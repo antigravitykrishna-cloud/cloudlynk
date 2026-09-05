@@ -1,0 +1,41 @@
+# EAS Build ignore — what's NOT needed by the cloud build worker
+# (worker runs its own gradle/npm install; we only ship source)
+
+# Gradle build outputs (the big offender — android/ folder was 6 GB)
+android/build/
+android/app/build/
+android/.gradle/
+android/.cxx/
+android/app/.cxx/
+
+# Local web build outputs
+web-build/
+dist/
+
+# Local Vercel deployable (lives at streamly-legal/, not part of the app)
+streamly-legal/
+.vercel/
+
+# Old build artifacts
+*.apk
+*.aab
+*.ipa
+
+# iOS source (only building Android for v0.6.0)
+ios/
+
+# Local audit / test / agent artifacts
+test-evidence/
+audit*.txt
+audit*.log
+*_utf8.txt
+*_utf8.log
+matrix-media-*.png
+matrix-media-*.jpg
+
+# Already gitignored but include here for the upload too
+node_modules/.cache/
+.expo/
+.env
+.env.local
+*.log

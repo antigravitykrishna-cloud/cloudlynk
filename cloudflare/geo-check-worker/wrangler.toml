@@ -1,0 +1,12 @@
+name = "streamly-geo-check"
+main = "index.js"
+compatibility_date = "2026-08-25"
+
+[vars]
+# Public project URL — safe to commit. Matches BACKEND_REFERENCE.md §1.
+SUPABASE_URL = "https://wdtwjiixuueqejfraaod.supabase.co"
+
+# SUPABASE_ANON_KEY is a secret, not a plain var — set it with:
+#   npx wrangler secret put SUPABASE_ANON_KEY
+# (the anon key is the same public-safe one already in the app's .env; this
+# just keeps it out of a file that gets committed to source control by habit)

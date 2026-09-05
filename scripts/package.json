@@ -1,0 +1,12 @@
+{
+  "name": "cloudlynk-scripts",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "seed": "node seed-demo-content.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.106.2",
+    "dotenv": "^16.4.7"
+  }
+}

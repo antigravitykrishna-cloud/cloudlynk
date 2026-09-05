@@ -1,0 +1,24 @@
+{
+  "requests": [
+    {
+      "prompt": "Minimal modern app icon, 1:1 square. Pure black background (#0A0A0A). Three thin horizontal stream lines centered: a thin neon orange line on top (#FF6B00), a slightly thicker white line in the middle, and a thin neon green line on the bottom (#39FF14). Restrained use of color — neons only as thin accents, not filled shapes. The white middle line is the dominant element. Modern, clean, geometric, no text, no other shapes.",
+      "aspect_ratio": "1:1",
+      "resolution": "1K"
+    },
+    {
+      "prompt": "Minimal modern app icon, 1:1 square. Pure black background (#0A0A0A). A stylized geometric letter S formed by a single continuous flowing white stroke, modern sans-serif feel. A tiny neon orange dot (#FF6B00) at the top entry point of the S and a tiny neon green dot (#39FF14) at the bottom exit point — just small accent dots, very restrained. No other color, no text, no shapes besides the S and the two tiny accent dots. Modern, sleek, clean.",
+      "aspect_ratio": "1:1",
+      "resolution": "1K"
+    },
+    {
+      "prompt": "Minimal modern app icon, 1:1 square. Pure black background (#0A0A0A). A centered rounded-square frame (small, about 60% of canvas width) with a very thin gradient border that transitions from neon orange (#FF6B00) to neon green (#39FF14). Inside the frame is a single small white play triangle pointing right. The neons appear ONLY on the thin border — no fills, no large neon shapes. Modern, premium, video-app aesthetic, no text, very clean.",
+      "aspect_ratio": "1:1",
+      "resolution": "1K"
+    },
+    {
+      "prompt": "Minimal modern app icon, 1:1 square. Pure black background (#0A0A0A). Three parallel diagonal stream lines slanting from top-left to bottom-right at roughly 20 degrees. Top line is thin neon orange (#FF6B00), middle line is thicker pure white, bottom line is thin neon green (#39FF14). The lines suggest streaming/flow direction. Restrained color use — neons as thin accents, white as the dominant visual. No text, no other shapes, ultra clean and modern.",
+      "aspect_ratio": "1:1",
+      "resolution": "1K"
+    }
+  ]
+}

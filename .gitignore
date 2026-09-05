@@ -1,0 +1,76 @@
+﻿node_modules/
+.expo/
+dist/
+web-build/
+
+# Local environment files
+.env
+.env.local
+
+# Expo generated files
+expo-env.d.ts
+
+# Mobile signing / store credentials
+*.jks
+*.keystore
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+google-services.json
+google-play-key.json
+
+# Local audit outputs
+audit*.txt
+audit*.log
+*_utf8.txt
+*_utf8.log
+
+# Local AI agent support folders
+.agents/
+.claude/
+skills/
+
+# Supabase CLI local cache (version pins, not source)
+supabase/.temp/
+
+# Workspace artifacts (local orchestration, not app code)
+STREAMLY_REBUILD_BRIEF.md
+claude-prompt.txt
+claude-rebuild*.log
+claude-rebuild.pid
+dispatch-claude.ps1
+matrix-media-*.png
+CLAUDE_TASK*.json
+legal-drafts-v1/
+logs/
+tmp/
+plans/
+prompts/
+
+# Build logs / scratch from local Android builds
+android/*.log
+android/.gradle_exit_code
+android/.gradle_stacktrace_exit
+android/launch_breakaway.ps1
+android/run_build_task.ps1
+android/run_release_build.ps1
+
+# Local build/handoff bundles (share separately, not via git)
+*.zip
+
+# Play Store listing assets (images, not code — shared separately)
+store-screenshots/
+
+# Vercel legal-pages deployable (separate project, deployed independently)
+streamly-legal/
+.vercel/
+
+# Local DB backups — contain production data (PII, payment records), never commit
+backups/
+
+# Built APK/AAB artifacts (137MB+ binaries, share separately)
+apk/
+*.apk
+*.aab

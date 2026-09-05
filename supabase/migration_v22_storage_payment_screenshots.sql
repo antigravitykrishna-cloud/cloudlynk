@@ -1,0 +1,20 @@
+-- Migration v22: payment-screenshots bucket documentation
+-- The bucket must be created manually in Supabase Dashboard > Storage > New Bucket:
+--   Name: payment-screenshots
+--   Public: false
+--   File size limit: 5MB
+--   Allowed MIME types: image/jpeg, image/png, image/webp
+--
+-- Storage policies (add via Dashboard):
+--
+-- Policy: "Owner upload" (INSERT)
+--   Target role: authenticated
+--   Policy: (bucket_id = 'payment-screenshots' AND (storage.foldername(name))[1] = auth.uid()::text)
+--
+-- Policy: "Owner read own" (SELECT)
+--   Target role: authenticated
+--   Policy: (bucket_id = 'payment-screenshots' AND (storage.foldername(name))[1] = auth.uid()::text)
+--
+-- Policy: "Admin read all" (SELECT)
+--   Target role: authenticated
+--   Policy: (bucket_id = 'payment-screenshots' AND exists(select 1 from public.profiles where id = auth.uid() and is_admin = true))

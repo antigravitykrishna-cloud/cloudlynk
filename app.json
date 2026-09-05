@@ -1,0 +1,114 @@
+{
+  "expo": {
+    "name": "Cloudlynk",
+    "slug": "cloudlynk",
+    "version": "0.7.0",
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "scheme": "cloudlynk",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0d1117"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.cloudlynk.app",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Cloudlynk needs access to your video library to upload content to your channel.",
+        "NSCameraUsageDescription": "Cloudlynk needs camera access to record videos for your channel.",
+        "NSMicrophoneUsageDescription": "Cloudlynk needs microphone access for video recording."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0d1117"
+      },
+      "package": "com.cloudlynk.app",
+      "versionCode": 7,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
+        "com.android.vending.BILLING"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-screen-orientation",
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Cloudlynk needs access to your photos to back them up to the cloud.",
+          "cameraPermission": "Cloudlynk needs camera access to take and upload photos."
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow Cloudlynk to access your photos.",
+          "savePhotosPermission": "Allow Cloudlynk to save photos.",
+          "isAccessMediaLocationEnabled": false,
+          "granularPermissions": ["photo", "video"]
+        }
+      ],
+      [
+        "expo-font",
+        {
+          "fonts": []
+        }
+      ],
+      "expo-video",
+      "./plugins/withRemoveAndroidPermissions.js",
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-3940256099942544~3347511713",
+          "iosAppId": "ca-app-pub-3940256099942544~1458002511"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "APP_ENV": "production",
+      "IAP_PROVIDER": "noop",
+      "GOOGLE_PLAY_PACKAGE_NAME": "com.cloudlynk.app",
+      "RECEIPT_VERIFIER_URL": "https://wdtwjiixuueqejfraaod.supabase.co/functions/v1/verify-play-receipt",
+      "ADMOB_APP_ID": "",
+      "ADMOB_BANNER_ID": "",
+      "ADMOB_INTERSTITIAL_ID": "",
+      "ADMOB_REWARDED_ID": "",
+      "ADMOB_ENABLED": false,
+      "SENTRY_DSN": "",
+      "SUPPORT_EMAIL": "support@cloudlynk.app",
+      "PRIVACY_POLICY_URL": "https://wdtwjiixuueqejfraaod.supabase.co/functions/v1/legal-pages/privacy",
+      "TERMS_URL": "https://wdtwjiixuueqejfraaod.supabase.co/functions/v1/legal-pages/terms",
+      "COMMUNITY_GUIDELINES_URL": "https://wdtwjiixuueqejfraaod.supabase.co/functions/v1/legal-pages/guidelines",
+      "REFUND_POLICY_URL": "https://wdtwjiixuueqejfraaod.supabase.co/functions/v1/legal-pages/refund",
+      "COPYRIGHT_POLICY_URL": "https://wdtwjiixuueqejfraaod.supabase.co/functions/v1/legal-pages/copyright",
+      "GEO_CHECK_WORKER_URL": "",
+      "router": {},
+      "eas": {
+        "projectId": "4224a968-e720-43b6-92a8-c26458f2a7a0"
+      }
+    },
+    "owner": "southern-methodist-university"
+  }
+}
