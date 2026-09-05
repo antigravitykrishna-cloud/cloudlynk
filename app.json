@@ -2,7 +2,7 @@
   "expo": {
     "name": "Cloudlynk",
     "slug": "cloudlynk",
-    "version": "0.7.0",
+    "version": "0.7.1",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "scheme": "cloudlynk",
@@ -30,7 +30,7 @@
         "backgroundColor": "#0d1117"
       },
       "package": "com.cloudlynk.app",
-      "versionCode": 7,
+      "versionCode": 8,
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.READ_MEDIA_IMAGES",

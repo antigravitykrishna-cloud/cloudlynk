@@ -111,8 +111,19 @@ android {
         applicationId 'com.cloudlynk.app'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "0.7.0"
+        // Kept in step with app.json BY HAND. android/ predates the current
+        // app.json and has not been re-prebuilt, so `expo prebuild` is not
+        // what is maintaining these two lines — until someone runs
+        // `npx expo prebuild --platform android --clean` (and then re-checks
+        // the signing block below, which prebuild does not preserve), these
+        // are the numbers that actually ship. app.json's copies are only
+        // advisory while that is true.
+        //
+        // Play rejects any upload whose versionCode is not strictly greater
+        // than the last one it accepted. Nothing has been uploaded yet, so 8
+        // is a free choice; after the first upload this must only ever go up.
+        versionCode 8
+        versionName "0.7.1"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }
@@ -153,6 +164,34 @@ android {
             // been configured (e.g. a local `expo run:android` dev build).
             // EAS Build's own managed credentials (if you use `eas build`)
             // handle this differently and don't need this property at all.
+            // The fallback to debug signing is convenient for a local
+            // `expo run:android --variant release` and catastrophic for a
+            // Play upload: a debug-signed AAB is silently produced, looks
+            // normal, and is rejected only after upload — or worse, is
+            // sideloaded and mistaken for the real thing. The v0.7.0 APK in
+            // apk/ was built exactly this way.
+            //
+            // So: keep the fallback, but make a release build that INTENDS to
+            // be signed say so. Set -PCLOUDLYNK_REQUIRE_RELEASE_SIGNING=true
+            // in CI and for any build destined for Play, and a missing
+            // keystore becomes a build failure instead of a debug-signed
+            // artifact. See android/gradle.properties.example.
+            if (!project.hasProperty('CLOUDLYNK_RELEASE_STORE_FILE')) {
+                if (project.findProperty('CLOUDLYNK_REQUIRE_RELEASE_SIGNING') == 'true') {
+                    throw new GradleException(
+                        "Release signing was required but CLOUDLYNK_RELEASE_STORE_FILE is not set.
+" +
+                        "Set the four CLOUDLYNK_RELEASE_* properties in android/gradle.properties or
+" +
+                        "~/.gradle/gradle.properties. See android/gradle.properties.example."
+                    )
+                }
+                logger.warn(
+                    "WARNING: no release keystore configured — this release build is being " +
+                    "DEBUG-SIGNED and cannot be uploaded to Play. Pass " +
+                    "-PCLOUDLYNK_REQUIRE_RELEASE_SIGNING=true to make this an error."
+                )
+            }
             signingConfig project.hasProperty('CLOUDLYNK_RELEASE_STORE_FILE') ? signingConfigs.release : signingConfigs.debug
             def enableShrinkResources = findProperty('android.enableShrinkResourcesInReleaseBuilds') ?: 'false'
             shrinkResources enableShrinkResources.toBoolean()

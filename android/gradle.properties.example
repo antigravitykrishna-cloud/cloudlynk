@@ -1,0 +1,27 @@
+# Release signing — copy the four properties below into either
+#   android/gradle.properties   (gitignored? CHECK — it is NOT, see note)
+# or, better,
+#   ~/.gradle/gradle.properties (outside the repo entirely)
+#
+# PREFER ~/.gradle/gradle.properties. android/gradle.properties IS tracked by
+# git in this repo, so passwords put there will be committed. The keystore
+# itself is safe either way (*.jks is gitignored), but the passwords are not.
+#
+# Without these, android/app/build.gradle falls back to DEBUG signing for
+# release builds. That produces an AAB that looks fine and that Play will not
+# accept. Pass -PCLOUDLYNK_REQUIRE_RELEASE_SIGNING=true to turn that silent
+# fallback into a build failure — do this in CI and for anything going to Play.
+#
+# The keystore for this app is android/app/cloudlynk-release.jks. Its passwords
+# were NOT included in the handover archive; get them from the owner. Losing
+# the keystore or its passwords means the app can never be updated under the
+# same Play listing without a Google-assisted key reset.
+
+CLOUDLYNK_RELEASE_STORE_FILE=cloudlynk-release.jks
+CLOUDLYNK_RELEASE_STORE_PASSWORD=
+CLOUDLYNK_RELEASE_KEY_ALIAS=
+CLOUDLYNK_RELEASE_KEY_PASSWORD=
+
+# Path note: CLOUDLYNK_RELEASE_STORE_FILE is resolved by `file()` relative to
+# android/app/, so a bare filename means android/app/<name>. An absolute path
+# also works and is the right choice if you keep the keystore outside the repo.
