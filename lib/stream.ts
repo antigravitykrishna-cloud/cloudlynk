@@ -181,9 +181,40 @@ export const StreamService = {
    * FREE content only. Premium posts (access_level='premium') have
    * requireSignedURLs=true on Cloudflare, so this plain URL 403s for everyone
    * — use getSignedPlaybackUrl(postId) instead.
+   *
+   * Since v57 this URL can also fail for a genuinely FREE post. Videos are now
+   * created locked (generate-stream-upload sets requireSignedURLs=true) and
+   * unlocked only when stream-set-access publishes the post as free, so a
+   * failed or skipped unlock leaves a free video that this plain URL cannot
+   * play. That is the deliberate direction to fail in — the alternative
+   * default leaked premium video — and resolveFreePlaybackUrl() below repairs
+   * it at playback time. Prefer that over calling this directly.
    */
   getHlsPlaybackUrl(uid: string): string {
     return `https://videodelivery.net/${uid}/manifest/video.m3u8`;
+  },
+
+  /**
+   * FREE content, with the v57 self-repair. Tries the plain unsigned URL
+   * first — that is the normal case, costs no round trip, and is what every
+   * already-published free video still uses. If Cloudflare rejects it because
+   * the video is still locked, falls back to the same signed-token endpoint
+   * premium uses; that endpoint mints a token for a free post without
+   * requiring any entitlement, but still refuses a suspended or banned caller.
+   *
+   * A HEAD request is enough to tell the two apart: a locked video answers
+   * 403 on the manifest, an unlocked one answers 200.
+   */
+  async resolveFreePlaybackUrl(postId: string, uid: string): Promise<string> {
+    const plain = this.getHlsPlaybackUrl(uid);
+    try {
+      const head = await fetch(plain, { method: 'HEAD' });
+      if (head.ok) return plain;
+    } catch {
+      // Network failure here says nothing about whether the video is locked.
+      // Fall through to the token path rather than reporting a lock problem.
+    }
+    return this.getSignedPlaybackUrl(postId);
   },
 
   /**
@@ -191,8 +222,12 @@ export const StreamService = {
    * short-lived signed manifest URL — the function derives server-side
    * whether the signed-in caller is actually entitled to this post's video
    * (never trusting the client to self-report), so this only resolves for an
-   * active/lifetime subscriber. Throws with a user-facing message on
-   * rejection; the caller should NOT fall back to getHlsPlaybackUrl().
+   * active/lifetime subscriber, an admin grant holder, or (since v57) any
+   * caller entitled to a free post via resolveFreePlaybackUrl. In every case
+   * the account itself must still be 'active' — a suspended or banned caller
+   * is refused here even with a live subscription. Throws with a user-facing
+   * message on rejection; the caller should NOT fall back to
+   * getHlsPlaybackUrl().
    */
   async getSignedPlaybackUrl(postId: string): Promise<string> {
     const { data: { session } } = await supabase.auth.getSession();

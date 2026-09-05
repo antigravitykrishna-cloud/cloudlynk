@@ -94,7 +94,53 @@ Deno.serve(async (req) => {
     }
 
     const goingFree = post.access_level === "premium" && accessLevel === "free";
+    const goingPremium = post.access_level === "free" && accessLevel === "premium";
     const uid: string | null = post.video_url ?? null;
+
+    if (goingPremium && uid) {
+      // v57: lock BEFORE the level changes, and refuse the change if the lock
+      // fails.
+      //
+      // This used to be left to stream-playback-token, which asserts
+      // requireSignedURLs lazily on the first premium play. The gap that
+      // opened: between the moment the post became premium and the moment
+      // somebody first pressed play, the video was still served unsigned from
+      // videodelivery.net/<uid>/manifest/video.m3u8 to anyone holding the UID
+      // — and if nobody ever played it, that window never closed.
+      //
+      // Ordering is the mirror image of the goingFree branch below, for the
+      // same fail-safe reason: there, unlock last so a failure leaves the post
+      // premium; here, lock first so a failure leaves the post free. Both
+      // failures land on "no premium content is being served unsigned".
+      let lockRes: Response;
+      try {
+        lockRes = await cloudflare(uid, {
+          method: "POST",
+          body: JSON.stringify({ uid, requireSignedURLs: true }),
+        });
+      } catch (e: any) {
+        console.error("stream-set-access: Cloudflare unreachable while locking:", e?.message ?? e);
+        return jsonResponse({
+          error: "Could not lock the video on Cloudflare, so the access level was left unchanged. Try again.",
+        }, 502);
+      }
+      if (!lockRes.ok) {
+        console.error("stream-set-access: requireSignedURLs=true failed:", lockRes.status, await lockRes.text().catch(() => ""));
+        return jsonResponse({
+          error: "Could not lock the video on Cloudflare, so the access level was left unchanged. Try again.",
+        }, 502);
+      }
+
+      // Cache it so stream-playback-token's fast path skips the re-assert.
+      // Best-effort: a failure here costs one redundant Cloudflare call on
+      // first play, not correctness.
+      const { error: markErr } = await supabaseUser.rpc("admin_set_signed_lock", {
+        p_stream_uid: uid,
+      });
+      if (markErr) {
+        console.error("stream-set-access: admin_set_signed_lock failed (non-fatal):", markErr.message);
+      }
+    }
 
     if (goingFree && uid) {
       // 1. Clear the cached flag FIRST. If anything below fails, the post is
@@ -140,7 +186,12 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: rpcErr.message ?? "Could not change the access level." }, 400);
     }
 
-    return jsonResponse({ ok: true, accessLevel, unlockedOnCloudflare: goingFree && !!uid });
+    return jsonResponse({
+      ok: true,
+      accessLevel,
+      unlockedOnCloudflare: goingFree && !!uid,
+      lockedOnCloudflare: goingPremium && !!uid,
+    });
   } catch (err: any) {
     if (err?.message === "CF_NOT_CONFIGURED") {
       console.error("stream-set-access: Cloudflare Stream secrets are not set");

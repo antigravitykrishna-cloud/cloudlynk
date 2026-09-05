@@ -126,6 +126,24 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           maxDurationSeconds: MAX_DURATION_SECONDS,
+          // Every video is born REQUIRING a signed URL. This is deliberate
+          // and is the fix for the window described in v57: before it, a
+          // video was created unsigned and only locked lazily, the first
+          // time stream-playback-token served a premium play. A post created
+          // premium therefore sat world-readable at
+          // videodelivery.net/<uid>/manifest/video.m3u8 for as long as
+          // nobody pressed play — unbounded, and invisible.
+          //
+          // Locking at birth inverts the failure mode. A video that should
+          // be free but never got unlocked simply does not play until
+          // stream-set-access unlocks it (visible, harmless, retryable),
+          // whereas the old default failed the other way: a premium video
+          // that never got locked leaked, silently.
+          //
+          // The unlock for genuinely-free posts happens in stream-set-access,
+          // called by the publish path once access_level is known — the
+          // upload has no way to know it yet.
+          requireSignedURLs: true,
           meta: {
             userId: user.id,
             fileName: fileName.slice(0, 100),
@@ -151,6 +169,10 @@ serve(async (req) => {
           stream_uid: uid,
           context: channelId ? "post_video" : "channel_video",
           post_id: null,
+          // Matches requireSignedURLs above, so stream-playback-token's
+          // "is it locked yet?" fast path doesn't re-assert it on every
+          // first play.
+          signed_locked: true,
         },
         {
           onConflict: "user_id,stream_uid",

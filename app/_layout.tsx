@@ -41,7 +41,12 @@ export default function RootLayout() {
     // complete-profile for a frame. See hooks/useAuth.ts `profileChecked`.
     if (!profileChecked) return;
 
-    const onCompleteProfile = inAuthGroup && segments[1] === 'complete-profile';
+    // `segments` is typed as a 1-tuple under expo-router's typedRoutes, so
+    // indexing [1] is a compile error even though it is correct at runtime —
+    // this is a nested route and the array really does have a second element.
+    // Widening to string[] is the narrowest fix; the alternative (turning
+    // typedRoutes off) loses type safety everywhere else.
+    const onCompleteProfile = inAuthGroup && (segments as string[])[1] === 'complete-profile';
     // Any account that hasn't accepted the CURRENT policy versions lands
     // here instead of /(tabs) until birth year + terms/guidelines/privacy
     // acceptance are on file. In practice that's existing accounts after a

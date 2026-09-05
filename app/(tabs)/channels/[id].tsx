@@ -221,7 +221,15 @@ const DetailModal = memo(({ selected, onClose, userId, channelId }: {
         .catch((err: any) => { if (!cancelled) setVideoError(err?.message ?? "This video isn't available."); })
         .finally(() => { if (!cancelled) setVideoLoading(false); });
     } else {
-      setVideoUrl(StreamService.getHlsPlaybackUrl(selected.video_url));
+      // v57: free playback is async now. Videos are created locked, so a free
+      // post whose unlock did not land needs the signed-token fallback rather
+      // than a plain URL that 403s. The common case still resolves without a
+      // round trip — see StreamService.resolveFreePlaybackUrl.
+      setVideoLoading(true);
+      StreamService.resolveFreePlaybackUrl(selected.id, selected.video_url)
+        .then((url) => { if (!cancelled) setVideoUrl(url); })
+        .catch((err: any) => { if (!cancelled) setVideoError(err?.message ?? "This video isn't available."); })
+        .finally(() => { if (!cancelled) setVideoLoading(false); });
     }
     return () => { cancelled = true; };
   }, [selected?.id, selected?.video_url, selected?.access_level]);

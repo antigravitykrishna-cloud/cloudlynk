@@ -153,7 +153,12 @@ const DetailModal = memo(({ selected, onClose, userId }: {
           .catch((err: any) => { if (!cancelled) setVideoError(err?.message ?? "This video isn't available."); })
           .finally(() => { if (!cancelled) setVideoLoading(false); });
       } else {
-        setVideoUrl(StreamService.getHlsPlaybackUrl(selected.video_url));
+        // v57: see the matching comment in app/(tabs)/channels/[id].tsx.
+        setVideoLoading(true);
+        StreamService.resolveFreePlaybackUrl(selected.id, selected.video_url)
+          .then((url) => { if (!cancelled) setVideoUrl(url); })
+          .catch((err: any) => { if (!cancelled) setVideoError(err?.message ?? "This video isn't available."); })
+          .finally(() => { if (!cancelled) setVideoLoading(false); });
       }
     } else if (selected?.media_url && selected.media_type === 'video') {
       setVideoUrl(PostService.getMediaPublicUrl(selected.media_url));

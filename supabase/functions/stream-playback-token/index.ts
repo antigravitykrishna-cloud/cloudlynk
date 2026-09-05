@@ -87,21 +87,45 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: UNAVAILABLE }, 404);
     }
 
-    // Free content does not use this path — the client builds the plain URL
-    // synchronously and never calls here. Reject rather than serving a URL so
-    // there's exactly one code path per access level.
-    if (post.access_level !== "premium") {
-      return jsonResponse({ error: "This video does not require a playback token." }, 400);
-    }
+    // Free content normally plays from a plain unsigned URL the client builds
+    // synchronously, and never reaches here. It IS allowed to reach here, as a
+    // fallback: since v57 every video is created with requireSignedURLs=true
+    // (see generate-stream-upload), so a free post whose unlock in
+    // stream-set-access failed would otherwise be permanently unplayable. The
+    // client retries through this function when the unsigned URL fails, and a
+    // free post mints a token with no entitlement requirement.
+    //
+    // Serving free content here is not a widening of access: the RLS read
+    // above already proved the caller may see this post, and the token is
+    // scoped to this one video and expires. What must never happen is the
+    // reverse — a PREMIUM video served unsigned — which is why the
+    // entitlement block below is skipped only for access_level='free'.
+    const isPremium = post.access_level === "premium";
 
     // Defence in depth: re-derive entitlement here even though RLS above
     // already required it. Reading your own profile is allowed by RLS.
     const { data: me, error: meErr } = await supabaseUser
       .from("profiles")
-      .select("plan_status, plan_expires_at")
+      .select("plan_status, plan_expires_at, account_status")
       .eq("id", user.id)
       .maybeSingle();
     if (meErr || !me) return jsonResponse({ error: UNAVAILABLE }, 403);
+
+    // v57: the CALLER's own account standing. Nothing checked this before.
+    //
+    // channel_posts_select_v56 checks account_status on the post's AUTHOR
+    // (so a banned creator's work disappears) and has_content_access checks
+    // it on the GRANTEE (so a banned user loses admin grants) — but a
+    // suspended or banned user holding a paid plan_status still satisfied
+    // the subscription branch, and so kept minting fresh 6-hour premium
+    // tokens for as long as their refresh token lived. Banning someone has
+    // to actually stop their playback, or it isn't a ban.
+    //
+    // Checked before the entitlement branch, and for free content too: a
+    // banned account should not be pulling video at all.
+    if (me.account_status !== "active") {
+      return jsonResponse({ error: UNAVAILABLE }, 403);
+    }
 
     const notExpired = !me.plan_expires_at || new Date(me.plan_expires_at) > new Date();
     const paid = me.plan_status === "lifetime" || (me.plan_status === "active" && notExpired);
@@ -120,7 +144,7 @@ Deno.serve(async (req) => {
     // via the has_content_access RPC rather than a reimplementation of the
     // condition, so the feed and the player can never disagree about what a
     // live grant is.
-    let entitled = paid;
+    let entitled = !isPremium || paid;
     if (!entitled) {
       const { data: granted, error: grantErr } = await supabaseUser.rpc("has_content_access", {
         p_post_id: postId,
@@ -156,7 +180,15 @@ Deno.serve(async (req) => {
       .limit(1);
     const tracked = trackedRows?.[0];
 
-    if (!tracked?.signed_locked) {
+    // Only PREMIUM playback may assert the lock. A free post arriving here is
+    // either already locked (the unlock failed — the fallback case this path
+    // exists for, and the token below is what rescues it) or still unlocked
+    // and playing fine unsigned for everyone else. Locking it here would take
+    // a working free video and break it for every client still using the
+    // plain URL, which is the opposite of the fallback's purpose. A token
+    // minted against an unlocked video is simply ignored by Cloudflare, so
+    // the free path needs no lock of its own.
+    if (isPremium && !tracked?.signed_locked) {
       // The edit call is idempotent — safe whether or not it was already true. This
       // self-heals videos flagged premium before this system existed, or
       // switched from free to premium after upload.
