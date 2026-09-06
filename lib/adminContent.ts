@@ -86,6 +86,27 @@ export type AuditEntry = {
  * in the function body — anything else raises 22023 there, so keeping this in
  * step turns that into a compile error instead.
  */
+/**
+ * Turns "this RPC does not exist on the server yet" into something an admin can
+ * act on. PostgREST answers an unknown function with PGRST202, Postgres itself
+ * with 42883; either way the raw text is a schema-cache complaint that reads
+ * like a crash.
+ *
+ * This is a real state, not a hypothetical: v59 and v60 are written and, until
+ * someone with a Supabase login runs the push, not deployed. A build handed to
+ * a tester before then will hit exactly this.
+ */
+function describeRpcError(err: any, feature: string): Error {
+  const code = err?.code ?? '';
+  if (code === 'PGRST202' || code === '42883') {
+    return new Error(
+      `${feature} is not available yet — the backend migration for it has not been deployed. ` +
+      `Everything else in the admin panel works normally.`
+    );
+  }
+  return new Error(err?.message ?? 'Something went wrong.');
+}
+
 export type PostClearableField =
   | 'body'
   | 'genre'
@@ -277,7 +298,7 @@ export const AdminContentService = {
       p_thumbnail_url: patch.thumbnailUrl ?? null,
       p_clear_fields: clearFields ?? null,
     });
-    if (error) throw error;
+    if (error) throw describeRpcError(error, 'Editing posts');
   },
 
   /**
@@ -314,6 +335,13 @@ export const AdminContentService = {
     }
 
     const json = await res.json().catch(() => null);
+    if (res.status === 404) {
+      // The edge function itself is missing, not the post — a deployed
+      // function answering about a missing post returns its own 404 body with
+      // an `error` field, so distinguish on that.
+      throw new Error(json?.error
+        ?? 'Replacing videos is not available yet — the admin-replace-video function has not been deployed.');
+    }
     if (!res.ok) throw new Error(json?.error ?? 'Could not replace the video.');
     return { previousUid: json?.previousUid ?? null };
   },

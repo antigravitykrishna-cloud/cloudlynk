@@ -1,1 +1,9 @@
-<resources/>
+<resources>
+  <!-- Mirrors values/colors.xml. The app is dark-only (userInterfaceStyle:
+       "dark" in app.json), so these are the same values rather than a dark
+       variant — the point is that a device in night mode cannot fall through
+       to a different, stale colour. -->
+  <color name="splashscreen_background">#0B1220</color>
+  <color name="iconBackground">#0B1220</color>
+  <color name="colorPrimary">#2E7DFF</color>
+</resources>

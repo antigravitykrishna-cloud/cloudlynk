@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The splash window background.
+
+  Theme.App.SplashScreen previously pointed android:windowBackground straight
+  at @drawable/splashscreen_logo, a 1152x1152 RGBA PNG. Two problems with that:
+
+    1. The PNG has an alpha channel, and a bare bitmap used as windowBackground
+       lets transparent regions fall through to the parent theme's window
+       background. The parent is Theme.AppCompat.DayNight, which follows the
+       SYSTEM light/dark setting — not the app's own userInterfaceStyle. On a
+       phone in light mode the splash therefore rendered light behind the logo,
+       then cut to a navy app.
+    2. A bitmap used directly as windowBackground is stretched to fill, which
+       distorts a square logo on a tall screen. app.json asks for
+       resizeMode "contain".
+
+  A layer-list fixes both: an opaque brand-coloured base, then the logo drawn
+  centred at its natural size.
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+  <item android:drawable="@color/splashscreen_background" />
+  <item>
+    <bitmap
+      android:gravity="center"
+      android:src="@drawable/splashscreen_logo" />
+  </item>
+</layer-list>

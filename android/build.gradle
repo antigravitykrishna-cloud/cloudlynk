@@ -20,5 +20,22 @@ allprojects {
   }
 }
 
+// SDK levels, pinned explicitly.
+//
+// Without this block they come from expo-root-project, which reads a Gradle
+// version catalog named `expoLibs` and falls back to 35 when there isn't one.
+// There is no catalog in this project, so the effective targetSdk was 35 —
+// below the 36 Play now requires for new uploads, and the build would have
+// been rejected after the fact rather than failing here.
+//
+// This works because the plugin uses `extra.setIfNotExist(...)`: whatever is
+// already on the root project's ext wins, and this block runs before
+// `apply plugin` below. Do not move it after that line.
+ext {
+    minSdkVersion = 24
+    compileSdkVersion = 36
+    targetSdkVersion = 36
+}
+
 apply plugin: "expo-root-project"
 apply plugin: "com.facebook.react.rootproject"

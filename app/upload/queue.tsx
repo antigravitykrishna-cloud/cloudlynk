@@ -44,7 +44,11 @@ export default function QueueScreen() {
       if (added === 0 && videos.length > 0) {
         Alert.alert(
           'Queue full',
-          `You can only have ${maxItems} items in the queue. Remove some items or upgrade to Premium for unlimited uploads.`,
+          // "unlimited uploads" read as a storage claim, which is false —
+          // storage_limit is pinned to 15 GB for every account by
+          // protect_profile_privileged_fields, Premium included. The limit
+          // here is how many files can sit in one batch.
+          `You can queue ${maxItems} files at a time. Remove some, or go Premium to queue as many as you like — storage stays 15 GB on every plan.`,
         );
       }
     } catch (err: any) {
@@ -168,8 +172,8 @@ export default function QueueScreen() {
             <Text style={styles.emptyIcon}>{'📁'}</Text>
             <Text style={styles.emptyTitle}>No uploads queued</Text>
             <Text style={styles.emptyDesc}>
-              Tap "+ Add" to pick videos from your device. You can add up to{' '}
-              {maxItems === Infinity ? 'unlimited' : maxItems} files at once.
+              Tap "+ Add" to pick videos from your device. You can queue{' '}
+              {maxItems === Infinity ? 'as many files as you like' : `${maxItems} files`} at once.
             </Text>
             <TouchableOpacity style={styles.emptyAddBtn} onPress={handleAddMore} activeOpacity={0.7}>
               <Text style={styles.emptyAddTxt}>Pick Videos</Text>

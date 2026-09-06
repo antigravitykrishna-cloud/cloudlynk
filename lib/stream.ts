@@ -207,14 +207,40 @@ export const StreamService = {
    */
   async resolveFreePlaybackUrl(postId: string, uid: string): Promise<string> {
     const plain = this.getHlsPlaybackUrl(uid);
+
+    // Only a 403 means "locked, you need a token". Every other outcome —
+    // 200, a 405 because Cloudflare declines HEAD on manifests, a CORS
+    // rejection, a flaky network — is NOT evidence of a lock, and must fall
+    // back to the plain URL, which is exactly what every build before v57 used
+    // and what still works for every unlocked video.
+    //
+    // Getting this wrong is a live regression, not a theoretical one: until
+    // the v57 edge function is deployed, the token endpoint answers free posts
+    // with 400 "This video does not require a playback token". An earlier
+    // version of this method routed every non-200 HEAD there and let that 400
+    // throw — turning a working free video into an error message on any
+    // transient hiccup. Degrade to the plain URL instead; a dead player is
+    // still better than a false error, and the player surfaces its own
+    // failure if the URL really is bad.
+    let locked = false;
     try {
       const head = await fetch(plain, { method: 'HEAD' });
       if (head.ok) return plain;
+      locked = head.status === 403;
     } catch {
-      // Network failure here says nothing about whether the video is locked.
-      // Fall through to the token path rather than reporting a lock problem.
+      // Network or method failure. Says nothing about lock state.
     }
-    return this.getSignedPlaybackUrl(postId);
+
+    if (!locked) return plain;
+
+    try {
+      return await this.getSignedPlaybackUrl(postId);
+    } catch {
+      // The video is locked AND the token path failed — most likely because
+      // the v57 function is not deployed yet. Hand back the plain URL so the
+      // player reports the real problem rather than us guessing at it.
+      return plain;
+    }
   },
 
   /**
