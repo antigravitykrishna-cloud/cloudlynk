@@ -168,8 +168,12 @@ android {
             // `expo run:android --variant release` and catastrophic for a
             // Play upload: a debug-signed AAB is silently produced, looks
             // normal, and is rejected only after upload — or worse, is
-            // sideloaded and mistaken for the real thing. The v0.7.0 APK in
-            // apk/ was built exactly this way.
+            // sideloaded and mistaken for the real thing.
+            //
+            // (The v0.7.0 APK in apk/ is NOT an example of this, despite what
+            // HANDOVER.md says: its signing certificate reads CN=Cloudlynk,
+            // O=Cloudlynk, C=IN, which is not this project's debug key
+            // (CN=Android Debug, O=Unknown, C=US). It was release-signed.)
             //
             // So: keep the fallback, but make a release build that INTENDS to
             // be signed say so. Set -PCLOUDLYNK_REQUIRE_RELEASE_SIGNING=true

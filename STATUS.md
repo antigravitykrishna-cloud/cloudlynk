@@ -139,8 +139,23 @@ wired, `-PCLOUDLYNK_REQUIRE_RELEASE_SIGNING=true` turns the silent debug-signing
 fallback into a build failure. Someone with a toolchain and the keystore
 passwords runs `./gradlew bundleRelease`.
 
-Your existing `apk/cloudlynk-v0.7.0-release.apk` is **debug-signed** despite its
-name. That is what the silent fallback did.
+**Correction to the handover, and to what I said earlier.** The handover states
+the v0.7.0 APK is debug-signed. It is not. Read out of its APK Signing Block,
+the certificate is:
+
+```
+CN=Cloudlynk, O=Cloudlynk, OU=Cloudlynk, L=Unknown, ST=Unknown, C=IN
+```
+
+The repo's `debug.keystore` is `CN=Android Debug, O=Unknown, OU=Android, C=US`.
+They do not match, so that APK was signed with the real release keystore —
+meaning whoever built it had the passwords configured outside the repo, in
+`~/.gradle/gradle.properties`. Worth asking them, since it is the fastest route
+to the credential that is otherwise blocking a signed build.
+
+The silent-fallback hazard in `build.gradle` was still real and is still worth
+the guard that now fails the build loudly — it just did not fire for that
+artifact.
 
 ---
 
