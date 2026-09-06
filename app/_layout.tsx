@@ -57,7 +57,12 @@ export default function RootLayout() {
       return;
     }
 
-    if (inAuthGroup) router.replace('/(tabs)');
+    // Land on Explore, not the Cloud tab. Explore is the content surface and
+    // the reason someone installed the app; the storage tab is a feature they
+    // find later. Routing to '/(tabs)' would resolve to the first declared
+    // screen, which is index (Cloud) — so name the route explicitly rather
+    // than relying on tab order, which a later reorder would silently change.
+    if (inAuthGroup) router.replace('/(tabs)/explore');
   }, [session, profile, profileChecked, loading, geoLoading, isBlocked, segments, router]);
 
   if (isBlocked && !geoLoading) {

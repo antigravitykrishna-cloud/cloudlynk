@@ -34,6 +34,11 @@ export default function TabsLayout() {
   return (
     <Tabs
       key={user?.id ?? 'guest'}
+      // Explore is the app's landing surface, so it is also the tab the
+      // navigator falls back to — otherwise a cold start or a deep link that
+      // resolves to the group lands on whichever screen happens to be declared
+      // first.
+      initialRouteName="explore"
       screenOptions={{
         headerShown: false,
         tabBarStyle: styles.tabBar,
