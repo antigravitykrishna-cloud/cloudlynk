@@ -154,6 +154,15 @@ BEGIN
     -- `plan` is a legacy column (superseded by plan_status) still read by the
     -- app for client-side paid gating, so it must not be self-editable either.
     NEW.plan := OLD.plan;
+    -- v55: the pre-purchase approval gate. Self-approval would make the
+    -- gate meaningless — only admin_set_user_approval() may move these.
+    -- CARRIED FORWARD DELIBERATELY: this body replaces the live one wholesale,
+    -- so omitting these four lines would silently drop the approval gate's
+    -- protection and let any user approve themselves.
+    NEW.approval_status := OLD.approval_status;
+    NEW.approval_reviewed_by := OLD.approval_reviewed_by;
+    NEW.approval_reviewed_at := OLD.approval_reviewed_at;
+    NEW.approval_note := OLD.approval_note;
   END IF;
 
   -- v52: flat 15GB for every account regardless of plan_status.
@@ -163,17 +172,18 @@ BEGIN
 END;
 $fn$;
 
--- v55 added approval_status to the privileged set in its own amendment of this
--- trigger. If that amendment is live, re-applying the v52 body above would drop
--- the approval_status line and let users self-approve. Re-assert it here rather
--- than assuming either ordering.
+-- Fail loudly if the approval columns are not present, rather than silently
+-- installing a trigger that references them. v55 introduced them and sorts
+-- before this migration, so their absence means the chain was applied out of
+-- order and the whole migration should abort.
 DO $mig$
 BEGIN
-  IF EXISTS (
+  IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'public' AND table_name = 'profiles' AND column_name = 'approval_status'
   ) THEN
-    RAISE NOTICE 'approval_status exists — verify it is still reverted for untrusted writers (v55 amendment).';
+    RAISE EXCEPTION
+      'profiles.approval_status is missing — v55 has not been applied. Aborting: this trigger body references it.';
   END IF;
 END $mig$;
 

@@ -158,21 +158,30 @@ DROP FUNCTION IF EXISTS public.approve_subscription_request(uuid, uuid);
 DROP FUNCTION IF EXISTS public.reject_subscription_request(uuid, text);
 DROP FUNCTION IF EXISTS public.reject_subscription_request(uuid, text, uuid);
 
--- The table is RENAMED, not dropped. It holds real money records — UPI
--- transaction references and amounts — that India's tax retention rules say
--- to keep for seven years (docs/privacy-policy-outline.md). Renaming makes it
--- unreachable over PostgREST (which exposes `public` only) while leaving the
--- rows intact and auditable. Drop it after the retention period, not now.
+-- The table is neither dropped nor moved. It holds real money records — UPI
+-- transaction references and amounts — that India's tax retention rules say to
+-- keep for seven years (docs/privacy-policy-outline.md).
+--
+-- An earlier draft of this migration did `ALTER TABLE ... SET SCHEMA retired`.
+-- That would have broken the GDPR/DPDPA data-export feature: export_my_data()
+-- (migration_v30_fix_export_my_data.sql:43) reads
+-- `from public.subscription_requests sr`, and it is SECURITY DEFINER with
+-- `SET search_path = public`, so the moved table would not resolve and every
+-- account export would fail. Caught in pre-flight review, not in production.
+--
+-- REVOKE achieves the actual goal — unreachable from the app — without that
+-- side effect. PostgREST executes as the caller's role, so with no grants to
+-- `authenticated` or `anon` the table cannot be read or written from the app
+-- at all. export_my_data keeps working because SECURITY DEFINER runs as the
+-- function owner, which retains access.
 DO $mig$
 BEGIN
   IF EXISTS (
     SELECT 1 FROM information_schema.tables
     WHERE table_schema = 'public' AND table_name = 'subscription_requests'
   ) THEN
-    CREATE SCHEMA IF NOT EXISTS retired;
-    EXECUTE 'ALTER TABLE public.subscription_requests SET SCHEMA retired';
-    EXECUTE 'REVOKE ALL ON retired.subscription_requests FROM authenticated, anon';
-    EXECUTE $c$COMMENT ON TABLE retired.subscription_requests IS 'RETIRED v57. The pre-Play-Billing UPI + screenshot + manual-approval flow (PLAY_STORE_COMPLIANCE_AUDIT.md Finding 1). Kept only for the 7-year tax retention on the payment references it holds. Not reachable from the app. Do not restore into public.'$c$;
+    EXECUTE 'REVOKE ALL ON public.subscription_requests FROM authenticated, anon';
+    EXECUTE $c$COMMENT ON TABLE public.subscription_requests IS 'RETIRED v57. The pre-Play-Billing UPI + screenshot + manual-approval flow (PLAY_STORE_COMPLIANCE_AUDIT.md Finding 1). All grants revoked; unreachable from the app. Retained only for the 7-year tax retention on the payment references it holds, and still read by export_my_data() for account data exports. Do not re-grant. Do not build on it.'$c$;
   END IF;
 END $mig$;
 
