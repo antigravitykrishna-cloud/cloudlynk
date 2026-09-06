@@ -182,16 +182,20 @@ android {
             // artifact. See android/gradle.properties.example.
             if (!project.hasProperty('CLOUDLYNK_RELEASE_STORE_FILE')) {
                 if (project.findProperty('CLOUDLYNK_REQUIRE_RELEASE_SIGNING') == 'true') {
-                    throw new GradleException(
-                        "Release signing was required but CLOUDLYNK_RELEASE_STORE_FILE is not set.
-" +
-                        "Set the four CLOUDLYNK_RELEASE_* properties in android/gradle.properties or
-" +
-                        "~/.gradle/gradle.properties. See android/gradle.properties.example."
-                    )
+                    // Triple-quoted: a plain double-quoted Groovy string cannot
+                    // span lines, and an earlier version of this had real
+                    // newlines inside one, which failed the build at parse time
+                    // before a single source file was compiled.
+                    throw new GradleException("""Release signing was required but CLOUDLYNK_RELEASE_STORE_FILE is not set.
+Set the four CLOUDLYNK_RELEASE_* properties in ~/.gradle/gradle.properties.
+See android/gradle.properties.example.""")
                 }
+                // ASCII in the message itself, so it renders the same wherever
+                // this is read. (Comments elsewhere in this file already carry
+                // em dashes and parse fine — the earlier failure was the
+                // multi-line string above, not encoding.)
                 logger.warn(
-                    "WARNING: no release keystore configured — this release build is being " +
+                    "WARNING: no release keystore configured - this release build is being " +
                     "DEBUG-SIGNED and cannot be uploaded to Play. Pass " +
                     "-PCLOUDLYNK_REQUIRE_RELEASE_SIGNING=true to make this an error."
                 )
