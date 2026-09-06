@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
+import { GuestPrompt } from '../../components/GuestPrompt';
 import { useAuth } from '../../hooks/useAuth';
 import { useFiles } from '../../hooks/useFiles';
 import { Colors } from '../../constants/theme';
@@ -83,6 +84,17 @@ export default function CloudScreen() {
       { text: 'Cancel', style: 'cancel' },
     ]);
   }, [handleShare, handleCopyLink, deleteFile]);
+
+  // v61: guests reach this tab but every query here early-returns on
+  // !user?.id, so without this they get a blank screen and assume the app
+  // is broken rather than that the feature needs an account.
+  if (!user?.id) {
+    return (
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        <GuestPrompt icon="☁️" title="Your 15 GB cloud drive" message="Back up photos, videos and documents, and stream them from anywhere. Every account gets 15 GB, free." />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>

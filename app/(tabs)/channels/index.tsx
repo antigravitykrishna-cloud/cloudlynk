@@ -6,6 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter, useFocusEffect } from 'expo-router';
+import { GuestPrompt } from '../../../components/GuestPrompt';
 import { useAuth } from '../../../hooks/useAuth';
 import { ChannelService } from '../../../lib/channels';
 import { supabase } from '../../../lib/supabase';
@@ -186,6 +187,17 @@ export default function ChannelsScreen() {
     }
     router.push({ pathname: '/(tabs)/channels/[id]', params: { id: channel.id } });
   };
+
+  // v61: guests reach this tab but every query here early-returns on
+  // !user?.id, so without this they get a blank screen and assume the app
+  // is broken rather than that the feature needs an account.
+  if (!user?.id) {
+    return (
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        <GuestPrompt icon="📺" title="Join channels you like" message="Follow creators, join public channels, or start your own. Public and private both." />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
