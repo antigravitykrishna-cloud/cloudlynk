@@ -38,7 +38,7 @@ export const config: AppConfig = {
   // Cloudflare Worker URL from cloudflare/geo-check-worker/ — see hooks/useGeoCheck.ts.
   geoCheckWorkerUrl: readEnv('GEO_CHECK_WORKER_URL'),
   sentryDsn: readEnv('SENTRY_DSN'),
-  supportEmail: readEnv('SUPPORT_EMAIL', 'support@cloudlynk.app'),
+  supportEmail: readEnv('SUPPORT_EMAIL', 'help.cupibs@gmail.com'),
   privacyPolicyUrl: readEnv('PRIVACY_POLICY_URL'),
   termsUrl: readEnv('TERMS_URL'),
   communityGuidelinesUrl: readEnv('COMMUNITY_GUIDELINES_URL'),
