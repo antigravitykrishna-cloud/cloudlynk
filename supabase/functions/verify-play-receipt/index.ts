@@ -132,15 +132,34 @@ Deno.serve(async (req) => {
       console.error("verify-play-receipt: failed to record purchase:", upsertErr.message);
     }
 
-    // Uses the service role since this must succeed regardless of RLS — the
-    // caller already proved their identity above, and profiles' own
-    // "protect privileged fields" trigger explicitly trusts service_role.
-    const { error: updateErr } = await supabaseAdmin
-      .from("profiles")
-      .update({ plan_status: planStatus, plan_expires_at: expiresAtIso })
-      .eq("id", user.id);
+    // v58: this MUST go through apply_play_entitlement, not a direct UPDATE.
+    //
+    // The direct UPDATE that used to be here was silently reverted on every
+    // call. protect_profile_privileged_fields reverts plan_status for any
+    // writer it does not trust, and its service_role branch tested
+    // `request.jwt.claim.role` — the legacy PostgREST GUC, removed in
+    // PostgREST 10. On a current project that setting is never populated, so
+    // the branch was always false and a service-role write was never trusted.
+    //
+    // The UPDATE reported success. updateErr was null. The row went back to
+    // 'free'. Every Play purchase took the customer's money and granted
+    // nothing, with no error anywhere — which is why this is now a hard
+    // failure rather than a logged warning.
+    const { error: updateErr } = await supabaseAdmin.rpc("apply_play_entitlement", {
+      p_user_id: user.id,
+      p_plan_status: planStatus,
+      p_expires_at: expiresAtIso,
+    });
     if (updateErr) {
-      console.error("verify-play-receipt: failed to update profile:", updateErr.message);
+      // Money has changed hands and we could not grant what was paid for.
+      // Telling the client the purchase is valid would leave them believing
+      // they have access they do not have, and would consume the receipt.
+      // Fail loudly so the client can retry — verifyReceipt is idempotent and
+      // restorePurchases replays it.
+      console.error("verify-play-receipt: apply_play_entitlement failed:", updateErr.message);
+      return jsonResponse({
+        error: "Your purchase went through, but we could not activate it. Reopen the app to retry — you will not be charged twice.",
+      }, 500);
     }
 
     return jsonResponse({ valid: true, planCode, expiresAt: expiresAtIso });

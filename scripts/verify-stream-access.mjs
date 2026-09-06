@@ -102,16 +102,56 @@ async function makeUser(label, profilePatch = {}) {
 
   // The handle_new_user trigger creates the profile row; give it a moment,
   // then patch. Retried because trigger timing is not guaranteed.
+  const patch = { birth_year: 1990, terms_accepted_at: new Date().toISOString(), ...profilePatch };
   let lastErr;
+  let patched = false;
   for (let i = 0; i < 10; i++) {
-    const patch = { birth_year: 1990, terms_accepted_at: new Date().toISOString(), ...profilePatch };
     const { error: upErr, count } = await admin
       .from('profiles').update(patch, { count: 'exact' }).eq('id', id);
-    if (!upErr && count > 0) return { id, email, label };
+    if (!upErr && count > 0) { patched = true; break; }
     lastErr = upErr;
     await new Promise(r => setTimeout(r, 300));
   }
-  throw new Error(`profile patch(${label}) never landed: ${lastErr?.message ?? 'no row'}`);
+  if (!patched) throw new Error(`profile patch(${label}) never landed: ${lastErr?.message ?? 'no row'}`);
+
+  // ── READ IT BACK. This is not paranoia; it caught a real bug. ──
+  //
+  // profiles has a trigger, protect_profile_privileged_fields, that reverts
+  // plan_status / account_status / is_admin / birth_year for any writer it
+  // does not trust. Before v58 its service_role branch tested a PostgREST GUC
+  // that no longer exists, so these UPDATEs succeeded, reported success, and
+  // were silently reverted.
+  //
+  // The first run of this suite therefore tested seven identical free users.
+  // Three cases "passed" because a reverted fixture happens to produce the
+  // same DENY the real condition would, and one "failed" because the premium
+  // subscriber was never premium. A harness that cannot see its own fixtures
+  // is worse than no harness: it reports green while proving nothing.
+  const verifyKeys = Object.keys(profilePatch);
+  if (verifyKeys.length) {
+    const { data: actual, error: readErr } = await admin
+      .from('profiles').select(verifyKeys.join(',')).eq('id', id).single();
+    if (readErr) throw new Error(`could not read back profile(${label}): ${readErr.message}`);
+
+    const wrong = verifyKeys.filter(k => {
+      const want = profilePatch[k], got = actual[k];
+      // Timestamps round-trip with different precision; compare as instants.
+      if (want && /_at$/.test(k)) return Math.abs(new Date(got) - new Date(want)) > 60_000;
+      return got !== want;
+    });
+    if (wrong.length) {
+      const detail = wrong
+        .map(k => `${k} wanted ${JSON.stringify(profilePatch[k])}, got ${JSON.stringify(actual[k])}`)
+        .join('; ');
+      throw new Error([
+        `FIXTURE NOT ESTABLISHED for "${label}": ${detail}.`,
+        '  This is protect_profile_privileged_fields reverting a write it does not trust.',
+        '  Apply v58 (20260906210000_v58_fix_service_role_entitlement_writes.sql) and re-run.',
+        '  Refusing to continue: every result after this point would measure the wrong user.',
+      ].join('\n'));
+    }
+  }
+  return { id, email, label };
 }
 
 /** A real end-user JWT, obtained the way the app obtains one. */

@@ -121,7 +121,15 @@ Deno.serve(async (req) => {
           status: "revoked",
           last_notification_type: "VOIDED_PURCHASE",
         }).eq("purchase_token", purchaseToken);
-        await supabaseAdmin.from("profiles").update({ plan_status: "cancelled", plan_expires_at: null }).eq("id", existing.user_id);
+        // v58: via the RPC, not a direct UPDATE — see the comment in
+        // verify-play-receipt. A direct write here was silently reverted, so
+        // voided purchases never actually lost their entitlement.
+        const { error: voidErr } = await supabaseAdmin.rpc("apply_play_entitlement", {
+          p_user_id: existing.user_id,
+          p_plan_status: "cancelled",
+          p_expires_at: null,
+        });
+        if (voidErr) console.error("play-rtdn-webhook: void entitlement write failed:", voidErr.message);
       }
       return new Response("OK (voided)", { status: 200 });
     }
@@ -154,10 +162,19 @@ Deno.serve(async (req) => {
       raw_response: status.raw,
     }).eq("purchase_token", purchaseToken);
 
-    await supabaseAdmin.from("profiles").update({
-      plan_status: planStatus,
-      plan_expires_at: expiresAtIso,
-    }).eq("id", existing.user_id);
+    // v58: via the RPC. Renewals, expiries and cancellations all landed here
+    // and all silently reverted before this change.
+    const { error: entErr } = await supabaseAdmin.rpc("apply_play_entitlement", {
+      p_user_id: existing.user_id,
+      p_plan_status: planStatus,
+      p_expires_at: expiresAtIso,
+    });
+    if (entErr) {
+      // Returning non-2xx makes Google retry the notification, which is what
+      // we want: the alternative is dropping a state change on the floor.
+      console.error("play-rtdn-webhook: apply_play_entitlement failed:", entErr.message);
+      return new Response("Entitlement write failed", { status: 500 });
+    }
 
     console.log(`play-rtdn-webhook: updated user ${existing.user_id} -> ${planStatus} (${notificationTypeLabel})`);
     return new Response("OK", { status: 200 });
