@@ -35,6 +35,14 @@ ext {
     minSdkVersion = 24
     compileSdkVersion = 36
     targetSdkVersion = 36
+    // expo-root-project would default this to 35.0.0, which is older than
+    // compileSdk 36. AGP tolerates the mismatch most of the time and then
+    // fails with an aapt2 or "Build Tools revision is corrupted" error that
+    // points nowhere near the cause. Keep it level with compileSdk.
+    buildToolsVersion = "36.0.0"
+    // Pinned so a machine without it downloads this exact revision rather
+    // than whatever the plugin default drifts to. ~1GB on first build.
+    ndkVersion = "27.1.12297006"
 }
 
 apply plugin: "expo-root-project"
