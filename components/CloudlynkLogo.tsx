@@ -43,12 +43,15 @@ export function CloudlynkLogo({ size = 32, variant = 'mark' }: Props) {
       )}
 
       {/* Cloud silhouette: three lobes over a flat base, as one closed path so
-          the gradient sweeps the whole shape instead of restarting per lobe. */}
+          the gradient sweeps the whole shape instead of restarting per lobe.
+          Every arc's radius is at least half its chord — an under-sized radius is
+          not an error in SVG, it is silently scaled up, which turns the lobe into
+          a plain semicircle and quietly loses the shape. */}
       <Path
-        d="M30 74
-           A18 18 0 0 1 28.5 38.5
-           A21 21 0 0 1 67 30.5
-           A17 17 0 0 1 71 74
+        d="M26 72
+           A16 16 0 0 1 26 44
+           A19 19 0 0 1 60 34
+           A21 21 0 0 1 74 72
            Z"
         fill={`url(#${gradId})`}
       />
