@@ -81,6 +81,21 @@ export type AuditEntry = {
   created_at: string;
 };
 
+/**
+ * Fields admin_update_post will set back to NULL. Mirrors the CASE whitelist
+ * in the function body — anything else raises 22023 there, so keeping this in
+ * step turns that into a compile error instead.
+ */
+export type PostClearableField =
+  | 'body'
+  | 'genre'
+  | 'duration_min'
+  | 'release_year'
+  | 'season_number'
+  | 'episode_number'
+  | 'episode_title'
+  | 'thumbnail_url';
+
 export const AdminContentService = {
   /**
    * The first-party channel admin uploads go to. Found by the is_official
@@ -221,6 +236,88 @@ export const AdminContentService = {
     if (!res.ok) throw new Error(json?.error ?? 'Could not change the access level.');
   },
 
+  /**
+   * Edits a post in place. `patch` carries only the fields being changed;
+   * `clearFields` names fields being set back to NULL, so blanking is always
+   * deliberate rather than something an omitted key does by accident.
+   *
+   * In place matters: content_access_grants rows are keyed on post_id, so the
+   * remove-and-re-upload workaround this replaces silently orphaned every
+   * individual grant an admin had issued for the post.
+   *
+   * Cannot change access_level or status — those have their own paths, and
+   * access_level in particular has to move Cloudflare's requireSignedURLs flag
+   * in step with the database (see setPostAccessLevel).
+   */
+  async updatePost(
+    postId: string,
+    patch: {
+      title?: string;
+      body?: string;
+      genre?: string;
+      durationMin?: number;
+      releaseYear?: number;
+      seasonNumber?: number;
+      episodeNumber?: number;
+      episodeTitle?: string;
+      thumbnailUrl?: string;
+    },
+    clearFields?: PostClearableField[],
+  ): Promise<void> {
+    const { error } = await supabase.rpc('admin_update_post', {
+      p_post_id: postId,
+      p_title: patch.title ?? null,
+      p_body: patch.body ?? null,
+      p_genre: patch.genre ?? null,
+      p_duration_min: patch.durationMin ?? null,
+      p_release_year: patch.releaseYear ?? null,
+      p_season_number: patch.seasonNumber ?? null,
+      p_episode_number: patch.episodeNumber ?? null,
+      p_episode_title: patch.episodeTitle ?? null,
+      p_thumbnail_url: patch.thumbnailUrl ?? null,
+      p_clear_fields: clearFields ?? null,
+    });
+    if (error) throw error;
+  },
+
+  /**
+   * Swaps the Cloudflare video behind a post, keeping the post id and its
+   * grants.
+   *
+   * Goes through the `admin-replace-video` edge function rather than the RPC
+   * directly, because a premium post's new video has to be carrying
+   * requireSignedURLs=true BEFORE it becomes the post's video. Postgres cannot
+   * call Cloudflare, so an RPC-only swap would leave a premium post serving an
+   * unsigned manifest until its first play — reopening the hole v57 closed.
+   *
+   * `newUid` is a Cloudflare Stream UID from a completed upload
+   * (StreamService.requestUploadUrl -> upload -> the `uid` it returned). The
+   * old video is left on Cloudflare on purpose; its UID is in the audit row.
+   */
+  async replaceVideo(postId: string, newUid: string): Promise<{ previousUid: string | null }> {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error('Not authenticated');
+
+    const fnUrl = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/admin-replace-video`;
+    let res: Response;
+    try {
+      res = await fetch(fnUrl, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ postId, newUid }),
+      });
+    } catch {
+      throw new Error('Could not reach the video service. The post still uses its old video.');
+    }
+
+    const json = await res.json().catch(() => null);
+    if (!res.ok) throw new Error(json?.error ?? 'Could not replace the video.');
+    return { previousUid: json?.previousUid ?? null };
+  },
+
   async listAuditLog(limit = 100, targetType?: string): Promise<AuditEntry[]> {
     const { data, error } = await supabase.rpc('admin_list_audit_log', {
       p_limit: limit,
@@ -237,4 +334,6 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   access_revoked: 'Revoked access',
   access_level_changed: 'Changed access level',
   post_status_changed: 'Changed post status',
+  post_updated: 'Edited post',
+  post_video_replaced: 'Replaced video',
 };

@@ -224,6 +224,18 @@ export default function AdminContentScreen() {
                     <Text style={styles.actionBtnGhostText}>Manage access</Text>
                   </TouchableOpacity>
 
+                  {/* Edits in place, so the post keeps its id and therefore
+                      every content_access_grants row pointing at it. The
+                      remove-and-re-upload workaround this replaces silently
+                      orphaned them. */}
+                  <TouchableOpacity
+                    style={styles.actionBtnGhost}
+                    onPress={() => router.push(`/admin/edit-post?postId=${post.id}` as any)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.actionBtnGhostText}>Edit</Text>
+                  </TouchableOpacity>
+
                   <TouchableOpacity
                     style={post.status === 'approved' ? styles.actionBtnWarn : styles.actionBtnPrimary}
                     onPress={() => togglePublished(post)}
