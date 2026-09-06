@@ -2,13 +2,14 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   KeyboardAvoidingView, Platform, Alert, ActivityIndicator, ScrollView,
 } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '../../constants/theme';
 
 export default function LoginScreen() {
   const { signIn } = useAuth();
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -89,6 +90,17 @@ export default function LoginScreen() {
             </View>
           </View>
 
+          {/* Recovery. Before this the app had none at all — no link, no
+              resetPasswordForEmail call — so a forgotten password meant being
+              locked out permanently and fixed by hand in the dashboard. */}
+          <TouchableOpacity
+            onPress={() => router.push('/(auth)/forgot-password')}
+            activeOpacity={0.7}
+            style={styles.forgotWrap}
+          >
+            <Text style={styles.forgotTxt}>Forgot password?</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity
             style={[styles.btn, loading && { opacity: 0.6 }]}
             onPress={handleLogin}
@@ -105,6 +117,27 @@ export default function LoginScreen() {
           <Text style={styles.footerText}>Don't have an account? </Text>
           <Link href="/(auth)/signup" style={styles.footerLink}>Sign up free</Link>
         </View>
+
+        {/* v61: browsing does not require an account. The app already opens on
+            Explore for a signed-out visitor; this is the way back out for
+            anyone who reached the login screen and would rather look around
+            first. Watching still asks for a sign-in. */}
+        <View style={styles.guestWrap}>
+          <View style={styles.guestRule} />
+          <Text style={styles.guestOr}>or</Text>
+          <View style={styles.guestRule} />
+        </View>
+
+        <TouchableOpacity
+          style={styles.guestBtn}
+          onPress={() => router.replace('/(tabs)/explore')}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.guestBtnTxt}>Continue as guest</Text>
+        </TouchableOpacity>
+        <Text style={styles.guestHint}>
+          Browse everything. You'll need an account to watch.
+        </Text>
 
         <Text style={styles.version}>Cloudlynk v1.0</Text>
       </ScrollView>
@@ -204,6 +237,27 @@ const styles = StyleSheet.create({
   },
   footerText: { color: Colors.textSecondary, fontSize: FontSize.md },
   footerLink: { color: Colors.accent, fontSize: FontSize.md, fontWeight: FontWeight.bold },
+  forgotWrap: { alignSelf: 'flex-end', marginBottom: Spacing.md },
+  forgotTxt: { color: Colors.accent, fontSize: FontSize.md, fontWeight: FontWeight.semibold },
+  guestWrap: {
+    flexDirection: 'row', alignItems: 'center',
+    marginTop: Spacing.xl, marginBottom: Spacing.lg, paddingHorizontal: Spacing.xl,
+  },
+  guestRule: { flex: 1, height: 1, backgroundColor: Colors.border },
+  guestOr: {
+    color: Colors.textMuted, fontSize: FontSize.sm,
+    marginHorizontal: Spacing.md, textTransform: 'uppercase', letterSpacing: 1,
+  },
+  guestBtn: {
+    alignSelf: 'center', paddingVertical: Spacing.md, paddingHorizontal: Spacing.xxl,
+    borderRadius: Radius.full, borderWidth: 1, borderColor: Colors.borderStrong,
+    backgroundColor: 'transparent',
+  },
+  guestBtnTxt: { color: Colors.text, fontSize: FontSize.lg, fontWeight: FontWeight.semibold },
+  guestHint: {
+    color: Colors.textMuted, fontSize: FontSize.sm,
+    textAlign: 'center', marginTop: Spacing.sm,
+  },
   version: {
     textAlign: 'center',
     color: Colors.textMuted,

@@ -194,6 +194,38 @@ export function useAuth() {
     await fetchProfile(data.user.id, true);
   }
 
+  /**
+   * Sends a password-reset email.
+   *
+   * `redirectTo` is a cloudlynk:// deep link, so the link in the email reopens
+   * the app on the reset screen rather than a web page. That URL must also be
+   * listed under Authentication -> URL Configuration -> Redirect URLs in the
+   * Supabase dashboard; Supabase silently refuses to redirect anywhere that is
+   * not on that allow-list, and the symptom is a link that appears to do
+   * nothing.
+   *
+   * Resolves the same way whether or not the address has an account. Telling a
+   * caller "no such user" turns this into an endpoint for discovering who is
+   * registered.
+   */
+  async function requestPasswordReset(email: string) {
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: 'cloudlynk://reset-password',
+    });
+    // A rate-limit is worth surfacing — the user can act on it by waiting.
+    // Anything else is swallowed so the response cannot be used to probe.
+    if (error && /rate limit|too many/i.test(error.message)) throw error;
+  }
+
+  /**
+   * Sets a new password. Only works while the recovery link's session is
+   * active, which Supabase establishes when the deep link opens the app.
+   */
+  async function updatePassword(newPassword: string) {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw error;
+  }
+
   async function signOut() {
     await UploadQueue.destroy();
     await supabase.auth.signOut();
@@ -260,6 +292,8 @@ export function useAuth() {
     isAuthenticated: !!session,
     canUpload: !!(profile?.can_upload_content || profile?.is_admin),
     isAdmin: !!(profile?.is_admin),
+    requestPasswordReset,
+    updatePassword,
     planStatus,
     approvalStatus,
     isApproved,

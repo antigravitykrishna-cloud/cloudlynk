@@ -8,6 +8,7 @@ import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client
 import { queryClient, asyncStoragePersister } from '../lib/queryClient';
 import { ServiceProvider, createServices } from '../lib/services';
 import ErrorBoundary from '../components/ErrorBoundary';
+import { AgeGate } from '../components/AgeGate';
 import { useAuth } from '../hooks/useAuth';
 import { useGeoCheck } from '../hooks/useGeoCheck';
 import { ComplianceService } from '../lib/compliance';
@@ -29,9 +30,21 @@ export default function RootLayout() {
     if (isBlocked) return;
 
     const inAuthGroup = segments[0] === '(auth)';
+    const inTabsGroup = segments[0] === '(tabs)';
 
     if (!session) {
-      if (!inAuthGroup) router.replace('/(auth)/login');
+      // v61: guests may browse. The app opens on Explore and only asks for an
+      // account at the moment of watching — see the sign-in prompt in
+      // app/(tabs)/explore.tsx.
+      //
+      // A guest who has deliberately navigated to Sign in / Sign up is left
+      // alone; bouncing them back to Explore would make the login screen
+      // impossible to reach. Everyone else lands on Explore.
+      //
+      // Screens that genuinely need an account gate themselves rather than
+      // being gated here, because "needs an account" is per-action now
+      // (watching, uploading, subscribing) rather than per-app.
+      if (!inAuthGroup && !inTabsGroup) router.replace('/(tabs)/explore');
       return;
     }
 
@@ -100,6 +113,12 @@ export default function RootLayout() {
               <Stack.Screen name="refund-policy" options={{ animation: 'slide_from_right' }} />
               <Stack.Screen name="community-guidelines" options={{ animation: 'slide_from_right' }} />
             </Stack>
+
+            {/* v61: guests never reach signup, where the 18+ birth-year check
+                lives — so without this, opening the app to visitors would
+                remove the only age gate in the product. Signed-in accounts
+                already passed that check and are not asked again. */}
+            <AgeGate enabled={!session && !loading && !isBlocked} />
           </GestureHandlerRootView>
         </ServiceProvider>
       </PersistQueryClientProvider>

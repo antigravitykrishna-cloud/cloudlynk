@@ -4,6 +4,20 @@ import { supabase } from './supabase';
 
 export type PostStatus = 'draft' | 'pending' | 'approved' | 'rejected';
 export type ContentType = 'post' | 'movie' | 'series' | 'short';
+
+/**
+ * Exactly the channel_posts columns the `anon` role is GRANTed by migration
+ * v61. Must stay in step with that migration: asking for a column outside this
+ * list as a guest fails the whole query with a permission error, not a null.
+ *
+ * video_url / media_url / trailer_url are absent on purpose — they are
+ * Cloudflare and Storage identifiers, and a guest holding one can play free
+ * content without ever signing in.
+ */
+export const GUEST_POST_COLUMNS =
+  'id, channel_id, author_id, title, body, content_type, access_level, genre, ' +
+  'duration_min, release_year, season_number, episode_number, episode_title, ' +
+  'series_id, tags, media_type, thumbnail_url, is_short, view_count, status, created_at';
 export type AccessLevel = 'free' | 'premium';
 
 /**
@@ -48,6 +62,24 @@ export type ChannelPost = {
   channel?: { name: string };
 };
 
+/**
+ * What a signed-OUT visitor can actually see of a post.
+ *
+ * Omitting these in the type, rather than casting the query result to
+ * ChannelPost, is deliberate: `video_url` really is absent for a guest (v61
+ * withholds the column GRANT), and if the type claimed otherwise the compiler
+ * would happily wave through `StreamService.getHlsPlaybackUrl(post.video_url)`
+ * on a guest post — which is exactly the sign-in bypass the column grant
+ * exists to prevent. Let the type carry the fact.
+ *
+ * The moderation fields go too; a visitor has no business with the review
+ * trail and anon is not granted them either.
+ */
+export type GuestChannelPost = Omit<
+  ChannelPost,
+  'video_url' | 'media_url' | 'submitted_at' | 'approved_by' | 'approved_at' | 'rejection_note'
+>;
+
 export const GENRES = [
   'Action', 'Adventure', 'Comedy', 'Drama', 'Horror',
   'Romance', 'Sci-Fi', 'Thriller', 'Documentary', 'Animation',
@@ -77,6 +109,46 @@ export const PostService = {
     if (e2) throw e2;
 
     return [...(mine ?? []), ...(approved ?? [])] as ChannelPost[];
+  },
+
+  /**
+   * Explore for a signed-OUT visitor.
+   *
+   * A separate function rather than a branch inside getExplorePosts, because
+   * two things differ in ways that do not fold together cleanly:
+   *
+   *   1. It cannot read channel_members — a guest has no memberships, and anon
+   *      has no grant on that table, so the query would error rather than
+   *      return nothing.
+   *   2. It CANNOT use select('*'). v61 grants anon only the presentation
+   *      columns; `video_url`, `media_url` and `trailer_url` are withheld
+   *      precisely so a guest cannot build the unsigned Cloudflare URL and
+   *      watch free content without signing in. PostgREST answers select('*')
+   *      for a caller without full column privileges with a permission error,
+   *      so the columns have to be named.
+   *
+   * Posts come back with video_url undefined. That is the point: the UI shows
+   * the card, and tapping it asks for a sign-in.
+   */
+  async getGuestExplorePosts(
+    filter?: 'all' | 'popular' | 'most_watched' | 'latest' | 'most_searched',
+  ): Promise<GuestChannelPost[]> {
+    const orderCol = (filter === 'popular' || filter === 'most_watched') ? 'view_count' : 'created_at';
+
+    // No channel filter needed: channel_posts_select_anon already restricts to
+    // approved posts in public, active channels, so RLS is doing the work the
+    // authenticated path does with an explicit .in() list.
+    const { data, error } = await supabase
+      .from('channel_posts')
+      .select(`${GUEST_POST_COLUMNS}, author:profiles!channel_posts_author_id_fkey(id, full_name, avatar_url)`)
+      .eq('status', 'approved')
+      .order(orderCol, { ascending: false })
+      .limit(300);
+    if (error) throw error;
+
+    return (data ?? []).filter((p: any) =>
+      p.content_type !== 'post' || p.thumbnail_url
+    ) as unknown as GuestChannelPost[];
   },
 
   async getExplorePosts(userId: string, filter?: 'all' | 'popular' | 'most_watched' | 'latest' | 'most_searched'): Promise<ChannelPost[]> {

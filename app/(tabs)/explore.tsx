@@ -3,12 +3,13 @@ import { VideoPlayerOverlay } from '../../components/VideoPlayerOverlay';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   FlatList, Modal, ActivityIndicator, RefreshControl,
-  Dimensions, Share,
+  Dimensions, Share, Alert,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
 import { useRecordProgress, getSavedPosition } from '../../hooks/useWatchHistory';
 import { PostService, ChannelPost } from '../../lib/posts';
@@ -117,7 +118,7 @@ const SectionBlock = memo(({ sectionKey, items, onSelect }: {
           <SectionCard
             item={item}
             isShorts={isShorts}
-            onPress={() => { onSelect(item); PostService.recordView(item.id); }}
+            onPress={() => onSelect(item)}
           />
         )}
       />
@@ -268,6 +269,7 @@ DetailModal.displayName = 'DetailModal';
 
 export default function ExploreScreen() {
   const { user, isPaidUser, isAdmin } = useAuth();
+  const router = useRouter();
   const [posts, setPosts] = useState<ChannelPost[]>([]);
   const [filteredPosts, setFilteredPosts] = useState<ChannelPost[]>([]);
   const [activeFilter, setActiveFilter] = useState('all');
@@ -286,11 +288,39 @@ export default function ExploreScreen() {
     prevUserIdRef.current = user?.id;
   }, [user?.id]);
 
+  // A guest can browse the catalogue but not open a post: the row they were
+  // served has no video_url, so a detail view would be a dead player. Ask for
+  // the account here instead, where the intent is obvious and the prompt can
+  // say what it unlocks.
+  const handleSelect = useCallback((item: ChannelPost) => {
+    if (!user?.id) {
+      Alert.alert(
+        'Sign in to watch',
+        item.access_level === 'premium'
+          ? 'Create a free account to watch. This title is part of Cloudlynk Premium.'
+          : 'Create a free account to watch this. It only takes a minute, and you get 15 GB of storage too.',
+        [
+          { text: 'Not now', style: 'cancel' },
+          { text: 'Sign in', onPress: () => router.push('/(auth)/login') },
+          { text: 'Sign up free', onPress: () => router.push('/(auth)/signup') },
+        ],
+      );
+      return;
+    }
+    setSelected(item);
+    PostService.recordView(item.id);
+  }, [user?.id, router]);
+
   const load = useCallback(async () => {
-    if (!user?.id) return;
     try {
-      const all = await PostService.getExplorePosts(user.id, activeFilter as any);
-      setPosts(all);
+      // v61: signed-out visitors browse too. getGuestExplorePosts names its
+      // columns explicitly because `anon` is not granted video_url — asking
+      // for it with select('*') would fail the whole query rather than return
+      // a null, and the guest would see an empty Explore with no clue why.
+      const all = user?.id
+        ? await PostService.getExplorePosts(user.id, activeFilter as any)
+        : await PostService.getGuestExplorePosts(activeFilter as any);
+      setPosts(all as ChannelPost[]);
     } catch (err) {
       if (__DEV__) console.error(err);
     } finally {
@@ -377,7 +407,7 @@ export default function ExploreScreen() {
           windowSize={5}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.brand} />}
           renderItem={({ item: s }) => (
-            <SectionBlock sectionKey={s.sectionKey} items={s.items} onSelect={setSelected} />
+            <SectionBlock sectionKey={s.sectionKey} items={s.items} onSelect={handleSelect} />
           )}
           ListFooterComponent={<View style={{ height: 40 }} />}
         />
