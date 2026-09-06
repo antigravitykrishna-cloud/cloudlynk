@@ -142,7 +142,7 @@ export default function AdminUploadScreen() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.list} keyboardShouldPersistTaps="handled">
           {channelLoading ? (
-            <ActivityIndicator color="#FF6B00" style={{ marginTop: 30 }} />
+            <ActivityIndicator color="#2E7DFF" style={{ marginTop: 30 }} />
           ) : !channel ? (
             <View style={styles.card}>
               <Text style={styles.emptyText}>
@@ -170,11 +170,11 @@ export default function AdminUploadScreen() {
               <View style={styles.card}>
                 <Text style={styles.label}>Title</Text>
                 <TextInput style={styles.input} value={title} onChangeText={setTitle}
-                  placeholder="Title" placeholderTextColor="#666666" editable={!submitting} />
+                  placeholder="Title" placeholderTextColor="#6B7C97" editable={!submitting} />
 
                 <Text style={styles.label}>Description</Text>
                 <TextInput style={[styles.input, styles.multiline]} value={description} onChangeText={setDescription}
-                  placeholder="Description" placeholderTextColor="#666666" multiline editable={!submitting} />
+                  placeholder="Description" placeholderTextColor="#6B7C97" multiline editable={!submitting} />
 
                 <Text style={styles.label}>Content type</Text>
                 <View style={styles.chipRow}>
@@ -193,7 +193,7 @@ export default function AdminUploadScreen() {
 
                 <Text style={styles.label}>Genre</Text>
                 <TouchableOpacity style={styles.input} onPress={() => setGenrePickerOpen(!genrePickerOpen)} activeOpacity={0.7} disabled={submitting}>
-                  <Text style={{ color: genre ? '#FFFFFF' : '#666666', fontSize: 14 }}>{genre || 'Select a genre'}</Text>
+                  <Text style={{ color: genre ? '#FFFFFF' : '#6B7C97', fontSize: 14 }}>{genre || 'Select a genre'}</Text>
                 </TouchableOpacity>
                 {genrePickerOpen && (
                   <View style={styles.chipRow}>
@@ -212,7 +212,7 @@ export default function AdminUploadScreen() {
 
                 <Text style={styles.label}>Duration (minutes)</Text>
                 <TextInput style={styles.input} value={durationMin} onChangeText={setDurationMin}
-                  placeholder="e.g. 118" placeholderTextColor="#666666" keyboardType="number-pad" editable={!submitting} />
+                  placeholder="e.g. 118" placeholderTextColor="#6B7C97" keyboardType="number-pad" editable={!submitting} />
 
                 <Text style={styles.label}>Access level</Text>
                 <View style={styles.chipRow}>
@@ -262,41 +262,41 @@ export default function AdminUploadScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0A0A0A' },
+  safe: { flex: 1, backgroundColor: '#0B1220' },
   header: {
-    backgroundColor: '#0A0A0A', flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#0B1220', flexDirection: 'row', alignItems: 'center',
     justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: '#2A2A2A',
+    borderBottomWidth: 1, borderBottomColor: '#22304A',
   },
   headerBack: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
-  headerBackTxt: { color: '#FF6B00', fontSize: 28, fontWeight: '700', lineHeight: 28 },
+  headerBackTxt: { color: '#2E7DFF', fontSize: 28, fontWeight: '700', lineHeight: 28 },
   headerTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: '800' },
   list: { paddingHorizontal: 16, paddingTop: 12 },
-  blurb: { color: '#999999', fontSize: 12, fontWeight: '500', marginBottom: 12 },
-  card: { backgroundColor: '#1C1C1C', borderRadius: 12, borderWidth: 1, borderColor: '#2A2A2A', padding: 16, marginBottom: 12 },
-  pickBtn: { backgroundColor: '#2A2A2A', borderRadius: 8, paddingVertical: 12, alignItems: 'center', marginBottom: 10 },
+  blurb: { color: '#9FB0C9', fontSize: 12, fontWeight: '500', marginBottom: 12 },
+  card: { backgroundColor: '#182437', borderRadius: 12, borderWidth: 1, borderColor: '#22304A', padding: 16, marginBottom: 12 },
+  pickBtn: { backgroundColor: '#22304A', borderRadius: 8, paddingVertical: 12, alignItems: 'center', marginBottom: 10 },
   pickBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
   thumb: { width: '100%', height: 160, borderRadius: 8 },
-  label: { color: '#999999', fontSize: 11, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 6, marginTop: 10 },
+  label: { color: '#9FB0C9', fontSize: 11, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 6, marginTop: 10 },
   input: {
-    backgroundColor: '#2A2A2A', borderRadius: 8, borderWidth: 1, borderColor: '#2A2A2A',
+    backgroundColor: '#22304A', borderRadius: 8, borderWidth: 1, borderColor: '#22304A',
     color: '#FFFFFF', fontSize: 14, paddingHorizontal: 12, paddingVertical: 10,
   },
   multiline: { minHeight: 70, textAlignVertical: 'top' },
-  hint: { color: '#666666', fontSize: 11, fontWeight: '500', marginTop: 8 },
+  hint: { color: '#6B7C97', fontSize: 11, fontWeight: '500', marginTop: 8 },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
-  chip: { backgroundColor: '#2A2A2A', borderWidth: 1, borderColor: '#2A2A2A', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
-  chipActive: { backgroundColor: '#FF6B00', borderColor: '#FF6B00' },
-  chipText: { color: '#999999', fontSize: 12, fontWeight: '700' },
+  chip: { backgroundColor: '#22304A', borderWidth: 1, borderColor: '#22304A', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
+  chipActive: { backgroundColor: '#2E7DFF', borderColor: '#2E7DFF' },
+  chipText: { color: '#9FB0C9', fontSize: 12, fontWeight: '700' },
   chipTextActive: { color: '#FFFFFF' },
-  metaText: { fontSize: 13, color: '#999999', fontWeight: '600' },
-  progressTrack: { height: 6, backgroundColor: '#2A2A2A', borderRadius: 3, marginTop: 8, overflow: 'hidden' },
-  progressFill: { height: 6, backgroundColor: '#FF6B00' },
+  metaText: { fontSize: 13, color: '#9FB0C9', fontWeight: '600' },
+  progressTrack: { height: 6, backgroundColor: '#22304A', borderRadius: 3, marginTop: 8, overflow: 'hidden' },
+  progressFill: { height: 6, backgroundColor: '#2E7DFF' },
   formActions: { flexDirection: 'row', gap: 10, marginBottom: 12 },
-  cancelBtn: { flex: 1, backgroundColor: '#2A2A2A', paddingVertical: 12, borderRadius: 8, alignItems: 'center' },
+  cancelBtn: { flex: 1, backgroundColor: '#22304A', paddingVertical: 12, borderRadius: 8, alignItems: 'center' },
   cancelBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
-  confirmBtn: { flex: 1, backgroundColor: '#FF6B00', paddingVertical: 12, borderRadius: 8, alignItems: 'center' },
+  confirmBtn: { flex: 1, backgroundColor: '#2E7DFF', paddingVertical: 12, borderRadius: 8, alignItems: 'center' },
   confirmBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80, paddingHorizontal: 20 },
-  emptyText: { fontSize: 14, color: '#999999', fontWeight: '600', textAlign: 'center' },
+  emptyText: { fontSize: 14, color: '#9FB0C9', fontWeight: '600', textAlign: 'center' },
 });

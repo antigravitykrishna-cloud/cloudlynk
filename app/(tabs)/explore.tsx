@@ -231,8 +231,8 @@ const DetailModal = memo(({ selected, onClose, userId }: {
 
           {hasVideoSource ? (
             videoError ? (
-              <View style={[styles.playBtn, { backgroundColor: '#ccc' }]}>
-                <Text style={[styles.playBtnTxt, { color: '#666', fontSize: 13 }]}>{videoError}</Text>
+              <View style={[styles.playBtn, { backgroundColor: '#9FB0C9' }]}>
+                <Text style={[styles.playBtnTxt, { color: '#6B7C97', fontSize: 13 }]}>{videoError}</Text>
               </View>
             ) : (
               <TouchableOpacity
@@ -246,8 +246,8 @@ const DetailModal = memo(({ selected, onClose, userId }: {
               </TouchableOpacity>
             )
           ) : (
-            <View style={[styles.playBtn, { backgroundColor: '#ccc' }]}>
-              <Text style={[styles.playBtnTxt, { color: '#666' }]}>{'No Video Available'}</Text>
+            <View style={[styles.playBtn, { backgroundColor: '#9FB0C9' }]}>
+              <Text style={[styles.playBtnTxt, { color: '#6B7C97' }]}>{'No Video Available'}</Text>
             </View>
           )}
 
@@ -404,7 +404,7 @@ const styles = StyleSheet.create({
   tile: { width: TILE, aspectRatio: 1, backgroundColor: Colors.card, borderRadius: 4, overflow: 'hidden', position: 'relative' },
   tileTall: { aspectRatio: 9 / 16 },
   tileImg: { width: '100%', height: '100%' },
-  tilePlaceholder: { backgroundColor: '#1C1C1C', alignItems: 'center', justifyContent: 'center' },
+  tilePlaceholder: { backgroundColor: '#182437', alignItems: 'center', justifyContent: 'center' },
   tileScrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.18)' },
   playIcon: { position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderRadius: 11, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' },
   playIconText: { color: '#ffffff', fontSize: 10, marginLeft: 2, marginTop: -1 },
@@ -413,20 +413,20 @@ const styles = StyleSheet.create({
   sectionBlock: { marginBottom: 8 },
   sectionRow: { paddingHorizontal: 12, gap: 10 },
   sectionCard: { width: 140, marginRight: 0 },
-  sectionCardImg: { width: 140, height: 80, borderRadius: 6, backgroundColor: '#1C1C1C' },
+  sectionCardImg: { width: 140, height: 80, borderRadius: 6, backgroundColor: '#182437' },
   sectionCardTitle: { fontSize: 12, color: '#FFFFFF', marginTop: 4, fontWeight: '600' },
-  shortsSection: { paddingBottom: 12, borderBottomWidth: 0.5, borderBottomColor: '#2A2A2A', marginBottom: 8 },
+  shortsSection: { paddingBottom: 12, borderBottomWidth: 0.5, borderBottomColor: '#22304A', marginBottom: 8 },
   shortsHeader: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingTop: 12, paddingBottom: 8, gap: 8 },
   shortsTitle: { fontSize: 18, fontWeight: '800', color: '#FFFFFF' },
   shortsBadge: { backgroundColor: '#A7F3D0', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
-  shortsBadgeText: { fontSize: 10, fontWeight: '800', color: '#0A0A0A' },
+  shortsBadgeText: { fontSize: 10, fontWeight: '800', color: '#0B1220' },
   shortsRow: { paddingHorizontal: 12, gap: 10 },
   shortCard: { width: 110, borderRadius: 8, overflow: 'hidden' },
   shortImg: { width: 110, height: 160, borderRadius: 8 },
-  shortPlaceholder: { backgroundColor: '#1C1C1C', alignItems: 'center', justifyContent: 'center' },
+  shortPlaceholder: { backgroundColor: '#182437', alignItems: 'center', justifyContent: 'center' },
   shortTitle: { fontSize: 11, fontWeight: '600', color: '#FFFFFF', marginTop: 4 },
   shortsEmpty: { paddingHorizontal: 12, paddingVertical: 20, alignItems: 'center' },
-  shortsEmptyText: { fontSize: 13, color: '#6E6E6E', fontWeight: '500' },
+  shortsEmptyText: { fontSize: 13, color: '#6B7C97', fontWeight: '500' },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80, paddingHorizontal: 20 },
   emptyIcon: { width: 120, height: 120, borderRadius: 28, backgroundColor: Colors.brand, alignItems: 'center', justifyContent: 'center', marginBottom: 20, shadowColor: Colors.brand, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 8 },
   emptyIconText: { fontSize: 56 },

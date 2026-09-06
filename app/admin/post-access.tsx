@@ -179,7 +179,7 @@ export default function AdminPostAccessScreen() {
             <TextInput
               style={styles.searchInput}
               placeholder="Search by email or name…"
-              placeholderTextColor="#666666"
+              placeholderTextColor="#6B7C97"
               value={search}
               onChangeText={setSearch}
               autoCapitalize="none"
@@ -229,7 +229,7 @@ export default function AdminPostAccessScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="YYYY-MM-DD"
-                  placeholderTextColor="#666666"
+                  placeholderTextColor="#6B7C97"
                   value={customDate}
                   onChangeText={setCustomDate}
                   autoCapitalize="none"
@@ -240,7 +240,7 @@ export default function AdminPostAccessScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="Why does this person get access?"
-                placeholderTextColor="#666666"
+                placeholderTextColor="#6B7C97"
                 value={reason}
                 onChangeText={setReason}
               />
@@ -262,7 +262,7 @@ export default function AdminPostAccessScreen() {
         {/* ── Current grantees ── */}
         <Text style={styles.sectionHeading}>Who has access</Text>
         {loading ? (
-          <ActivityIndicator color="#FF6B00" size="large" style={{ marginTop: 30 }} />
+          <ActivityIndicator color="#2E7DFF" size="large" style={{ marginTop: 30 }} />
         ) : grantees.length === 0 ? (
           <View style={styles.card}><Text style={styles.emptyText}>Nobody has been granted access to this post.</Text></View>
         ) : (
@@ -270,7 +270,7 @@ export default function AdminPostAccessScreen() {
             <View key={g.grant_id} style={styles.card}>
               <View style={styles.cardTopRow}>
                 <Text style={styles.userName} numberOfLines={1}>{g.full_name || g.email}</Text>
-                <View style={[styles.badge, { backgroundColor: g.status === 'active' ? '#22c55e' : '#666666' }]}>
+                <View style={[styles.badge, { backgroundColor: g.status === 'active' ? '#2ED47A' : '#6B7C97' }]}>
                   <Text style={styles.badgeText}>{g.status.toUpperCase()}</Text>
                 </View>
               </View>
@@ -299,55 +299,55 @@ export default function AdminPostAccessScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0A0A0A' },
+  safe: { flex: 1, backgroundColor: '#0B1220' },
   header: {
-    backgroundColor: '#0A0A0A', flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#0B1220', flexDirection: 'row', alignItems: 'center',
     justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: '#2A2A2A',
+    borderBottomWidth: 1, borderBottomColor: '#22304A',
   },
   headerBack: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
-  headerBackTxt: { color: '#FF6B00', fontSize: 28, fontWeight: '700', lineHeight: 28 },
+  headerBackTxt: { color: '#2E7DFF', fontSize: 28, fontWeight: '700', lineHeight: 28 },
   headerTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: '800' },
   list: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12 },
-  blurb: { color: '#999999', fontSize: 12, fontWeight: '500', lineHeight: 18, marginBottom: 12 },
-  card: { backgroundColor: '#1C1C1C', borderRadius: 12, borderWidth: 1, borderColor: '#2A2A2A', padding: 16, marginBottom: 12 },
+  blurb: { color: '#9FB0C9', fontSize: 12, fontWeight: '500', lineHeight: 18, marginBottom: 12 },
+  card: { backgroundColor: '#182437', borderRadius: 12, borderWidth: 1, borderColor: '#22304A', padding: 16, marginBottom: 12 },
   cardTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, gap: 10 },
   sectionTitle: { color: '#FFFFFF', fontSize: 15, fontWeight: '800', marginBottom: 10 },
-  sectionHeading: { color: '#999999', fontSize: 12, fontWeight: '800', letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 8, marginTop: 4 },
+  sectionHeading: { color: '#9FB0C9', fontSize: 12, fontWeight: '800', letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 8, marginTop: 4 },
   searchRow: { flexDirection: 'row', gap: 8 },
   searchInput: {
-    flex: 1, backgroundColor: '#2A2A2A', borderRadius: 8, borderWidth: 1, borderColor: '#2A2A2A',
+    flex: 1, backgroundColor: '#22304A', borderRadius: 8, borderWidth: 1, borderColor: '#22304A',
     color: '#FFFFFF', fontSize: 14, paddingHorizontal: 12, paddingVertical: 10,
   },
-  searchBtn: { backgroundColor: '#FF6B00', paddingHorizontal: 18, borderRadius: 8, alignItems: 'center', justifyContent: 'center', minWidth: 70 },
+  searchBtn: { backgroundColor: '#2E7DFF', paddingHorizontal: 18, borderRadius: 8, alignItems: 'center', justifyContent: 'center', minWidth: 70 },
   searchBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
-  userRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#2A2A2A' },
+  userRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#22304A' },
   userRowSelected: { backgroundColor: '#241a12' },
   userName: { fontSize: 14, fontWeight: '700', color: '#FFFFFF', flex: 1 },
-  tick: { color: '#FF6B00', fontSize: 18, fontWeight: '900' },
-  metaText: { fontSize: 12, color: '#999999', fontWeight: '500', marginTop: 2 },
-  reasonText: { fontSize: 12, color: '#f0b429', fontWeight: '600', marginTop: 6 },
+  tick: { color: '#2E7DFF', fontSize: 18, fontWeight: '900' },
+  metaText: { fontSize: 12, color: '#9FB0C9', fontWeight: '500', marginTop: 2 },
+  reasonText: { fontSize: 12, color: '#FFC65C', fontWeight: '600', marginTop: 6 },
   grantForm: { marginTop: 12 },
-  label: { color: '#999999', fontSize: 11, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 6, marginTop: 8 },
+  label: { color: '#9FB0C9', fontSize: 11, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 6, marginTop: 8 },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { backgroundColor: '#2A2A2A', borderWidth: 1, borderColor: '#2A2A2A', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
-  chipActive: { backgroundColor: '#FF6B00', borderColor: '#FF6B00' },
-  chipText: { color: '#999999', fontSize: 12, fontWeight: '700' },
+  chip: { backgroundColor: '#22304A', borderWidth: 1, borderColor: '#22304A', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
+  chipActive: { backgroundColor: '#2E7DFF', borderColor: '#2E7DFF' },
+  chipText: { color: '#9FB0C9', fontSize: 12, fontWeight: '700' },
   chipTextActive: { color: '#FFFFFF' },
   input: {
-    backgroundColor: '#2A2A2A', borderRadius: 8, borderWidth: 1, borderColor: '#2A2A2A',
+    backgroundColor: '#22304A', borderRadius: 8, borderWidth: 1, borderColor: '#22304A',
     color: '#FFFFFF', fontSize: 14, paddingHorizontal: 12, paddingVertical: 10, marginTop: 4,
   },
   formActions: { flexDirection: 'row', gap: 10, marginTop: 14 },
-  cancelBtn: { backgroundColor: '#2A2A2A', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 },
+  cancelBtn: { backgroundColor: '#22304A', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 },
   cancelBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
-  confirmBtn: { backgroundColor: '#FF6B00', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8, minWidth: 120, alignItems: 'center' },
+  confirmBtn: { backgroundColor: '#2E7DFF', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8, minWidth: 120, alignItems: 'center' },
   confirmBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
   badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
-  badgeText: { fontSize: 10, fontWeight: '900', color: '#0A0A0A', letterSpacing: 0.5 },
+  badgeText: { fontSize: 10, fontWeight: '900', color: '#0B1220', letterSpacing: 0.5 },
   actionsWrap: { flexDirection: 'row', gap: 8, marginTop: 12 },
-  revokeBtn: { backgroundColor: '#2A2A2A', paddingHorizontal: 18, paddingVertical: 9, borderRadius: 8, minWidth: 90, alignItems: 'center' },
+  revokeBtn: { backgroundColor: '#22304A', paddingHorizontal: 18, paddingVertical: 9, borderRadius: 8, minWidth: 90, alignItems: 'center' },
   revokeBtnText: { color: '#FF4D6D', fontSize: 12, fontWeight: '800' },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80, paddingHorizontal: 20 },
-  emptyText: { fontSize: 14, color: '#999999', fontWeight: '600', textAlign: 'center' },
+  emptyText: { fontSize: 14, color: '#9FB0C9', fontWeight: '600', textAlign: 'center' },
 });

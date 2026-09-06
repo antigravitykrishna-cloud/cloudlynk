@@ -293,7 +293,7 @@ export default function ProfileScreen() {
               />
               <SettingsRow
                 icon="📊"
-                iconBg="#f0fdf4"
+                iconBg="#12261C"
                 label="My Subscription"
                 onPress={() => router.push('/my-subscription')}
               />
@@ -317,7 +317,7 @@ export default function ProfileScreen() {
               />
               <SettingsRow
                 icon="📦"
-                iconBg="#f0fdf4"
+                iconBg="#12261C"
                 label="Export My Data"
                 onPress={() => router.push('/export-data')}
               />
@@ -424,18 +424,18 @@ const styles = StyleSheet.create({
   emptyIconUploadText: { fontSize: 14, fontWeight: '900', color: Colors.brand },
   emptyText: { fontSize: 14, color: Colors.text, fontWeight: '600' },
   channelsList: { gap: 8 },
-  channelCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1C1C1C', borderRadius: 10, padding: 12, borderWidth: 0.5, borderColor: '#2A2A2A' },
+  channelCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#182437', borderRadius: 10, padding: 12, borderWidth: 0.5, borderColor: '#22304A' },
   channelName: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
   channelMeta: { flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 8 },
   statusBadge: { borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
   statusText: { fontSize: 10, fontWeight: '700' },
-  memberCount: { fontSize: 11, color: '#6E6E6E' },
-  manageBtn: { backgroundColor: '#FF6B00', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 },
+  memberCount: { fontSize: 11, color: '#6B7C97' },
+  manageBtn: { backgroundColor: '#2E7DFF', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 },
   manageBtnText: { color: '#FFFFFF', fontSize: 12, fontWeight: '700' },
   bottomButtons: { paddingHorizontal: 16, marginTop: 16, marginBottom: 16, gap: 12 },
   logoutBtn: { backgroundColor: Colors.brand, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
   logoutBtnText: { color: '#ffffff', fontSize: 15, fontWeight: '800' },
-  deleteBtn: { backgroundColor: '#fef2f2', borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: Colors.danger },
+  deleteBtn: { backgroundColor: '#2A1620', borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: Colors.danger },
   deleteBtnText: { color: Colors.danger, fontSize: 15, fontWeight: '800' },
   version: { textAlign: 'center', fontSize: 11, color: Colors.textMuted, lineHeight: 18, paddingHorizontal: 16 },
 });

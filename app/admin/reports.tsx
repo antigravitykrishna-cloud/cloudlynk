@@ -27,10 +27,10 @@ const REASON_LABELS: Record<string, string> = {
 };
 
 const TARGET_BADGE: Record<string, { label: string; color: string }> = {
-  content: { label: 'CONTENT', color: '#FF6B00' },
+  content: { label: 'CONTENT', color: '#2E7DFF' },
   user: { label: 'USER', color: '#f472b6' },
   copyright: { label: 'COPYRIGHT', color: '#facc15' },
-  other: { label: 'OTHER', color: '#94a3b8' },
+  other: { label: 'OTHER', color: '#9FB0C9' },
 };
 
 // Admin moderation queue for content_reports. AdminModerationService
@@ -157,7 +157,7 @@ export default function AdminReportsScreen() {
       </View>
 
       {loading ? (
-        <ActivityIndicator color="#FF6B00" size="large" style={{ marginTop: 60 }} />
+        <ActivityIndicator color="#2E7DFF" size="large" style={{ marginTop: 60 }} />
       ) : reports.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>No pending reports</Text>
@@ -187,7 +187,7 @@ export default function AdminReportsScreen() {
                     <TextInput
                       style={styles.noteInput}
                       placeholder="Note for the audit log (required)…"
-                      placeholderTextColor="#666666"
+                      placeholderTextColor="#6B7C97"
                       value={note}
                       onChangeText={setNote}
                       multiline
@@ -242,46 +242,46 @@ export default function AdminReportsScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0A0A0A' },
+  safe: { flex: 1, backgroundColor: '#0B1220' },
   header: {
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#0B1220',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#2A2A2A',
+    borderBottomColor: '#22304A',
   },
   headerBack: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
-  headerBackTxt: { color: '#FF6B00', fontSize: 28, fontWeight: '700', lineHeight: 28 },
+  headerBackTxt: { color: '#2E7DFF', fontSize: 28, fontWeight: '700', lineHeight: 28 },
   headerTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: '800' },
   list: { paddingVertical: 12, paddingHorizontal: 16 },
-  card: { backgroundColor: '#1C1C1C', borderRadius: 12, borderWidth: 1, borderColor: '#2A2A2A', padding: 16, marginBottom: 12 },
+  card: { backgroundColor: '#182437', borderRadius: 12, borderWidth: 1, borderColor: '#22304A', padding: 16, marginBottom: 12 },
   cardTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
   badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
-  badgeText: { fontSize: 10, fontWeight: '900', color: '#0A0A0A', letterSpacing: 0.5 },
-  cardDate: { fontSize: 11, color: '#666666', fontWeight: '500' },
+  badgeText: { fontSize: 10, fontWeight: '900', color: '#0B1220', letterSpacing: 0.5 },
+  cardDate: { fontSize: 11, color: '#6B7C97', fontWeight: '500' },
   reasonText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF', marginBottom: 6 },
-  metaText: { fontSize: 13, color: '#999999', fontWeight: '500', marginBottom: 2 },
+  metaText: { fontSize: 13, color: '#9FB0C9', fontWeight: '500', marginBottom: 2 },
   actionsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
-  actionBtnGhost: { backgroundColor: '#2A2A2A', paddingHorizontal: 14, paddingVertical: 9, borderRadius: 8 },
+  actionBtnGhost: { backgroundColor: '#22304A', paddingHorizontal: 14, paddingVertical: 9, borderRadius: 8 },
   actionBtnGhostText: { color: '#FFFFFF', fontSize: 12, fontWeight: '700' },
-  actionBtnWarn: { backgroundColor: '#f0b429', paddingHorizontal: 14, paddingVertical: 9, borderRadius: 8 },
-  actionBtnWarnText: { color: '#0A0A0A', fontSize: 12, fontWeight: '800' },
+  actionBtnWarn: { backgroundColor: '#FFC65C', paddingHorizontal: 14, paddingVertical: 9, borderRadius: 8 },
+  actionBtnWarnText: { color: '#0B1220', fontSize: 12, fontWeight: '800' },
   actionBtnDanger: { backgroundColor: '#FF4D6D', paddingHorizontal: 14, paddingVertical: 9, borderRadius: 8 },
   actionBtnDangerText: { color: '#FFFFFF', fontSize: 12, fontWeight: '800' },
   noteForm: { marginTop: 8 },
   noteInput: {
-    backgroundColor: '#2A2A2A', borderRadius: 8, borderWidth: 1, borderColor: '#FF6B00',
+    backgroundColor: '#22304A', borderRadius: 8, borderWidth: 1, borderColor: '#2E7DFF',
     color: '#FFFFFF', fontSize: 14, paddingHorizontal: 12, paddingVertical: 10, minHeight: 60,
     textAlignVertical: 'top', marginBottom: 10,
   },
   noteFormActions: { flexDirection: 'row', gap: 10 },
-  cancelBtn: { backgroundColor: '#2A2A2A', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 },
+  cancelBtn: { backgroundColor: '#22304A', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 },
   cancelBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
-  confirmBtn: { backgroundColor: '#FF6B00', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8, minWidth: 90, alignItems: 'center' },
+  confirmBtn: { backgroundColor: '#2E7DFF', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8, minWidth: 90, alignItems: 'center' },
   confirmBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80, paddingHorizontal: 20 },
-  emptyText: { fontSize: 16, color: '#999999', fontWeight: '600' },
+  emptyText: { fontSize: 16, color: '#9FB0C9', fontWeight: '600' },
 });

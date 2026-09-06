@@ -92,9 +92,9 @@ export default function ChannelActivityScreen() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active': return '#4CAF50';
-      case 'pending': return '#FF6B00';
+      case 'pending': return '#2E7DFF';
       case 'suspended': return '#FF4D6D';
-      default: return '#6E6E6E';
+      default: return '#6B7C97';
     }
   };
 
@@ -111,7 +111,7 @@ export default function ChannelActivityScreen() {
 
       {loading ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#FF6B00" />
+          <ActivityIndicator size="large" color="#2E7DFF" />
           <Text style={styles.loadingText}>Loading channels...</Text>
         </View>
       ) : channels.length === 0 ? (
@@ -178,7 +178,7 @@ export default function ChannelActivityScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#0B1220',
   },
   centered: {
     flex: 1,
@@ -197,14 +197,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#2A2A2A',
+    borderBottomColor: '#22304A',
   },
   backButton: {
     paddingVertical: 4,
     paddingRight: 12,
   },
   backText: {
-    color: '#FF6B00',
+    color: '#2E7DFF',
     fontSize: 15,
     fontWeight: '600',
   },
@@ -217,12 +217,12 @@ const styles = StyleSheet.create({
     width: 60,
   },
   loadingText: {
-    color: '#A8A8A8',
+    color: '#9FB0C9',
     fontSize: 14,
     marginTop: 12,
   },
   emptyText: {
-    color: '#6E6E6E',
+    color: '#6B7C97',
     fontSize: 16,
     fontWeight: '500',
   },
@@ -234,12 +234,12 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   card: {
-    backgroundColor: '#1C1C1C',
+    backgroundColor: '#182437',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#2A2A2A',
+    borderColor: '#22304A',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -265,14 +265,14 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   ownerText: {
-    color: '#A8A8A8',
+    color: '#9FB0C9',
     fontSize: 13,
     marginBottom: 12,
   },
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#0B1220',
     borderRadius: 8,
     paddingVertical: 12,
     marginBottom: 12,
@@ -286,15 +286,15 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   statLabel: {
-    color: '#6E6E6E',
+    color: '#6B7C97',
     fontSize: 11,
     marginTop: 2,
   },
   pendingHighlight: {
-    color: '#FF6B00',
+    color: '#2E7DFF',
   },
   lastUpload: {
-    color: '#6E6E6E',
+    color: '#6B7C97',
     fontSize: 12,
     marginBottom: 12,
   },

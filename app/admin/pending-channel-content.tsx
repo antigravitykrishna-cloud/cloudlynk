@@ -105,7 +105,7 @@ export default function PendingChannelContentScreen() {
       </View>
 
       {loading ? (
-        <ActivityIndicator color="#FF6B00" size="large" style={{ marginTop: 60 }} />
+        <ActivityIndicator color="#2E7DFF" size="large" style={{ marginTop: 60 }} />
       ) : items.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>No pending content</Text>
@@ -134,7 +134,7 @@ export default function PendingChannelContentScreen() {
                   <TextInput
                     style={styles.rejectInput}
                     placeholder="Reason for rejection..."
-                    placeholderTextColor="#666666"
+                    placeholderTextColor="#6B7C97"
                     value={rejectReason}
                     onChangeText={setRejectReason}
                     multiline
@@ -186,17 +186,17 @@ export default function PendingChannelContentScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#0B1220',
   },
   header: {
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#0B1220',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#2A2A2A',
+    borderBottomColor: '#22304A',
   },
   headerBack: {
     width: 32,
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerBackTxt: {
-    color: '#FF6B00',
+    color: '#2E7DFF',
     fontSize: 28,
     fontWeight: '700',
     lineHeight: 28,
@@ -220,10 +220,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   card: {
-    backgroundColor: '#1C1C1C',
+    backgroundColor: '#182437',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#2A2A2A',
+    borderColor: '#22304A',
     padding: 16,
     marginBottom: 12,
   },
@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
   },
   cardMeta: {
     fontSize: 13,
-    color: '#999999',
+    color: '#9FB0C9',
     fontWeight: '500',
     marginBottom: 6,
   },
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   typeBadge: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: '#22304A',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 4,
@@ -256,12 +256,12 @@ const styles = StyleSheet.create({
   typeBadgeText: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#FF6B00',
+    color: '#2E7DFF',
     letterSpacing: 0.3,
   },
   cardDate: {
     fontSize: 12,
-    color: '#666666',
+    color: '#6B7C97',
     fontWeight: '500',
   },
   cardActions: {
@@ -269,13 +269,13 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   approveBtn: {
-    backgroundColor: '#39FF14',
+    backgroundColor: '#00D4FF',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
   },
   approveBtnText: {
-    color: '#0A0A0A',
+    color: '#0B1220',
     fontSize: 13,
     fontWeight: '800',
   },
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   rejectInput: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: '#22304A',
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#FF4D6D',
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   cancelBtn: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: '#22304A',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#999999',
+    color: '#9FB0C9',
     fontWeight: '600',
   },
 });

@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0d1117"
+      "backgroundColor": "#0B1220"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -27,7 +27,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#0d1117"
+        "backgroundColor": "#0B1220"
       },
       "package": "com.cloudlynk.app",
       "versionCode": 8,

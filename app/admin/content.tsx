@@ -37,11 +37,11 @@ const ACCESS_FILTERS: { key: AccessFilter; label: string }[] = [
 ];
 
 const STATUS_COLORS: Record<string, string> = {
-  draft: '#94a3b8',
-  pending: '#f0b429',
-  approved: '#22c55e',
+  draft: '#9FB0C9',
+  pending: '#FFC65C',
+  approved: '#2ED47A',
   rejected: '#FF4D6D',
-  removed: '#666666',
+  removed: '#6B7C97',
 };
 
 export default function AdminContentScreen() {
@@ -174,7 +174,7 @@ export default function AdminContentScreen() {
       </ScrollView>
 
       {loading ? (
-        <ActivityIndicator color="#FF6B00" size="large" style={{ marginTop: 60 }} />
+        <ActivityIndicator color="#2E7DFF" size="large" style={{ marginTop: 60 }} />
       ) : posts.length === 0 ? (
         <View style={styles.emptyState}><Text style={styles.emptyText}>No content matches these filters</Text></View>
       ) : (
@@ -187,7 +187,7 @@ export default function AdminContentScreen() {
                   <Text style={styles.titleText} numberOfLines={1}>
                     {post.title || post.body?.slice(0, 40) || 'Untitled'}
                   </Text>
-                  <View style={[styles.badge, { backgroundColor: STATUS_COLORS[post.status] ?? '#666666' }]}>
+                  <View style={[styles.badge, { backgroundColor: STATUS_COLORS[post.status] ?? '#6B7C97' }]}>
                     <Text style={styles.badgeText}>{post.status.toUpperCase()}</Text>
                   </View>
                 </View>
@@ -246,39 +246,39 @@ export default function AdminContentScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0A0A0A' },
+  safe: { flex: 1, backgroundColor: '#0B1220' },
   header: {
-    backgroundColor: '#0A0A0A', flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#0B1220', flexDirection: 'row', alignItems: 'center',
     justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: '#2A2A2A',
+    borderBottomWidth: 1, borderBottomColor: '#22304A',
   },
   headerBack: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
-  headerBackTxt: { color: '#FF6B00', fontSize: 28, fontWeight: '700', lineHeight: 28 },
+  headerBackTxt: { color: '#2E7DFF', fontSize: 28, fontWeight: '700', lineHeight: 28 },
   headerTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: '800' },
   headerAction: { minWidth: 32, alignItems: 'flex-end' },
-  headerActionTxt: { color: '#FF6B00', fontSize: 14, fontWeight: '800' },
+  headerActionTxt: { color: '#2E7DFF', fontSize: 14, fontWeight: '800' },
   filterScroll: { flexGrow: 0 },
   filterRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 8 },
-  filterTab: { backgroundColor: '#1C1C1C', borderWidth: 1, borderColor: '#2A2A2A', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
-  filterTabActive: { backgroundColor: '#FF6B00', borderColor: '#FF6B00' },
-  filterTabText: { color: '#999999', fontSize: 12, fontWeight: '700' },
+  filterTab: { backgroundColor: '#182437', borderWidth: 1, borderColor: '#22304A', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
+  filterTabActive: { backgroundColor: '#2E7DFF', borderColor: '#2E7DFF' },
+  filterTabText: { color: '#9FB0C9', fontSize: 12, fontWeight: '700' },
   filterTabTextActive: { color: '#FFFFFF' },
   list: { paddingBottom: 12, paddingHorizontal: 16, paddingTop: 4 },
-  card: { backgroundColor: '#1C1C1C', borderRadius: 12, borderWidth: 1, borderColor: '#2A2A2A', padding: 16, marginBottom: 12 },
+  card: { backgroundColor: '#182437', borderRadius: 12, borderWidth: 1, borderColor: '#22304A', padding: 16, marginBottom: 12 },
   cardTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, gap: 10 },
   titleText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF', flex: 1 },
   badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
-  badgeText: { fontSize: 10, fontWeight: '900', color: '#0A0A0A', letterSpacing: 0.5 },
-  metaText: { fontSize: 13, color: '#999999', fontWeight: '500', marginBottom: 2 },
-  premiumText: { color: '#f0b429', fontWeight: '700' },
-  cardDate: { fontSize: 11, color: '#666666', fontWeight: '500', marginTop: 4 },
+  badgeText: { fontSize: 10, fontWeight: '900', color: '#0B1220', letterSpacing: 0.5 },
+  metaText: { fontSize: 13, color: '#9FB0C9', fontWeight: '500', marginBottom: 2 },
+  premiumText: { color: '#FFC65C', fontWeight: '700' },
+  cardDate: { fontSize: 11, color: '#6B7C97', fontWeight: '500', marginTop: 4 },
   actionsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
-  actionBtnGhost: { backgroundColor: '#2A2A2A', paddingHorizontal: 14, paddingVertical: 9, borderRadius: 8, minWidth: 92, alignItems: 'center' },
+  actionBtnGhost: { backgroundColor: '#22304A', paddingHorizontal: 14, paddingVertical: 9, borderRadius: 8, minWidth: 92, alignItems: 'center' },
   actionBtnGhostText: { color: '#FFFFFF', fontSize: 12, fontWeight: '700' },
-  actionBtnPrimary: { backgroundColor: '#FF6B00', paddingHorizontal: 14, paddingVertical: 9, borderRadius: 8 },
+  actionBtnPrimary: { backgroundColor: '#2E7DFF', paddingHorizontal: 14, paddingVertical: 9, borderRadius: 8 },
   actionBtnPrimaryText: { color: '#FFFFFF', fontSize: 12, fontWeight: '800' },
-  actionBtnWarn: { backgroundColor: '#f0b429', paddingHorizontal: 14, paddingVertical: 9, borderRadius: 8 },
-  actionBtnWarnText: { color: '#0A0A0A', fontSize: 12, fontWeight: '800' },
+  actionBtnWarn: { backgroundColor: '#FFC65C', paddingHorizontal: 14, paddingVertical: 9, borderRadius: 8 },
+  actionBtnWarnText: { color: '#0B1220', fontSize: 12, fontWeight: '800' },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80, paddingHorizontal: 20 },
-  emptyText: { fontSize: 16, color: '#999999', fontWeight: '600', textAlign: 'center' },
+  emptyText: { fontSize: 16, color: '#9FB0C9', fontWeight: '600', textAlign: 'center' },
 });

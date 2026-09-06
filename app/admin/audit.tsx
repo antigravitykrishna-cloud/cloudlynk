@@ -18,9 +18,9 @@ const FILTERS: { key: string | undefined; label: string }[] = [
 ];
 
 const ACTION_COLORS: Record<string, string> = {
-  access_granted: '#22c55e',
+  access_granted: '#2ED47A',
   access_revoked: '#FF4D6D',
-  access_level_changed: '#f0b429',
+  access_level_changed: '#FFC65C',
   post_status_changed: '#38bdf8',
 };
 
@@ -103,7 +103,7 @@ export default function AdminAuditScreen() {
       </View>
 
       {loading ? (
-        <ActivityIndicator color="#FF6B00" size="large" style={{ marginTop: 60 }} />
+        <ActivityIndicator color="#2E7DFF" size="large" style={{ marginTop: 60 }} />
       ) : entries.length === 0 ? (
         <View style={styles.emptyState}><Text style={styles.emptyText}>Nothing logged yet</Text></View>
       ) : (
@@ -113,7 +113,7 @@ export default function AdminAuditScreen() {
             return (
               <View key={e.id} style={styles.card}>
                 <View style={styles.cardTopRow}>
-                  <View style={[styles.badge, { backgroundColor: ACTION_COLORS[e.action] ?? '#666666' }]}>
+                  <View style={[styles.badge, { backgroundColor: ACTION_COLORS[e.action] ?? '#6B7C97' }]}>
                     <Text style={styles.badgeText}>
                       {(AUDIT_ACTION_LABELS[e.action] ?? e.action).toUpperCase()}
                     </Text>
@@ -139,28 +139,28 @@ export default function AdminAuditScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0A0A0A' },
+  safe: { flex: 1, backgroundColor: '#0B1220' },
   header: {
-    backgroundColor: '#0A0A0A', flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#0B1220', flexDirection: 'row', alignItems: 'center',
     justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: '#2A2A2A',
+    borderBottomWidth: 1, borderBottomColor: '#22304A',
   },
   headerBack: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
-  headerBackTxt: { color: '#FF6B00', fontSize: 28, fontWeight: '700', lineHeight: 28 },
+  headerBackTxt: { color: '#2E7DFF', fontSize: 28, fontWeight: '700', lineHeight: 28 },
   headerTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: '800' },
   filterRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 12 },
-  filterTab: { backgroundColor: '#1C1C1C', borderWidth: 1, borderColor: '#2A2A2A', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
-  filterTabActive: { backgroundColor: '#FF6B00', borderColor: '#FF6B00' },
-  filterTabText: { color: '#999999', fontSize: 12, fontWeight: '700' },
+  filterTab: { backgroundColor: '#182437', borderWidth: 1, borderColor: '#22304A', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
+  filterTabActive: { backgroundColor: '#2E7DFF', borderColor: '#2E7DFF' },
+  filterTabText: { color: '#9FB0C9', fontSize: 12, fontWeight: '700' },
   filterTabTextActive: { color: '#FFFFFF' },
   list: { paddingBottom: 12, paddingHorizontal: 16 },
-  card: { backgroundColor: '#1C1C1C', borderRadius: 12, borderWidth: 1, borderColor: '#2A2A2A', padding: 16, marginBottom: 12 },
+  card: { backgroundColor: '#182437', borderRadius: 12, borderWidth: 1, borderColor: '#22304A', padding: 16, marginBottom: 12 },
   cardTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, gap: 10 },
   badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
-  badgeText: { fontSize: 10, fontWeight: '900', color: '#0A0A0A', letterSpacing: 0.5 },
-  cardDate: { fontSize: 11, color: '#666666', fontWeight: '500' },
-  metaText: { fontSize: 13, color: '#999999', fontWeight: '500', marginBottom: 2 },
-  detailText: { fontSize: 12, color: '#f0b429', fontWeight: '600', marginTop: 6 },
+  badgeText: { fontSize: 10, fontWeight: '900', color: '#0B1220', letterSpacing: 0.5 },
+  cardDate: { fontSize: 11, color: '#6B7C97', fontWeight: '500' },
+  metaText: { fontSize: 13, color: '#9FB0C9', fontWeight: '500', marginBottom: 2 },
+  detailText: { fontSize: 12, color: '#FFC65C', fontWeight: '600', marginTop: 6 },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80, paddingHorizontal: 20 },
-  emptyText: { fontSize: 16, color: '#999999', fontWeight: '600', textAlign: 'center' },
+  emptyText: { fontSize: 16, color: '#9FB0C9', fontWeight: '600', textAlign: 'center' },
 });

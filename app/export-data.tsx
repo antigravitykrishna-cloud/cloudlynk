@@ -148,12 +148,12 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 18, fontWeight: '800', color: Colors.text, marginBottom: 8 },
   cardDesc: { fontSize: 14, color: Colors.textMuted, textAlign: 'center', lineHeight: 20 },
   successCard: {
-    backgroundColor: '#f0fdf4', borderRadius: 12, padding: 16, alignItems: 'center',
+    backgroundColor: '#12261C', borderRadius: 12, padding: 16, alignItems: 'center',
     borderWidth: 1, borderColor: '#bbf7d0', marginBottom: 20,
   },
-  successIcon: { fontSize: 24, color: '#16a34a', fontWeight: '800', marginBottom: 4 },
-  successText: { fontSize: 15, fontWeight: '700', color: '#16a34a', marginBottom: 4 },
-  successMeta: { fontSize: 13, color: '#666', marginTop: 2 },
+  successIcon: { fontSize: 24, color: '#2ED47A', fontWeight: '800', marginBottom: 4 },
+  successText: { fontSize: 15, fontWeight: '700', color: '#2ED47A', marginBottom: 4 },
+  successMeta: { fontSize: 13, color: '#6B7C97', marginTop: 2 },
   exportBtn: {
     backgroundColor: Colors.brand, borderRadius: 12, paddingVertical: 16,
     alignItems: 'center', marginBottom: 20,

@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
   menuGroup: { marginHorizontal: 16, marginTop: 16, marginBottom: 16, backgroundColor: Colors.bg, borderRadius: 12, borderWidth: 1, borderColor: Colors.border, overflow: 'hidden' },
   menuRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, paddingHorizontal: 14, borderBottomWidth: 0.5, borderBottomColor: Colors.border },
   menuRowLast: { borderBottomWidth: 0 },
-  menuIcon: { width: 32, height: 32, borderRadius: 8, backgroundColor: '#1C1C1C', alignItems: 'center', justifyContent: 'center' },
+  menuIcon: { width: 32, height: 32, borderRadius: 8, backgroundColor: '#182437', alignItems: 'center', justifyContent: 'center' },
   menuLabel: { flex: 1, fontSize: 14, fontWeight: '600', color: Colors.text },
   chevron: { fontSize: 18, color: Colors.textMuted },
   versionBlock: { alignItems: 'center', paddingVertical: 16 },
@@ -110,6 +110,6 @@ const styles = StyleSheet.create({
   bottomButtons: { paddingHorizontal: 16, marginTop: 8, gap: 12 },
   logoutBtn: { backgroundColor: Colors.brand, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
   logoutBtnText: { color: '#ffffff', fontSize: 15, fontWeight: '800' },
-  deleteBtn: { backgroundColor: '#fef2f2', borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: Colors.danger },
+  deleteBtn: { backgroundColor: '#2A1620', borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: Colors.danger },
   deleteBtnText: { color: Colors.danger, fontSize: 15, fontWeight: '800' },
 });

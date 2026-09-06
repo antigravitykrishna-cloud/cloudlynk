@@ -33,8 +33,8 @@ function formatDate(iso: string | null): string {
 
 function getStatusColor(status: string | null): string {
   switch (status) {
-    case 'active': return '#16a34a';
-    case 'pending': return '#d97706';
+    case 'active': return '#2ED47A';
+    case 'pending': return '#FFB347';
     case 'expired': return Colors.brand;
     case 'cancelled': return Colors.brand;
     default: return Colors.textMuted;
@@ -43,8 +43,8 @@ function getStatusColor(status: string | null): string {
 
 function getRequestStatusColor(status: string | null): string {
   switch (status) {
-    case 'approved': return '#16a34a';
-    case 'pending': return '#d97706';
+    case 'approved': return '#2ED47A';
+    case 'pending': return '#FFB347';
     case 'rejected': return Colors.brand;
     default: return Colors.textMuted;
   }
@@ -145,7 +145,7 @@ export default function MySubscriptionScreen() {
                 </Text>
 
                 {status.latest_request_status === 'approved' && status.latest_request_reviewed_at && (
-                  <Text style={[styles.cardSub, { color: '#16a34a' }]}>
+                  <Text style={[styles.cardSub, { color: '#2ED47A' }]}>
                     Approved on {formatDate(status.latest_request_reviewed_at)}
                   </Text>
                 )}

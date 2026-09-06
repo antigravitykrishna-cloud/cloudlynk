@@ -42,9 +42,9 @@ function formatDuration(min: number): string {
 
 function getTypeColor(type: ContentType): string {
   const map: Record<ContentType, string> = {
-    movie: '#E50914', series: '#0090ff', short: '#00d4aa', post: '#a371f7',
+    movie: '#2E7DFF', series: '#0090ff', short: '#00d4aa', post: '#a371f7',
   };
-  return map[type] ?? '#E50914';
+  return map[type] ?? '#2E7DFF';
 }
 
 // ── Extracted components — defined OUTSIDE parent to prevent remount on rerender
@@ -117,13 +117,13 @@ const GenrePickerModal = memo(({ visible, selected, onSelect, onClose }: {
         <ScrollView keyboardShouldPersistTaps="handled">
           {GENRES.map(g => (
             <TouchableOpacity key={g} style={styles.genrePickerRow} onPress={() => { onSelect(g); onClose(); }}>
-              <Text style={[styles.genrePickerTxt, selected === g && { color: '#E50914' }]}>{g}</Text>
-              {selected === g && <Text style={{ color: '#E50914', fontSize: 16 }}>{'✓'}</Text>}
+              <Text style={[styles.genrePickerTxt, selected === g && { color: '#2E7DFF' }]}>{g}</Text>
+              {selected === g && <Text style={{ color: '#2E7DFF', fontSize: 16 }}>{'✓'}</Text>}
             </TouchableOpacity>
           ))}
         </ScrollView>
         <TouchableOpacity style={styles.genrePickerCancel} onPress={onClose}>
-          <Text style={{ color: '#999', fontWeight: '600', fontSize: 15 }}>Cancel</Text>
+          <Text style={{ color: '#9FB0C9', fontWeight: '600', fontSize: 15 }}>Cancel</Text>
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -325,8 +325,8 @@ const DetailModal = memo(({ selected, onClose, userId, channelId }: {
           </View>
           {hasVideo ? (
             videoError ? (
-              <View style={[styles.playBtn, { backgroundColor: '#222', borderColor: '#333', borderWidth: 0.5 }]}>
-                <Text style={[styles.playBtnTxt, { color: '#999', fontSize: 13 }]}>{videoError}</Text>
+              <View style={[styles.playBtn, { backgroundColor: '#182437', borderColor: '#22304A', borderWidth: 0.5 }]}>
+                <Text style={[styles.playBtnTxt, { color: '#9FB0C9', fontSize: 13 }]}>{videoError}</Text>
               </View>
             ) : (
               <TouchableOpacity
@@ -340,8 +340,8 @@ const DetailModal = memo(({ selected, onClose, userId, channelId }: {
               </TouchableOpacity>
             )
           ) : (
-            <View style={[styles.playBtn, { backgroundColor: '#222', borderColor: '#333', borderWidth: 0.5 }]}>
-              <Text style={[styles.playBtnTxt, { color: '#666' }]}>{'No Video Available'}</Text>
+            <View style={[styles.playBtn, { backgroundColor: '#182437', borderColor: '#22304A', borderWidth: 0.5 }]}>
+              <Text style={[styles.playBtnTxt, { color: '#6B7C97' }]}>{'No Video Available'}</Text>
             </View>
           )}
           <View style={{ height: 40 }} />
@@ -458,7 +458,7 @@ const CreateModal = memo(({ visible, onClose, onSubmit, channelId }: {
               <Text style={styles.createTitle}>Add Content</Text>
               <TouchableOpacity onPress={handleSubmit} disabled={submitting || !postTitle.trim()}>
                 {submitting
-                  ? <ActivityIndicator color="#E50914" size="small" />
+                  ? <ActivityIndicator color="#2E7DFF" size="small" />
                   : <Text style={[styles.createSubmit, !postTitle.trim() && { opacity: 0.3 }]}>Submit</Text>
                 }
               </TouchableOpacity>
@@ -474,7 +474,7 @@ const CreateModal = memo(({ visible, onClose, onSubmit, channelId }: {
                     onPress={() => setContentType(ct.id)}
                   >
                     <Text style={{ fontSize: 18 }}>{ct.icon}</Text>
-                    <Text style={[styles.typeChipTxt, contentType === ct.id && { color: '#E50914' }]}>{ct.label}</Text>
+                    <Text style={[styles.typeChipTxt, contentType === ct.id && { color: '#2E7DFF' }]}>{ct.label}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -502,7 +502,7 @@ const CreateModal = memo(({ visible, onClose, onSubmit, channelId }: {
               >
                 {picking
                   ? <>
-                      <ActivityIndicator color="#E50914" size="small" style={{ marginBottom: 6 }} />
+                      <ActivityIndicator color="#2E7DFF" size="small" style={{ marginBottom: 6 }} />
                       <Text style={styles.videoPickerTxt}>Selecting…</Text>
                     </>
                   : <>
@@ -538,7 +538,7 @@ const CreateModal = memo(({ visible, onClose, onSubmit, channelId }: {
                 value={postTitle}
                 onChangeText={setPostTitle}
                 placeholder="Enter title"
-                placeholderTextColor="#555"
+                placeholderTextColor="#31425F"
                 blurOnSubmit={false}
               />
 
@@ -548,14 +548,14 @@ const CreateModal = memo(({ visible, onClose, onSubmit, channelId }: {
                 value={postBody}
                 onChangeText={setPostBody}
                 placeholder="What is this about?"
-                placeholderTextColor="#555"
+                placeholderTextColor="#31425F"
                 multiline
                 blurOnSubmit={false}
               />
 
               <Text style={styles.createLabel}>GENRE</Text>
               <TouchableOpacity style={[styles.input, { justifyContent: 'center' }]} onPress={() => setShowGenrePicker(true)}>
-                <Text style={{ color: genre ? '#fff' : '#555', fontSize: 14 }}>
+                <Text style={{ color: genre ? '#fff' : '#31425F', fontSize: 14 }}>
                   {genre || 'Select genre'}
                 </Text>
               </TouchableOpacity>
@@ -566,7 +566,7 @@ const CreateModal = memo(({ visible, onClose, onSubmit, channelId }: {
                 value={releaseYear}
                 onChangeText={setReleaseYear}
                 placeholder={String(new Date().getFullYear())}
-                placeholderTextColor="#555"
+                placeholderTextColor="#31425F"
                 keyboardType="numeric"
                 maxLength={4}
                 blurOnSubmit={false}
@@ -580,7 +580,7 @@ const CreateModal = memo(({ visible, onClose, onSubmit, channelId }: {
                     value={durationMin}
                     onChangeText={setDurationMin}
                     placeholder="e.g. 120"
-                    placeholderTextColor="#555"
+                    placeholderTextColor="#31425F"
                     keyboardType="numeric"
                     blurOnSubmit={false}
                   />
@@ -593,18 +593,18 @@ const CreateModal = memo(({ visible, onClose, onSubmit, channelId }: {
                     <View style={{ flex: 1 }}>
                       <Text style={styles.createLabel}>SEASON</Text>
                       <TextInput style={styles.input} value={seasonNo} onChangeText={setSeasonNo}
-                        placeholder="1" placeholderTextColor="#555" keyboardType="numeric" blurOnSubmit={false} />
+                        placeholder="1" placeholderTextColor="#31425F" keyboardType="numeric" blurOnSubmit={false} />
                     </View>
                     <View style={{ width: 12 }} />
                     <View style={{ flex: 1 }}>
                       <Text style={styles.createLabel}>EPISODE</Text>
                       <TextInput style={styles.input} value={episodeNo} onChangeText={setEpisodeNo}
-                        placeholder="1" placeholderTextColor="#555" keyboardType="numeric" blurOnSubmit={false} />
+                        placeholder="1" placeholderTextColor="#31425F" keyboardType="numeric" blurOnSubmit={false} />
                     </View>
                   </View>
                   <Text style={styles.createLabel}>EPISODE TITLE</Text>
                   <TextInput style={styles.input} value={episodeTitle} onChangeText={setEpisodeTitle}
-                    placeholder="e.g. Pilot" placeholderTextColor="#555" blurOnSubmit={false} />
+                    placeholder="e.g. Pilot" placeholderTextColor="#31425F" blurOnSubmit={false} />
                 </>
               )}
 
@@ -714,7 +714,7 @@ export default function ChannelDetailScreen() {
   if (loading) {
     return (
       <View style={[styles.safe, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator color="#E50914" size="large" />
+        <ActivityIndicator color="#2E7DFF" size="large" />
       </View>
     );
   }
@@ -723,7 +723,7 @@ export default function ChannelDetailScreen() {
     <View style={styles.safe}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
       <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#E50914" />}>
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2E7DFF" />}>
 
         <View style={[styles.hero, { height: HERO_H }]}>
           {heroThumb
@@ -922,51 +922,51 @@ const styles = StyleSheet.create({
   videoCloseBtnTxt: { color: '#fff', fontSize: 14, fontWeight: '700' },
   createModal: { flex: 1, backgroundColor: Colors.bg },
   createHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 0.5, borderBottomColor: Colors.border },
-  createCancel: { fontSize: 15, color: '#888', fontWeight: '600' },
+  createCancel: { fontSize: 15, color: '#9FB0C9', fontWeight: '600' },
   createTitle: { fontSize: 17, fontWeight: '900', color: '#fff' },
-  createSubmit: { fontSize: 15, color: '#E50914', fontWeight: '900' },
+  createSubmit: { fontSize: 15, color: '#2E7DFF', fontWeight: '900' },
   createBody: { flex: 1, padding: 16 },
-  createLabel: { fontSize: 10, fontWeight: '800', color: '#555', letterSpacing: 1.2, marginBottom: 8, marginTop: 16 },
-  input: { backgroundColor: '#1a1a1a', borderRadius: 8, borderWidth: 0.5, borderColor: '#333', color: '#fff', fontSize: 14, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 4 },
+  createLabel: { fontSize: 10, fontWeight: '800', color: '#31425F', letterSpacing: 1.2, marginBottom: 8, marginTop: 16 },
+  input: { backgroundColor: '#182437', borderRadius: 8, borderWidth: 0.5, borderColor: '#22304A', color: '#fff', fontSize: 14, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 4 },
   rowInputs: { flexDirection: 'row' },
   typeRow: { flexDirection: 'row', gap: 8 },
-  typeChip: { flex: 1, alignItems: 'center', gap: 4, paddingVertical: 12, backgroundColor: '#1a1a1a', borderRadius: 8, borderWidth: 0.5, borderColor: '#333' },
-  typeChipActive: { borderColor: '#E50914', backgroundColor: 'rgba(229,9,20,0.1)' },
-  typeChipTxt: { fontSize: 10, color: '#888', fontWeight: '700' },
-  thumbPicker: { height: 180, backgroundColor: '#1a1a1a', borderRadius: 12, borderWidth: 0.5, borderColor: '#333', overflow: 'hidden', marginBottom: 4 },
+  typeChip: { flex: 1, alignItems: 'center', gap: 4, paddingVertical: 12, backgroundColor: '#182437', borderRadius: 8, borderWidth: 0.5, borderColor: '#22304A' },
+  typeChipActive: { borderColor: '#2E7DFF', backgroundColor: 'rgba(229,9,20,0.1)' },
+  typeChipTxt: { fontSize: 10, color: '#9FB0C9', fontWeight: '700' },
+  thumbPicker: { height: 180, backgroundColor: '#182437', borderRadius: 12, borderWidth: 0.5, borderColor: '#22304A', overflow: 'hidden', marginBottom: 4 },
   thumbPreview: { width: '100%', height: '100%' },
   thumbEmpty: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  thumbEmptyTxt: { color: '#444', fontSize: 14, fontWeight: '700' },
-  reviewNote: { backgroundColor: '#1a1a1a', borderRadius: 8, borderWidth: 0.5, borderColor: '#2a2a2a', padding: 14, marginTop: 8 },
-  reviewNoteTxt: { color: '#666', fontSize: 12, fontWeight: '600', lineHeight: 18 },
-  videoPicker: { backgroundColor: '#1a1a1a', borderRadius: 10, borderWidth: 0.5, borderColor: '#333', padding: 20, alignItems: 'center', marginBottom: 4 },
-  videoPickerSelected: { borderColor: '#E50914', backgroundColor: 'rgba(229,9,20,0.06)' },
-  videoPickerTxt: { color: '#ccc', fontSize: 13, fontWeight: '700', maxWidth: '90%', textAlign: 'center' },
-  videoPickerSize: { color: '#555', fontSize: 11, fontWeight: '600', marginTop: 4 },
+  thumbEmptyTxt: { color: '#9FB0C9', fontSize: 14, fontWeight: '700' },
+  reviewNote: { backgroundColor: '#182437', borderRadius: 8, borderWidth: 0.5, borderColor: '#22304A', padding: 14, marginTop: 8 },
+  reviewNoteTxt: { color: '#6B7C97', fontSize: 12, fontWeight: '600', lineHeight: 18 },
+  videoPicker: { backgroundColor: '#182437', borderRadius: 10, borderWidth: 0.5, borderColor: '#22304A', padding: 20, alignItems: 'center', marginBottom: 4 },
+  videoPickerSelected: { borderColor: '#2E7DFF', backgroundColor: 'rgba(229,9,20,0.06)' },
+  videoPickerTxt: { color: '#9FB0C9', fontSize: 13, fontWeight: '700', maxWidth: '90%', textAlign: 'center' },
+  videoPickerSize: { color: '#31425F', fontSize: 11, fontWeight: '600', marginTop: 4 },
   progressWrapper: { marginTop: 8, marginBottom: 4 },
-  progressBar: { height: 4, backgroundColor: '#222', borderRadius: 2, overflow: 'hidden', marginBottom: 6 },
-  progressFill: { height: '100%', backgroundColor: '#E50914', borderRadius: 2 },
-  progressTxt: { fontSize: 11, color: '#E50914', fontWeight: '700', textAlign: 'center' },
+  progressBar: { height: 4, backgroundColor: '#182437', borderRadius: 2, overflow: 'hidden', marginBottom: 6 },
+  progressFill: { height: '100%', backgroundColor: '#2E7DFF', borderRadius: 2 },
+  progressTxt: { fontSize: 11, color: '#2E7DFF', fontWeight: '700', textAlign: 'center' },
   genrePickerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
   genrePickerSheet: { backgroundColor: '#111', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: H * 0.6, paddingTop: 20 },
   genrePickerTitle: { fontSize: 16, fontWeight: '900', color: '#fff', textAlign: 'center', marginBottom: 16, paddingHorizontal: 20 },
-  genrePickerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingVertical: 14, borderBottomWidth: 0.5, borderBottomColor: '#1a1a1a' },
-  genrePickerTxt: { fontSize: 15, color: '#ccc', fontWeight: '600' },
-  genrePickerCancel: { padding: 20, alignItems: 'center', borderTopWidth: 0.5, borderTopColor: '#1a1a1a' },
+  genrePickerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingVertical: 14, borderBottomWidth: 0.5, borderBottomColor: '#182437' },
+  genrePickerTxt: { fontSize: 15, color: '#9FB0C9', fontWeight: '600' },
+  genrePickerCancel: { padding: 20, alignItems: 'center', borderTopWidth: 0.5, borderTopColor: '#182437' },
   emptyState: { alignItems: 'center', paddingTop: 60, paddingHorizontal: 40 },
   emptyTitle: { fontSize: 22, fontWeight: '900', color: Colors.text, marginBottom: 8 },
   emptyDesc: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', lineHeight: 22, marginBottom: 28 },
   emptyAddBtn: { backgroundColor: Colors.brand, borderRadius: 8, paddingHorizontal: 28, paddingVertical: 14 },
   emptyAddTxt: { color: '#fff', fontSize: 15, fontWeight: '900' },
   pendingSection: { marginHorizontal: 16, marginTop: 20 },
-  pendingSectionTitle: { fontSize: 14, fontWeight: '700', color: '#E9A23B', marginBottom: 10 },
+  pendingSectionTitle: { fontSize: 14, fontWeight: '700', color: '#FFC65C', marginBottom: 10 },
   pendingCard: { backgroundColor: '#1a1400', borderRadius: 8, borderWidth: 1, borderColor: '#443300', padding: 12, marginBottom: 8 },
   pendingCardTitle: { fontSize: 14, fontWeight: '700', color: '#fff', marginBottom: 4 },
-  pendingCardMeta: { fontSize: 12, color: '#E9A23B', fontWeight: '600' },
-  lockedBanner: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 16, marginTop: 16, backgroundColor: '#111', borderRadius: 10, borderWidth: 0.5, borderColor: '#333', padding: 14 },
+  pendingCardMeta: { fontSize: 12, color: '#FFC65C', fontWeight: '600' },
+  lockedBanner: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 16, marginTop: 16, backgroundColor: '#111', borderRadius: 10, borderWidth: 0.5, borderColor: '#22304A', padding: 14 },
   lockedBannerIcon: { fontSize: 22 },
   lockedBannerTitle: { fontSize: 13, fontWeight: '800', color: '#aaa', marginBottom: 3 },
-  lockedBannerDesc: { fontSize: 12, color: '#666', fontWeight: '600', lineHeight: 18 },
+  lockedBannerDesc: { fontSize: 12, color: '#6B7C97', fontWeight: '600', lineHeight: 18 },
   lockedContentCard: { marginHorizontal: 16, marginTop: 24, padding: 32, backgroundColor: '#fafafa', borderRadius: 16, borderWidth: 1, borderColor: Colors.border, alignItems: 'center' },
   lockedContentIcon: { fontSize: 48, marginBottom: 12 },
   lockedContentTitle: { fontSize: 18, fontWeight: '800', color: Colors.text, marginBottom: 8, textAlign: 'center' },

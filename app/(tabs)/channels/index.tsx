@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
   filterPillTextActive: { color: '#ffffff' },
   list: { paddingVertical: 8 },
   channelRow: { position: 'relative', flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14, paddingHorizontal: 16, borderBottomWidth: 0.5, borderBottomColor: Colors.border },
-  pendingBadge: { position: 'absolute', top: 6, right: 16, backgroundColor: '#f59e0b', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, zIndex: 1 },
+  pendingBadge: { position: 'absolute', top: 6, right: 16, backgroundColor: '#FFB347', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, zIndex: 1 },
   pendingBadgeText: { fontSize: 9, fontWeight: '800', color: '#ffffff', letterSpacing: 0.5 },
   channelAvatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: Colors.surfaceHover, alignItems: 'center', justifyContent: 'center' },
   channelAvatarEmoji: { fontSize: 22 },

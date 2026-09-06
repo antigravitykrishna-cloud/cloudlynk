@@ -75,7 +75,7 @@ function deriveSeriesId(channelId: string, seriesName: string): string {
 
 function ProgressBar({ progress, status }: { progress: number; status: string }) {
   const pct = Math.round(progress * 100);
-  const color = status === 'done' ? '#00d4aa' : status === 'failed' ? Colors.brand : '#ff6b00';
+  const color = status === 'done' ? '#00d4aa' : status === 'failed' ? Colors.brand : '#2E7DFF';
   return (
     <View style={pb.wrap}>
       <View style={[pb.bar, { width: `${pct}%` as any, backgroundColor: color }]} />

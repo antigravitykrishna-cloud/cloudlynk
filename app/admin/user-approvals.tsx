@@ -198,7 +198,7 @@ export default function AdminUserApprovalsScreen() {
       </View>
 
       {loading ? (
-        <ActivityIndicator color="#FF6B00" size="large" style={{ marginTop: 60 }} />
+        <ActivityIndicator color="#2E7DFF" size="large" style={{ marginTop: 60 }} />
       ) : rows.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>
@@ -234,7 +234,7 @@ export default function AdminUserApprovalsScreen() {
                     <TextInput
                       style={styles.noteInput}
                       placeholder="Why is this account being rejected? (required)"
-                      placeholderTextColor="#666666"
+                      placeholderTextColor="#6B7C97"
                       value={note}
                       onChangeText={setNote}
                       multiline
@@ -269,7 +269,7 @@ export default function AdminUserApprovalsScreen() {
                         disabled={isActing}
                       >
                         {isActing
-                          ? <ActivityIndicator color="#0A0A0A" size="small" />
+                          ? <ActivityIndicator color="#0B1220" size="small" />
                           : <Text style={styles.approveBtnText}>Approve</Text>}
                       </TouchableOpacity>
                     )}
@@ -298,7 +298,7 @@ export default function AdminUserApprovalsScreen() {
                 {grantsFor === item.id && (
                   <View style={styles.grantsPanel}>
                     {grantsLoading ? (
-                      <ActivityIndicator color="#FF6B00" size="small" style={{ marginVertical: 8 }} />
+                      <ActivityIndicator color="#2E7DFF" size="small" style={{ marginVertical: 8 }} />
                     ) : grants.length === 0 ? (
                       <Text style={styles.metaText}>No content grants.</Text>
                     ) : (
@@ -338,59 +338,59 @@ export default function AdminUserApprovalsScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0A0A0A' },
+  safe: { flex: 1, backgroundColor: '#0B1220' },
   header: {
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#0B1220',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#2A2A2A',
+    borderBottomColor: '#22304A',
   },
   headerBack: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
-  headerBackTxt: { color: '#FF6B00', fontSize: 28, fontWeight: '700', lineHeight: 28 },
+  headerBackTxt: { color: '#2E7DFF', fontSize: 28, fontWeight: '700', lineHeight: 28 },
   headerTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: '800' },
   blurb: {
-    color: '#999999', fontSize: 12, fontWeight: '500', lineHeight: 18,
+    color: '#9FB0C9', fontSize: 12, fontWeight: '500', lineHeight: 18,
     paddingHorizontal: 16, paddingTop: 12,
   },
   filterRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 12 },
-  filterTab: { backgroundColor: '#1C1C1C', borderWidth: 1, borderColor: '#2A2A2A', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
-  filterTabActive: { backgroundColor: '#FF6B00', borderColor: '#FF6B00' },
-  filterTabText: { color: '#999999', fontSize: 12, fontWeight: '700' },
+  filterTab: { backgroundColor: '#182437', borderWidth: 1, borderColor: '#22304A', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
+  filterTabActive: { backgroundColor: '#2E7DFF', borderColor: '#2E7DFF' },
+  filterTabText: { color: '#9FB0C9', fontSize: 12, fontWeight: '700' },
   filterTabTextActive: { color: '#FFFFFF' },
   list: { paddingBottom: 12, paddingHorizontal: 16 },
-  card: { backgroundColor: '#1C1C1C', borderRadius: 12, borderWidth: 1, borderColor: '#2A2A2A', padding: 16, marginBottom: 12 },
+  card: { backgroundColor: '#182437', borderRadius: 12, borderWidth: 1, borderColor: '#22304A', padding: 16, marginBottom: 12 },
   cardTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, gap: 10 },
   nameText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF', flex: 1 },
-  cardDate: { fontSize: 11, color: '#666666', fontWeight: '500' },
-  metaText: { fontSize: 13, color: '#999999', fontWeight: '500', marginBottom: 2 },
-  noteText: { fontSize: 12, color: '#f0b429', fontWeight: '600', marginTop: 6 },
+  cardDate: { fontSize: 11, color: '#6B7C97', fontWeight: '500' },
+  metaText: { fontSize: 13, color: '#9FB0C9', fontWeight: '500', marginBottom: 2 },
+  noteText: { fontSize: 12, color: '#FFC65C', fontWeight: '600', marginTop: 6 },
   actionsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
-  approveBtn: { backgroundColor: '#FF6B00', paddingHorizontal: 18, paddingVertical: 9, borderRadius: 8, minWidth: 92, alignItems: 'center' },
+  approveBtn: { backgroundColor: '#2E7DFF', paddingHorizontal: 18, paddingVertical: 9, borderRadius: 8, minWidth: 92, alignItems: 'center' },
   approveBtnText: { color: '#FFFFFF', fontSize: 12, fontWeight: '800' },
-  rejectBtn: { backgroundColor: '#2A2A2A', paddingHorizontal: 18, paddingVertical: 9, borderRadius: 8 },
+  rejectBtn: { backgroundColor: '#22304A', paddingHorizontal: 18, paddingVertical: 9, borderRadius: 8 },
   rejectBtnText: { color: '#FF4D6D', fontSize: 12, fontWeight: '800' },
-  grantsBtn: { backgroundColor: '#2A2A2A', paddingHorizontal: 18, paddingVertical: 9, borderRadius: 8 },
+  grantsBtn: { backgroundColor: '#22304A', paddingHorizontal: 18, paddingVertical: 9, borderRadius: 8 },
   grantsBtnText: { color: '#38bdf8', fontSize: 12, fontWeight: '800' },
-  grantsPanel: { marginTop: 12, borderTopWidth: 1, borderTopColor: '#2A2A2A', paddingTop: 10 },
-  grantRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#2A2A2A' },
+  grantsPanel: { marginTop: 12, borderTopWidth: 1, borderTopColor: '#22304A', paddingTop: 10 },
+  grantRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#22304A' },
   grantTitle: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
-  grantRevokeBtn: { backgroundColor: '#2A2A2A', paddingHorizontal: 12, paddingVertical: 7, borderRadius: 8 },
+  grantRevokeBtn: { backgroundColor: '#22304A', paddingHorizontal: 12, paddingVertical: 7, borderRadius: 8 },
   grantRevokeText: { color: '#FF4D6D', fontSize: 11, fontWeight: '800' },
   noteForm: { marginTop: 12 },
   noteInput: {
-    backgroundColor: '#2A2A2A', borderRadius: 8, borderWidth: 1, borderColor: '#FF6B00',
+    backgroundColor: '#22304A', borderRadius: 8, borderWidth: 1, borderColor: '#2E7DFF',
     color: '#FFFFFF', fontSize: 14, paddingHorizontal: 12, paddingVertical: 10, minHeight: 60,
     textAlignVertical: 'top', marginBottom: 10,
   },
   noteFormActions: { flexDirection: 'row', gap: 10 },
-  cancelBtn: { backgroundColor: '#2A2A2A', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 },
+  cancelBtn: { backgroundColor: '#22304A', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 },
   cancelBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
   confirmBtn: { backgroundColor: '#FF4D6D', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8, minWidth: 120, alignItems: 'center' },
   confirmBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80, paddingHorizontal: 20 },
-  emptyText: { fontSize: 16, color: '#999999', fontWeight: '600', textAlign: 'center' },
+  emptyText: { fontSize: 16, color: '#9FB0C9', fontWeight: '600', textAlign: 'center' },
 });
