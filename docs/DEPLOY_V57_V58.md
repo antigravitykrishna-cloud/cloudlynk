@@ -1,6 +1,10 @@
-# Deployment runbook — v57 + v58
+# Deployment runbook — v57, v58, v59, v60
 
 **Status: NOT DEPLOYED. Blocked on CLI authentication.**
+
+> Scope grew after this was written: v59 and v60 landed on the same branch and
+> deploy in the same push. A third edge function, `admin-replace-video`, joins
+> the two billing ones. Sections 2, 6, 7 and 8 cover all four migrations.
 
 ```
 $ npx supabase migration list --linked
@@ -56,6 +60,39 @@ the only production database and there is no staging.
 | `REVOKE ALL` | from `PUBLIC`, `anon`, `authenticated` | Lockdown |
 | `GRANT EXECUTE` | → `service_role` **only** | New grant |
 | `CREATE OR REPLACE FUNCTION` | `protect_profile_privileged_fields()` | **Replaced** |
+
+### v59 — `20260907090000_v59_admin_edit_and_replace_media.sql`
+
+| Statement | Object | Type |
+|---|---|---|
+| `CREATE OR REPLACE FUNCTION` | `admin_update_post(uuid,text,…,text[])` | **New** |
+| `CREATE OR REPLACE FUNCTION` | `admin_replace_post_video(uuid,text)` | **New** |
+| `REVOKE` / `GRANT EXECUTE` | both → `authenticated`, not `anon` | New grants |
+
+Additive only. No drops, no data writes.
+
+### v60 — `20260907120000_v60_admin_standing_and_channel_writes.sql`
+
+| Statement | Object | Type |
+|---|---|---|
+| `CREATE OR REPLACE FUNCTION` | `is_active_admin()` | **New** |
+| `CREATE OR REPLACE FUNCTION` | `admin_grant_content_access(...)` | **Replaced** — guard line only |
+| `CREATE OR REPLACE FUNCTION` | `admin_revoke_content_access(...)` | **Replaced** — guard line only |
+| `CREATE OR REPLACE FUNCTION` | `activate_approved_channels()` | **Replaced** — adds audit, fixes RETURNING |
+| `REVOKE ALL` / `GRANT` | `activate_approved_channels` → `service_role` only | **Grant narrowed** |
+| `CREATE OR REPLACE FUNCTION` | `protect_channel_privileged_fields()` | **New** |
+| `DROP TRIGGER IF EXISTS` / `CREATE TRIGGER` | `channels_guard_privileged_fields` on `channels` | **New trigger** |
+
+No `DROP TABLE`, no `DELETE`, no `TRUNCATE`, no policy changes.
+
+**Behaviour change worth knowing before you push:** after v60, a suspended or
+banned admin can no longer grant or revoke content access. If any working admin
+account is not `account_status = 'active'`, it stops being able to do those two
+things. Check first:
+
+```sql
+SELECT id, email, account_status FROM public.profiles WHERE is_admin = true;
+```
 
 ### Functions dropped or replaced — the full list
 
@@ -190,10 +227,21 @@ same time.
 the functions first breaks every purchase verification until the migration
 catches up.
 
-Not redeployed, and deliberately: `stream-playback-token`, `stream-set-access`
-and `generate-stream-upload` were changed earlier on this branch and are a
-separate concern. They depend on `admin_set_signed_lock` from v57, so if you
-are deploying those too, they also go **after** the migration.
+| `admin-replace-video` | **New function** (v59). Locks a new video on Cloudflare before it replaces the old one on a premium post | new directory |
+
+Also changed earlier on this branch and needing redeploy if you are shipping the
+whole thing: `stream-playback-token`, `stream-set-access`, `generate-stream-upload`.
+They depend on `admin_set_signed_lock` from v57, so they also go **after** the
+migration. Full set, in order:
+
+```bash
+npx supabase functions deploy verify-play-receipt
+npx supabase functions deploy play-rtdn-webhook
+npx supabase functions deploy admin-replace-video
+npx supabase functions deploy stream-playback-token
+npx supabase functions deploy stream-set-access
+npx supabase functions deploy generate-stream-upload
+```
 
 ---
 
@@ -220,6 +268,10 @@ npx supabase db push --linked
 # 5. functions, AFTER the migration
 npx supabase functions deploy verify-play-receipt
 npx supabase functions deploy play-rtdn-webhook
+npx supabase functions deploy admin-replace-video
+npx supabase functions deploy stream-playback-token
+npx supabase functions deploy stream-set-access
+npx supabase functions deploy generate-stream-upload
 ```
 
 ---
@@ -231,8 +283,8 @@ Run in order. Read-only except step 6.
 ```sql
 -- 1. both migrations recorded
 SELECT version, name FROM supabase_migrations.schema_migrations
-WHERE version IN ('20260906180000','20260906210000');
--- expect 2 rows
+WHERE version IN ('20260906180000','20260906210000','20260907090000','20260907120000');
+-- expect 4 rows
 
 -- 2. the new RPC exists, is SECURITY DEFINER, has a pinned search_path
 SELECT p.proname, p.prosecdef AS security_definer, p.proconfig
@@ -260,6 +312,21 @@ WHERE proname IN ('approve_subscription_request','reject_subscription_request');
 SELECT prosrc LIKE '%approval_status := OLD.approval_status%' AS approval_protected
 FROM pg_proc WHERE proname = 'protect_profile_privileged_fields';
 -- expect true
+
+-- 7. v60: the sweeper is no longer callable by ordinary users
+SELECT grantee, privilege_type FROM information_schema.role_routine_grants
+WHERE routine_name = 'activate_approved_channels';
+-- expect service_role only — `authenticated` must NOT appear
+
+-- 8. v60: the channel guard trigger is installed
+SELECT tgname FROM pg_trigger
+WHERE tgrelid = 'public.channels'::regclass AND NOT tgisinternal;
+-- expect channels_guard_privileged_fields among them
+
+-- 9. v60 section 3 reported which branch it took — check the migration
+--    output for one of:
+--      'replaced the permissive channels UPDATE policy'   (hole was real, now closed)
+--      'permissive channels UPDATE policy not present'    (verify policies by hand)
 ```
 
 Then, from the repo:
