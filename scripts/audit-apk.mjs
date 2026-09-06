@@ -203,7 +203,16 @@ function searchableEntries() {
       const dataStart = lh + 30 + nameLen + extraLen;
       const raw = buf.subarray(dataStart, dataStart + e.compSize);
       const body = method === 8 ? inflateRawSync(raw) : raw;
-      out.push({ name: e.name, text: body.toString('latin1') });
+      // Two views of the same bytes. Hermes stores any string containing a
+      // non-ASCII character as UTF-16, so a latin1 scan cannot see it — a
+      // secret with one accented character or an em dash in it would pass
+      // every leak check below while sitting in plain sight. Stripping the
+      // interleaved NULs gives a second searchable view.
+      const latin1 = body.toString('latin1');
+      const utf16 = body.length > 1
+        ? Buffer.from(body.filter((_, i) => i % 2 === 0)).toString('latin1')
+        : '';
+      out.push({ name: e.name, text: latin1 + ' ' + utf16 });
     } catch {
       // A corrupt or unsupported entry is not worth failing the whole audit
       // over; it just is not searched.
