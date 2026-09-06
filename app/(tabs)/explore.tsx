@@ -292,21 +292,42 @@ export default function ExploreScreen() {
   // served has no video_url, so a detail view would be a dead player. Ask for
   // the account here instead, where the intent is obvious and the prompt can
   // say what it unlocks.
-  const handleSelect = useCallback((item: ChannelPost) => {
+  const handleSelect = useCallback(async (item: ChannelPost) => {
+    // v63: a guest watches FREE content without an account. Only Premium asks
+    // for one, and it asks for a subscription in the same breath — being told
+    // to sign in, and only then that you also have to pay, is the worse of the
+    // two orderings.
     if (!user?.id) {
-      Alert.alert(
-        'Sign in to watch',
-        item.access_level === 'premium'
-          ? 'Create a free account to watch. This title is part of Cloudlynk Premium.'
-          : 'Create a free account to watch this. It only takes a minute, and you get 15 GB of storage too.',
-        [
-          { text: 'Not now', style: 'cancel' },
-          { text: 'Sign in', onPress: () => router.push('/(auth)/login') },
-          { text: 'Sign up free', onPress: () => router.push('/(auth)/signup') },
-        ],
-      );
+      if (item.access_level === 'premium') {
+        Alert.alert(
+          'Premium title',
+          'This one is part of Cloudlynk Premium. Create an account and subscribe to watch it — everything marked Free plays without an account.',
+          [
+            { text: 'Continue as guest', style: 'cancel' },
+            { text: 'Sign in', onPress: () => router.push('/(auth)/login') },
+            { text: 'Sign up free', onPress: () => router.push('/(auth)/signup') },
+          ],
+        );
+        return;
+      }
+
+      // Free. The guest's own row has no video_url — anon is not granted that
+      // column, because a grant cannot be limited to free rows and would leak
+      // every premium UID too. free_post_media (v63) is the row-filtered way
+      // in, and it can only ever return free posts.
+      try {
+        const media = await PostService.getFreeMedia(item.id);
+        if (!media?.video_url && !media?.media_url) {
+          Alert.alert('Not available', "This one can't be played right now.");
+          return;
+        }
+        setSelected({ ...item, ...media } as ChannelPost);
+      } catch {
+        Alert.alert('Not available', 'Could not load this video. Check your connection and try again.');
+      }
       return;
     }
+
     setSelected(item);
     PostService.recordView(item.id);
   }, [user?.id, router]);

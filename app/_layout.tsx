@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -22,6 +22,9 @@ export default function RootLayout() {
   const { session, profile, profileChecked, loading } = useAuth();
   const { isBlocked, country, loading: geoLoading } = useGeoCheck();
   const segments = useSegments();
+  // Guards the one-shot cold-start redirect below. A ref, not state: flipping
+  // it must not trigger another render of the routing effect.
+  const didInitialGuestRoute = useRef(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -44,9 +47,27 @@ export default function RootLayout() {
       // Screens that genuinely need an account gate themselves rather than
       // being gated here, because "needs an account" is per-action now
       // (watching, uploading, subscribing) rather than per-app.
-      if (!inAuthGroup && !inTabsGroup) router.replace('/(tabs)/explore');
+      // The redirect has to fire even when the guest is ALREADY inside the
+      // tabs group, which is the case on a cold start: expo-router resolves
+      // '/(tabs)' against the index route file — app/(tabs)/index.tsx, the
+      // Cloud tab — before any of this runs, and `initialRouteName` on the
+      // Tabs layout does not override a direct index match. Guarding on
+      // !inTabsGroup therefore skipped the redirect entirely and the app
+      // opened on Cloud.
+      //
+      // One-shot, so this only steers the FIRST routing decision. Without the
+      // ref, a guest tapping the Cloud tab would be bounced straight back to
+      // Explore and the other tabs would be unreachable.
+      if (!inAuthGroup && !didInitialGuestRoute.current) {
+        didInitialGuestRoute.current = true;
+        router.replace('/(tabs)/explore');
+      }
       return;
     }
+
+    // Re-arm, so signing out later lands back on Explore rather than wherever
+    // the previous session happened to leave off.
+    didInitialGuestRoute.current = false;
 
     // Wait for the (possibly still in-flight) profile fetch before deciding
     // whether this account needs to complete its profile — deciding off a

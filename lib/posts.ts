@@ -130,6 +130,34 @@ export const PostService = {
    * Posts come back with video_url undefined. That is the point: the UI shows
    * the card, and tapping it asks for a sign-in.
    */
+  /**
+   * Media identifiers for a FREE post, for a viewer who may be signed out.
+   *
+   * Reads the `free_post_media` view (v63) rather than channel_posts. anon has
+   * no grant on channel_posts.video_url and deliberately never will: a column
+   * grant applies across every row, so granting it would hand out the
+   * Cloudflare UID of every PREMIUM post too. The view filters by row, which
+   * is the capability a grant does not have, and cannot return a premium row
+   * by construction.
+   *
+   * Returns null when the post is not free, not approved, or not in a public
+   * active channel — the caller should treat that as "not playable" rather
+   * than an error, since it is also what a premium post looks like from here.
+   */
+  async getFreeMedia(postId: string): Promise<{
+    video_url: string | null;
+    media_url: string | null;
+    media_type: 'image' | 'video' | null;
+  } | null> {
+    const { data, error } = await supabase
+      .from('free_post_media')
+      .select('video_url, media_url, media_type')
+      .eq('id', postId)
+      .maybeSingle();
+    if (error) throw error;
+    return (data as any) ?? null;
+  },
+
   async getGuestExplorePosts(
     filter?: 'all' | 'popular' | 'most_watched' | 'latest' | 'most_searched',
   ): Promise<GuestChannelPost[]> {
