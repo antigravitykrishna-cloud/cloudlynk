@@ -20,7 +20,7 @@
  */
 
 import { readFileSync, existsSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
+import { inflateRawSync } from 'node:zlib';
 
 const file = process.argv[2];
 if (!file || !existsSync(file)) {
@@ -86,10 +86,28 @@ if (magic !== -1) {
   rdns = derRdns(buf.subarray(start, magic));
   sigScheme = 'APK Signing Block (v2/v3)';
 } else {
-  // AAB / v1: the certificate lives in META-INF as a PKCS#7 blob. Scanning the
-  // whole file is fine — a DER RDN sequence is distinctive enough.
-  rdns = derRdns(buf);
-  if (rdns.length) sigScheme = 'JAR signature (v1)';
+  // AAB / v1: the certificate is a PKCS#7 blob in META-INF/*.RSA|DSA|EC, and in
+  // an AAB that entry is DEFLATED — scanning the raw file finds nothing and
+  // reports an unsigned bundle that is in fact signed. Inflate it first.
+  for (const e of zipEntries(buf)) {
+    if (!/^META-INF\/.*\.(RSA|DSA|EC)$/i.test(e.name)) continue;
+    try {
+      const lh = e.localOff;
+      if (buf.readUInt32LE(lh) !== 0x04034b50) continue;
+      const method = buf.readUInt16LE(lh + 8);
+      const nameLen = buf.readUInt16LE(lh + 26);
+      const extraLen = buf.readUInt16LE(lh + 28);
+      const start = lh + 30 + nameLen + extraLen;
+      const raw = buf.subarray(start, start + e.compSize);
+      rdns = derRdns(method === 8 ? inflateRawSync(raw) : raw);
+      if (rdns.length) { sigScheme = `JAR signature (v1) — ${e.name}`; break; }
+    } catch { /* try the next candidate */ }
+  }
+  // Fall back to the raw scan for a stored (uncompressed) signature.
+  if (!rdns.length) {
+    rdns = derRdns(buf);
+    if (rdns.length) sigScheme = 'JAR signature (v1)';
+  }
 }
 
 const uniq = [...new Map(rdns.map(([k, v]) => [`${k}=${v}`, [k, v]])).values()];
@@ -125,9 +143,6 @@ function stringsUtf16(b) {
 }
 
 const hay = buf.toString('latin1');
-const pkgHit = hay.includes(EXPECTED.packageName)
-  || stringsUtf16(buf).some(s => s.includes(EXPECTED.packageName));
-check('Package name', pkgHit, EXPECTED.packageName);
 
 // ── entry index, so a finding can say WHERE it is ────────────────────────
 //
@@ -162,6 +177,43 @@ function zipEntries(b) {
 
 const entries = zipEntries(buf);
 
+/**
+ * Inflate the entries worth searching, so content checks work on an AAB.
+ *
+ * An APK stores its JS bundle and native libs uncompressed, so scanning the
+ * raw file happened to work. An AAB deflates everything — which made the first
+ * AAB audit report "no Supabase URL found" and "package name FAIL" on a bundle
+ * that contained both, and match "1TB" inside a debug-symbols file. A checker
+ * that is wrong on the artifact you actually upload to Play is worse than none.
+ *
+ * Debug-symbol entries are skipped deliberately: BUNDLE-METADATA/...debugsymbols
+ * holds compiler symbol names, and matching product strings against them is
+ * pure noise.
+ */
+function searchableEntries() {
+  const out = [];
+  for (const e of entries) {
+    if (/debugsymbols|\.sym$/i.test(e.name)) continue;
+    try {
+      const lh = e.localOff;
+      if (buf.readUInt32LE(lh) !== 0x04034b50) continue;
+      const method = buf.readUInt16LE(lh + 8);
+      const nameLen = buf.readUInt16LE(lh + 26);
+      const extraLen = buf.readUInt16LE(lh + 28);
+      const dataStart = lh + 30 + nameLen + extraLen;
+      const raw = buf.subarray(dataStart, dataStart + e.compSize);
+      const body = method === 8 ? inflateRawSync(raw) : raw;
+      out.push({ name: e.name, text: body.toString('latin1') });
+    } catch {
+      // A corrupt or unsupported entry is not worth failing the whole audit
+      // over; it just is not searched.
+    }
+  }
+  return out;
+}
+
+const searchable = isAab ? searchableEntries() : [];
+
 /** Which zip entries a byte offset falls inside. Approximate but sufficient. */
 function entryAt(offset) {
   let best = null;
@@ -183,7 +235,11 @@ const CHECKS = [
   ['No Cloudflare API token',   /CLOUDFLARE_STREAM_API_TOKEN|CLOUDFLARE_R2_SECRET/,           'fail'],
   ['No dev-client',             /expo\/modules\/devlauncher|DevLauncherController/,           'fail'],
   ['No UPI payment flow',       /upi:\/\/pay/,                                                'fail'],
-  ['No 2TB/1TB storage claim',  /\b[12]\s?TB\b/,                                              'fail'],
+  // Text only, via the 4th element. Applied to dex this matches raw bytecode
+  // that happens to spell "1TB" — it fired on five separate dex files in a
+  // bundle that makes no storage claim anywhere. A user-visible claim can only
+  // live in the JS bundle or in resources, so look only there.
+  ['No 2TB/1TB storage claim',  /\b[12]\s?TB\b/,                        'fail', /\.(bundle|json|xml|arsc)$|assets\//],
   ['No Streamly identity',      /streamly/i,                                                  'fail'],
   // Warnings: both fire on things outside the app's own code. React Native
   // ships localhost strings in every release bundle (dev-server paths that are
@@ -192,11 +248,37 @@ const CHECKS = [
   ['No Jollify identity',       /jollify/i,                                                   'warn'],
   ['No localhost endpoints',    /http:\/\/localhost|127\.0\.0\.1:\d|10\.0\.2\.2/,             'warn'],
 ];
-for (const [name, re, severity] of CHECKS) {
-  const m = hay.match(re);
+/**
+ * `scope`, when given, restricts the search to entries whose name matches it.
+ * Some checks are only meaningful against text: searching compiled dex for a
+ * product string matches bytecode by coincidence and reports a defect that
+ * does not exist.
+ */
+function findInArtifact(re, scope) {
+  const pool = isAab ? searchable : searchableAll();
+  for (const e of pool) {
+    if (scope && !scope.test(e.name)) continue;
+    const m = e.text.match(re);
+    if (m) return { text: m[0], where: e.name };
+  }
+  return null;
+}
+
+// An APK stores much of its content uncompressed, so a raw scan worked — but
+// not for dex, where it missed expo-dev-client entirely and produced a
+// confident "absent". Inflate both formats the same way.
+let _all = null;
+function searchableAll() {
+  if (_all) return _all;
+  _all = searchableEntries();
+  return _all;
+}
+
+for (const [name, re, severity, scope] of CHECKS) {
+  const m = findInArtifact(re, scope);
   if (!m) { check(name, true, 'absent'); continue; }
-  const where = entryAt(m.index);
-  const detail = `"${String(m[0]).slice(0, 30)}" in ${where}`;
+  const where = m.where;
+  const detail = `"${String(m.text).slice(0, 30)}" in ${where}`;
   if (severity === 'warn') {
     results.push({ name, pass: null, detail });
     console.log(`  [WARN] ${name.padEnd(34)} ${detail}`);
@@ -209,8 +291,20 @@ for (const [name, re, severity] of CHECKS) {
 // compiled into the bundle must be the production project. A build pointed at
 // a branch database looks completely normal until the client's data goes
 // somewhere nobody is watching.
+// Package name: checked here rather than earlier, because on an AAB it lives
+// in a protobuf manifest and a compressed resource table, so it needs the
+// inflated view that only exists by this point.
+const pkgHit = isAab
+  ? searchable.some(e => e.text.includes(EXPECTED.packageName))
+  : (hay.includes(EXPECTED.packageName) || stringsUtf16(buf).some(x => x.includes(EXPECTED.packageName)));
+check('Package name', pkgHit, EXPECTED.packageName);
+
 const PROD_REF = 'wdtwjiixuueqejfraaod';
-const urls = [...new Set((hay.match(/https:\/\/[a-z0-9]{20}\.supabase\.co/g) ?? []))];
+const urlRe = /https:\/\/[a-z0-9]{20}\.supabase\.co/g;
+const urls = [...new Set(
+  isAab ? searchable.flatMap(e => e.text.match(urlRe) ?? [])
+        : (hay.match(urlRe) ?? [])
+)];
 check(
   'Supabase URL is production',
   urls.length === 1 && urls[0].includes(PROD_REF),
