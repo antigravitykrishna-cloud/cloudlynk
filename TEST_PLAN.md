@@ -1,5 +1,22 @@
 # Streamly Test Plan
 
+> **Stale as of 2026-09-08 — read before following.**
+>
+> This plan was written for the pre-rebrand app. Several steps describe things
+> that no longer exist:
+>
+> - `PaywallModal` and the "You've used your free 30 min" screen were removed.
+>   `hooks/useUsageTimer.ts` still returns a `showPaywall` flag, but nothing
+>   renders it. Verified against the shipped APK: none of those strings are in
+>   the binary.
+> - The three-tier Basic / Standard $4.99 / Premium $12.99 model is gone. There
+>   is one product, `cloudlynk_premium`, with four base plans at
+>   ₹199 / ₹259 / ₹599 / ₹999. See DEPLOY.md §0.2.
+> - The app is Cloudlynk, not Streamly.
+>
+> Steps covering playback, upload, channels and admin are still valid.
+
+
 This document outlines the rigorous end-to-end testing required before submitting the EAS production build to the Play Store.
 
 ## Prerequisites

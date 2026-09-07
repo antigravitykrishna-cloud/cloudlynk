@@ -29,16 +29,48 @@ The latest migration adds the `username` column and defensively normalizes the `
    You should see `username` listed as `text` (nullable) and the constraint enforcing `('free','standard','premium')`.
 
 ### 0.2 Create the IAP products in Play Console
-The mobile app calls `streamly_standard_monthly` and `streamly_premium_monthly`. They must exist in the Play Console **before** the AAB is submitted or `requestPurchase` will return an error.
 
-1. **Play Console** → your app → **Monetize** → **Products** → **In-app products** → **Subscriptions**.
-2. Create two subscriptions:
-   - **Product ID:** `streamly_standard_monthly` — **Price:** $4.99 USD/month
-   - **Product ID:** `streamly_premium_monthly` — **Price:** $12.99 USD/month
-3. Set the billing period to **1 month**, auto-renewing.
-4. Activate both.
+> **Corrected 2026-09-08.** This section previously described
+> `streamly_standard_monthly` and `streamly_premium_monthly` at $4.99 and
+> $12.99 — the old two-tier USD model from before the Cloudlynk rebrand.
+> Following it would have created products the app never asks for, and every
+> purchase would have failed with "product not found" *after* the Console
+> setup was done. The values below are read straight from
+> `lib/services/iap.ts`, which is what the app actually queries.
 
-> **Note on pricing for India:** Play Console will localize prices automatically based on the buyer's country. The $4.99/$12.99 figures are the US baseline. For India, expect ~₹399/₹999-equivalent at current FX.
+**Play Console → Monetize → Subscriptions → Create subscription.**
+
+There is **one** subscription product with **four base plans**, not four
+products. The app fetches `cloudlynk_premium` and then picks an offer by
+`basePlanId`.
+
+| Field | Value |
+|---|---|
+| Product ID | `cloudlynk_premium` |
+| Name | Cloudlynk Premium |
+
+Then add four base plans on that product:
+
+| Base plan ID | Billing period | Price | Type |
+|---|---|---|---|
+| `silver-7d` | 1 week | ₹199 | Auto-renewing |
+| `gold-1m` | 1 month | ₹259 | Auto-renewing |
+| `platinum-6m` | 6 months | ₹599 | Auto-renewing |
+| `diamond-1y` | 1 year | ₹999 | Auto-renewing |
+
+**Activate every base plan.** One left in draft is invisible to the app, and
+selecting it at checkout shows *"that base plan isn't live in Play Console
+yet"* — the message comes from `iap.ts` when the offer lookup returns nothing.
+
+The IDs must match exactly. They are compared as strings; a typo is not a
+warning, it is a purchase that cannot complete.
+
+Prices are set in INR because that is the market. Play converts for buyers in
+other countries automatically.
+
+**Subscriptions cannot be created until an app bundle has been uploaded** —
+the Monetize section is empty on a new app. So the order is: upload the AAB to
+Internal testing first, then come back and do this.
 
 ### 0.3 Generate the Play Store service account key
 This is the `google-play-key.json` referenced in `eas.json`. You need it to automate submissions via `eas submit`.
