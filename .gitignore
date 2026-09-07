@@ -74,3 +74,10 @@ backups/
 apk/
 *.apk
 *.aab
+
+# The legacy store-screenshots dump is 40+ multi-MB captures of the old
+# Streamly UI and stays ignored. v071 holds the current Play Store assets —
+# icon, feature graphic and the screenshots actually being uploaded — which
+# are deliverables and belong in the repo.
+!store-screenshots/v071/
+!store-screenshots/v071/**

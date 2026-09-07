@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="500" viewBox="0 0 1024 500">
+  <defs>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2E7DFF"/><stop offset="1" stop-color="#00D4FF"/>
+    </linearGradient>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0B1220"/><stop offset="1" stop-color="#16233C"/>
+    </linearGradient>
+    <linearGradient id="wordmark" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#BBD6FF"/>
+    </linearGradient>
+    <!-- Radial, not a flat-opacity disc: a constant-alpha circle draws a hard
+         rim against the navy and reads as a drawn shape rather than light. -->
+    <radialGradient id="glowBlue">
+      <stop offset="0" stop-color="#2E7DFF" stop-opacity="0.22"/>
+      <stop offset="0.6" stop-color="#2E7DFF" stop-opacity="0.07"/>
+      <stop offset="1" stop-color="#2E7DFF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowCyan">
+      <stop offset="0" stop-color="#00D4FF" stop-opacity="0.16"/>
+      <stop offset="0.6" stop-color="#00D4FF" stop-opacity="0.05"/>
+      <stop offset="1" stop-color="#00D4FF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1024" height="500" fill="url(#bg)"/>
+
+  <!-- Soft brand glow behind the mark. Play renders this graphic at wildly
+       different sizes; a flat navy field looks dead at thumbnail scale. -->
+  <circle cx="215" cy="250" r="300" fill="url(#glowBlue)"/>
+  <circle cx="890" cy="110" r="260" fill="url(#glowCyan)"/>
+
+  <!-- Logo, same geometry as the app and the icon, scaled from its 100-unit box. -->
+  <g transform="translate(96,140) scale(2.2)">
+    <path d="M26 72 A16 16 0 0 1 26 44 A19 19 0 0 1 60 34 A21 21 0 0 1 74 72 Z" fill="url(#brand)"/>
+    <path d="M45 46.5 L61 55 L45 63.5 Z" fill="#0B1220"/>
+  </g>
+
+  <text x="352" y="196" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+        font-size="78" font-weight="800" letter-spacing="-2" fill="url(#wordmark)">Cloudlynk</text>
+
+  <text x="356" y="256" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+        font-size="34" font-weight="600" fill="#9FB0C9">Store. Stream. Share.</text>
+
+  <!-- Three claims, each one true of the shipped app: the storage figure, the
+       subscription tier, and the channels feature. Nothing here promises
+       something the build does not do. -->
+  <g font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-size="27" font-weight="600" fill="#E6EDF7">
+    <circle cx="368" cy="331" r="7" fill="#00D4FF"/><text x="392" y="340">15 GB free cloud storage</text>
+    <circle cx="368" cy="381" r="7" fill="#00D4FF"/><text x="392" y="390">Premium movies &amp; web series</text>
+    <circle cx="368" cy="431" r="7" fill="#00D4FF"/><text x="392" y="440">Public &amp; private channels</text>
+  </g>
+</svg>
