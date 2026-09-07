@@ -90,7 +90,7 @@ export default function NotificationsScreen() {
         >
           {notifications.length === 0 ? (
             <View style={styles.empty}>
-              <Text style={{ fontSize: 48, marginBottom: Spacing.md }}>🔔</Text>
+              <Icon name="bell" size={44} color={Colors.textMuted} />
               <Text style={styles.emptyTitle}>All caught up</Text>
               <Text style={styles.emptyDesc}>
                 You'll be notified here when your channels and posts are reviewed.

@@ -322,7 +322,7 @@ export default function AddContentScreen() {
 
                 {entries.length === 0 && (
                   <View style={styles.empty}>
-                    <Text style={styles.emptyIcon}>{'🎬'}</Text>
+                    <Icon name="film" size={16} color={Colors.textMuted} />
                     <Text style={styles.emptyTxt}>No videos yet</Text>
                     <Text style={styles.emptySubTxt}>
                       {'Tap "Add Videos" to pick one or more files.\nFor a series, pick all episodes together.'}
@@ -363,14 +363,14 @@ export default function AddContentScreen() {
                         style={[styles.typeChip, entry.accessLevel === 'free' && styles.typeChipActive]}
                         onPress={() => updateEntry(idx, { accessLevel: 'free' })}
                       >
-                        <Text style={{ fontSize: 14 }}>{'🔓'}</Text>
+                        <Icon name="lock" size={16} color={Colors.success} />
                         <Text style={[styles.typeChipTxt, entry.accessLevel === 'free' && { color: Colors.brand }]}>Free</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={[styles.typeChip, entry.accessLevel === 'premium' && styles.typeChipActive]}
                         onPress={() => updateEntry(idx, { accessLevel: 'premium' })}
                       >
-                        <Text style={{ fontSize: 14 }}>{'🔒'}</Text>
+                        <Icon name="lock" size={16} color={Colors.textMuted} />
                         <Text style={[styles.typeChipTxt, entry.accessLevel === 'premium' && { color: Colors.brand }]}>Premium</Text>
                       </TouchableOpacity>
                     </View>
@@ -411,7 +411,7 @@ export default function AddContentScreen() {
                           {thumbPickingFor === idx
                             ? <ActivityIndicator color={Colors.brand} />
                             : <>
-                                <Text style={{ fontSize: 24, marginBottom: 4 }}>{'🖼️'}</Text>
+                                <Icon name="image" size={24} color={Colors.textMuted} />
                                 <Text style={styles.thumbEmptyTxt}>Add Thumbnail</Text>
                               </>}
                         </View>

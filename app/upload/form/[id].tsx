@@ -155,7 +155,7 @@ export default function FormScreen() {
           <ScrollView style={styles.body} keyboardShouldPersistTaps="handled" keyboardDismissMode="none">
             {/* Video info */}
             <View style={styles.videoInfo}>
-              <Text style={styles.videoIcon}>{'🎬'}</Text>
+              <Icon name="film" size={16} color={Colors.textMuted} />
               <View style={styles.videoMeta}>
                 <Text style={styles.videoName} numberOfLines={1}>{item.video.name}</Text>
                 <Text style={styles.videoSize}>{(item.video.size / (1024 * 1024)).toFixed(0)} MB</Text>
@@ -184,7 +184,7 @@ export default function FormScreen() {
                 <Image source={{ uri: thumbnailUri }} style={styles.thumbPreview} resizeMode="cover" />
               ) : (
                 <View style={styles.thumbEmpty}>
-                  <Text style={{ fontSize: 28, marginBottom: 6 }}>{'🖼️'}</Text>
+                  <Icon name="image" size={16} color={Colors.textMuted} />
                   <Text style={styles.thumbEmptyTxt}>Add Thumbnail</Text>
                 </View>
               )}

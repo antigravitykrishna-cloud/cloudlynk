@@ -14,6 +14,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useGeoCheck } from '../hooks/useGeoCheck';
 import { ComplianceService } from '../lib/compliance';
 import { Colors } from '../constants/theme';
+import { Icon } from '../components/Icon';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -105,7 +106,7 @@ export default function RootLayout() {
       <GestureHandlerRootView style={{ flex: 1, backgroundColor: Colors.bg }}>
         <StatusBar style="light" />
         <View style={geoStyles.container}>
-          <Text style={geoStyles.icon}>🚫</Text>
+          <Icon name="lock" size={16} color={Colors.danger} />
           <Text style={geoStyles.title}>Cloudlynk is not available in your region</Text>
           <Text style={geoStyles.subtitle}>
             This app is not available for download or use in your country.

@@ -7,6 +7,7 @@ import { Colors, Radius, FontSize, FontWeight } from '../constants/theme';
 import { useAuth } from '../hooks/useAuth';
 import { useSubscriptionPlans } from '../lib/subscriptionService';
 import { getIapService } from '../lib/services/iap';
+import { Icon } from '../components/Icon';
 
 // v52: Premium no longer sells storage — every account (free or premium)
 // gets the same 15GB. Premium instead unlocks movies/series/shorts the
@@ -66,7 +67,7 @@ export default function PremiumScreen() {
           <View style={{ width: 80 }} />
         </View>
         <View style={styles.pendingContainer}>
-          <Text style={styles.pendingIcon}>{'✅'}</Text>
+          <Icon name="check-circle" size={16} color={Colors.success} />
           <Text style={styles.pendingTitle}>{"You're on Premium!"}</Text>
           <Text style={styles.pendingText}>
             You now have full access to Premium movies, series, and shorts across Cloudlynk.

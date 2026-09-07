@@ -284,7 +284,7 @@ const DetailModal = memo(({ selected, onClose, userId, channelId }: {
         <View style={styles.detailHero}>
           {thumb
             ? <Image source={{ uri: thumb }} style={styles.detailHeroImg} resizeMode="cover" />
-            : <View style={[styles.detailHeroImg, styles.detailHeroPlaceholder]}><Text style={{ fontSize: 64 }}>{'🎬'}</Text></View>
+            : <View style={[styles.detailHeroImg, styles.detailHeroPlaceholder]}><Icon name="film" size={64} color={Colors.textMuted} /></View>
           }
           <LinearGradient colors={['transparent', 'rgba(0,0,0,0.95)']} style={StyleSheet.absoluteFill} />
           <TouchableOpacity style={[styles.detailClose, { top: insets.top + 12, right: 62 }]} onPress={handleMore}>
@@ -505,7 +505,7 @@ const CreateModal = memo(({ visible, onClose, onSubmit, channelId }: {
                       <Text style={styles.videoPickerTxt}>Selecting…</Text>
                     </>
                   : <>
-                      <Text style={{ fontSize: 24, marginBottom: 6 }}>{videoMeta ? '🎬' : '📁'}</Text>
+                      <Icon name={videoMeta ? 'film' : 'folder'} size={22} color={Colors.textMuted} />
                       <Text style={styles.videoPickerTxt} numberOfLines={1}>
                         {videoMeta ? videoMeta.name : 'Pick Video File'}
                       </Text>
@@ -609,7 +609,7 @@ const CreateModal = memo(({ visible, onClose, onSubmit, channelId }: {
 
               <View style={styles.reviewNote}>
                 <Text style={styles.reviewNoteTxt}>
-                  {'📋'} All content is reviewed before going live.
+                  All content is reviewed before going live.
                 </Text>
               </View>
               <View style={{ height: 60 }} />
@@ -736,7 +736,7 @@ export default function ChannelDetailScreen() {
           </TouchableOpacity>
 
           <View style={styles.heroBottom}>
-            <Text style={styles.channelLabel}>{'📡'} {channel?.name ?? ''}</Text>
+            <Text style={styles.channelLabel}>{channel?.name ?? ''}</Text>
             {hero ? (
               <>
                 <Text style={styles.heroTitle}>{hero.title}</Text>
@@ -755,7 +755,7 @@ export default function ChannelDetailScreen() {
                     </TouchableOpacity>
                   </View>
                 ) : (
-                  <Text style={styles.heroLockedHint}>{'🔒 Subscribe to play'}</Text>
+                  <Text style={styles.heroLockedHint}>{'Subscribe to play'}</Text>
                 )}
               </>
             ) : (
@@ -787,13 +787,13 @@ export default function ChannelDetailScreen() {
               style={styles.queueBtn}
               onPress={() => router.push({ pathname: '/upload/queue', params: { channelId: id } })}
             >
-              <Text style={styles.queueBtnTxt}>📤 Upload Queue</Text>
+              <Text style={styles.queueBtnTxt}>Upload Queue</Text>
             </TouchableOpacity>
           </View>
         )}
         {isMember && !canUpload && !isAdmin && channel?.owner_id !== user?.id && (
           <View style={styles.lockedBanner}>
-            <Text style={styles.lockedBannerIcon}>🔒</Text>
+            <Icon name="lock" size={16} color={Colors.textMuted} />
             <View style={{ flex: 1 }}>
               <Text style={styles.lockedBannerTitle}>Creator Access Locked</Text>
               <Text style={styles.lockedBannerDesc}>Contact the channel owner or upgrade your plan to submit content.</Text>
@@ -817,7 +817,7 @@ export default function ChannelDetailScreen() {
 
         {!isMember ? (
           <View style={styles.lockedContentCard}>
-            <Text style={styles.lockedContentIcon}>{'🔒'}</Text>
+            <Icon name="lock" size={16} color={Colors.textMuted} />
             <Text style={styles.lockedContentTitle}>Subscribe to view content</Text>
             <Text style={styles.lockedContentDesc}>
               Join this channel to watch its movies, series, and short films.
@@ -832,7 +832,7 @@ export default function ChannelDetailScreen() {
           </View>
         ) : !hasContent ? (
           <View style={styles.emptyState}>
-            <Text style={{ fontSize: 52, marginBottom: 16 }}>{'🎬'}</Text>
+            <Icon name="film" size={52} color={Colors.textMuted} />
             <Text style={styles.emptyTitle}>No content yet</Text>
             <Text style={styles.emptyDesc}>Be the first to add a movie or series to this channel.</Text>
             {canUpload && (

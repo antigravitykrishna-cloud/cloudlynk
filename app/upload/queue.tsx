@@ -12,6 +12,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Colors, Spacing, Radius, FontSize } from '../../constants/theme';
 import { useUploadQueue, QueueItem } from '../../hooks/useUploadQueue';
 import { StreamService, STREAM_MAX_MB } from '../../lib/stream';
+import { Icon } from '../../components/Icon';
 
 export default function QueueScreen() {
   const router = useRouter();
@@ -167,7 +168,7 @@ export default function QueueScreen() {
       <ScrollView style={styles.list} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
         {items.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>{'📁'}</Text>
+            <Icon name="folder" size={16} color={Colors.textMuted} />
             <Text style={styles.emptyTitle}>No uploads queued</Text>
             <Text style={styles.emptyDesc}>
               Tap "+ Add" to pick videos from your device. You can queue{' '}

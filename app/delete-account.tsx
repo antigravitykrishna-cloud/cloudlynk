@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../hooks/useAuth';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '../constants/theme';
+import { Icon } from '../components/Icon';
 
 export default function DeleteAccountScreen() {
   const router = useRouter();
@@ -37,7 +38,7 @@ export default function DeleteAccountScreen() {
 
       <View style={styles.content}>
         <View style={styles.warningCard}>
-          <Text style={styles.warningIcon}>⚠️</Text>
+          <Icon name="flag" size={16} color={Colors.warning} />
           <Text style={styles.warningTitle}>This action is permanent</Text>
           <Text style={styles.warningBody}>
             Deleting your account will permanently remove:{"\n\n"}

@@ -177,7 +177,7 @@ export default function NewChannelScreen() {
 
           {/* Video hint */}
           <Text style={styles.videoHint}>
-            {'💡 Once your channel is approved, open it to start uploading movies, series, or short films.'}
+            {'Once your channel is approved, open it to start uploading movies, series, or short films.'}
           </Text>
 
           {/* T&C checkbox */}

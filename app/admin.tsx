@@ -168,10 +168,10 @@ export default function AdminScreen() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.accent} />}>
           {activeTab === 'channels'
             ? pendingChannels.length === 0
-              ? <View style={styles.emptyState}><Text style={{ fontSize: 44, marginBottom: Spacing.md }}>✅</Text><Text style={styles.emptyTitle}>All caught up</Text><Text style={styles.emptyDesc}>No channels waiting.</Text></View>
+              ? <View style={styles.emptyState}><Icon name="check-circle" size={44} color={Colors.success} /><Text style={styles.emptyTitle}>All caught up</Text><Text style={styles.emptyDesc}>No channels waiting.</Text></View>
               : pendingChannels.map(ch => <ChannelCard key={ch.id} ch={ch} />)
             : pendingPosts.length === 0
-              ? <View style={styles.emptyState}><Text style={{ fontSize: 44, marginBottom: Spacing.md }}>✅</Text><Text style={styles.emptyTitle}>All caught up</Text><Text style={styles.emptyDesc}>No posts waiting.</Text></View>
+              ? <View style={styles.emptyState}><Icon name="check-circle" size={44} color={Colors.success} /><Text style={styles.emptyTitle}>All caught up</Text><Text style={styles.emptyDesc}>No posts waiting.</Text></View>
               : pendingPosts.map(post => <PostCard key={post.id} post={post} />)
           }
           <View style={{ height: 32 }} />
