@@ -1,0 +1,5 @@
+-- Applied to production via the Supabase MCP; recorded here so the repo and
+-- the database stay in step. See v73 and v74 comments in the dashboard.
+-- v73: created admin_list_channel_activity + admin_list_pending_content,
+--      which the app called but the database never had.
+-- v74: join_channel and is_user_approved now let an active admin through.

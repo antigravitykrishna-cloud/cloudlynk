@@ -142,7 +142,7 @@ export default function ProfileScreen() {
           <View style={styles.headerActions}>
             <TouchableOpacity
               style={styles.headerActionBtn}
-              onPress={() => showAlert('Edit Profile', 'Edit profile coming soon.')}
+              onPress={() => router.push('/edit-profile')}
               activeOpacity={0.7}
             >
               <Icon name="edit" size={17} color={Colors.text} />

@@ -132,6 +132,7 @@ export default function RootLayout() {
               <Stack.Screen name="admin" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
               <Stack.Screen name="notifications" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
               <Stack.Screen name="create-content" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+              <Stack.Screen name="edit-profile" options={{ animation: 'slide_from_right' }} />
               <Stack.Screen name="delete-account" options={{ animation: 'slide_from_right' }} />
               <Stack.Screen name="refund-policy" options={{ animation: 'slide_from_right' }} />
               <Stack.Screen name="community-guidelines" options={{ animation: 'slide_from_right' }} />
