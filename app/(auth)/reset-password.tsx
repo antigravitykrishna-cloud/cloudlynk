@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '../../constants/theme';
+import { Icon } from '../../components/Icon';
 
 // Step 2 of password recovery — reached from the cloudlynk://reset-password
 // deep link in the email.
@@ -115,7 +116,7 @@ export default function ResetPasswordScreen() {
               onPress={() => setShow(s => !s)}
               activeOpacity={0.7}
             >
-              <Text style={styles.eyeTxt}>{show ? '🙈' : '👁'}</Text>
+              <Icon name={show ? 'eye-off' : 'eye'} size={19} color={Colors.textSecondary} />
             </TouchableOpacity>
           </View>
 

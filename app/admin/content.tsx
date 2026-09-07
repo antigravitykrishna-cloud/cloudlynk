@@ -1,8 +1,6 @@
 import { useState, useCallback } from 'react';
-import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Alert, ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { showAlert } from '../../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
@@ -82,7 +80,7 @@ export default function AdminContentScreen() {
   const toggleAccessLevel = (post: AdminPost) => {
     const next: AccessLevel = post.access_level === 'premium' ? 'free' : 'premium';
     const goingFree = next === 'free';
-    Alert.alert(
+    showAlert(
       goingFree ? 'Make this free?' : 'Make this premium?',
       goingFree
         ? 'Anyone will be able to watch it. This also unlocks the video on Cloudflare so free playback works — if that step fails, nothing is changed.'
@@ -97,7 +95,7 @@ export default function AdminContentScreen() {
               await AdminContentService.setPostAccessLevel(post.id, next);
               setPosts(prev => prev.map(p => (p.id === post.id ? { ...p, access_level: next } : p)));
             } catch (err: any) {
-              Alert.alert('Not changed', err?.message ?? 'Could not change the access level.');
+              showAlert('Not changed', err?.message ?? 'Could not change the access level.');
             } finally {
               setActingId(null);
             }
@@ -114,7 +112,7 @@ export default function AdminContentScreen() {
       await AdminContentService.setPostStatus(post.id, next);
       setPosts(prev => prev.map(p => (p.id === post.id ? { ...p, status: next } : p)));
     } catch (err: any) {
-      Alert.alert('Error', err?.message ?? 'Could not change the status.');
+      showAlert('Error', err?.message ?? 'Could not change the status.');
     } finally {
       setActingId(null);
     }

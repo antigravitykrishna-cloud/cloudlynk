@@ -9,6 +9,7 @@ import { queryClient, asyncStoragePersister } from '../lib/queryClient';
 import { ServiceProvider, createServices } from '../lib/services';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { AgeGate } from '../components/AgeGate';
+import { FeedbackHost } from '../components/Feedback';
 import { useAuth } from '../hooks/useAuth';
 import { useGeoCheck } from '../hooks/useGeoCheck';
 import { ComplianceService } from '../lib/compliance';
@@ -140,6 +141,8 @@ export default function RootLayout() {
                 remove the only age gate in the product. Signed-in accounts
                 already passed that check and are not asked again. */}
             <AgeGate enabled={!session && !loading && !isBlocked} />
+            {/* Last child, so branded dialogs/toasts paint over every screen. */}
+            <FeedbackHost />
           </GestureHandlerRootView>
         </ServiceProvider>
       </PersistQueryClientProvider>

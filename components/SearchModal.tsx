@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import { SearchService, SearchResults, SearchChannel } from '../lib/search';
 import { ChannelPost, PostService } from '../lib/posts';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '../constants/theme';
+import { Icon } from './Icon';
 
 const CARD_W = 120;
 const CARD_H = 170;
@@ -128,7 +129,7 @@ export function SearchModal({ visible, onClose }: Props) {
       <View style={styles.container}>
         <View style={styles.header}>
           <View style={styles.inputWrap}>
-            <Text style={styles.searchIcon}>{'🔍'}</Text>
+            <Icon name="search" size={16} color={Colors.textMuted} />
             <TextInput
               ref={inputRef}
               style={styles.input}

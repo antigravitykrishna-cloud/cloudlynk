@@ -8,6 +8,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { Colors } from '../constants/theme';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
+import { Icon } from '../components/Icon';
 
 interface MyPost {
   id: string;
@@ -135,7 +136,7 @@ export default function MyVideosScreen() {
               disabled={!post.video_url}
             >
               <View style={styles.thumb}>
-                <Text style={{ fontSize: 28 }}>{post.thumbnail_url ? '🎬' : '🎞️'}</Text>
+                <Icon name={post.thumbnail_url ? 'film' : 'video'} size={26} color={Colors.textMuted} />
               </View>
               <View style={styles.cardBody}>
                 <Text style={styles.cardTitle} numberOfLines={2}>{post.title ?? 'Untitled'}</Text>
@@ -171,7 +172,7 @@ export default function MyVideosScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
-  header: { backgroundColor: Colors.brand, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14 },
+  header: { backgroundColor: Colors.surface, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14 },
   backBtn: { width: 80 },
   backTxt: { color: '#ffffff', fontSize: 14, fontWeight: '600' },
   headerTitle: { color: '#ffffff', fontSize: 18, fontWeight: '800', flex: 1, textAlign: 'center' },

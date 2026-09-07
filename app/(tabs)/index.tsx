@@ -1,8 +1,6 @@
 import { CloudlynkLogo } from '../../components/CloudlynkLogo';
-import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, Alert, Share,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Share } from 'react-native';
+import { showAlert } from '../../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'expo-router';
@@ -11,14 +9,15 @@ import { GuestPrompt } from '../../components/GuestPrompt';
 import { useAuth } from '../../hooks/useAuth';
 import { useFiles } from '../../hooks/useFiles';
 import { Colors } from '../../constants/theme';
-import { formatBytes, formatTimeAgo, CATEGORY_ICONS, CATEGORY_DIM } from '../../lib/storage';
+import { formatBytes, formatTimeAgo, CATEGORY_ICONS, CATEGORY_DIM, CATEGORY_COLORS } from '../../lib/storage';
+import { Icon, type IconName } from '../../components/Icon';
 
-const CATEGORIES = [
-  { key: 'all', label: 'All', icon: '📁' },
-  { key: 'photo', label: 'Photos', icon: '🖼️' },
-  { key: 'video', label: 'Videos', icon: '🎬' },
-  { key: 'document', label: 'Docs', icon: '📄' },
-  { key: 'audio', label: 'Audio', icon: '🎵' },
+const CATEGORIES: { key: string; label: string; icon: IconName }[] = [
+  { key: 'all', label: 'All', icon: 'folder' },
+  { key: 'photo', label: 'Photos', icon: 'image' },
+  { key: 'video', label: 'Videos', icon: 'film' },
+  { key: 'document', label: 'Docs', icon: 'document' },
+  { key: 'audio', label: 'Audio', icon: 'music' },
 ];
 
 export default function CloudScreen() {
@@ -48,11 +47,11 @@ export default function CloudScreen() {
   const handleShare = useCallback(async (file: typeof files[0]) => {
     try {
       const url = await createShareableLink(file.storage_path);
-      if (!url) { Alert.alert('Error', 'Could not generate share link.'); return; }
+      if (!url) { showAlert('Error', 'Could not generate share link.'); return; }
       await Share.share({ message: `${file.name}\n${url}`, url });
     } catch (err) {
       if ((err as Error).message !== 'User did not share') {
-        Alert.alert('Share Error', (err as Error).message);
+        showAlert('Share Error', (err as Error).message);
       }
     }
   }, [createShareableLink]);
@@ -60,22 +59,22 @@ export default function CloudScreen() {
   const handleCopyLink = useCallback(async (file: typeof files[0]) => {
     try {
       const url = await createShareableLink(file.storage_path);
-      if (!url) { Alert.alert('Error', 'Could not generate link.'); return; }
+      if (!url) { showAlert('Error', 'Could not generate link.'); return; }
       await Clipboard.setStringAsync(url);
-      Alert.alert('Copied', 'Link copied to clipboard.');
+      showAlert('Copied', 'Link copied to clipboard.');
     } catch (err) {
-      Alert.alert('Error', (err as Error).message);
+      showAlert('Error', (err as Error).message);
     }
   }, [createShareableLink]);
 
   const handleFileOptions = useCallback((file: typeof files[0]) => {
-    Alert.alert(file.name, `${formatBytes(file.size)} · ${formatTimeAgo(file.created_at)}`, [
+    showAlert(file.name, `${formatBytes(file.size)} · ${formatTimeAgo(file.created_at)}`, [
       { text: 'Share', onPress: () => handleShare(file) },
       { text: 'Copy Link', onPress: () => handleCopyLink(file) },
       {
         text: 'Delete', style: 'destructive',
         onPress: () => {
-          Alert.alert('Delete File', `Are you sure you want to delete "${file.name}"?`, [
+          showAlert('Delete File', `Are you sure you want to delete "${file.name}"?`, [
             { text: 'Cancel', style: 'cancel' },
             { text: 'Delete', style: 'destructive', onPress: () => deleteFile(file.id, file.storage_path, file.size) },
           ]);
@@ -91,7 +90,7 @@ export default function CloudScreen() {
   if (!user?.id) {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
-        <GuestPrompt icon="☁️" title="Your 15 GB cloud drive" message="Back up photos, videos and documents, and stream them from anywhere. Every account gets 15 GB, free." />
+        <GuestPrompt icon="cloud" title="Your 15 GB cloud drive" message="Back up photos, videos and documents, and stream them from anywhere. Every account gets 15 GB, free." />
       </SafeAreaView>
     );
   }
@@ -108,13 +107,19 @@ export default function CloudScreen() {
         {files.length === 0 ? (
           <View style={styles.emptyState}>
             <CloudlynkLogo size={48} />
-            <Text style={styles.emptyText}>No Record Found</Text>
+            {/* "No Record Found" is what a database says, not what you tell
+                someone opening their empty drive. An empty state has one job:
+                say what goes here and how to put it there. */}
+            <Text style={styles.emptyText}>Nothing here yet</Text>
+            <Text style={styles.emptyHint}>
+              Tap + to upload photos, videos and documents. You have 15 GB free.
+            </Text>
           </View>
         ) : (
           <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
             {/* Search bar */}
             <View style={styles.searchBar}>
-              <Text style={{ fontSize: 16 }}>{'🔍'}</Text>
+              <Icon name="search" size={16} color={Colors.textMuted} />
               <TextInput
                 style={styles.searchInput}
                 placeholder="Search files..."
@@ -137,7 +142,7 @@ export default function CloudScreen() {
                   style={[styles.categoryChip, activeCategory === cat.key && styles.categoryChipActive]}
                   onPress={() => setActiveCategory(cat.key)}
                 >
-                  <Text style={{ fontSize: 14 }}>{cat.icon}</Text>
+                  <Icon name={cat.icon} size={15} color={activeCategory === cat.key ? Colors.brandBlue : Colors.textMuted} />
                   <Text style={[styles.categoryLabel, activeCategory === cat.key && styles.categoryLabelActive]}>
                     {cat.label}
                   </Text>
@@ -150,7 +155,7 @@ export default function CloudScreen() {
               <TouchableOpacity key={file.id} style={styles.fileRow} activeOpacity={0.7}
                 onPress={() => handleFileOptions(file)}>
                 <View style={[styles.fileIcon, { backgroundColor: CATEGORY_DIM[file.category] ?? Colors.card }]}>
-                  <Text style={{ fontSize: 22 }}>{CATEGORY_ICONS[file.category] ?? '📦'}</Text>
+                  <Icon name={(CATEGORY_ICONS[file.category] ?? 'package') as IconName} size={20} color={CATEGORY_COLORS[file.category] ?? Colors.textMuted} />
                 </View>
                 <View style={styles.fileInfo}>
                   <Text style={styles.fileName} numberOfLines={1}>{file.name}</Text>
@@ -166,7 +171,7 @@ export default function CloudScreen() {
 
             {filteredFiles.length === 0 && (
               <View style={styles.emptyState}>
-                <Text style={{ fontSize: 48, marginBottom: 12 }}>{'📭'}</Text>
+                <Icon name="folder" size={44} color={Colors.textMuted} />
                 <Text style={styles.emptyText}>{`No files matching "${search}"`}</Text>
               </View>
             )}
@@ -176,7 +181,7 @@ export default function CloudScreen() {
         {/* Active transfers banner */}
         {activeTransfers.length > 0 && (
           <View style={styles.transferBanner}>
-            <Text style={{ fontSize: 14 }}>{'📤'}</Text>
+            <Icon name="upload" size={15} color={Colors.text} />
             <Text style={styles.transferBannerText}>
               {activeTransfers.length} upload{activeTransfers.length > 1 ? 's' : ''} in progress
             </Text>
@@ -191,7 +196,7 @@ export default function CloudScreen() {
       <TouchableOpacity
         style={styles.fab}
         onPress={() => {
-          Alert.alert('Upload', 'What would you like to upload?', [
+          showAlert('Upload', 'What would you like to upload?', [
             { text: 'Photo / Video', onPress: () => uploadImage() },
             { text: 'Document', onPress: () => uploadDocument() },
             { text: 'Cancel', style: 'cancel' },
@@ -214,6 +219,7 @@ const styles = StyleSheet.create({
   body: { flex: 1, backgroundColor: Colors.bg },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80, paddingHorizontal: 20 },
   emptyText: { fontSize: 16, color: Colors.text, fontWeight: '600', marginTop: 16 },
+  emptyHint: { fontSize: 14, color: Colors.textSecondary, marginTop: 8, textAlign: 'center', paddingHorizontal: 40, lineHeight: 20 },
   searchBar: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     marginHorizontal: 16, marginTop: 16, marginBottom: 12,

@@ -1,14 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
+import { showAlert } from '../../../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '../../../hooks/useAuth';
@@ -38,7 +30,7 @@ export default function ManageChannelScreen() {
       .single();
 
     if (error) {
-      Alert.alert('Error', 'Failed to load channel');
+      showAlert('Error', 'Failed to load channel');
       router.replace('/(tabs)/channels');
       return;
     }
@@ -84,14 +76,14 @@ export default function ManageChannelScreen() {
   useEffect(() => {
     if (profile === null) return;
     if (channel && user && channel.owner_id !== user.id && !isAdmin) {
-      Alert.alert('Access Denied', 'You can only manage your own channels.');
+      showAlert('Access Denied', 'You can only manage your own channels.');
       router.replace('/(tabs)/channels');
     }
   }, [channel, user, isAdmin, profile]);
 
   const handleSave = async () => {
     if (!editName.trim()) {
-      Alert.alert('Error', 'Channel name cannot be empty');
+      showAlert('Error', 'Channel name cannot be empty');
       return;
     }
 
@@ -104,16 +96,16 @@ export default function ManageChannelScreen() {
       );
       setChannel(updated);
       setEditing(false);
-      Alert.alert('Success', 'Channel updated successfully');
+      showAlert('Success', 'Channel updated successfully');
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to update channel');
+      showAlert('Error', err.message || 'Failed to update channel');
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = () => {
-    Alert.alert(
+    showAlert(
       'Delete Channel',
       'Are you sure you want to delete this channel? This action cannot be undone.',
       [
@@ -124,10 +116,10 @@ export default function ManageChannelScreen() {
           onPress: async () => {
             try {
               await ChannelService.deleteChannel(id as string);
-              Alert.alert('Deleted', 'Channel has been deleted.');
+              showAlert('Deleted', 'Channel has been deleted.');
               router.replace('/(tabs)/channels');
             } catch (err: any) {
-              Alert.alert('Error', err.message || 'Failed to delete channel');
+              showAlert('Error', err.message || 'Failed to delete channel');
             }
           },
         },
@@ -136,7 +128,7 @@ export default function ManageChannelScreen() {
   };
 
   const handleDeletePost = (postId: string, postTitle: string | null) => {
-    Alert.alert(
+    showAlert(
       'Delete Post',
       `Are you sure you want to delete "${postTitle || 'Untitled'}"?`,
       [
@@ -154,7 +146,7 @@ export default function ManageChannelScreen() {
               if (error) throw error;
               setPosts((prev) => prev.filter((p) => p.id !== postId));
             } catch (err: any) {
-              Alert.alert('Error', err.message || 'Failed to delete post');
+              showAlert('Error', err.message || 'Failed to delete post');
             }
           },
         },

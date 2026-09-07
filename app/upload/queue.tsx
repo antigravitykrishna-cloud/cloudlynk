@@ -5,10 +5,8 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Alert, ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { showAlert } from '../../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Colors, Spacing, Radius, FontSize } from '../../constants/theme';
@@ -34,7 +32,7 @@ export default function QueueScreen() {
 
       const oversized = videos.filter(v => v.size > STREAM_MAX_MB * 1024 * 1024);
       if (oversized.length > 0) {
-        Alert.alert(
+        showAlert(
           'Files too large',
           `${oversized.length} file(s) exceed the ${STREAM_MAX_MB}MB upload limit and will be skipped.`,
         );
@@ -42,7 +40,7 @@ export default function QueueScreen() {
 
       const added = await addToQueue(videos.map(v => ({ video: v })));
       if (added === 0 && videos.length > 0) {
-        Alert.alert(
+        showAlert(
           'Queue full',
           // "unlimited uploads" read as a storage claim, which is false —
           // storage_limit is pinned to 15 GB for every account by
@@ -52,14 +50,14 @@ export default function QueueScreen() {
         );
       }
     } catch (err: any) {
-      Alert.alert('Error', err.message ?? 'Could not add videos');
+      showAlert('Error', err.message ?? 'Could not add videos');
     } finally {
       setAdding(false);
     }
   }, [addToQueue, maxItems]);
 
   const handleRemove = useCallback((itemId: string, title: string) => {
-    Alert.alert('Remove', `Remove "${title || 'Untitled'}" from the queue?`, [
+    showAlert('Remove', `Remove "${title || 'Untitled'}" from the queue?`, [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Remove', style: 'destructive', onPress: () => removeFromQueue(itemId) },
     ]);

@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '../constants/theme';
+import { Icon, type IconName } from './Icon';
 
 // What a signed-out visitor sees on a tab that needs an account.
 //
@@ -17,16 +18,26 @@ export function GuestPrompt({
   icon,
   title,
   message,
+  /**
+   * Optional third action. Profile uses it to link to the Premium plans:
+   * a signed-out visitor could not see what a subscription costs from
+   * anywhere in the app, which hides the pitch from the people most likely
+   * to be deciding whether to make an account at all.
+   */
+  linkLabel,
+  linkHref,
 }: {
-  icon: string;
+  icon: IconName;
   title: string;
   message: string;
+  linkLabel?: string;
+  linkHref?: string;
 }) {
   const router = useRouter();
 
   return (
     <View style={styles.wrap}>
-      <Text style={styles.icon}>{icon}</Text>
+      <View style={styles.icon}><Icon name={icon} size={46} color={Colors.brandBlue} /></View>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.message}>{message}</Text>
 
@@ -46,6 +57,12 @@ export function GuestPrompt({
         <Text style={styles.ghostTxt}>I already have an account</Text>
       </TouchableOpacity>
 
+      {linkLabel && linkHref ? (
+        <TouchableOpacity onPress={() => router.push(linkHref as never)} activeOpacity={0.7}>
+          <Text style={styles.link}>{linkLabel}</Text>
+        </TouchableOpacity>
+      ) : null}
+
       <Text style={styles.footnote}>
         Free forever. 15 GB of storage included.
       </Text>
@@ -54,11 +71,15 @@ export function GuestPrompt({
 }
 
 const styles = StyleSheet.create({
+  link: {
+    color: Colors.brandCyan, fontSize: FontSize.base,
+    fontWeight: FontWeight.semibold, marginTop: Spacing.lg,
+  },
   wrap: {
     flex: 1, alignItems: 'center', justifyContent: 'center',
     paddingHorizontal: Spacing.xxl, paddingBottom: Spacing.xxxl,
   },
-  icon: { fontSize: 52, marginBottom: Spacing.lg },
+  icon: { marginBottom: Spacing.lg },
   title: {
     color: Colors.text, fontSize: FontSize.xxl, fontWeight: FontWeight.bold,
     textAlign: 'center', marginBottom: Spacing.sm,

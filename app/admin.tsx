@@ -1,7 +1,5 @@
-import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Alert, ActivityIndicator, RefreshControl, Image,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Image } from 'react-native';
+import { showAlert } from '../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'expo-router';
@@ -10,6 +8,7 @@ import { PostService, ChannelPost } from '../lib/posts';
 import { NotificationService } from '../lib/notifications';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '../constants/theme';
 import { formatTimeAgo } from '../lib/storage';
+import { Icon } from '../components/Icon';
 
 type PendingChannel = {
   id: string; name: string; description: string | null;
@@ -28,7 +27,7 @@ export default function AdminScreen() {
   const [reviewing, setReviewing] = useState<string | null>(null);
 
   useEffect(() => {
-    if (profile && !(profile as any).is_admin) { Alert.alert('Access denied'); router.replace('/(tabs)/profile'); }
+    if (profile && !(profile as any).is_admin) { showAlert('Access denied'); router.replace('/(tabs)/profile'); }
   }, [profile, router]);
 
   const load = useCallback(async () => {
@@ -36,7 +35,7 @@ export default function AdminScreen() {
       const [channels, posts] = await Promise.all([PostService.getPendingChannels(), PostService.getPendingPosts()]);
       setPendingChannels(channels as PendingChannel[]);
       setPendingPosts(posts);
-    } catch (err: any) { Alert.alert('Error', err.message); }
+    } catch (err: any) { showAlert('Error', err.message); }
     finally { setLoading(false); }
   }, []);
 
@@ -49,13 +48,13 @@ export default function AdminScreen() {
       await PostService.approveChannel(ch.id);
       await NotificationService.channelApproved(ch.owner?.id ?? ch.owner_id, ch.name, ch.id);
       setPendingChannels(prev => prev.filter(c => c.id !== ch.id));
-      Alert.alert('✓ Approved', `"${ch.name}" is live. Owner notified.`);
-    } catch (err: any) { Alert.alert('Error', err.message); }
+      showAlert('✓ Approved', `"${ch.name}" is live. Owner notified.`);
+    } catch (err: any) { showAlert('Error', err.message); }
     finally { setReviewing(null); }
   };
 
   const rejectChannel = (ch: PendingChannel) => {
-    Alert.alert('Reject?', `"${ch.name}" will be suspended.`, [
+    showAlert('Reject?', `"${ch.name}" will be suspended.`, [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Reject', style: 'destructive', onPress: async () => {
         setReviewing(ch.id);
@@ -63,7 +62,7 @@ export default function AdminScreen() {
           await PostService.rejectChannel(ch.id);
           await NotificationService.channelRejected(ch.owner?.id ?? ch.owner_id, ch.name, ch.id);
           setPendingChannels(prev => prev.filter(c => c.id !== ch.id));
-        } catch (err: any) { Alert.alert('Error', err.message); }
+        } catch (err: any) { showAlert('Error', err.message); }
         finally { setReviewing(null); }
       }},
     ]);
@@ -76,14 +75,14 @@ export default function AdminScreen() {
       await PostService.approvePost(post.id, profile.id);
       await NotificationService.postApproved(post.author_id, (post.channel as any)?.name ?? 'your channel', post.channel_id, post.id);
       setPendingPosts(prev => prev.filter(p => p.id !== post.id));
-      Alert.alert('✓ Post approved', 'Author notified.');
-    } catch (err: any) { Alert.alert('Error', err.message); }
+      showAlert('✓ Post approved', 'Author notified.');
+    } catch (err: any) { showAlert('Error', err.message); }
     finally { setReviewing(null); }
   };
 
   const rejectPost = (post: ChannelPost) => {
     if (!profile?.id) return;
-    Alert.alert('Reject post?', 'Author will be notified.', [
+    showAlert('Reject post?', 'Author will be notified.', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Reject', style: 'destructive', onPress: async () => {
         setReviewing(post.id);
@@ -91,7 +90,7 @@ export default function AdminScreen() {
           await PostService.rejectPost(post.id, profile.id, 'Does not meet content guidelines.');
           await NotificationService.postRejected(post.author_id, (post.channel as any)?.name ?? 'your channel', post.channel_id, post.id);
           setPendingPosts(prev => prev.filter(p => p.id !== post.id));
-        } catch (err: any) { Alert.alert('Error', err.message); }
+        } catch (err: any) { showAlert('Error', err.message); }
         finally { setReviewing(null); }
       }},
     ]);
@@ -100,7 +99,7 @@ export default function AdminScreen() {
   const ChannelCard = ({ ch }: { ch: PendingChannel }) => (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
-        <View style={styles.cardIcon}><Text style={{ fontSize: 22 }}>{ch.is_public ? '🌐' : '🔐'}</Text></View>
+        <View style={styles.cardIcon}><Icon name={ch.is_public ? 'globe' : 'lock'} size={20} color={Colors.brandBlue} /></View>
         <View style={{ flex: 1 }}>
           <Text style={styles.cardTitle}>{ch.name}</Text>
           <Text style={styles.cardMeta}>by {ch.owner?.full_name ?? ch.owner?.email ?? 'Unknown'} · {formatTimeAgo(ch.created_at)}</Text>
@@ -124,7 +123,7 @@ export default function AdminScreen() {
     return (
       <View style={styles.card}>
         <View style={styles.cardHeader}>
-          <View style={[styles.cardIcon, { backgroundColor: Colors.purpleDim }]}><Text style={{ fontSize: 18 }}>📝</Text></View>
+          <View style={[styles.cardIcon, { backgroundColor: Colors.purpleDim }]}><Icon name="edit" size={18} color={Colors.purple} /></View>
           <View style={{ flex: 1 }}>
             <Text style={styles.cardTitle} numberOfLines={1}>{post.title ?? post.body?.slice(0, 40) ?? 'Untitled'}</Text>
             <Text style={styles.cardMeta}>{post.author?.full_name ?? 'Unknown'} → #{(post.channel as any)?.name ?? '?'} · {formatTimeAgo(post.created_at)}</Text>

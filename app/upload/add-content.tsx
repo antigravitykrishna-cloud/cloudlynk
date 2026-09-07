@@ -6,23 +6,21 @@
  */
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, Alert, ActivityIndicator, Image,
-  KeyboardAvoidingView, Platform, Modal,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Image, KeyboardAvoidingView, Platform, Modal } from 'react-native';
+import { showAlert } from '../../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Colors, Radius, FontSize } from '../../constants/theme';
 import { useUploadQueue } from '../../hooks/useUploadQueue';
 import { StreamService } from '../../lib/stream';
 import { PostService, ContentType, GENRES, AccessLevel, defaultAccessLevel } from '../../lib/posts';
+import { Icon, type IconName } from '../../components/Icon';
 
-const CONTENT_TYPES: { id: ContentType; label: string; icon: string }[] = [
-  { id: 'movie',  label: 'Movie',      icon: '🎬' },
-  { id: 'series', label: 'Web Series', icon: '📺' },
-  { id: 'short',  label: 'Short Film', icon: '🎞️' },
-  { id: 'post',   label: 'Post',       icon: '📝' },
+const CONTENT_TYPES: { id: ContentType; label: string; icon: IconName }[] = [
+  { id: 'movie',  label: 'Movie',      icon: 'film' },
+  { id: 'series', label: 'Web Series', icon: 'tv' },
+  { id: 'short',  label: 'Short Film', icon: 'video' },
+  { id: 'post',   label: 'Post',       icon: 'document' },
 ];
 
 type EntryForm = {
@@ -168,16 +166,16 @@ export default function AddContentScreen() {
         ? videos.length
         : Math.max(0, maxItems - queuedCount - entries.length);
       if (slotsLeft === 0) {
-        Alert.alert('Queue full', `Free plan allows up to ${maxItems} videos. Upgrade to add more.`);
+        showAlert('Queue full', `Free plan allows up to ${maxItems} videos. Upgrade to add more.`);
         return;
       }
       const toAdd = videos.slice(0, slotsLeft);
       setEntries(prev => [...prev, ...toAdd.map(blankEntry)]);
       if (videos.length > slotsLeft) {
-        Alert.alert('Limit reached', `${videos.length - slotsLeft} file(s) skipped — free plan limit of ${maxItems}.`);
+        showAlert('Limit reached', `${videos.length - slotsLeft} file(s) skipped — free plan limit of ${maxItems}.`);
       }
     } catch (err: any) {
-      Alert.alert('Error', err.message ?? 'Could not pick videos');
+      showAlert('Error', err.message ?? 'Could not pick videos');
     } finally {
       setPicking(false);
     }
@@ -190,19 +188,19 @@ export default function AddContentScreen() {
       const result = await PostService.pickImage();
       if (result) updateEntry(idx, { thumbnailUri: result.uri });
     } catch (err: any) {
-      Alert.alert('Permission required', err.message);
+      showAlert('Permission required', err.message);
     } finally {
       setThumbPickingFor(null);
     }
   };
 
   const handleSubmit = async () => {
-    if (!channelId) { Alert.alert('Error', 'No channel selected.'); return; }
-    if (entries.length === 0) { Alert.alert('No videos', 'Add at least one video first.'); return; }
+    if (!channelId) { showAlert('Error', 'No channel selected.'); return; }
+    if (entries.length === 0) { showAlert('No videos', 'Add at least one video first.'); return; }
 
     const missingIdx = entries.findIndex(e => !e.title.trim());
     if (missingIdx !== -1) {
-      Alert.alert('Title required', `Please add a title for video ${missingIdx + 1}.`);
+      showAlert('Title required', `Please add a title for video ${missingIdx + 1}.`);
       return;
     }
 
@@ -229,7 +227,7 @@ export default function AddContentScreen() {
       const prevCount = items.length;
       const added = await addToQueue(queueEntries);
       if (added === 0) {
-        Alert.alert('Queue full', 'Could not add videos — queue is at capacity.');
+        showAlert('Queue full', 'Could not add videos — queue is at capacity.');
         return;
       }
       setSubmitted(true);
@@ -237,7 +235,7 @@ export default function AddContentScreen() {
       // We read them in the useEffect below once items state updates
       await startUpload();
     } catch (err: any) {
-      Alert.alert('Error', err.message ?? 'Failed to queue uploads');
+      showAlert('Error', err.message ?? 'Failed to queue uploads');
     }
   };
 
@@ -262,7 +260,7 @@ export default function AddContentScreen() {
             <TouchableOpacity
               onPress={() => {
                 if (isUploading) {
-                  Alert.alert(
+                  showAlert(
                     'Upload in progress',
                     'Uploads are running. You can leave — they will continue.',
                     [{ text: 'Stay' }, { text: 'Leave', onPress: () => router.back() }],
@@ -353,7 +351,7 @@ export default function AddContentScreen() {
                           style={[styles.typeChip, entry.contentType === ct.id && styles.typeChipActive]}
                           onPress={() => updateEntry(idx, { contentType: ct.id, accessLevel: defaultAccessLevel(ct.id) })}
                         >
-                          <Text style={{ fontSize: 14 }}>{ct.icon}</Text>
+                          <Icon name={ct.icon} size={14} color={Colors.textSecondary} />
                           <Text style={[styles.typeChipTxt, entry.contentType === ct.id && { color: Colors.brand }]}>{ct.label}</Text>
                         </TouchableOpacity>
                       ))}
@@ -548,7 +546,7 @@ export default function AddContentScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
-  header: { backgroundColor: Colors.brand, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14 },
+  header: { backgroundColor: Colors.surface, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14 },
   backBtn: { width: 60 },
   backTxt: { color: '#fff', fontSize: 16, fontWeight: '700' },
   headerTitle: { color: '#fff', fontSize: 17, fontWeight: '800', flex: 1, textAlign: 'center' },

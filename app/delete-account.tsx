@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import {
-  View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
+import { showAlert } from '../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../hooks/useAuth';
@@ -21,7 +20,7 @@ export default function DeleteAccountScreen() {
     try {
       await deleteAccount();
     } catch (err: any) {
-      Alert.alert('Error', err.message ?? 'Failed to delete account. Please try again.');
+      showAlert('Error', err.message ?? 'Failed to delete account. Please try again.');
       setLoading(false);
     }
   }

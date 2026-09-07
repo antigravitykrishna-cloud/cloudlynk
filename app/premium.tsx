@@ -1,11 +1,9 @@
 import { useState } from 'react';
-import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Alert, ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { showAlert } from '../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Colors } from '../constants/theme';
+import { Colors, Radius, FontSize, FontWeight } from '../constants/theme';
 import { useAuth } from '../hooks/useAuth';
 import { useSubscriptionPlans } from '../lib/subscriptionService';
 import { getIapService } from '../lib/services/iap';
@@ -28,7 +26,7 @@ const BENEFITS = [
 
 export default function PremiumScreen() {
   const router = useRouter();
-  const { isActive, planStatus, isApproved, approvalStatus, refreshProfile } = useAuth();
+  const { user, isActive, planStatus, isApproved, approvalStatus, refreshProfile } = useAuth();
   const { data: plans, isLoading: plansLoading } = useSubscriptionPlans();
 
   const [selectedPlanIndex, setSelectedPlanIndex] = useState(2);
@@ -46,12 +44,12 @@ export default function PremiumScreen() {
       const result = await getIapService().purchasePlan(selectedPlan.code);
       if (result.success) {
         await refreshProfile();
-        Alert.alert('Success', "You're now on Premium!", [{ text: 'OK', onPress: () => router.back() }]);
+        showAlert('Success', "You're now on Premium!", [{ text: 'OK', onPress: () => router.back() }]);
       } else {
-        Alert.alert('Purchase failed', result.errorMessage ?? 'Please try again.');
+        showAlert('Purchase failed', result.errorMessage ?? 'Please try again.');
       }
     } catch (err: unknown) {
-      Alert.alert('Purchase failed', err instanceof Error ? err.message : 'Please try again.');
+      showAlert('Purchase failed', err instanceof Error ? err.message : 'Please try again.');
     } finally {
       setPurchasing(false);
     }
@@ -78,38 +76,20 @@ export default function PremiumScreen() {
     );
   }
 
-  // v55 PRE-purchase approval gate. Deliberately placed AFTER the
-  // already-subscribed branch above: if this account has actually paid, it
-  // sees its entitlement here regardless of approval_status. Withholding
-  // something already paid for is the exact pattern this gate exists to
-  // avoid — see supabase/migrations/20260905120000_v55_user_approval_gate.sql.
-  // Nothing else in the app is gated on approval: an unapproved account
-  // browses, watches free content and uses cloud storage normally.
-  if (!isApproved) {
-    const rejected = approvalStatus === 'rejected';
-    return (
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
-            <Text style={styles.backTxt}>{'< Back'}</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Premium</Text>
-          <View style={{ width: 80 }} />
-        </View>
-        <View style={styles.pendingContainer}>
-          <Text style={styles.pendingIcon}>{rejected ? 'ℹ️' : '⏳'}</Text>
-          <Text style={styles.pendingTitle}>
-            {rejected ? 'Premium is not available for this account' : 'Your account is being reviewed'}
-          </Text>
-          <Text style={styles.pendingText}>
-            {rejected
-              ? 'Premium subscriptions are not available for this account right now. You can keep using Cloudlynk’s free features as normal. Contact support if you think this is a mistake.'
-              : 'An admin needs to approve your account before you can subscribe to Premium. You’ll be notified once that’s done — everything else in Cloudlynk keeps working in the meantime.'}
-          </Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
+  // v55 approval gate — enforced on the PURCHASE, not on the page.
+  //
+  // This used to early-return a "your account is being reviewed" screen, so a
+  // guest and a pending user never saw what Premium costs or what it includes.
+  // That hides the pitch from precisely the two audiences it needs to reach:
+  // someone deciding whether to make an account, and someone waiting on
+  // approval and wondering whether it is worth waiting for.
+  //
+  // Everyone sees the benefits and the four prices. Only the button changes.
+  const gate: 'guest' | 'pending' | 'rejected' | null =
+    !user ? 'guest'
+    : approvalStatus === 'rejected' ? 'rejected'
+    : !isApproved ? 'pending'
+    : null;
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -121,6 +101,23 @@ export default function PremiumScreen() {
           <Text style={styles.headerTitle}>Premium</Text>
           <View style={{ width: 80 }} />
         </View>
+
+        {gate && (
+          <View style={[styles.gateBanner, gate === 'rejected' && styles.gateBannerMuted]}>
+            <Text style={styles.gateBannerTitle}>
+              {gate === 'guest' ? 'Create a free account to subscribe'
+               : gate === 'rejected' ? 'Premium is not available for this account'
+               : 'Your account is being reviewed'}
+            </Text>
+            <Text style={styles.gateBannerText}>
+              {gate === 'guest'
+                ? "Here's everything Premium includes. Making an account is free and takes a moment."
+                : gate === 'rejected'
+                ? 'You can keep using Cloudlynk’s free features as normal. Contact support if you think this is a mistake.'
+                : 'An admin approves new accounts before they can subscribe. You’ll be notified once that’s done — everything else in Cloudlynk keeps working in the meantime.'}
+            </Text>
+          </View>
+        )}
 
         {/* Benefits card */}
         <View style={styles.badgeCard}>
@@ -180,18 +177,40 @@ export default function PremiumScreen() {
           </View>
         )}
 
-        {/* Proceed button */}
+        {/* Proceed button. A guest gets a route forward; a pending or
+            rejected account gets a disabled button that says why, rather than
+            a live one that fails at the Play Store. */}
         <TouchableOpacity
-          style={[styles.proceedBtn, (plansLoading || purchasing) && { opacity: 0.5 }]}
-          onPress={handleProceed}
-          disabled={plansLoading || !selectedPlan || purchasing}
+          style={[
+            styles.proceedBtn,
+            (plansLoading || purchasing) && { opacity: 0.5 },
+            (gate === 'pending' || gate === 'rejected') && styles.proceedBtnDisabled,
+          ]}
+          onPress={gate === 'guest' ? () => router.push('/(auth)/signup') : handleProceed}
+          disabled={gate === 'pending' || gate === 'rejected' || plansLoading || (!gate && !selectedPlan) || purchasing}
           activeOpacity={0.8}
         >
           {purchasing
             ? <ActivityIndicator color="#ffffff" />
-            : <Text style={styles.proceedBtnText}>Proceed to Payment</Text>
+            : (
+              <Text style={[
+                styles.proceedBtnText,
+                (gate === 'pending' || gate === 'rejected') && styles.proceedBtnTextDisabled,
+              ]}>
+                {gate === 'guest' ? 'Create free account'
+                 : gate === 'pending' ? 'Awaiting admin approval'
+                 : gate === 'rejected' ? 'Not available'
+                 : 'Proceed to Payment'}
+              </Text>
+            )
           }
         </TouchableOpacity>
+
+        {gate === 'guest' && (
+          <TouchableOpacity onPress={() => router.push('/(auth)/login')} activeOpacity={0.7}>
+            <Text style={styles.gateSignIn}>I already have an account</Text>
+          </TouchableOpacity>
+        )}
 
         <Text style={styles.legal}>
           Billed via Google Play. Cancel anytime from Play Store settings.
@@ -205,12 +224,33 @@ export default function PremiumScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
+  gateBanner: {
+    marginHorizontal: 16, marginTop: 16, padding: 16,
+    backgroundColor: Colors.accentOrangeDim,
+    borderWidth: 1, borderColor: Colors.accentBorder,
+    borderRadius: Radius.lg,
+  },
+  gateBannerMuted: {
+    backgroundColor: 'rgba(159,176,201,0.10)',
+    borderColor: Colors.border,
+  },
+  gateBannerTitle: {
+    color: Colors.text, fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold, marginBottom: 6,
+  },
+  gateBannerText: { color: Colors.textSecondary, fontSize: FontSize.base, lineHeight: 19 },
+  proceedBtnDisabled: { backgroundColor: Colors.surfaceElevated, borderWidth: 1, borderColor: Colors.border },
+  proceedBtnTextDisabled: { color: Colors.textMuted },
+  gateSignIn: {
+    color: Colors.brandBlue, fontSize: FontSize.lg,
+    fontWeight: FontWeight.semibold, textAlign: 'center', marginTop: 14,
+  },
   content: { paddingBottom: 40 },
-  header: { backgroundColor: Colors.brand, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14 },
+  header: { backgroundColor: Colors.surface, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14 },
   backBtn: { width: 80 },
   backTxt: { color: '#ffffff', fontSize: 14, fontWeight: '600' },
   headerTitle: { color: '#ffffff', fontSize: 18, fontWeight: '800', flex: 1, textAlign: 'center' },
-  badgeCard: { margin: 16, backgroundColor: '#ffe5e5', borderRadius: 16, padding: 18 },
+  badgeCard: { margin: 16, backgroundColor: Colors.accentOrangeDim, borderRadius: 16, padding: 18 },
   badgeHeader: { marginBottom: 14 },
   badgePill: { alignSelf: 'flex-start', backgroundColor: Colors.brand, paddingHorizontal: 14, paddingVertical: 4, borderRadius: 12 },
   badgePillText: { color: '#ffffff', fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
@@ -221,7 +261,7 @@ const styles = StyleSheet.create({
   planSectionTitle: { fontSize: 15, fontWeight: '800', color: Colors.text, marginLeft: 18, marginTop: 24, marginBottom: 12 },
   plansContainer: { paddingHorizontal: 16, gap: 10 },
   planCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.bg, borderWidth: 1.5, borderColor: Colors.border, borderRadius: 12, padding: 14, gap: 12 },
-  planCardSelected: { borderColor: Colors.brand, backgroundColor: '#fff5f5' },
+  planCardSelected: { borderColor: Colors.brand, backgroundColor: Colors.accentOrangeDim },
   radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: '#9FB0C9', alignItems: 'center', justifyContent: 'center' },
   radioSelected: { borderColor: Colors.brand },
   radioInner: { width: 12, height: 12, borderRadius: 6, backgroundColor: Colors.brand },

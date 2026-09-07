@@ -23,11 +23,16 @@ export type Notification = {
 };
 
 // Icon + color per notification type
-export const NOTIF_META: Record<NotificationType, { icon: string; color: string; dimColor: string }> = {
-  channel_approved: { icon: '✅', color: '#3fb950', dimColor: 'rgba(63,185,80,0.12)' },
-  channel_rejected: { icon: '❌', color: '#f85149', dimColor: 'rgba(248,81,73,0.12)'  },
-  post_approved:    { icon: '✓',  color: '#00d4aa', dimColor: 'rgba(0,212,170,0.12)' },
-  post_rejected:    { icon: '✕',  color: '#f85149', dimColor: 'rgba(248,81,73,0.12)'  },
+import type { IconName } from '../components/Icon';
+
+// `icon` names an entry in the app's icon set rather than holding an emoji
+// glyph: the glyph came from the system font, so the same notification looked
+// different on every phone and could not take the row's accent colour.
+export const NOTIF_META: Record<NotificationType, { icon: IconName; color: string; dimColor: string }> = {
+  channel_approved: { icon: 'check-circle', color: '#3fb950', dimColor: 'rgba(63,185,80,0.12)' },
+  channel_rejected: { icon: 'flag', color: '#f85149', dimColor: 'rgba(248,81,73,0.12)'  },
+  post_approved:    { icon: 'check-circle',  color: '#00d4aa', dimColor: 'rgba(0,212,170,0.12)' },
+  post_rejected:    { icon: 'flag',  color: '#f85149', dimColor: 'rgba(248,81,73,0.12)'  },
 };
 
 export const NotificationService = {

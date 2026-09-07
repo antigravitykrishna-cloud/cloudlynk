@@ -1,8 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
-import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Alert, ActivityIndicator, TextInput, Image, KeyboardAvoidingView, Platform,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, Image, KeyboardAvoidingView, Platform } from 'react-native';
+import { showAlert } from '../../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
@@ -62,7 +60,7 @@ export default function AdminUploadScreen() {
       const picked = await StreamService.pickVideo();
       if (picked) setVideo(picked);
     } catch (err: any) {
-      Alert.alert('Could not pick video', err?.message ?? 'Please try again.');
+      showAlert('Could not pick video', err?.message ?? 'Please try again.');
     }
   };
 
@@ -71,15 +69,15 @@ export default function AdminUploadScreen() {
       const picked = await PostService.pickImage();
       if (picked) setThumbnailUri(picked.uri);
     } catch (err: any) {
-      Alert.alert('Could not pick image', err?.message ?? 'Please try again.');
+      showAlert('Could not pick image', err?.message ?? 'Please try again.');
     }
   };
 
   const submit = async (saveAsDraft: boolean) => {
-    if (!channel) { Alert.alert('No official channel', 'The Cloudlynk Official channel does not exist yet.'); return; }
-    if (!profile?.id) { Alert.alert('Not signed in', 'Please sign in again.'); return; }
-    if (!title.trim()) { Alert.alert('Title required', 'Give this content a title.'); return; }
-    if (!video && contentType !== 'post') { Alert.alert('Video required', 'Pick a video file to upload.'); return; }
+    if (!channel) { showAlert('No official channel', 'The Cloudlynk Official channel does not exist yet.'); return; }
+    if (!profile?.id) { showAlert('Not signed in', 'Please sign in again.'); return; }
+    if (!title.trim()) { showAlert('Title required', 'Give this content a title.'); return; }
+    if (!video && contentType !== 'post') { showAlert('Video required', 'Pick a video file to upload.'); return; }
 
     setSubmitting(true);
     setProgress(0);
@@ -100,7 +98,7 @@ export default function AdminUploadScreen() {
         saveAsDraft,
       });
 
-      Alert.alert(
+      showAlert(
         saveAsDraft ? 'Saved as draft' : 'Published',
         saveAsDraft
           ? 'You can publish it from the Content screen when you are ready.'
@@ -108,7 +106,7 @@ export default function AdminUploadScreen() {
         [{ text: 'OK', onPress: () => router.replace('/admin/content') }],
       );
     } catch (err: any) {
-      Alert.alert('Upload failed', err?.message ?? 'Something went wrong.');
+      showAlert('Upload failed', err?.message ?? 'Something went wrong.');
     } finally {
       setSubmitting(false);
     }

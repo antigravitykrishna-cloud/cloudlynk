@@ -10,6 +10,7 @@ import { useNotifications } from '../hooks/useNotifications';
 import { Notification, NOTIF_META } from '../lib/notifications';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '../constants/theme';
 import { formatTimeAgo } from '../lib/storage';
+import { Icon } from '../components/Icon';
 
 export default function NotificationsScreen() {
   const { user } = useAuth();
@@ -33,7 +34,7 @@ export default function NotificationsScreen() {
   const NotifCard = ({ notif }: { notif: Notification }) => {
     // Fall back to a neutral style for any unknown/legacy/null notification type
     // so a single bad row can't crash the whole screen (undefined meta access).
-    const meta = NOTIF_META[notif.type] ?? { icon: '🔔', color: Colors.textMuted, dimColor: 'rgba(255,255,255,0.06)' };
+    const meta = NOTIF_META[notif.type] ?? { icon: 'bell' as const, color: Colors.textMuted, dimColor: 'rgba(255,255,255,0.06)' };
     return (
       <TouchableOpacity
         style={[styles.card, !notif.read && styles.cardUnread]}
@@ -45,7 +46,7 @@ export default function NotificationsScreen() {
 
         {/* Icon */}
         <View style={[styles.iconWrap, { backgroundColor: meta.dimColor }]}>
-          <Text style={{ fontSize: 20 }}>{meta.icon}</Text>
+          <Icon name={meta.icon} size={19} color={meta.color} />
         </View>
 
         {/* Content */}

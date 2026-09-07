@@ -1,8 +1,6 @@
 import { useState, useCallback } from 'react';
-import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Alert, ActivityIndicator, TextInput,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
+import { showAlert } from '../../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
@@ -114,7 +112,7 @@ export default function AdminReportsScreen() {
       setPendingAction(null);
       setNote('');
     } catch (err: any) {
-      Alert.alert('Error', err?.message ?? 'Could not resolve report.');
+      showAlert('Error', err?.message ?? 'Could not resolve report.');
     } finally {
       setActingId(null);
     }
@@ -123,7 +121,7 @@ export default function AdminReportsScreen() {
   const confirmPendingAction = () => {
     if (!pendingAction) return;
     if (!note.trim()) {
-      Alert.alert('Note required', 'Add a short note explaining this action (kept for audit history).');
+      showAlert('Note required', 'Add a short note explaining this action (kept for audit history).');
       return;
     }
     resolve(pendingAction.id, pendingAction.action, note.trim());

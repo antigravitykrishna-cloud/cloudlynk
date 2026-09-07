@@ -1,8 +1,6 @@
 import { useState, useCallback } from 'react';
-import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Alert, ActivityIndicator, TextInput,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
+import { showAlert } from '../../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
@@ -70,7 +68,7 @@ export default function AdminPostAccessScreen() {
     try {
       setResults(await AdminContentService.searchUsers(search));
     } catch (err: any) {
-      Alert.alert('Error', err?.message ?? 'Could not search users.');
+      showAlert('Error', err?.message ?? 'Could not search users.');
     } finally {
       setSearching(false);
     }
@@ -82,7 +80,7 @@ export default function AdminPostAccessScreen() {
     try {
       expiresAt = expiryFor(duration, customDate);
     } catch (err: any) {
-      Alert.alert('Check the date', err.message);
+      showAlert('Check the date', err.message);
       return;
     }
     setActingId(selected.id);
@@ -96,7 +94,7 @@ export default function AdminPostAccessScreen() {
       setCustomDate('');
       await load();
     } catch (err: any) {
-      Alert.alert('Error', err?.message ?? 'Could not grant access.');
+      showAlert('Error', err?.message ?? 'Could not grant access.');
     } finally {
       setActingId(null);
     }
@@ -104,7 +102,7 @@ export default function AdminPostAccessScreen() {
 
   const revoke = (g: PostGrantee) => {
     if (!postId) return;
-    Alert.alert('Revoke access?', `${g.email} will no longer be able to watch this post. Their subscription, if any, is unaffected.`, [
+    showAlert('Revoke access?', `${g.email} will no longer be able to watch this post. Their subscription, if any, is unaffected.`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Revoke',
@@ -115,7 +113,7 @@ export default function AdminPostAccessScreen() {
             await AdminContentService.revokeAccess(g.user_id, postId);
             await load();
           } catch (err: any) {
-            Alert.alert('Error', err?.message ?? 'Could not revoke access.');
+            showAlert('Error', err?.message ?? 'Could not revoke access.');
           } finally {
             setActingId(null);
           }

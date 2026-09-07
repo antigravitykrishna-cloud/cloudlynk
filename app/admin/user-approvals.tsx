@@ -1,8 +1,6 @@
 import { useState, useCallback } from 'react';
-import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Alert, ActivityIndicator, TextInput,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
+import { showAlert } from '../../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
@@ -100,7 +98,7 @@ export default function AdminUserApprovalsScreen() {
       setPendingReject(null);
       setNote('');
     } catch (err: any) {
-      Alert.alert('Error', err?.message ?? 'Could not update this account.');
+      showAlert('Error', err?.message ?? 'Could not update this account.');
     } finally {
       setActingId(null);
     }
@@ -114,7 +112,7 @@ export default function AdminUserApprovalsScreen() {
     try {
       setGrants(await AdminContentService.getUserGrants(userId));
     } catch (err: any) {
-      Alert.alert('Error', err?.message ?? 'Could not load grants.');
+      showAlert('Error', err?.message ?? 'Could not load grants.');
       setGrantsFor(null);
     } finally {
       setGrantsLoading(false);
@@ -122,7 +120,7 @@ export default function AdminUserApprovalsScreen() {
   };
 
   const revokeGrant = (userId: string, postId: string, title: string | null) => {
-    Alert.alert(
+    showAlert(
       'Revoke access?',
       `This person will no longer be able to watch "${title ?? 'this post'}". Their subscription, if any, is unaffected.`,
       [
@@ -135,7 +133,7 @@ export default function AdminUserApprovalsScreen() {
               await AdminContentService.revokeAccess(userId, postId);
               setGrants(await AdminContentService.getUserGrants(userId));
             } catch (err: any) {
-              Alert.alert('Error', err?.message ?? 'Could not revoke access.');
+              showAlert('Error', err?.message ?? 'Could not revoke access.');
             }
           },
         },

@@ -1,10 +1,6 @@
 import { VideoPlayerOverlay } from '../../../components/VideoPlayerOverlay';
-import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  FlatList, Image, Modal, TextInput, Alert,
-  ActivityIndicator, RefreshControl, Dimensions,
-  KeyboardAvoidingView, Platform, StatusBar,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, Image, Modal, TextInput, ActivityIndicator, RefreshControl, Dimensions, KeyboardAvoidingView, Platform, StatusBar } from 'react-native';
+import { showAlert } from '../../../components/Feedback';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState, useEffect, useCallback, memo, useRef } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -19,6 +15,7 @@ import { formatTimeAgo } from '../../../lib/storage';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { useEvent } from 'expo';
 import { Colors } from '../../../constants/theme';
+import { Icon, type IconName } from '../../../components/Icon';
 
 const { width: W, height: H } = Dimensions.get('window');
 const CARD_W = 120;
@@ -27,11 +24,11 @@ const HERO_H = H * 0.52;
 
 type Channel = Database['public']['Tables']['channels']['Row'];
 
-const CONTENT_TYPES: { id: ContentType; label: string; icon: string }[] = [
-  { id: 'movie',  label: 'Movie',      icon: '🎬' },
-  { id: 'series', label: 'Web Series', icon: '📺' },
-  { id: 'short',  label: 'Short Film', icon: '🎞️' },
-  { id: 'post',   label: 'Post',       icon: '📝' },
+const CONTENT_TYPES: { id: ContentType; label: string; icon: IconName }[] = [
+  { id: 'movie',  label: 'Movie',      icon: 'film' },
+  { id: 'series', label: 'Web Series', icon: 'tv' },
+  { id: 'short',  label: 'Short Film', icon: 'video' },
+  { id: 'post',   label: 'Post',       icon: 'document' },
 ];
 
 function formatDuration(min: number): string {
@@ -59,9 +56,11 @@ const ContentCard = memo(({ item, onPress }: { item: ChannelPost; onPress: () =>
         {thumb
           ? <Image source={{ uri: thumb }} style={styles.cardThumbImg} resizeMode="cover" />
           : <View style={styles.cardThumbPlaceholder}>
-              <Text style={{ fontSize: 28 }}>
-                {item.content_type === 'movie' ? '🎬' : item.content_type === 'series' ? '📺' : item.content_type === 'short' ? '🎞️' : '📝'}
-              </Text>
+              <Icon
+                name={item.content_type === 'movie' ? 'film' : item.content_type === 'series' ? 'tv' : item.content_type === 'short' ? 'video' : 'document'}
+                size={26}
+                color={Colors.textMuted}
+              />
             </View>
         }
         <View style={[styles.cardTypeBadge, { backgroundColor: getTypeColor(item.content_type) }]}>
@@ -147,10 +146,10 @@ const DetailModal = memo(({ selected, onClose, userId, channelId }: {
     if (!selected || !userId || !channelId) return;
     const submit = (reason: string) => {
       ChannelService.reportContent(channelId, userId, reason, { postId: selected.id, reportedUserId: selected.author_id })
-        .then(() => Alert.alert('Reported', 'Thanks — our team will review this.'))
-        .catch((err: any) => Alert.alert('Error', err.message ?? 'Could not submit report.'));
+        .then(() => showAlert('Reported', 'Thanks — our team will review this.'))
+        .catch((err: any) => showAlert('Error', err.message ?? 'Could not submit report.'));
     };
-    Alert.alert('Report this content', 'Why are you reporting it?', [
+    showAlert('Report this content', 'Why are you reporting it?', [
       { text: 'Inappropriate content', onPress: () => submit('inappropriate_content') },
       { text: 'Copyright violation', onPress: () => submit('copyright_violation') },
       { text: 'Cancel', style: 'cancel' },
@@ -160,7 +159,7 @@ const DetailModal = memo(({ selected, onClose, userId, channelId }: {
   const handleBlock = () => {
     if (!selected?.author_id || !userId) return;
     if (selected.author_id === userId) return;
-    Alert.alert(
+    showAlert(
       'Block this uploader?',
       `You won't see content from ${selected.author?.full_name ?? 'this user'} anymore.`,
       [
@@ -168,8 +167,8 @@ const DetailModal = memo(({ selected, onClose, userId, channelId }: {
         {
           text: 'Block', style: 'destructive', onPress: () => {
             BlockService.blockUser(userId, selected.author_id)
-              .then(() => { Alert.alert('Blocked'); onClose(); })
-              .catch((err: any) => Alert.alert('Error', err.message ?? 'Could not block user.'));
+              .then(() => { showAlert('Blocked'); onClose(); })
+              .catch((err: any) => showAlert('Error', err.message ?? 'Could not block user.'));
           },
         },
       ],
@@ -184,10 +183,10 @@ const DetailModal = memo(({ selected, onClose, userId, channelId }: {
     if (selected.author_id === userId) return;
     const submit = (reason: string) => {
       ReportService.reportUser(userId, selected.author_id, reason)
-        .then(() => Alert.alert('Reported', 'Thanks — our team will review this account.'))
-        .catch((err: any) => Alert.alert('Error', err.message ?? 'Could not submit report.'));
+        .then(() => showAlert('Reported', 'Thanks — our team will review this account.'))
+        .catch((err: any) => showAlert('Error', err.message ?? 'Could not submit report.'));
     };
-    Alert.alert(`Report ${selected.author?.full_name ?? 'this user'}`, 'Why are you reporting this account?', [
+    showAlert(`Report ${selected.author?.full_name ?? 'this user'}`, 'Why are you reporting this account?', [
       { text: 'Harassment or bullying', onPress: () => submit('harassment') },
       { text: 'Spam or scam account', onPress: () => submit('spam') },
       { text: 'Impersonation', onPress: () => submit('impersonation') },
@@ -198,7 +197,7 @@ const DetailModal = memo(({ selected, onClose, userId, channelId }: {
   };
 
   const handleMore = () => {
-    Alert.alert('More options', undefined, [
+    showAlert('More options', undefined, [
       { text: 'Report content', onPress: handleReport },
       { text: 'Report user', onPress: handleReportUser },
       { text: 'Block uploader', style: 'destructive', onPress: handleBlock },
@@ -274,7 +273,7 @@ const DetailModal = memo(({ selected, onClose, userId, channelId }: {
 
   const handlePlay = async () => {
     if (!selected.video_url) return;
-    if (videoError) { Alert.alert('Cannot play', videoError); return; }
+    if (videoError) { showAlert('Cannot play', videoError); return; }
     if (selected.access_level === 'premium' && !videoUrl) return; // still fetching the signed URL
     setIsPlaying(true);
   };
@@ -393,8 +392,8 @@ const CreateModal = memo(({ visible, onClose, onSubmit, channelId }: {
   const handleCancel = () => { reset(); onClose(); };
 
   const handleSubmit = async () => {
-    if (!postTitle.trim()) { Alert.alert('Required', 'Please add a title.'); return; }
-    if (!postBody.trim()) { Alert.alert('Required', 'Please add a description.'); return; }
+    if (!postTitle.trim()) { showAlert('Required', 'Please add a title.'); return; }
+    if (!postBody.trim()) { showAlert('Required', 'Please add a description.'); return; }
     setSubmitting(true);
     let streamVideoUid: string | null = null;
     try {
@@ -406,7 +405,7 @@ const CreateModal = memo(({ visible, onClose, onSubmit, channelId }: {
       await onSubmit({ contentType, postTitle, postBody, genre, durationMin, seasonNo, episodeNo, episodeTitle, releaseYear, thumbnailUri, streamVideoUid });
       reset();
     } catch (err: any) {
-      Alert.alert('Upload failed', err.message ?? 'Please try again.');
+      showAlert('Upload failed', err.message ?? 'Please try again.');
     } finally {
       setSubmitting(false);
       setUploadProgress(-1);
@@ -419,7 +418,7 @@ const CreateModal = memo(({ visible, onClose, onSubmit, channelId }: {
     try {
       const result = await PostService.pickImage();
       if (result) setThumbnailUri(result.uri);
-    } catch (err: any) { Alert.alert('Permission required', err.message); }
+    } catch (err: any) { showAlert('Permission required', err.message); }
     finally { setPicking(false); }
   };
 
@@ -434,7 +433,7 @@ const CreateModal = memo(({ visible, onClose, onSubmit, channelId }: {
         // only after a long upload that ends in a 413. Bump this after a plan upgrade.
         const STREAM_MAX_MB = 180;
         if (result.size > STREAM_MAX_MB * 1024 * 1024) {
-          Alert.alert(
+          showAlert(
             'File too large',
             `This video is ${(result.size / 1024 / 1024).toFixed(0)} MB. The current upload limit is ${STREAM_MAX_MB} MB. Please pick a smaller file.`
           );
@@ -442,7 +441,7 @@ const CreateModal = memo(({ visible, onClose, onSubmit, channelId }: {
         }
         setVideoMeta(result);
       }
-    } catch (err: any) { Alert.alert('Error', err.message); }
+    } catch (err: any) { showAlert('Error', err.message); }
     finally { setPicking(false); }
   };
 
@@ -473,7 +472,7 @@ const CreateModal = memo(({ visible, onClose, onSubmit, channelId }: {
                     style={[styles.typeChip, contentType === ct.id && styles.typeChipActive]}
                     onPress={() => setContentType(ct.id)}
                   >
-                    <Text style={{ fontSize: 18 }}>{ct.icon}</Text>
+                    <Icon name={ct.icon} size={18} color={Colors.textSecondary} />
                     <Text style={[styles.typeChipTxt, contentType === ct.id && { color: '#2E7DFF' }]}>{ct.label}</Text>
                   </TouchableOpacity>
                 ))}
@@ -488,7 +487,7 @@ const CreateModal = memo(({ visible, onClose, onSubmit, channelId }: {
                 {thumbnailUri
                   ? <Image source={{ uri: thumbnailUri }} style={styles.thumbPreview} resizeMode="cover" />
                   : <View style={styles.thumbEmpty}>
-                      <Text style={{ fontSize: 32, marginBottom: 8 }}>{'🖼️'}</Text>
+                      <View style={{ marginBottom: 8 }}><Icon name="image" size={30} color={Colors.textMuted} /></View>
                       <Text style={styles.thumbEmptyTxt}>Add Thumbnail</Text>
                     </View>
                 }
@@ -682,7 +681,7 @@ export default function ChannelDetailScreen() {
       setPosts(visiblePosts);
       setGrouped(PostService.groupByGenre(visiblePosts));
     } catch (err: any) {
-      Alert.alert('Error', err.message);
+      showAlert('Error', err.message);
     } finally {
       setLoading(false);
     }
@@ -700,7 +699,7 @@ export default function ChannelDetailScreen() {
     try {
       await ChannelService.joinChannel(id, user.id);
       setIsMember(true); await load();
-    } catch (err: any) { Alert.alert('Error', err.message); }
+    } catch (err: any) { showAlert('Error', err.message); }
     finally { setJoining(false); }
   };
 
@@ -967,7 +966,7 @@ const styles = StyleSheet.create({
   lockedBannerIcon: { fontSize: 22 },
   lockedBannerTitle: { fontSize: 13, fontWeight: '800', color: '#aaa', marginBottom: 3 },
   lockedBannerDesc: { fontSize: 12, color: '#6B7C97', fontWeight: '600', lineHeight: 18 },
-  lockedContentCard: { marginHorizontal: 16, marginTop: 24, padding: 32, backgroundColor: '#fafafa', borderRadius: 16, borderWidth: 1, borderColor: Colors.border, alignItems: 'center' },
+  lockedContentCard: { marginHorizontal: 16, marginTop: 24, padding: 32, backgroundColor: Colors.surface, borderRadius: 16, borderWidth: 1, borderColor: Colors.border, alignItems: 'center' },
   lockedContentIcon: { fontSize: 48, marginBottom: 12 },
   lockedContentTitle: { fontSize: 18, fontWeight: '800', color: Colors.text, marginBottom: 8, textAlign: 'center' },
   lockedContentDesc: { fontSize: 14, color: Colors.textMuted, fontWeight: '500', textAlign: 'center', marginBottom: 20, lineHeight: 20 },

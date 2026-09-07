@@ -6,23 +6,21 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, Alert, ActivityIndicator, KeyboardAvoidingView,
-  Platform, Modal, Image,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Modal, Image } from 'react-native';
+import { showAlert } from '../../../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Colors, Spacing, Radius, FontSize } from '../../../constants/theme';
 import { useUploadQueue } from '../../../hooks/useUploadQueue';
 import { QueueItem } from '../../../lib/uploadQueue';
 import { PostService, ContentType, GENRES } from '../../../lib/posts';
+import { Icon, type IconName } from '../../../components/Icon';
 
-const CONTENT_TYPES: { id: ContentType; label: string; icon: string }[] = [
-  { id: 'movie',  label: 'Movie',      icon: '🎬' },
-  { id: 'series', label: 'Web Series', icon: '📺' },
-  { id: 'short',  label: 'Short Film', icon: '🎞️' },
-  { id: 'post',   label: 'Post',       icon: '📝' },
+const CONTENT_TYPES: { id: ContentType; label: string; icon: IconName }[] = [
+  { id: 'movie',  label: 'Movie',      icon: 'film' },
+  { id: 'series', label: 'Web Series', icon: 'tv' },
+  { id: 'short',  label: 'Short Film', icon: 'video' },
+  { id: 'post',   label: 'Post',       icon: 'document' },
 ];
 
 export default function FormScreen() {
@@ -78,7 +76,7 @@ export default function FormScreen() {
         thumbnailUri,
       });
     } catch (err: any) {
-      Alert.alert('Error', err.message ?? 'Failed to save');
+      showAlert('Error', err.message ?? 'Failed to save');
     } finally {
       setSaving(false);
     }
@@ -113,7 +111,7 @@ export default function FormScreen() {
       const result = await PostService.pickImage();
       if (result) setThumbnailUri(result.uri);
     } catch (err: any) {
-      Alert.alert('Permission required', err.message);
+      showAlert('Permission required', err.message);
     } finally {
       setPicking(false);
     }
@@ -173,7 +171,7 @@ export default function FormScreen() {
                   style={[styles.typeChip, contentType === ct.id && styles.typeChipActive]}
                   onPress={() => setContentType(ct.id)}
                 >
-                  <Text style={{ fontSize: 16 }}>{ct.icon}</Text>
+                  <Icon name={ct.icon} size={16} color={Colors.textSecondary} />
                   <Text style={[styles.typeChipTxt, contentType === ct.id && { color: Colors.brand }]}>{ct.label}</Text>
                 </TouchableOpacity>
               ))}

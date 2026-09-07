@@ -1,8 +1,6 @@
 import { useState, useCallback } from 'react';
-import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Alert, ActivityIndicator, TextInput,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
+import { showAlert } from '../../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
@@ -51,15 +49,15 @@ export default function PendingChannelContentScreen() {
       const { error } = await supabase.rpc('approve_channel_content', { content_id: item.id });
       if (error) throw error;
       setItems(prev => prev.filter(i => i.id !== item.id));
-      Alert.alert('Approved', `"${item.title}" has been approved.`);
+      showAlert('Approved', `"${item.title}" has been approved.`);
     } catch (err: unknown) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Approve failed');
+      showAlert('Error', err instanceof Error ? err.message : 'Approve failed');
     }
   };
 
   const handleReject = async (item: PendingContentItem) => {
     if (!rejectReason.trim()) {
-      Alert.alert('Reason required', 'Please enter a reason for rejection.');
+      showAlert('Reason required', 'Please enter a reason for rejection.');
       return;
     }
     try {
@@ -71,9 +69,9 @@ export default function PendingChannelContentScreen() {
       setItems(prev => prev.filter(i => i.id !== item.id));
       setRejectingId(null);
       setRejectReason('');
-      Alert.alert('Rejected', `"${item.title}" has been rejected.`);
+      showAlert('Rejected', `"${item.title}" has been rejected.`);
     } catch (err: unknown) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Reject failed');
+      showAlert('Error', err instanceof Error ? err.message : 'Reject failed');
     }
   };
 

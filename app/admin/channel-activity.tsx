@@ -1,8 +1,6 @@
 import { useState, useCallback } from 'react';
-import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Alert, ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { showAlert } from '../../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
@@ -34,7 +32,7 @@ export default function ChannelActivityScreen() {
       if (error) throw error;
       setChannels(data ?? []);
     } catch (err: any) {
-      Alert.alert('Error', err.message ?? 'Failed to load channel activity');
+      showAlert('Error', err.message ?? 'Failed to load channel activity');
     } finally {
       setLoading(false);
     }
@@ -47,7 +45,7 @@ export default function ChannelActivityScreen() {
   );
 
   const handleSuspend = (channelId: string, channelName: string) => {
-    Alert.alert(
+    showAlert(
       'Suspend Channel',
       `Are you sure you want to suspend "${channelName}"?`,
       [
@@ -62,10 +60,10 @@ export default function ChannelActivityScreen() {
                 .update({ status: 'suspended' })
                 .eq('id', channelId);
               if (error) throw error;
-              Alert.alert('Done', `"${channelName}" has been suspended.`);
+              showAlert('Done', `"${channelName}" has been suspended.`);
               fetchActivity();
             } catch (err: any) {
-              Alert.alert('Error', err.message ?? 'Failed to suspend channel');
+              showAlert('Error', err.message ?? 'Failed to suspend channel');
             }
           },
         },

@@ -1,8 +1,6 @@
 import { useState, useCallback } from 'react';
-import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput,
-  Alert, ActivityIndicator, KeyboardAvoidingView, Platform,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { showAlert } from '../../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
@@ -143,7 +141,7 @@ export default function EditPostScreen() {
       setInitial(f);
       setForm(f);
     } catch (err: any) {
-      Alert.alert('Could not load', err?.message ?? 'Something went wrong.');
+      showAlert('Could not load', err?.message ?? 'Something went wrong.');
     } finally {
       setLoading(false);
     }
@@ -156,7 +154,7 @@ export default function EditPostScreen() {
   const save = async () => {
     if (!post) return;
     if (!form.title.trim()) {
-      Alert.alert('Title required', 'A post needs a title.');
+      showAlert('Title required', 'A post needs a title.');
       return;
     }
 
@@ -187,17 +185,17 @@ export default function EditPostScreen() {
     });
 
     if (Object.keys(patch).length === 0 && clear.length === 0) {
-      Alert.alert('Nothing to save', 'No fields have changed.');
+      showAlert('Nothing to save', 'No fields have changed.');
       return;
     }
 
     setSaving(true);
     try {
       await AdminContentService.updatePost(post.id, patch, clear.length ? clear : undefined);
-      Alert.alert('Saved', 'The post has been updated.');
+      showAlert('Saved', 'The post has been updated.');
       setInitial(form);
     } catch (err: any) {
-      Alert.alert('Could not save', err?.message ?? 'Something went wrong.');
+      showAlert('Could not save', err?.message ?? 'Something went wrong.');
     } finally {
       setSaving(false);
     }
@@ -207,7 +205,7 @@ export default function EditPostScreen() {
     const uid = newUid.trim();
     if (!post || !uid) return;
 
-    Alert.alert(
+    showAlert(
       'Replace the video?',
       post.access_level === 'premium'
         ? 'The new video will be protected on Cloudflare before it replaces the old one. Access grants and the post link are kept. The old video is not deleted.'
@@ -223,14 +221,14 @@ export default function EditPostScreen() {
               const { previousUid } = await AdminContentService.replaceVideo(post.id, uid);
               setNewUid('');
               await load();
-              Alert.alert(
+              showAlert(
                 'Video replaced',
                 previousUid
                   ? `The post now plays the new video. The old one (${previousUid}) is still on Cloudflare — delete it there once you are sure.`
                   : 'The post now plays the new video.'
               );
             } catch (err: any) {
-              Alert.alert('Could not replace', err?.message ?? 'Something went wrong.');
+              showAlert('Could not replace', err?.message ?? 'Something went wrong.');
             } finally {
               setReplacing(false);
             }

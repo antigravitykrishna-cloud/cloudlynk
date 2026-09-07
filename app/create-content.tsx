@@ -1,8 +1,6 @@
 import { useState } from 'react';
-import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { showAlert } from '../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../hooks/useAuth';
@@ -40,21 +38,21 @@ export default function NewChannelScreen() {
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async () => {
-    if (!user?.id) { Alert.alert('Error', 'You must be logged in to create a channel.'); return; }
-    if (!name.trim()) { Alert.alert('Name required', 'Please enter a channel name.'); return; }
-    if (!category) { Alert.alert('Category required', 'Please select a channel category.'); return; }
-    if (!agreed) { Alert.alert('Terms required', 'Please agree to the Channel Community Rules to continue.'); return; }
+    if (!user?.id) { showAlert('Error', 'You must be logged in to create a channel.'); return; }
+    if (!name.trim()) { showAlert('Name required', 'Please enter a channel name.'); return; }
+    if (!category) { showAlert('Category required', 'Please select a channel category.'); return; }
+    if (!agreed) { showAlert('Terms required', 'Please agree to the Channel Community Rules to continue.'); return; }
 
     setSubmitting(true);
     try {
       await ChannelService.createChannel(user.id, name.trim(), description.trim(), isPublic, channelLink, category ?? undefined);
-      Alert.alert(
+      showAlert(
         'Channel submitted!',
         'Your channel is under review. We\'ll activate it within 7 days.',
         [{ text: 'OK', onPress: () => router.back() }],
       );
     } catch (err: unknown) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to create channel.');
+      showAlert('Error', err instanceof Error ? err.message : 'Failed to create channel.');
     } finally {
       setSubmitting(false);
     }
@@ -204,7 +202,7 @@ export default function NewChannelScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
-  header: { backgroundColor: Colors.brand, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14 },
+  header: { backgroundColor: Colors.surface, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14 },
   headerBack: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
   headerBackTxt: { color: '#ffffff', fontSize: 28, fontWeight: '700', lineHeight: 28 },
   headerTitle: { color: '#ffffff', fontSize: 18, fontWeight: '800' },
@@ -213,7 +211,7 @@ const styles = StyleSheet.create({
   body: { flex: 1 },
   contentWrap: { paddingBottom: 40 },
   avatarBlock: { alignItems: 'center', paddingVertical: 24 },
-  avatar: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#fce7e7', alignItems: 'center', justifyContent: 'center' },
+  avatar: { width: 80, height: 80, borderRadius: 40, backgroundColor: Colors.surfaceElevated, alignItems: 'center', justifyContent: 'center' },
   avatarText: { color: Colors.brand, fontSize: 28, fontWeight: '900' },
   field: { marginHorizontal: 16, marginBottom: 16 },
   fieldHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },

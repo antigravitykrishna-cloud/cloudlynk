@@ -166,12 +166,15 @@ export const Shadows = {
   }),
 };
 
+// Names in the app's icon set, not emoji glyphs — a file list rendered with
+// system emoji looked different on every device and could not take the
+// category colour beside it.
 export const CATEGORY_ICONS: Record<string, string> = {
-  photo: '🖼️',
-  video: '🎬',
-  document: '📄',
-  audio: '🎵',
-  other: '📦',
+  photo: 'image',
+  video: 'film',
+  document: 'document',
+  audio: 'music',
+  other: 'package',
 };
 
 // Categories were all one colour before, which made the icon the only

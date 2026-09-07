@@ -11,10 +11,8 @@
 // RootLayout (app/_layout.tsx) routes here automatically via
 // ComplianceService.hasAcceptedCurrentPolicies(); there is no way to
 // navigate to this screen except by having an incomplete profile.
-import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
-  KeyboardAvoidingView, Platform, Alert, ActivityIndicator, ScrollView,
-} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView } from 'react-native';
+import { showAlert } from '../../components/Feedback';
 import { Link } from 'expo-router';
 import { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
@@ -29,7 +27,7 @@ export default function CompleteProfileScreen() {
 
   const showAlert = (title: string, msg: string) => {
     if (Platform.OS === 'web') window.alert(`${title}: ${msg}`);
-    else Alert.alert(title, msg);
+    else showAlert(title, msg);
   };
 
   async function handleContinue() {

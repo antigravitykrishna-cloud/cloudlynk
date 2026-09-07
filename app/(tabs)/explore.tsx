@@ -1,14 +1,13 @@
 import { CloudlynkLogo } from '../../components/CloudlynkLogo';
 import { VideoPlayerOverlay } from '../../components/VideoPlayerOverlay';
-import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  FlatList, Modal, ActivityIndicator, RefreshControl,
-  Dimensions, Share, Alert,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, Modal, ActivityIndicator, RefreshControl, Dimensions, Share } from 'react-native';
+import { showAlert } from '../../components/Feedback';
 import { Image } from 'expo-image';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Icon, type IconName } from '../../components/Icon';
+import { ExploreSkeleton } from '../../components/Skeleton';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
 import { useRecordProgress, getSavedPosition } from '../../hooks/useWatchHistory';
@@ -16,7 +15,7 @@ import { PostService, ChannelPost } from '../../lib/posts';
 import { StreamService } from '../../lib/stream';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { useEvent } from 'expo';
-import { Colors } from '../../constants/theme';
+import { Colors, Radius, FontWeight } from '../../constants/theme';
 
 const { width: W, height: H } = Dimensions.get('window');
 const COLS = 3;
@@ -40,9 +39,7 @@ const VideoTile = memo(({ item, onPress }: { item: ChannelPost; onPress: () => v
       {thumb
         ? <Image source={{ uri: thumb }} style={styles.tileImg} resizeMode="cover" />
         : <View style={[styles.tileImg, styles.tilePlaceholder]}>
-            <Text style={{ fontSize: 32 }}>
-              {item.content_type === 'short' ? '🎞️' : item.content_type === 'movie' ? '🎬' : item.content_type === 'series' ? '📺' : '📝'}
-            </Text>
+            <Icon name={contentIcon(item.content_type)} size={30} color={Colors.textMuted} />
           </View>
       }
       {hasVideo && <View style={styles.tileScrim} />}
@@ -60,6 +57,12 @@ const VideoTile = memo(({ item, onPress }: { item: ChannelPost; onPress: () => v
   );
 });
 VideoTile.displayName = 'VideoTile';
+
+
+/** Placeholder glyph when a post has no thumbnail. */
+function contentIcon(t?: string | null): IconName {
+  return t === 'movie' ? 'film' : t === 'series' ? 'tv' : t === 'short' ? 'video' : 'document';
+}
 
 type SectionItem = { sectionKey: string; items: ChannelPost[] };
 
@@ -82,9 +85,17 @@ const SectionCard = memo(({ item, isShorts, onPress }: {
         />
       ) : (
         <View style={[isShorts ? styles.shortImg : styles.sectionCardImg, styles.shortPlaceholder]}>
-          <Text style={{ fontSize: isShorts ? 24 : 28 }}>
-            {item.content_type === 'movie' ? '🎬' : item.content_type === 'series' ? '📺' : item.content_type === 'short' ? '🎞️' : '📝'}
-          </Text>
+          <Icon name={contentIcon(item.content_type)} size={isShorts ? 24 : 28} color={Colors.textMuted} />
+        </View>
+      )}
+      {/* Premium marker. Without it the only way to discover a title is
+          premium is to tap it and be refused, which reads as the app being
+          broken rather than as an upsell. Shown to everyone, signed in or
+          not: for a subscriber it is a badge, for a guest it is the reason
+          to subscribe. */}
+      {item.access_level === 'premium' && (
+        <View style={styles.premiumBadge} pointerEvents="none">
+          <Text style={styles.premiumBadgeText}>PREMIUM</Text>
         </View>
       )}
       <Text style={isShorts ? styles.shortTitle : styles.sectionCardTitle} numberOfLines={2}>
@@ -95,10 +106,80 @@ const SectionCard = memo(({ item, isShorts, onPress }: {
 });
 SectionCard.displayName = 'SectionCard';
 
+
+/**
+ * Full-bleed hero for the first Featured title.
+ *
+ * A streaming home screen opens with one large piece of art, not a grid — it
+ * is what tells you in half a second that this is a place to watch something.
+ * Before this, "Featured" was a 140x80 thumbnail in a row, which read as a
+ * list item, and with one entry it left two thirds of the row empty.
+ *
+ * The gradient is a scrim, not decoration: poster art is arbitrary, so white
+ * title text needs a guaranteed dark floor underneath it or it becomes
+ * unreadable over a bright frame.
+ */
+const HeroCard = memo(({ item, onPress }: { item: ChannelPost; onPress: () => void }) => {
+  const thumb = item.thumbnail_url ? PostService.getMediaPublicUrl(item.thumbnail_url) : null;
+  return (
+    <TouchableOpacity style={styles.hero} onPress={onPress} activeOpacity={0.92}>
+      {thumb ? (
+        <Image source={thumb} style={styles.heroImg} contentFit="cover" transition={220} />
+      ) : (
+        <View style={[styles.heroImg, styles.shortPlaceholder]} />
+      )}
+      <LinearGradient
+        colors={['transparent', 'rgba(11,18,32,0.55)', 'rgba(11,18,32,0.97)']}
+        locations={[0, 0.45, 1]}
+        style={styles.heroScrim}
+      />
+      <View style={styles.heroBody}>
+        {item.access_level === 'premium' ? (
+          <View style={styles.heroTag}><Text style={styles.heroTagText}>PREMIUM</Text></View>
+        ) : (
+          <View style={[styles.heroTag, styles.heroTagFree]}><Text style={styles.heroTagText}>FREE</Text></View>
+        )}
+        <Text style={styles.heroTitle} numberOfLines={2}>{item.title ?? 'Untitled'}</Text>
+        {item.genre ? <Text style={styles.heroMeta} numberOfLines={1}>{item.genre}</Text> : null}
+        <View style={styles.heroPlay}>
+          <Icon name="play" size={16} color={Colors.textInverse} filled />
+          <Text style={styles.heroPlayText}>Play</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+});
+HeroCard.displayName = 'HeroCard';
+
 const SectionBlock = memo(({ sectionKey, items, onSelect }: {
   sectionKey: string; items: ChannelPost[]; onSelect: (item: ChannelPost) => void;
 }) => {
   const isShorts = sectionKey === 'Shorts';
+
+  // Featured is the hero, not a row. Its first item gets the full-width
+  // treatment; anything after it falls through to the normal carousel so a
+  // second featured title is not silently dropped.
+  if (sectionKey === 'Featured' && items.length > 0) {
+    const [lead, ...rest] = items;
+    return (
+      <View style={styles.sectionBlock}>
+        <HeroCard item={lead} onPress={() => onSelect(lead)} />
+        {rest.length > 0 && (
+          <FlatList
+            data={rest}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={i => i.id}
+            contentContainerStyle={styles.sectionRow}
+            renderItem={({ item }) => (
+              <SectionCard item={item} isShorts={false} onPress={() => onSelect(item)} />
+            )}
+          />
+        )}
+      </View>
+    );
+  }
+
   return (
     <View style={styles.sectionBlock}>
       <View style={styles.shortsHeader}>
@@ -212,7 +293,7 @@ const DetailModal = memo(({ selected, onClose, userId }: {
         <View style={styles.detailHero}>
           {thumb
             ? <Image source={{ uri: thumb }} style={styles.detailHeroImg} resizeMode="cover" />
-            : <View style={[styles.detailHeroImg, styles.detailHeroPlaceholder]}><Text style={{ fontSize: 64 }}>{'🎬'}</Text></View>
+            : <View style={[styles.detailHeroImg, styles.detailHeroPlaceholder]}><Icon name="film" size={56} color={Colors.textMuted} /></View>
           }
           <LinearGradient colors={['transparent', 'rgba(0,0,0,0.92)']} style={StyleSheet.absoluteFill} />
           <TouchableOpacity style={[styles.detailClose, { top: insets.top + 12 }]} onPress={onClose}>
@@ -299,12 +380,16 @@ export default function ExploreScreen() {
     // two orderings.
     if (!user?.id) {
       if (item.access_level === 'premium') {
-        Alert.alert(
+        showAlert(
           'Premium title',
           'This one is part of Cloudlynk Premium. Create an account and subscribe to watch it — everything marked Free plays without an account.',
           [
             { text: 'Continue as guest', style: 'cancel' },
-            { text: 'Sign in', onPress: () => router.push('/(auth)/login') },
+            // Someone who just tapped a locked title is the most curious
+            // they will ever be about the price. Sending them to the plans
+            // costs one tap; making them sign up first to find out costs
+            // most of them.
+            { text: 'See Premium plans', onPress: () => router.push('/premium') },
             { text: 'Sign up free', onPress: () => router.push('/(auth)/signup') },
           ],
         );
@@ -318,12 +403,25 @@ export default function ExploreScreen() {
       try {
         const media = await PostService.getFreeMedia(item.id);
         if (!media?.video_url && !media?.media_url) {
-          Alert.alert('Not available', "This one can't be played right now.");
+          showAlert('Not available', "This one can't be played right now.");
           return;
         }
         setSelected({ ...item, ...media } as ChannelPost);
-      } catch {
-        Alert.alert('Not available', 'Could not load this video. Check your connection and try again.');
+      } catch (err: any) {
+        // Distinguish "the view isn't deployed" from "the network is down".
+        // PostgREST answers 404/PGRST205 for an unknown relation, and telling
+        // someone to check their connection when the server is answering fine
+        // sends them to reboot their router instead of to the real cause.
+        const code = err?.code ?? '';
+        const missingView =
+          code === 'PGRST205' || code === '42P01' ||
+          /free_post_media|does not exist|not find the table/i.test(err?.message ?? '');
+        showAlert(
+          'Not available',
+          missingView
+            ? 'Free playback is not switched on for this app yet. Ask the Cloudlynk team to finish setup — nothing is wrong with your device.'
+            : 'Could not load this video. Check your connection and try again.',
+        );
       }
       return;
     }
@@ -409,9 +507,7 @@ export default function ExploreScreen() {
       </View>
 
       {loading ? (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator color={Colors.brand} size="large" />
-        </View>
+        <ExploreSkeleton />
       ) : sectionOrder.length === 0 ? (
         <ScrollView contentContainerStyle={{ flexGrow: 1 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.brand} />}>
           <View style={styles.emptyState}>
@@ -461,19 +557,70 @@ const styles = StyleSheet.create({
   playIconText: { color: '#ffffff', fontSize: 10, marginLeft: 2, marginTop: -1 },
   tileTitleWrap: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 6, paddingVertical: 4, backgroundColor: 'rgba(0,0,0,0.45)' },
   tileTitle: { color: '#ffffff', fontSize: 10, fontWeight: '700' },
-  sectionBlock: { marginBottom: 8 },
-  sectionRow: { paddingHorizontal: 12, gap: 10 },
-  sectionCard: { width: 140, marginRight: 0 },
-  sectionCardImg: { width: 140, height: 80, borderRadius: 6, backgroundColor: '#182437' },
-  sectionCardTitle: { fontSize: 12, color: '#FFFFFF', marginTop: 4, fontWeight: '600' },
+  sectionBlock: { marginBottom: 22 },
+  hero: {
+    height: 460,
+    marginBottom: 20,
+    backgroundColor: Colors.surface,
+    position: 'relative',
+  },
+  heroImg: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%' },
+  heroScrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  heroBody: { position: 'absolute', left: 20, right: 20, bottom: 22 },
+  heroTag: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(0,212,255,0.16)',
+    borderWidth: 1, borderColor: Colors.brandCyan,
+    borderRadius: Radius.sm,
+    paddingHorizontal: 8, paddingVertical: 3,
+    marginBottom: 10,
+  },
+  heroTagFree: {
+    backgroundColor: 'rgba(46,212,122,0.16)',
+    borderColor: Colors.success,
+  },
+  heroTagText: {
+    color: '#FFFFFF', fontSize: 10,
+    fontWeight: FontWeight.extrabold, letterSpacing: 0.8,
+  },
+  heroTitle: {
+    color: '#FFFFFF', fontSize: 30, fontWeight: '800',
+    letterSpacing: -0.6, lineHeight: 35,
+  },
+  heroMeta: { color: Colors.textSecondary, fontSize: 14, marginTop: 6 },
+  heroPlay: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    alignSelf: 'flex-start',
+    backgroundColor: '#FFFFFF',
+    borderRadius: Radius.full,
+    paddingHorizontal: 22, paddingVertical: 11,
+    marginTop: 16,
+  },
+  heroPlayText: { color: Colors.textInverse, fontSize: 15, fontWeight: FontWeight.bold },
+
+  premiumBadge: {
+    position: 'absolute', top: 6, left: 6,
+    backgroundColor: 'rgba(11,18,32,0.82)',
+    borderWidth: 1, borderColor: Colors.brandCyan,
+    borderRadius: Radius.sm,
+    paddingHorizontal: 6, paddingVertical: 2,
+  },
+  premiumBadgeText: {
+    color: Colors.brandCyan, fontSize: 9,
+    fontWeight: FontWeight.extrabold, letterSpacing: 0.6,
+  },
+  sectionRow: { paddingHorizontal: 16, gap: 12 },
+  sectionCard: { width: 132, marginRight: 0 },
+  sectionCardImg: { width: 132, height: 198, borderRadius: 8, backgroundColor: '#182437' },
+  sectionCardTitle: { fontSize: 13, color: '#FFFFFF', marginTop: 6, fontWeight: '600', lineHeight: 17 },
   shortsSection: { paddingBottom: 12, borderBottomWidth: 0.5, borderBottomColor: '#22304A', marginBottom: 8 },
   shortsHeader: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingTop: 12, paddingBottom: 8, gap: 8 },
-  shortsTitle: { fontSize: 18, fontWeight: '800', color: '#FFFFFF' },
-  shortsBadge: { backgroundColor: '#A7F3D0', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
-  shortsBadgeText: { fontSize: 10, fontWeight: '800', color: '#0B1220' },
+  shortsTitle: { fontSize: 19, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.3 },
+  shortsBadge: { backgroundColor: 'rgba(46,212,122,0.16)', borderWidth: 1, borderColor: Colors.success, borderRadius: Radius.sm, paddingHorizontal: 8, paddingVertical: 3 },
+  shortsBadgeText: { fontSize: 10, fontWeight: '800', color: '#FFFFFF', letterSpacing: 0.8 },
   shortsRow: { paddingHorizontal: 12, gap: 10 },
-  shortCard: { width: 110, borderRadius: 8, overflow: 'hidden' },
-  shortImg: { width: 110, height: 160, borderRadius: 8 },
+  shortCard: { width: 120, borderRadius: 8, overflow: 'hidden' },
+  shortImg: { width: 120, height: 205, borderRadius: 8 },
   shortPlaceholder: { backgroundColor: '#182437', alignItems: 'center', justifyContent: 'center' },
   shortTitle: { fontSize: 11, fontWeight: '600', color: '#FFFFFF', marginTop: 4 },
   shortsEmpty: { paddingHorizontal: 12, paddingVertical: 20, alignItems: 'center' },

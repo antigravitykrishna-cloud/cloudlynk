@@ -1,13 +1,14 @@
-import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { showAlert } from '../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../hooks/useAuth';
 import { Colors } from '../constants/theme';
+import Constants from 'expo-constants';
+import { Icon, type IconName } from '../components/Icon';
 
 type MenuRow = {
-  icon: string;
+  icon: IconName;
   label: string;
   onPress: () => void;
 };
@@ -17,7 +18,7 @@ export default function AppSettingScreen() {
   const { signOut } = useAuth();
 
   const handleSignOut = () => {
-    Alert.alert('Sign out', 'Are you sure you want to sign out?', [
+    showAlert('Sign out', 'Are you sure you want to sign out?', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Sign out', style: 'destructive', onPress: () => { signOut(); router.replace('/(auth)/login'); } },
     ]);
@@ -32,11 +33,11 @@ export default function AppSettingScreen() {
   // that opens the corresponding hosted page in an in-app browser, so the
   // app and the Play-Console-linked pages can never drift apart.
   const menuRows: MenuRow[] = [
-    { icon: '🔒', label: 'Privacy Policy', onPress: () => router.push('/privacy') },
-    { icon: '📄', label: 'Terms & Conditions', onPress: () => router.push('/terms') },
-    { icon: '👥', label: 'Community Guidelines', onPress: () => router.push('/community-guidelines') },
-    { icon: '💰', label: 'Refund Policy', onPress: () => router.push('/refund-policy') },
-    { icon: '©️', label: 'Copyright & IP Policy', onPress: () => router.push('/copyright') },
+    { icon: 'lock', label: 'Privacy Policy', onPress: () => router.push('/privacy') },
+    { icon: 'document', label: 'Terms & Conditions', onPress: () => router.push('/terms') },
+    { icon: 'user', label: 'Community Guidelines', onPress: () => router.push('/community-guidelines') },
+    { icon: 'diamond', label: 'Refund Policy', onPress: () => router.push('/refund-policy') },
+    { icon: 'shield', label: 'Copyright & IP Policy', onPress: () => router.push('/copyright') },
   ];
 
   return (
@@ -61,7 +62,7 @@ export default function AppSettingScreen() {
               activeOpacity={0.7}
             >
               <View style={styles.menuIcon}>
-                <Text style={{ fontSize: 16 }}>{row.icon}</Text>
+                <Icon name={row.icon} size={17} color={Colors.brandBlue} />
               </View>
               <Text style={styles.menuLabel}>{row.label}</Text>
               <Text style={styles.chevron}>{'›'}</Text>
@@ -71,7 +72,7 @@ export default function AppSettingScreen() {
 
         {/* Version info */}
         <View style={styles.versionBlock}>
-          <Text style={styles.versionText}>Cloudlynk · v1.0.0</Text>
+          <Text style={styles.versionText}>Cloudlynk · v{Constants.expoConfig?.version ?? '0.0.0'}</Text>
           <Text style={styles.versionSub}>© 2026 Cloudlynk Inc. All rights reserved.</Text>
         </View>
 

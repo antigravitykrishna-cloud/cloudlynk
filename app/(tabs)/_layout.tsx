@@ -1,12 +1,14 @@
 import { Tabs } from 'expo-router';
 import { View, Text, StyleSheet, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Icon, type IconName } from '../../components/Icon';
 import { useEffect } from 'react';
 import { Colors } from '../../constants/theme';
 import { useAuth } from '../../hooks/useAuth';
 import { NotificationService } from '../../lib/notifications';
 
 type TabIconProps = {
-  icon: string;
+  icon: IconName;
   label: string;
   focused: boolean;
 };
@@ -15,7 +17,9 @@ function TabIcon({ icon, label, focused }: TabIconProps) {
   return (
     <View style={styles.tabItem}>
       <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
-        <Text style={[styles.icon, focused && styles.iconActive]}>{icon}</Text>
+        {/* The icon takes the tint from the same source as the label, so the
+            active state is one decision rather than two that can drift. */}
+        <Icon name={icon} size={22} color={focused ? Colors.brandBlue : Colors.inactive} />
       </View>
       <Text style={[styles.label, focused && styles.labelActive]}>{label}</Text>
     </View>
@@ -24,6 +28,7 @@ function TabIcon({ icon, label, focused }: TabIconProps) {
 
 export default function TabsLayout() {
   const { user, profile } = useAuth();
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     if (user && profile?.notifications_enabled !== false) {
@@ -41,7 +46,18 @@ export default function TabsLayout() {
       initialRouteName="explore"
       screenOptions={{
         headerShown: false,
-        tabBarStyle: styles.tabBar,
+        // The bar's bottom padding has to clear the gesture pill, which is not
+        // a fixed number: it is 0 with 3-button navigation and ~24-48px with
+        // gesture navigation, and it differs per device. It was hardcoded to
+        // 16, so on a gesture-nav phone the pill was drawn straight through
+        // the "Explore" and "Channels" labels.
+        tabBarStyle: [
+          styles.tabBar,
+          {
+            height: (Platform.OS === 'ios' ? 84 : 72) + insets.bottom,
+            paddingBottom: (Platform.OS === 'ios' ? 24 : 12) + insets.bottom,
+          },
+        ],
         tabBarShowLabel: false,
       }}
     >
@@ -49,7 +65,7 @@ export default function TabsLayout() {
         name="index"
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon icon="☁️" label="Cloud" focused={focused} />
+            <TabIcon icon="cloud" label="Cloud" focused={focused} />
           ),
         }}
       />
@@ -58,7 +74,7 @@ export default function TabsLayout() {
         name="explore"
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon icon="🔍" label="Explore" focused={focused} />
+            <TabIcon icon="compass" label="Explore" focused={focused} />
           ),
         }}
       />
@@ -67,7 +83,7 @@ export default function TabsLayout() {
         name="channels"
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon icon="📡" label="Channels" focused={focused} />
+            <TabIcon icon="broadcast" label="Channels" focused={focused} />
           ),
         }}
       />
@@ -76,7 +92,7 @@ export default function TabsLayout() {
         name="profile"
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon icon="👤" label="Profile" focused={focused} />
+            <TabIcon icon="user" label="Profile" focused={focused} />
           ),
         }}
       />
@@ -90,8 +106,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.bg,
     borderTopWidth: 0.5,
     borderTopColor: Colors.border,
-    height: Platform.OS === 'ios' ? 84 : 72,
-    paddingBottom: Platform.OS === 'ios' ? 24 : 16,
     paddingTop: 8,
   },
   tabItem: { alignItems: 'center', gap: 3, width: 80 },

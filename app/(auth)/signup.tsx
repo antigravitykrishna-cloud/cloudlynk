@@ -1,7 +1,5 @@
-import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
-  KeyboardAvoidingView, Platform, Alert, ActivityIndicator, ScrollView,
-} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView } from 'react-native';
+import { showAlert } from '../../components/Feedback';
 import { Link } from 'expo-router';
 import { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
@@ -20,7 +18,7 @@ export default function SignupScreen() {
   async function handleSignUp() {
     const showAlert = (title: string, msg: string) => {
       if (Platform.OS === 'web') window.alert(`${title}: ${msg}`);
-      else Alert.alert(title, msg);
+      else showAlert(title, msg);
     };
 
     if (!fullName.trim() || !email.trim() || !password || !birthYear.trim()) {
@@ -73,7 +71,7 @@ export default function SignupScreen() {
         <View style={styles.logoRow}>
           <Text style={styles.logo}>☁</Text>
           <Text style={styles.logoText}>
-            Stream<Text style={{ color: Colors.accent }}>ly</Text>
+            Cloud<Text style={{ color: Colors.accent }}>lynk</Text>
           </Text>
         </View>
 

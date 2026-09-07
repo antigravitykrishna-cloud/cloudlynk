@@ -185,12 +185,12 @@ export default function MySubscriptionScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
-  header: { backgroundColor: Colors.brand, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14 },
+  header: { backgroundColor: Colors.surface, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14 },
   backBtn: { width: 80 },
   backTxt: { color: '#ffffff', fontSize: 14, fontWeight: '600' },
   headerTitle: { color: '#ffffff', fontSize: 18, fontWeight: '800', flex: 1, textAlign: 'center' },
   content: { paddingVertical: 16 },
-  card: { marginHorizontal: 16, marginBottom: 16, backgroundColor: '#f8fafc', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: Colors.border },
+  card: { marginHorizontal: 16, marginBottom: 16, backgroundColor: Colors.surface, borderRadius: 16, padding: 20, borderWidth: 1, borderColor: Colors.border },
   cardTitle: { fontSize: 14, fontWeight: '800', color: Colors.text, marginBottom: 12 },
   cardMeta: { fontSize: 13, color: Colors.text, fontWeight: '500', marginTop: 8 },
   cardSub: { fontSize: 12, color: Colors.textMuted, fontWeight: '500', marginTop: 4 },

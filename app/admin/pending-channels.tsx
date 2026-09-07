@@ -1,8 +1,6 @@
 import { useState, useCallback } from 'react';
-import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Alert, ActivityIndicator, RefreshControl, Linking,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Linking } from 'react-native';
+import { showAlert } from '../../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
@@ -148,22 +146,68 @@ export default function PendingChannelsScreen() {
     setRefreshing(false);
   }, [loadPending]);
 
+/**
+ * Set a channel's status, preferring the audited v64 RPC.
+ *
+ * admin_set_channel_status() re-checks admin standing server-side and writes
+ * an admin_audit_log row, so "who published this channel, and when" has an
+ * answer. It ships in migration v64.
+ *
+ * Until v64 is applied, PostgREST answers PGRST202 ("Could not find the
+ * function") and we fall back to the direct UPDATE this screen used before.
+ * Security is unchanged either way — v60's protect_channel_privileged_fields
+ * trigger reverts a status write from anyone who is not an active admin. What
+ * the fallback loses is the audit row, which is why it is a fallback.
+ *
+ * Delete this helper's fallback branch once v64 is deployed everywhere.
+ */
+async function setChannelStatus(channelId: string, status: 'active' | 'rejected') {
+  const rpc = await supabase.rpc('admin_set_channel_status', {
+    p_channel_id: channelId,
+    p_status: status,
+    p_reason: null,
+  });
+
+  const missing =
+    rpc.error &&
+    (rpc.error.code === 'PGRST202' || /could not find the function/i.test(rpc.error.message));
+
+  if (!missing) return { error: rpc.error };
+
+  const { error } = await supabase
+    .from('channels')
+    .update({ status })
+    .eq('id', channelId);
+
+  // 23514 is the CHECK violation on channels.status. Pre-v64 the constraint
+  // is (pending, active, suspended) with no 'rejected', so rejecting cannot
+  // work at all until the migration lands. Say that, rather than surfacing a
+  // raw Postgres constraint string to an admin who cannot act on it.
+  if (error && error.code === '23514') {
+    return {
+      error: {
+        ...error,
+        message:
+          'Rejecting needs database migration v64. Run "npx supabase db push" — approving works without it.',
+      },
+    };
+  }
+  return { error };
+}
+
   const handleApproveChannel = async (channel: PendingChannel) => {
     try {
-      const { error } = await supabase
-        .from('channels')
-        .update({ status: 'active' })
-        .eq('id', channel.id);
+      const { error } = await setChannelStatus(channel.id, 'active');
       if (error) throw error;
       setChannels(prev => prev.filter(c => c.id !== channel.id));
-      Alert.alert('Approved', `"${channel.name}" is now active.`);
+      showAlert('Approved', `"${channel.name}" is now active.`);
     } catch (err: unknown) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Approve failed');
+      showAlert('Error', err instanceof Error ? err.message : 'Approve failed');
     }
   };
 
   const handleRejectChannel = (channel: PendingChannel) => {
-    Alert.alert(
+    showAlert(
       'Reject Channel',
       `Are you sure? This will mark "${channel.name}" as rejected.`,
       [
@@ -172,15 +216,12 @@ export default function PendingChannelsScreen() {
           text: 'Reject', style: 'destructive',
           onPress: async () => {
             try {
-              const { error } = await supabase
-                .from('channels')
-                .update({ status: 'rejected' })
-                .eq('id', channel.id);
+              const { error } = await setChannelStatus(channel.id, 'rejected');
               if (error) throw error;
               setChannels(prev => prev.filter(c => c.id !== channel.id));
-              Alert.alert('Rejected', `"${channel.name}" has been rejected.`);
+              showAlert('Rejected', `"${channel.name}" has been rejected.`);
             } catch (err: unknown) {
-              Alert.alert('Error', err instanceof Error ? err.message : 'Reject failed');
+              showAlert('Error', err instanceof Error ? err.message : 'Reject failed');
             }
           },
         },
@@ -194,12 +235,12 @@ export default function PendingChannelsScreen() {
         .from('channel-videos')
         .createSignedUrl(video.storage_path, 3600);
       if (error || !data?.signedUrl) {
-        Alert.alert('Error', 'Could not generate preview URL.');
+        showAlert('Error', 'Could not generate preview URL.');
         return;
       }
       await Linking.openURL(data.signedUrl);
     } catch (err: unknown) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Could not open video.');
+      showAlert('Error', err instanceof Error ? err.message : 'Could not open video.');
     }
   };
 
@@ -211,14 +252,14 @@ export default function PendingChannelsScreen() {
         .eq('id', video.id);
       if (error) throw error;
       setVideos(prev => prev.filter(v => v.id !== video.id));
-      Alert.alert('Approved', `Video "${video.title ?? 'Untitled'}" is now approved.`);
+      showAlert('Approved', `Video "${video.title ?? 'Untitled'}" is now approved.`);
     } catch (err: unknown) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Approve failed');
+      showAlert('Error', err instanceof Error ? err.message : 'Approve failed');
     }
   };
 
   const handleRejectVideo = (video: PendingVideo) => {
-    Alert.alert(
+    showAlert(
       'Reject Video',
       `Reject "${video.title ?? 'Untitled'}"? Enter a reason if needed.`,
       [
@@ -237,9 +278,9 @@ export default function PendingChannelsScreen() {
                 .eq('id', video.id);
               if (error) throw error;
               setVideos(prev => prev.filter(v => v.id !== video.id));
-              Alert.alert('Rejected', 'Video has been rejected.');
+              showAlert('Rejected', 'Video has been rejected.');
             } catch (err: unknown) {
-              Alert.alert('Error', err instanceof Error ? err.message : 'Reject failed');
+              showAlert('Error', err instanceof Error ? err.message : 'Reject failed');
             }
           },
         },
@@ -249,13 +290,13 @@ export default function PendingChannelsScreen() {
 
   const handlePlayPost = async (post: PendingPost) => {
     if (!post.video_url) {
-      Alert.alert('No video', 'This post has no video URL attached.');
+      showAlert('No video', 'This post has no video URL attached.');
       return;
     }
     try {
       await Linking.openURL(post.video_url);
     } catch (err: unknown) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Could not open video.');
+      showAlert('Error', err instanceof Error ? err.message : 'Could not open video.');
     }
   };
 
@@ -264,14 +305,14 @@ export default function PendingChannelsScreen() {
       const { error } = await supabase.rpc('approve_post', { p_post_id: post.id });
       if (error) throw error;
       setPosts(prev => prev.filter(p => p.id !== post.id));
-      Alert.alert('Approved', `"${post.title ?? 'Untitled'}" is now approved.`);
+      showAlert('Approved', `"${post.title ?? 'Untitled'}" is now approved.`);
     } catch (err: unknown) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Approve failed');
+      showAlert('Error', err instanceof Error ? err.message : 'Approve failed');
     }
   };
 
   const handleRejectPost = (post: PendingPost) => {
-    Alert.alert(
+    showAlert(
       'Reject Post',
       `Reject "${post.title ?? 'Untitled'}"?`,
       [
@@ -286,9 +327,9 @@ export default function PendingChannelsScreen() {
               });
               if (error) throw error;
               setPosts(prev => prev.filter(p => p.id !== post.id));
-              Alert.alert('Rejected', 'Post has been rejected.');
+              showAlert('Rejected', 'Post has been rejected.');
             } catch (err: unknown) {
-              Alert.alert('Error', err instanceof Error ? err.message : 'Reject failed');
+              showAlert('Error', err instanceof Error ? err.message : 'Reject failed');
             }
           },
         },
@@ -463,7 +504,7 @@ export default function PendingChannelsScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
-  header: { backgroundColor: Colors.brand, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14 },
+  header: { backgroundColor: Colors.surface, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14 },
   headerBack: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
   headerBackTxt: { color: '#ffffff', fontSize: 28, fontWeight: '700', lineHeight: 28 },
   headerTitle: { color: '#ffffff', fontSize: 18, fontWeight: '800' },

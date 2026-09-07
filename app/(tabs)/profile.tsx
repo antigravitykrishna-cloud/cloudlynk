@@ -1,8 +1,6 @@
 import { CloudlynkLogo } from '../../components/CloudlynkLogo';
-import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Alert, Switch, Linking, ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Linking, ActivityIndicator } from 'react-native';
+import { showAlert } from '../../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useState, useCallback, useEffect, useRef } from 'react';
@@ -15,12 +13,14 @@ import { supabase } from '../../lib/supabase';
 import { Colors } from '../../constants/theme';
 import { formatBytes } from '../../lib/storage';
 import { config } from '../../lib/config';
+import Constants from 'expo-constants';
+import { Icon, type IconName } from '../../components/Icon';
 
 const SettingsRow = ({
   icon, iconBg, label, value, onPress, danger = false,
   toggle, toggleValue, onToggle,
 }: {
-  icon: string; iconBg: string; label: string;
+  icon: IconName; iconBg: string; label: string;
   value?: string; onPress?: () => void; danger?: boolean;
   toggle?: boolean; toggleValue?: boolean; onToggle?: (v: boolean) => void;
 }) => (
@@ -31,20 +31,20 @@ const SettingsRow = ({
     disabled={!onPress && !toggle}
   >
     <View style={[styles.rowIcon, { backgroundColor: iconBg }]}>
-      <Text style={{ fontSize: 16 }}>{icon}</Text>
+      <Icon name={icon} size={18} color={danger ? Colors.danger : Colors.brandBlue} />
     </View>
     <Text style={[styles.rowLabel, danger && { color: Colors.danger }]}>{label}</Text>
     {toggle ? (
       <Switch
         value={toggleValue}
         onValueChange={onToggle}
-        trackColor={{ false: '#e5e5e5', true: Colors.brandLight }}
+        trackColor={{ false: Colors.borderStrong, true: Colors.accentOrangeDim }}
         thumbColor={toggleValue ? Colors.brand : '#cccccc'}
       />
     ) : (
       <View style={styles.rowRight}>
         {value ? <Text style={styles.rowValue}>{value}</Text> : null}
-        {onPress ? <Text style={styles.chevron}>{'›'}</Text> : null}
+        {onPress ? <Icon name="chevron-right" size={16} color={Colors.textMuted} /> : null}
       </View>
     )}
   </TouchableOpacity>
@@ -89,7 +89,7 @@ export default function ProfileScreen() {
   const isPaidUser = profile?.plan != null && profile.plan !== 'free';
 
   const handleSignOut = () => {
-    Alert.alert('Sign out', 'Are you sure you want to sign out?', [
+    showAlert('Sign out', 'Are you sure you want to sign out?', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Sign out', style: 'destructive', onPress: signOut },
     ]);
@@ -102,7 +102,7 @@ export default function ProfileScreen() {
       if (error) throw error;
       await refreshProfile();
     } catch (err: unknown) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Update failed');
+      showAlert('Error', err instanceof Error ? err.message : 'Update failed');
     }
   };
 
@@ -116,7 +116,13 @@ export default function ProfileScreen() {
   if (!user?.id) {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
-        <GuestPrompt icon="👤" title="Your profile lives here" message="Sign in to manage your storage, subscription, uploads and privacy settings." />
+        <GuestPrompt
+          icon="user"
+          title="Your profile lives here"
+          message="Sign in to manage your storage, subscription, uploads and privacy settings."
+          linkLabel="See Premium plans"
+          linkHref="/premium"
+        />
       </SafeAreaView>
     );
   }
@@ -136,17 +142,17 @@ export default function ProfileScreen() {
           <View style={styles.headerActions}>
             <TouchableOpacity
               style={styles.headerActionBtn}
-              onPress={() => Alert.alert('Edit Profile', 'Edit profile coming soon.')}
+              onPress={() => showAlert('Edit Profile', 'Edit profile coming soon.')}
               activeOpacity={0.7}
             >
-              <Text style={styles.headerActionIcon}>{'✏️'}</Text>
+              <Icon name="edit" size={17} color={Colors.text} />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.headerActionBtn}
               onPress={() => router.push('/app-setting')}
               activeOpacity={0.7}
             >
-              <Text style={styles.headerActionIcon}>{'⚙️'}</Text>
+              <Icon name="settings" size={17} color={Colors.text} />
             </TouchableOpacity>
           </View>
         </View>
@@ -226,7 +232,7 @@ export default function ProfileScreen() {
             <View style={styles.menuGroup}>
               {isAdmin && (
                 <SettingsRow
-                  icon="🛡️"
+                  icon="shield"
                   iconBg={Colors.brandLight}
                   label="Admin Panel"
                   onPress={() => router.push('/admin')}
@@ -234,114 +240,114 @@ export default function ProfileScreen() {
               )}
               {isAdmin && (
                 <SettingsRow
-                  icon="📋"
-                  iconBg="#fef3c7"
+                  icon="clipboard"
+                  iconBg="rgba(255,179,71,0.14)"
                   label="Admin: Pending Channels"
                   onPress={() => router.push('/admin/pending-channels')}
                 />
               )}
               {isAdmin && (
                 <SettingsRow
-                  icon="📝"
-                  iconBg="#fef3c7"
+                  icon="edit"
+                  iconBg="rgba(255,179,71,0.14)"
                   label="Pending Channel Content"
                   onPress={() => router.push("/admin/pending-channel-content")}
                 />
               )}
               {isAdmin && (
                 <SettingsRow
-                  icon="📊"
-                  iconBg="#e0f2fe"
+                  icon="chart"
+                  iconBg="rgba(46,125,255,0.14)"
                   label="Channel Activity"
                   onPress={() => router.push("/admin/channel-activity")}
                 />
               )}
               {isAdmin && (
                 <SettingsRow
-                  icon="🚩"
-                  iconBg="#fee2e2"
+                  icon="flag"
+                  iconBg="rgba(255,77,109,0.14)"
                   label="Reports (Content & Users)"
                   onPress={() => router.push("/admin/reports")}
                 />
               )}
               {isAdmin && (
                 <SettingsRow
-                  icon="✅"
-                  iconBg="#dcfce7"
+                  icon="check-circle"
+                  iconBg="rgba(46,212,122,0.14)"
                   label="User Approvals"
                   onPress={() => router.push("/admin/user-approvals")}
                 />
               )}
               {isAdmin && (
                 <SettingsRow
-                  icon="🎬"
-                  iconBg="#ede9fe"
+                  icon="film"
+                  iconBg="rgba(180,169,255,0.14)"
                   label="Content & Access"
                   onPress={() => router.push("/admin/content")}
                 />
               )}
               {isAdmin && (
                 <SettingsRow
-                  icon="⬆️"
-                  iconBg="#e0f2fe"
+                  icon="upload"
+                  iconBg="rgba(46,125,255,0.14)"
                   label="Upload Content"
                   onPress={() => router.push("/admin/upload")}
                 />
               )}
               {isAdmin && (
                 <SettingsRow
-                  icon="📜"
-                  iconBg="#f3f4f6"
+                  icon="history"
+                  iconBg="rgba(159,176,201,0.14)"
                   label="Audit Log"
                   onPress={() => router.push("/admin/audit")}
                 />
               )}
               <SettingsRow
-                icon="🔔"
+                icon="bell"
                 iconBg={Colors.brandLight}
                 label="Notifications"
                 value={unreadCount > 0 ? `${unreadCount} new` : undefined}
                 onPress={() => router.push('/notifications')}
               />
               <SettingsRow
-                icon="📊"
-                iconBg="#12261C"
+                icon="chart"
+                iconBg="rgba(46,212,122,0.14)"
                 label="My Subscription"
                 onPress={() => router.push('/my-subscription')}
               />
               <SettingsRow
-                icon="🎥"
-                iconBg="#fef3c7"
+                icon="video"
+                iconBg="rgba(255,179,71,0.14)"
                 label="My Videos"
                 onPress={() => router.push('/my-videos')}
               />
               <SettingsRow
-                icon="🔒"
-                iconBg="#e0f2fe"
+                icon="lock"
+                iconBg="rgba(46,125,255,0.14)"
                 label="Privacy Policy"
                 onPress={() => Linking.openURL(config.privacyPolicyUrl)}
               />
               <SettingsRow
-                icon="📜"
-                iconBg="#fef3c7"
+                icon="document"
+                iconBg="rgba(255,179,71,0.14)"
                 label="Terms of Service"
                 onPress={() => Linking.openURL(config.termsUrl)}
               />
               <SettingsRow
-                icon="📦"
-                iconBg="#12261C"
+                icon="package"
+                iconBg="rgba(46,212,122,0.14)"
                 label="Export My Data"
                 onPress={() => router.push('/export-data')}
               />
               <SettingsRow
-                icon="💎"
+                icon="diamond"
                 iconBg={Colors.brandLight}
                 label={isPaidUser ? 'Manage Plan' : 'Upgrade to Premium'}
                 value={isPaidUser ? planName : undefined}
                 onPress={() => router.push('/premium')}
               />
               <SettingsRow
-                icon="☁️"
+                icon="cloud"
                 iconBg={Colors.brandLight}
                 label="Auto Backup"
                 toggle
@@ -349,7 +355,7 @@ export default function ProfileScreen() {
                 onToggle={(v) => handleToggle('auto_backup', v)}
               />
               <SettingsRow
-                icon="📶"
+                icon="wifi"
                 iconBg={Colors.brandLight}
                 label="Wi-Fi Only Uploads"
                 toggle
@@ -357,7 +363,7 @@ export default function ProfileScreen() {
                 onToggle={(v) => handleToggle('wifi_only', v)}
               />
               <SettingsRow
-                icon="⚙️"
+                icon="settings"
                 iconBg={Colors.brandLight}
                 label="App Setting"
                 onPress={() => router.push('/app-setting')}
@@ -370,8 +376,8 @@ export default function ProfileScreen() {
             <View style={styles.section}>
               <Text style={styles.sectionHeaderTitle}>DEV TOOLS</Text>
               <View style={styles.menuGroup}>
-                <SettingsRow icon="🛠️" iconBg="#fefce8" label="Force Paywall (30 min)" onPress={() => setUsage(30 * 60 * 1000)} />
-                <SettingsRow icon="🔄" iconBg="#fefce8" label="Reset usage timer" onPress={() => resetTimer()} />
+                <SettingsRow icon="tools" iconBg="rgba(255,179,71,0.10)" label="Force Paywall (30 min)" onPress={() => setUsage(30 * 60 * 1000)} />
+                <SettingsRow icon="refresh" iconBg="rgba(255,179,71,0.10)" label="Reset usage timer" onPress={() => resetTimer()} />
               </View>
             </View>
           )}
@@ -386,7 +392,7 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.version}>{'Cloudlynk · v1.0.0\n© 2026 Cloudlynk Inc. All rights reserved.'}</Text>
+          <Text style={styles.version}>{`Cloudlynk · v${Constants.expoConfig?.version ?? '0.0.0'}\n© 2026 Cloudlynk Inc. All rights reserved.`}</Text>
           <View style={{ height: 32 }} />
         </View>
       </ScrollView>

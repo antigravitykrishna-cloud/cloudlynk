@@ -1,11 +1,15 @@
-import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
-  KeyboardAvoidingView, Platform, Alert, ActivityIndicator, ScrollView,
-} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView } from 'react-native';
+import { showAlert } from '../../components/Feedback';
 import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '../../constants/theme';
+import Constants from 'expo-constants';
+import { Icon } from '../../components/Icon';
+
+// Read the real version rather than a literal: this said "v1.0" while the
+// app shipped 0.7.1, and a hardcoded string drifts again at the next bump.
+const APP_VERSION = Constants.expoConfig?.version ?? '0.0.0';
 
 export default function LoginScreen() {
   const { signIn } = useAuth();
@@ -17,7 +21,7 @@ export default function LoginScreen() {
 
   const showAlert = (title: string, msg: string) => {
     if (Platform.OS === 'web') window.alert(`${title}: ${msg}`);
-    else Alert.alert(title, msg);
+    else showAlert(title, msg);
   };
 
   async function handleLogin() {
@@ -85,7 +89,7 @@ export default function LoginScreen() {
                 style={styles.eyeBtn}
                 onPress={() => setShowPassword(!showPassword)}
               >
-                <Text style={{ fontSize: 18 }}>{showPassword ? '🙈' : '👁️'}</Text>
+                <Icon name={showPassword ? 'eye-off' : 'eye'} size={19} color={Colors.textSecondary} />
               </TouchableOpacity>
             </View>
           </View>
@@ -136,10 +140,10 @@ export default function LoginScreen() {
           <Text style={styles.guestBtnTxt}>Continue as guest</Text>
         </TouchableOpacity>
         <Text style={styles.guestHint}>
-          Browse everything. You'll need an account to watch.
+          Browse everything. Free titles play without an account.
         </Text>
 
-        <Text style={styles.version}>Cloudlynk v1.0</Text>
+        <Text style={styles.version}>Cloudlynk v{APP_VERSION}</Text>
       </ScrollView>
     </KeyboardAvoidingView>
   );

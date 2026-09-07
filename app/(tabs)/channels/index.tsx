@@ -1,8 +1,6 @@
 import { CloudlynkLogo } from '../../../components/CloudlynkLogo';
-import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, Alert, RefreshControl, ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, RefreshControl, ActivityIndicator } from 'react-native';
+import { showAlert } from '../../../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -12,6 +10,8 @@ import { ChannelService } from '../../../lib/channels';
 import { supabase } from '../../../lib/supabase';
 import { Colors } from '../../../constants/theme';
 import { Database } from '../../../lib/supabase';
+import { ListSkeleton } from '../../../components/Skeleton';
+import { Icon } from '../../../components/Icon';
 
 type Channel = Database['public']['Tables']['channels']['Row'];
 type TabKey = 'discover' | 'feed' | 'joined';
@@ -96,7 +96,7 @@ export default function ChannelsScreen() {
 
   const handleJoinPress = (channel: Channel) => {
     if (!isPaidUser) {
-      Alert.alert(
+      showAlert(
         'Subscription Required',
         'A subscription is required to join this channel. Upgrade to continue.',
         [
@@ -118,13 +118,13 @@ export default function ChannelsScreen() {
       router.push({ pathname: '/(tabs)/channels/[id]', params: { id: channel.id } });
     } catch (err: unknown) {
       const msg = err instanceof Error && err.message ? err.message : 'Could not join channel.';
-      Alert.alert('Cannot join channel', msg);
+      showAlert('Cannot join channel', msg);
     }
   };
 
   const handleLeave = (channel: Channel) => {
     if (!user?.id) return;
-    Alert.alert('Leave channel', `Leave "${channel.name}"?`, [
+    showAlert('Leave channel', `Leave "${channel.name}"?`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Leave', style: 'destructive',
@@ -135,7 +135,7 @@ export default function ChannelsScreen() {
             await loadMemberships();
           } catch (err: unknown) {
             const msg = err instanceof Error && err.message ? err.message : 'Could not leave channel.';
-            Alert.alert('Error', msg);
+            showAlert('Error', msg);
           }
         },
       },
@@ -143,7 +143,7 @@ export default function ChannelsScreen() {
   };
 
   const handleManage = (channel: Channel) => {
-    Alert.alert(
+    showAlert(
       `Manage: ${channel.name}`,
       `Members: ${channel.member_count ?? 0} · Posts: ${channel.post_count ?? 0}`,
       [
@@ -151,7 +151,7 @@ export default function ChannelsScreen() {
         {
           text: 'Delete Channel', style: 'destructive',
           onPress: () => {
-            Alert.alert('Confirm Delete', `Permanently delete "${channel.name}" and all its content?`, [
+            showAlert('Confirm Delete', `Permanently delete "${channel.name}" and all its content?`, [
               { text: 'Cancel', style: 'cancel' },
               {
                 text: 'Delete', style: 'destructive',
@@ -159,9 +159,9 @@ export default function ChannelsScreen() {
                   try {
                     await ChannelService.deleteChannel(channel.id);
                     await loadChannels();
-                    Alert.alert('Deleted', `"${channel.name}" has been deleted.`);
+                    showAlert('Deleted', `"${channel.name}" has been deleted.`);
                   } catch (err: unknown) {
-                    Alert.alert('Error', err instanceof Error ? err.message : 'Delete failed');
+                    showAlert('Error', err instanceof Error ? err.message : 'Delete failed');
                   }
                 },
               },
@@ -175,7 +175,7 @@ export default function ChannelsScreen() {
 
   const handleRowPress = (channel: Channel) => {
     if (!isPaidUser && !isAdmin && channel.owner_id !== user?.id && !joinedChannelIds.has(channel.id)) {
-      Alert.alert(
+      showAlert(
         'Subscription Required',
         'A subscription is required to view this channel. Upgrade to continue.',
         [
@@ -194,7 +194,7 @@ export default function ChannelsScreen() {
   if (!user?.id) {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
-        <GuestPrompt icon="📺" title="Join channels you like" message="Follow creators, join public channels, or start your own. Public and private both." />
+        <GuestPrompt icon="tv" title="Join channels you like" message="Follow creators, join public channels, or start your own. Public and private both." />
       </SafeAreaView>
     );
   }
@@ -210,7 +210,7 @@ export default function ChannelsScreen() {
       {/* Search bar (white pill on red bg) */}
       <View style={styles.searchBarWrap}>
         <View style={styles.searchBar}>
-          <Text style={styles.searchIcon}>{'🔍'}</Text>
+          <Icon name="search" size={16} color={Colors.textMuted} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search"
@@ -263,12 +263,15 @@ export default function ChannelsScreen() {
 
       {/* Channel list */}
       {loading ? (
-        <ActivityIndicator color={Colors.brand} size="large" style={{ marginTop: 60 }} />
+        <ListSkeleton rows={7} />
       ) : sortedChannels.length === 0 ? (
         <ScrollView contentContainerStyle={{ flexGrow: 1 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.brand} />}>
           <View style={styles.emptyState}>
             <CloudlynkLogo size={48} />
-            <Text style={styles.emptyText}>No Record Found</Text>
+            <Text style={styles.emptyText}>No channels yet</Text>
+            <Text style={styles.emptyHint}>
+              Join a public channel from Explore, or create your own.
+            </Text>
           </View>
         </ScrollView>
       ) : (
@@ -296,9 +299,7 @@ export default function ChannelsScreen() {
                   onPress={() => handleRowPress(channel)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.channelAvatarEmoji}>
-                    {channel.is_public ? '🌐' : '🔐'}
-                  </Text>
+                  <Icon name={channel.is_public ? 'globe' : 'lock'} size={22} color={Colors.brandBlue} />
                 </TouchableOpacity>
 
                 {/* Center info — sibling TouchableOpacity */}
@@ -310,11 +311,11 @@ export default function ChannelsScreen() {
                   <Text style={styles.channelName} numberOfLines={1}>{channel.name}</Text>
                   <View style={styles.channelStats}>
                     <View style={styles.channelStat}>
-                      <Text style={styles.channelStatIcon}>{'👤'}</Text>
+                      <Icon name="user" size={13} color={Colors.textMuted} />
                       <Text style={styles.channelStatText}>{memberCount}</Text>
                     </View>
                     <View style={styles.channelStat}>
-                      <Text style={styles.channelStatIcon}>{'📁'}</Text>
+                      <Icon name="folder" size={13} color={Colors.textMuted} />
                       <Text style={styles.channelStatText}>{contentCount}</Text>
                     </View>
                   </View>
@@ -351,7 +352,7 @@ export default function ChannelsScreen() {
                     onPress={() => handleJoinPress(channel)}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.lockBtnIcon}>{'🔒'}</Text>
+                    <Icon name="lock" size={14} color={Colors.textMuted} />
                   </TouchableOpacity>
                 )}
               </View>
@@ -408,4 +409,5 @@ const styles = StyleSheet.create({
   lockBtnIcon: { fontSize: 16 },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80, paddingHorizontal: 20 },
   emptyText: { fontSize: 16, color: Colors.text, fontWeight: '600', marginTop: 16 },
+  emptyHint: { fontSize: 14, color: Colors.textSecondary, marginTop: 8, textAlign: 'center', paddingHorizontal: 40, lineHeight: 20 },
 });

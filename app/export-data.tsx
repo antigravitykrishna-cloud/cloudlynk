@@ -1,13 +1,13 @@
 import { useState, useCallback } from 'react';
-import {
-  View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { showAlert } from '../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { supabase } from '../lib/supabase';
 import { Colors } from '../constants/theme';
+import { Icon } from '../components/Icon';
 
 type ExportStatus = 'idle' | 'loading' | 'success' | 'error';
 
@@ -69,13 +69,13 @@ export default function ExportDataScreen() {
           UTI: 'public.json',
         });
       } else {
-        Alert.alert('Saved', `Data exported to:\n${file.uri}`);
+        showAlert('Saved', `Data exported to:\n${file.uri}`);
       }
 
       setStatus('success');
     } catch (err: unknown) {
       setStatus('error');
-      Alert.alert('Export Failed', err instanceof Error ? err.message : 'An unexpected error occurred');
+      showAlert('Export Failed', err instanceof Error ? err.message : 'An unexpected error occurred');
     }
   };
 
@@ -93,7 +93,7 @@ export default function ExportDataScreen() {
       {/* Body */}
       <View style={styles.body}>
         <View style={styles.card}>
-          <Text style={styles.cardIcon}>{'📦'}</Text>
+          <Icon name="package" size={30} color={Colors.brandBlue} />
           <Text style={styles.cardTitle}>Download Your Data</Text>
           <Text style={styles.cardDesc}>
             Download a copy of all your data in JSON format. Includes your profile, channel memberships, posts, subscription history, and uploaded videos.
