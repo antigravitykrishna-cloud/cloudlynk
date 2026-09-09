@@ -185,6 +185,66 @@ debug-signed and it was not.
 | `Keystore was tampered with, or password was incorrect` | Wrong password in `~/.gradle/gradle.properties` |
 | Build fails demanding release signing | Intended. §4 is not set up |
 | `Could not resolve all files` | Network, or a proxy blocking Maven |
+| `Unable to delete directory '...\generated\ksp\...'` | **MAX_PATH.** See below — not a lock, despite what the message says |
+| `Execution failed for task ':app:packageReleaseResources'` followed by a bare `Error: <some long path>` | **MAX_PATH.** Same cause |
+
+### The Windows path-length trap
+
+Both of those errors are the same problem wearing two disguises, and neither
+message says so. Windows caps paths at **260 characters** unless
+`LongPathsEnabled` is set. This checkout sits at
+
+```
+C:\Users\MIT\OneDrive\Desktop\cloudlynk
+```
+
+which is 133 characters before Gradle appends
+`\android\app\build\intermediates\incremental\release\packageReleaseResources\merged.dir\values\...`.
+Resource merging and KSP codegen both blow past the cap, and the failure
+surfaces as a delete that "failed because a process has files open" — which
+sends you hunting for a file lock that does not exist.
+
+Check whether the cap is on:
+
+```bash
+reg query "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v LongPathsEnabled
+```
+
+`0x0` means the cap is active. Two ways out:
+
+**A. Redirect the build output to a short path** (no admin rights, changes
+nothing in the repo). Create `C:\clb\shortpath.init.gradle`:
+
+```groovy
+gradle.allprojects { p ->
+    def safe = p.path.replace(":", "_")
+    if (safe == "_") { safe = "root" }
+    p.layout.buildDirectory.set(new File("C:/clb/" + safe))
+}
+```
+
+then build with `-I`:
+
+```bash
+./gradlew assembleRelease --no-daemon -I C:/clb/shortpath.init.gradle
+```
+
+Outputs land in `C:\clb\_app\outputs\` instead of `android/app/build/outputs/`.
+
+**B. Turn the cap off** (permanent, needs an **admin** shell, survives reboots):
+
+```bash
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v LongPathsEnabled /t REG_DWORD /d 1 /f
+```
+
+Then restart the machine. This is the better long-term fix, but it is a
+system-wide change — make it deliberately, not to unblock one build.
+
+> **OneDrive makes this worse.** The checkout is inside a synced folder, so
+> OneDrive can hold handles on files Gradle is trying to replace, and may store
+> them as cloud-only placeholders. If builds are flaky here even after fixing
+> path length, pause syncing (or move the project outside OneDrive) before
+> spending time on anything else.
 
 ---
 
