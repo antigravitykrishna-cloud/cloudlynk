@@ -8,7 +8,12 @@ export type NotificationType =
   | 'channel_approved'
   | 'channel_rejected'
   | 'post_approved'
-  | 'post_rejected';
+  | 'post_rejected'
+  // v75. Written by the pg_cron sweepers (expire_lapsed_plans,
+  // notify_expiring_plans), never by the client — there is no
+  // NotificationService.create for these.
+  | 'subscription_expiring'
+  | 'subscription_expired';
 
 export type Notification = {
   id: string;
@@ -33,6 +38,9 @@ export const NOTIF_META: Record<NotificationType, { icon: IconName; color: strin
   channel_rejected: { icon: 'flag', color: '#f85149', dimColor: 'rgba(248,81,73,0.12)'  },
   post_approved:    { icon: 'check-circle',  color: '#00d4aa', dimColor: 'rgba(0,212,170,0.12)' },
   post_rejected:    { icon: 'flag',  color: '#f85149', dimColor: 'rgba(248,81,73,0.12)'  },
+  // Amber, not red: the subscription still works when this one arrives.
+  subscription_expiring: { icon: 'diamond', color: '#e3b341', dimColor: 'rgba(227,179,65,0.12)' },
+  subscription_expired:  { icon: 'lock',    color: '#f85149', dimColor: 'rgba(248,81,73,0.12)' },
 };
 
 export const NotificationService = {

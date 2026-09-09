@@ -51,9 +51,9 @@ const SettingsRow = ({
 );
 
 export default function ProfileScreen() {
-  const { profile, user, signOut, refreshProfile, isAdmin } = useAuth();
+  const { profile, user, signOut, refreshProfile, isAdmin, isPaidUser, planStatus } = useAuth();
   const { unreadCount } = useNotifications(user?.id);
-  const { setUsage, resetTimer } = useUsageTimer(profile?.plan === 'free');
+  const { setUsage, resetTimer } = useUsageTimer(!isPaidUser);
   const router = useRouter();
   const [myChannels, setMyChannels] = useState<any[]>([]);
   const [channelsLoading, setChannelsLoading] = useState(true);
@@ -85,8 +85,11 @@ export default function ProfileScreen() {
     ? profile.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
     : '??';
 
-  const planName = (profile?.plan ?? 'free').toUpperCase();
-  const isPaidUser = profile?.plan != null && profile.plan !== 'free';
+  // Both read plan_status via useAuth, not the legacy `plan` column. `plan`
+  // was superseded in v48 and nothing has written it since — verify-play-receipt
+  // and play-rtdn-webhook both write plan_status — so it reported FREE to
+  // people who had paid, and this screen showed them the upgrade prompt.
+  const planName = (planStatus ?? 'free').toUpperCase();
 
   const handleSignOut = () => {
     showAlert('Sign out', 'Are you sure you want to sign out?', [
@@ -276,6 +279,14 @@ export default function ProfileScreen() {
                   iconBg="rgba(46,212,122,0.14)"
                   label="User Approvals"
                   onPress={() => router.push("/admin/user-approvals")}
+                />
+              )}
+              {isAdmin && (
+                <SettingsRow
+                  icon="diamond"
+                  iconBg="rgba(227,179,65,0.14)"
+                  label="Subscribers"
+                  onPress={() => router.push("/admin/subscribers")}
                 />
               )}
               {isAdmin && (
