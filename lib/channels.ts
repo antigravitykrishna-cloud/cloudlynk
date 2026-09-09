@@ -1,5 +1,27 @@
 import { supabase } from './supabase';
 
+/**
+ * The columns the channel LIST screens actually render, and — not by
+ * coincidence — a subset of what `anon` is granted on `channels`.
+ *
+ * `channels` has 14 columns; anon may read 11. `approval_expires_at`, `link`
+ * and `updated_at` are withheld. PostgREST does not quietly null out a column
+ * a role cannot read: it fails the ENTIRE request with a permission error. So
+ * `.select('*')` returns nothing at all for a guest — not a partial row — and
+ * the caller's error handling turns that into an empty list. The Channels tab
+ * rendered "No channels yet" over eight perfectly visible public channels.
+ *
+ * This is the same trap `GUEST_POST_COLUMNS` in lib/posts.ts exists to avoid,
+ * and its comment says so: "list as a guest fails the whole query with a
+ * permission error, not a null."
+ *
+ * Naming the columns also works for authenticated callers, who are granted a
+ * superset — so there is one query for both roles rather than a fork.
+ */
+const CHANNEL_LIST_COLUMNS =
+  'id, owner_id, name, description, category, is_public, is_official, ' +
+  'status, member_count, post_count, created_at';
+
 export const ChannelService = {
   async createChannel(
     ownerId: string,
@@ -69,7 +91,7 @@ export const ChannelService = {
   async getDiscoverChannels(_userId: string, filter?: 'top_rated' | 'trending' | 'latest') {
     let query = supabase
       .from('channels')
-      .select('*')
+      .select(CHANNEL_LIST_COLUMNS)
       .eq('is_public', true)
       .in('status', ['active', 'pending']);
 

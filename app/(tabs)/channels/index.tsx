@@ -78,7 +78,14 @@ export default function ChannelsScreen() {
         // Discover runs for guests too. getDiscoverChannels ignores the id it
         // is handed and filters on is_public + status, which anon is allowed
         // to read since v61 — so browsing works without an account.
-        data = (await ChannelService.getDiscoverChannels(user?.id ?? '', activeFilter)) as Channel[];
+        // `as unknown as` because getDiscoverChannels now names its columns
+        // rather than selecting *, so the inferred row is narrower than
+        // Channel. Everything this screen renders is present; the omitted
+        // fields (approval_expires_at, link, updated_at) are ones anon may not
+        // read and this list never shows. The generated Database type is also
+        // stale — it has no `category` or `is_official`, both of which the
+        // table has — so a Pick<> would not typecheck either.
+        data = (await ChannelService.getDiscoverChannels(user?.id ?? '', activeFilter)) as unknown as Channel[];
       }
       setChannels(data);
     } catch (err) {
