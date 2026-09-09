@@ -13,6 +13,7 @@ export interface AppConfig {
   admobInterstitialId: string;
   admobRewardedId: string;
   geoCheckWorkerUrl: string;
+  googleWebClientId: string;
   sentryDsn: string;
   supportEmail: string;
   privacyPolicyUrl: string;
@@ -37,6 +38,11 @@ export const config: AppConfig = {
   admobRewardedId: readEnv('ADMOB_REWARDED_ID'),
   // Cloudflare Worker URL from cloudflare/geo-check-worker/ — see hooks/useGeoCheck.ts.
   geoCheckWorkerUrl: readEnv('GEO_CHECK_WORKER_URL'),
+  // OAuth 2.0 *Web* client id from Google Cloud, not the Android one. Supabase
+  // verifies the ID token against this audience, and the native sign-in
+  // returns a token minted for the web client when it is passed as the
+  // webClientId. Setup steps are in DEPLOY.md §0.4.
+  googleWebClientId: readEnv('GOOGLE_WEB_CLIENT_ID'),
   sentryDsn: readEnv('SENTRY_DSN'),
   supportEmail: readEnv('SUPPORT_EMAIL', 'help.cupibs@gmail.com'),
   privacyPolicyUrl: readEnv('PRIVACY_POLICY_URL'),
@@ -59,4 +65,16 @@ export function isAdmobLive(): boolean {
 /** True when Sentry is configured */
 export function isSentryLive(): boolean {
   return !!config.sentryDsn;
+}
+
+/**
+ * True when Google Sign-In is configured.
+ *
+ * The button is hidden rather than shown-and-broken when this is false: a
+ * "Sign in with Google" that always errors is worse than one that isn't
+ * offered, and this ships before the OAuth client exists. Setting
+ * GOOGLE_WEB_CLIENT_ID in app.json's `extra` turns it on with no code change.
+ */
+export function isGoogleAuthLive(): boolean {
+  return !!config.googleWebClientId;
 }

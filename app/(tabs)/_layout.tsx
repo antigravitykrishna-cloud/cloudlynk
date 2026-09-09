@@ -71,6 +71,15 @@ export default function TabsLayout() {
       />
 
       <Tabs.Screen
+        name="feed"
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <TabIcon icon="globe" label="Feed" focused={focused} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
         name="explore"
         options={{
           tabBarIcon: ({ focused }) => (

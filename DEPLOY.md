@@ -11,22 +11,54 @@ This runbook covers two independent deploys from the same Streamly launch:
 
 ## 0. Pre-Flight (one-time, before either deploy)
 
-### 0.1 Run the new database migration
-The latest migration adds the `username` column and defensively normalizes the `plan` enum to `('free','standard','premium')`. **The mobile upgrade flow depends on this** — without it, the IAP success handler will fail when it tries to write `plan: 'standard'` or `'premium'`.
+### 0.1 Run the new database migrations
+
+> **Rewritten 2026-09-10.** This section used to point at `supabase/migration_v8.sql`
+> and tell you to normalize the `plan` enum to `('free','standard','premium')`,
+> "because the IAP success handler writes `plan: 'standard'`". None of that is
+> true any more: `plan` was superseded by `plan_status` in v48 and nothing has
+> written it since — `verify-play-receipt` and `play-rtdn-webhook` both write
+> `plan_status`. Following the old text did nothing useful and implied the
+> legacy column still mattered.
+
+Apply everything in `supabase/migrations/` that the project has not seen yet,
+in filename order. The current head is
+`20260910090000_v75_subscription_expiry_enforcement.sql`.
 
 1. Open the **Supabase dashboard** for the `cloud` project (ref: `wdtwjiixuueqejfraaod`).
-2. Go to **SQL Editor** → New query.
-3. Paste the contents of `supabase/migration_v8.sql` and **Run**.
-4. Verify with:
+2. **SQL Editor** → New query → paste the migration → **Run**. One file at a time, in order.
+3. Verify v75 specifically:
    ```sql
-   SELECT column_name, data_type
-   FROM information_schema.columns
-   WHERE table_schema = 'public' AND table_name = 'profiles'
-     AND column_name IN ('username', 'plan');
+   -- 1. The premium gate honours the expiry date.
+   --    Expect: is_plan_active listed, and the policy body containing it.
+   SELECT proname FROM pg_proc WHERE proname = 'is_plan_active';
 
-   SELECT DISTINCT plan FROM public.profiles;
+   SELECT pg_get_expr(polqual, polrelid) LIKE '%is_plan_active%' AS gate_fixed
+   FROM pg_policy
+   WHERE polname = 'channel_posts_select_v57';
+
+   -- 2. Both sweepers exist and are service_role-only.
+   SELECT proname, proacl FROM pg_proc
+   WHERE proname IN ('expire_lapsed_plans', 'notify_expiring_plans');
+
+   -- 3. The cron jobs are scheduled (empty result = pg_cron was not enabled;
+   --    see below).
+   SELECT jobname, schedule FROM cron.job
+   WHERE jobname LIKE 'cloudlynk-%';
    ```
-   You should see `username` listed as `text` (nullable) and the constraint enforcing `('free','standard','premium')`.
+
+**If step 3 returns nothing**, `pg_cron` is not enabled on the project. The
+migration creates the functions either way and says so in a `NOTICE` — access
+revocation does *not* depend on the cron, because `is_plan_active()` ignores a
+lapsed date on its own. What you lose without it is the `plan_status` column
+catching up and the expiry notification being sent. To enable:
+
+1. **Database** → **Extensions** → enable `pg_cron`.
+2. Re-run the last `DO $$ ... $$` block of the v75 migration, or schedule by hand:
+   ```sql
+   SELECT cron.schedule('cloudlynk-expire-lapsed-plans',  '7 * * * *',  $$SELECT public.expire_lapsed_plans();$$);
+   SELECT cron.schedule('cloudlynk-notify-expiring-plans', '37 9 * * *', $$SELECT public.notify_expiring_plans(3);$$);
+   ```
 
 ### 0.2 Create the IAP products in Play Console
 
@@ -85,6 +117,39 @@ This is the `google-play-key.json` referenced in `eas.json`. You need it to auto
 The user (developer) needs at minimum:
 - **Admin** or **Release manager** role on the Play Console for the Streamly app
 - The app created in the Console (package: `com.streamly.app`)
+
+### 0.5 (Optional) Turn on Google Sign-In
+
+The login screen offers **Continue as guest**, **Sign in with Google** and
+**Continue with email**. Guest and email work with no setup. The Google button
+is **hidden** until `GOOGLE_WEB_CLIENT_ID` is set — deliberately, since a
+sign-in button that always errors is worse than one that isn't offered
+(`isGoogleAuthLive()` in `lib/config.ts`).
+
+To enable it:
+
+1. **Install the native module** (it is lazy-required, so the app runs without it):
+   ```bash
+   npx expo install @react-native-google-signin/google-signin
+   ```
+2. **Google Cloud Console** → the project behind your Supabase auth → **APIs &
+   Services** → **Credentials** → create two OAuth 2.0 client IDs:
+   - **Android** — package `com.streamly.app`, plus the SHA-1 of the signing
+     key. For a Play-signed release that is the SHA-1 from **Play Console →
+     Setup → App integrity → App signing key certificate**, *not* your upload
+     key. Getting this wrong is the usual cause of `DEVELOPER_ERROR`.
+   - **Web** — this one's client id is what the app and Supabase both use.
+3. **Supabase dashboard** → **Authentication** → **Providers** → **Google**:
+   enable it and paste the **Web** client id and secret.
+4. Add the **Web** client id to `app.json` under `expo.extra`:
+   ```json
+   "extra": { "GOOGLE_WEB_CLIENT_ID": "xxxxxxxx.apps.googleusercontent.com" }
+   ```
+5. Rebuild. The button appears on its own — no code change.
+
+> The **Web** client id is correct in step 4, not the Android one. Supabase
+> validates the ID token's audience against the web client, and the native
+> sign-in mints a token for whatever is passed as `webClientId`.
 
 ---
 

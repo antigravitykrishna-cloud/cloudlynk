@@ -4,7 +4,6 @@ import { showAlert } from '../../../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { GuestPrompt } from '../../../components/GuestPrompt';
 import { useAuth } from '../../../hooks/useAuth';
 import { ChannelService } from '../../../lib/channels';
 import { supabase } from '../../../lib/supabase';
@@ -30,7 +29,7 @@ const FILTERS: { key: FilterKey; label: string }[] = [
 ];
 
 export default function ChannelsScreen() {
-  const { user, profile, isAdmin } = useAuth();
+  const { user, isAdmin, isPaidUser } = useAuth();
   const router = useRouter();
 
   const [activeTab, setActiveTab] = useState<TabKey>('discover');
@@ -41,7 +40,11 @@ export default function ChannelsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const isPaidUser = profile?.plan !== 'free' && profile?.plan != null;
+  // isPaidUser comes from useAuth, which reads plan_status and honours
+  // plan_expires_at. This screen used to compute it from `profile.plan` — a
+  // legacy column superseded by plan_status in v48 and written by nothing
+  // since, so it sat at 'free' for people who had actually paid and this gate
+  // locked them out of the channels they were paying for.
 
   const prevUserIdRef = useRef<string | undefined>(undefined);
   useEffect(() => {
@@ -54,7 +57,10 @@ export default function ChannelsScreen() {
   }, [user?.id]);
 
   const loadMemberships = useCallback(async () => {
-    if (!user?.id) return;
+    // A guest has no memberships. Not an early return that leaves stale state:
+    // the set is cleared, because signing out must not leave the previous
+    // account's joined channels marked as joined.
+    if (!user?.id) { setJoinedChannelIds(new Set()); return; }
     const { data } = await supabase
       .from('channel_members')
       .select('channel_id')
@@ -63,17 +69,21 @@ export default function ChannelsScreen() {
   }, [user?.id]);
 
   const loadChannels = useCallback(async () => {
-    if (!user?.id) return;
     try {
       let data: Channel[] = [];
       if (activeTab === 'joined') {
-        data = (await ChannelService.getMyChannels(user.id)) as Channel[];
+        // Nothing to fetch for a guest, and getMyChannels needs a user id.
+        data = user?.id ? ((await ChannelService.getMyChannels(user.id)) as Channel[]) : [];
       } else {
-        data = (await ChannelService.getDiscoverChannels(user.id, activeFilter)) as Channel[];
+        // Discover runs for guests too. getDiscoverChannels ignores the id it
+        // is handed and filters on is_public + status, which anon is allowed
+        // to read since v61 — so browsing works without an account.
+        data = (await ChannelService.getDiscoverChannels(user?.id ?? '', activeFilter)) as Channel[];
       }
       setChannels(data);
     } catch (err) {
       if (__DEV__) console.error('loadChannels error:', err);
+      setChannels([]);
     } finally {
       setLoading(false);
     }
@@ -94,18 +104,42 @@ export default function ChannelsScreen() {
       (c.description ?? '').toLowerCase().includes(q);
   });
 
-  const handleJoinPress = (channel: Channel) => {
+  // Guests browse this tab freely; joining is where the wall is. A guest is
+  // sent to sign-up rather than to the paywall because there is nothing to
+  // attach a subscription to yet — /premium with no session would dead-end.
+  // Returns true when the caller may proceed.
+  const requireSubscription = (verb: 'join' | 'open'): boolean => {
+    if (!user?.id) {
+      showAlert(
+        'Create an account first',
+        verb === 'join'
+          ? 'Joining a channel needs an account. It takes one tap — guest, Google or email.'
+          : 'Opening a channel needs an account. It takes one tap — guest, Google or email.',
+        [
+          { text: 'Not now', style: 'cancel' },
+          { text: 'Continue', onPress: () => router.push('/(auth)/login') },
+        ],
+      );
+      return false;
+    }
     if (!isPaidUser) {
       showAlert(
         'Subscription Required',
-        'A subscription is required to join this channel. Upgrade to continue.',
+        verb === 'join'
+          ? 'A subscription is required to join this channel. Upgrade to continue.'
+          : 'A subscription is required to view this channel. Upgrade to continue.',
         [
           { text: 'Cancel', style: 'cancel' },
           { text: 'Upgrade', onPress: () => router.push('/premium') },
         ],
       );
-      return;
+      return false;
     }
+    return true;
+  };
+
+  const handleJoinPress = (channel: Channel) => {
+    if (!requireSubscription('join')) return;
     handleJoin(channel);
   };
 
@@ -174,30 +208,14 @@ export default function ChannelsScreen() {
   };
 
   const handleRowPress = (channel: Channel) => {
-    if (!isPaidUser && !isAdmin && channel.owner_id !== user?.id && !joinedChannelIds.has(channel.id)) {
-      showAlert(
-        'Subscription Required',
-        'A subscription is required to view this channel. Upgrade to continue.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Upgrade', onPress: () => router.push('/premium') },
-        ],
-      );
-      return;
-    }
+    // Owners, admins and existing members skip the gate entirely — including
+    // a member whose subscription has since lapsed, who should reach the
+    // channel and find its premium posts locked rather than be bounced from
+    // a channel they belong to.
+    const exempt = isAdmin || channel.owner_id === user?.id || joinedChannelIds.has(channel.id);
+    if (!exempt && !requireSubscription('open')) return;
     router.push({ pathname: '/(tabs)/channels/[id]', params: { id: channel.id } });
   };
-
-  // v61: guests reach this tab but every query here early-returns on
-  // !user?.id, so without this they get a blank screen and assume the app
-  // is broken rather than that the feature needs an account.
-  if (!user?.id) {
-    return (
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <GuestPrompt icon="tv" title="Join channels you like" message="Follow creators, join public channels, or start your own. Public and private both." />
-      </SafeAreaView>
-    );
-  }
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -268,10 +286,23 @@ export default function ChannelsScreen() {
         <ScrollView contentContainerStyle={{ flexGrow: 1 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.brand} />}>
           <View style={styles.emptyState}>
             <CloudlynkLogo size={48} />
-            <Text style={styles.emptyText}>No channels yet</Text>
-            <Text style={styles.emptyHint}>
-              Join a public channel from Explore, or create your own.
-            </Text>
+            {activeTab === 'joined' && !user?.id ? (
+              <>
+                <Text style={styles.emptyText}>Not signed in</Text>
+                <Text style={styles.emptyHint}>
+                  Browse every channel in Discover. Sign in to join one and keep it here.
+                </Text>
+              </>
+            ) : (
+              <>
+                <Text style={styles.emptyText}>No channels yet</Text>
+                <Text style={styles.emptyHint}>
+                  {activeTab === 'joined'
+                    ? 'Channels you join will appear here.'
+                    : 'Join a public channel from Explore, or create your own.'}
+                </Text>
+              </>
+            )}
           </View>
         </ScrollView>
       ) : (

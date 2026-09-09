@@ -5,6 +5,7 @@ import { supabase, Database } from '../lib/supabase';
 import { queryClient } from '../lib/queryClient';
 import { UploadQueue } from '../lib/uploadQueue';
 import { ComplianceService } from '../lib/compliance';
+import { config, isGoogleAuthLive } from '../lib/config';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 
@@ -133,6 +134,77 @@ export function useAuth() {
 
   async function signIn(email: string, password: string) {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+  }
+
+  // ── Passwordless email ───────────────────────────────────────
+  //
+  // The one-tap flow: a 6-digit code to the address, no password to choose,
+  // remember or reset. signInWithPassword stays for accounts that already have
+  // a password — removing it would lock them out.
+  //
+  // shouldCreateUser is true because this is sign-IN and sign-UP at once,
+  // which is the point: there is no separate signup screen in the new flow.
+  // A first-time address gets a profile from the handle_new_user trigger with
+  // no full_name and no birth_year, and app/_layout.tsx routes it to
+  // complete-profile for the 18+ gate and policy acceptance before it reaches
+  // the tabs. The age gate is not optional — see docs/PLAY_STORE_COMPLIANCE_AUDIT.md.
+  async function sendEmailCode(email: string) {
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email.trim(),
+      options: { shouldCreateUser: true },
+    });
+    if (error) throw error;
+  }
+
+  async function verifyEmailCode(email: string, code: string) {
+    // type 'email' covers both the first-time and returning case; 'signup'
+    // would reject a code issued to an address that already has an account.
+    const { error } = await supabase.auth.verifyOtp({
+      email: email.trim(),
+      token: code.trim(),
+      type: 'email',
+    });
+    if (error) throw error;
+  }
+
+  // ── Google ───────────────────────────────────────────────────
+  //
+  // Native Google Sign-In, then hand the ID token to Supabase. NOT
+  // signInWithOAuth: that opens a browser and needs a redirect URL, which on
+  // Android means a custom scheme and an intent filter — more moving parts,
+  // and a visibly worse flow than the native account picker.
+  //
+  // The module is lazy-required (same approach as lib/ads.ts) so that a build
+  // without the native package installed still runs: this is dead code until
+  // GOOGLE_WEB_CLIENT_ID is set, and a top-level import would crash the whole
+  // auth screen at load time in Expo Go or any build predating the config.
+  async function signInWithGoogle() {
+    if (!isGoogleAuthLive()) {
+      throw new Error('Google sign-in is not configured in this build.');
+    }
+
+    let GoogleSignin: any;
+    try {
+      ({ GoogleSignin } = require('@react-native-google-signin/google-signin'));
+    } catch {
+      throw new Error('Google sign-in is unavailable in this build.');
+    }
+
+    GoogleSignin.configure({ webClientId: config.googleWebClientId });
+    await GoogleSignin.hasPlayServices();
+    const result = await GoogleSignin.signIn();
+
+    // The token moved between library majors: v13+ returns it under `data`,
+    // older versions at the top level. Read both rather than pinning a shape
+    // that a routine dependency bump would break.
+    const idToken: string | undefined = result?.data?.idToken ?? result?.idToken;
+    if (!idToken) throw new Error('Google did not return an ID token.');
+
+    const { error } = await supabase.auth.signInWithIdToken({
+      provider: 'google',
+      token: idToken,
+    });
     if (error) throw error;
   }
 
@@ -283,6 +355,9 @@ export function useAuth() {
     loading,
     profileChecked,
     signIn,
+    sendEmailCode,
+    verifyEmailCode,
+    signInWithGoogle,
     signUp,
     completeProfile,
     signOut,
