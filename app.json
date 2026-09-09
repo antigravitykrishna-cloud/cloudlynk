@@ -32,12 +32,10 @@
       "package": "com.cloudlynk.app",
       "versionCode": 8,
       "permissions": [
-        "android.permission.CAMERA",
         "android.permission.READ_MEDIA_IMAGES",
         "android.permission.READ_MEDIA_VIDEO",
         "android.permission.INTERNET",
         "android.permission.ACCESS_NETWORK_STATE",
-        "android.permission.RECORD_AUDIO",
         "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
         "com.android.vending.BILLING"
       ]
@@ -55,7 +53,7 @@
         "expo-image-picker",
         {
           "photosPermission": "Cloudlynk needs access to your photos to back them up to the cloud.",
-          "cameraPermission": "Cloudlynk needs camera access to take and upload photos."
+          "cameraPermission": false
         }
       ],
       [
@@ -64,7 +62,10 @@
           "photosPermission": "Allow Cloudlynk to access your photos.",
           "savePhotosPermission": "Allow Cloudlynk to save photos.",
           "isAccessMediaLocationEnabled": false,
-          "granularPermissions": ["photo", "video"]
+          "granularPermissions": [
+            "photo",
+            "video"
+          ]
         }
       ],
       [

@@ -46,9 +46,43 @@ const PLAIN_REMOVE = [
   'android.permission.ACCESS_MEDIA_LOCATION',
 ];
 
+// Everything below needs the manifest-merge marker rather than a plain
+// removal, because each is declared by a DEPENDENCY's own library manifest.
+// A plain removal only edits this app's manifest; the merger would pull the
+// permission back in from the library at build time.
+//
+// - READ_EXTERNAL_STORAGE / WRITE_EXTERNAL_STORAGE: see the note above.
+//
+// - CAMERA / RECORD_AUDIO: declared by expo-image-picker (and app.json's
+//   permission list, now trimmed). The app never opens the camera or the
+//   microphone — every call site is launchImageLibraryAsync /
+//   requestMediaLibraryPermissionsAsync (lib/posts.ts, lib/channelVideos.ts,
+//   lib/storage.ts). Shipping them anyway puts "take pictures and videos" and
+//   "record audio" on the store listing for features that do not exist, which
+//   is both a worse listing and the kind of unjustified-permission mismatch
+//   review asks about. Re-add them here if a camera-capture feature is ever
+//   built.
+//
+// - AD_ID and the ACCESS_ADSERVICES_* trio: pulled in by
+//   react-native-google-mobile-ads. The SDK is linked but nothing renders an
+//   ad — see the comment in lib/adsConfig.ts ("nothing currently renders a
+//   BannerAd/interstitial"), and the configured unit IDs are still Google's
+//   public test IDs. Keeping AD_ID would force a "collects Advertising ID for
+//   advertising" entry in the Data Safety form describing behaviour the app
+//   does not have. Removing it keeps the declaration honest.
+//
+//   IF ADS ARE TURNED ON LATER: delete the four ad entries from this list,
+//   replace the test unit IDs in app.json, and update the Data Safety form to
+//   declare Device or other IDs. All three go together.
 const MERGE_REMOVE_MARKER = [
   'android.permission.READ_EXTERNAL_STORAGE',
   'android.permission.WRITE_EXTERNAL_STORAGE',
+  'android.permission.CAMERA',
+  'android.permission.RECORD_AUDIO',
+  'com.google.android.gms.permission.AD_ID',
+  'android.permission.ACCESS_ADSERVICES_AD_ID',
+  'android.permission.ACCESS_ADSERVICES_ATTRIBUTION',
+  'android.permission.ACCESS_ADSERVICES_TOPICS',
 ];
 
 module.exports = function withRemoveAndroidPermissions(config) {

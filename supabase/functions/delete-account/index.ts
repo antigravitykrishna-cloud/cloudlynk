@@ -1,7 +1,30 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const ALLOWED_ORIGINS = (Deno.env.get("ALLOWED_ORIGINS") ?? "").split(",").filter(Boolean);
+// The web account-deletion page Google Play requires lives on the marketing
+// site, and it calls this function from the browser. Its origin has to be in
+// the allowlist or the preflight hands back an Access-Control-Allow-Origin
+// that does not match and the browser refuses the request.
+//
+// This was live: with APP_ORIGIN set to the Supabase project URL, a request
+// from https://thecloudlynk.com got back
+// `Access-Control-Allow-Origin: https://wdtwjiixuueqejfraaod.supabase.co`, so
+// cloudlynk-site/delete-account.html could not delete anything. The mobile app
+// was unaffected -- React Native sends no Origin header and is not subject to
+// CORS -- which is exactly why it went unnoticed.
+//
+// Defaulted in code rather than left to ALLOWED_ORIGINS alone so that the
+// compliance-critical path cannot be broken by an unset environment variable.
+// ALLOWED_ORIGINS still adds to this list for staging/preview origins.
+const DEFAULT_ALLOWED_ORIGINS = [
+  "https://thecloudlynk.com",
+  "https://www.thecloudlynk.com",
+];
+
+const ALLOWED_ORIGINS = [
+  ...DEFAULT_ALLOWED_ORIGINS,
+  ...(Deno.env.get("ALLOWED_ORIGINS") ?? "").split(",").map((o) => o.trim()).filter(Boolean),
+];
 const APP_ORIGIN = Deno.env.get("APP_ORIGIN") ?? "";
 
 function corsHeaders(req: Request): Headers {
