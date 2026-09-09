@@ -74,7 +74,7 @@ AS $$
 $$;
 
 REVOKE ALL   ON FUNCTION public.is_plan_active(uuid) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.is_plan_active(uuid) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.is_plan_active(uuid) TO authenticated;  -- v77: anon removed, see that migration
 
 COMMENT ON FUNCTION public.is_plan_active(uuid) IS
   'True when the user holds a subscription that is live right now: lifetime, or active with plan_expires_at absent or in the future. Single source of truth for the premium gate (v75) — RLS and stream-playback-token must never disagree about this. SECURITY DEFINER so policies can test plan state without plan columns being readable by the caller.';

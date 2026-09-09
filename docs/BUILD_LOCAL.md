@@ -212,24 +212,33 @@ reg query "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v LongPathsEnabled
 
 `0x0` means the cap is active. Two ways out:
 
-**A. Redirect the build output to a short path** (no admin rights, changes
-nothing in the repo). Create `C:\clb\shortpath.init.gradle`:
-
-```groovy
-gradle.allprojects { p ->
-    def safe = p.path.replace(":", "_")
-    if (safe == "_") { safe = "root" }
-    p.layout.buildDirectory.set(new File("C:/clb/" + safe))
-}
-```
-
-then build with `-I`:
+**A. Build through a directory junction** (no admin rights, changes nothing in
+the repo — this is the one that works). A junction is an alias for the folder;
+Gradle sees a 5-character path instead of a 133-character one, and every output
+still lands in the real project directory.
 
 ```bash
-./gradlew assembleRelease --no-daemon -I C:/clb/shortpath.init.gradle
+cd /c && cmd //c "mklink /J cl C:\\Users\\MIT\\OneDrive\\Desktop\\cloudlynk"
 ```
 
-Outputs land in `C:\clb\_app\outputs\` instead of `android/app/build/outputs/`.
+Then build from the alias instead of the real path:
+
+```bash
+cd /c/cl/android && ./gradlew assembleRelease --no-daemon
+```
+
+The APK appears at `android/app/build/outputs/apk/release/` as normal — it is
+the same folder, reached by a shorter name. `mklink /J` needs no elevation
+(unlike `/D` symlinks). Delete it with `cmd //c "rmdir C:\cl"`; that removes
+the alias only, never the contents.
+
+> **Do not try to relocate `buildDirectory` with a Gradle init script.** It is
+> the obvious idea and it fails: React Native's autolinking writes
+> `generated/autolinking/autolinking.json` into the root build directory while
+> `settings.gradle` is being evaluated, before an `allprojects` hook can run.
+> The writer uses the old location, the reader looks in the new one, and the
+> build dies with `autolinking.json (The system cannot find the path
+> specified)`. Shorten the input path, not the output path.
 
 **B. Turn the cap off** (permanent, needs an **admin** shell, survives reboots):
 
