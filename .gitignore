@@ -81,3 +81,6 @@ apk/
 # are deliverables and belong in the repo.
 !store-screenshots/v071/
 !store-screenshots/v071/**
+
+# Kotlin incremental build state (Gradle 9 / AGP 8.12)
+android/.kotlin/
