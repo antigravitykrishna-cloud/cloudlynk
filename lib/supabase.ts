@@ -14,6 +14,33 @@ const supabaseAnonKey =
   process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ??
   '';
 
+// Fail loudly, at launch, if the build has no backend credentials.
+//
+// EXPO_PUBLIC_* variables are inlined by Metro at BUNDLE time, from whatever
+// .env the bundler could see. An EAS cloud build cannot see .env at all: it is
+// listed in .easignore (and .gitignore), and eas.json's `env` blocks set only
+// APP_ENV. So unless the values are supplied another way, an `eas build`
+// produces a bundle where both constants are '' -- createClient accepts that
+// without complaint and every request then fails at runtime with an opaque
+// network error. The app looks installed, opens, and does nothing.
+//
+// That failure is invisible until someone launches the artifact, which for a
+// production AAB means after it has been uploaded to Play. Crashing here with
+// a readable message is strictly better: it surfaces on the first launch of
+// the first test build, and it names the fix.
+//
+// To fix: either add the two values to eas.json's env block for the profile
+// being built (both are public by design -- they ship inside every APK, and
+// RLS is the actual security boundary), or set them as EAS environment
+// variables in the Expo dashboard. See DEPLOY.md 1.2.
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error(
+    'Cloudlynk is not configured: EXPO_PUBLIC_SUPABASE_URL / ' +
+    'EXPO_PUBLIC_SUPABASE_ANON_KEY were empty when this bundle was built. ' +
+    'The bundler could not see them -- see DEPLOY.md 1.2.'
+  );
+}
+
 // ── Storage adapter — SecureStore on native, localStorage on web ──
 // This prevents the "localStorage is not defined" crash during SSR/bundling
 const getStorageAdapter = () => {

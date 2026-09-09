@@ -390,7 +390,13 @@ export default function ExploreScreen() {
             // costs one tap; making them sign up first to find out costs
             // most of them.
             { text: 'See Premium plans', onPress: () => router.push('/premium') },
-            { text: 'Sign up free', onPress: () => router.push('/(auth)/signup') },
+            // /(auth)/login, not /(auth)/signup: login is now the one-tap
+            // chooser (guest / Google / emailed code) and creates the account
+            // as a side effect of signing in. signup.tsx is the old
+            // email+password form, kept only for accounts that already have a
+            // password — sending a new user there is three extra fields for
+            // no reason.
+            { text: 'Sign up free', onPress: () => router.push('/(auth)/login') },
           ],
         );
         return;

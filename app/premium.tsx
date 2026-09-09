@@ -187,7 +187,10 @@ export default function PremiumScreen() {
             (plansLoading || purchasing) && { opacity: 0.5 },
             (gate === 'pending' || gate === 'rejected') && styles.proceedBtnDisabled,
           ]}
-          onPress={gate === 'guest' ? () => router.push('/(auth)/signup') : handleProceed}
+          // The one-tap chooser, not the old password form — see the note in
+          // app/(tabs)/explore.tsx. A guest here is mid-purchase, which is the
+          // worst possible moment to ask for a password they have to invent.
+          onPress={gate === 'guest' ? () => router.push('/(auth)/login') : handleProceed}
           disabled={gate === 'pending' || gate === 'rejected' || plansLoading || (!gate && !selectedPlan) || purchasing}
           activeOpacity={0.8}
         >

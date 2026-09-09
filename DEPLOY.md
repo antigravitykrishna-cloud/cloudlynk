@@ -174,6 +174,17 @@ eas env:create --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "<your-anon-key>" --
 
 > `--visibility plaintext` is intentional for EXPO_PUBLIC_* vars. Don't mark them as secrets.
 
+**Repeat both commands with `--environment preview`.** A preview build is what
+you hand testers; if only `production` is set, the test APK is the broken one.
+
+**If you skip this step the build still succeeds.** `.env` is excluded from EAS
+uploads by `.easignore`, and `eas.json` sets only `APP_ENV`, so the bundler
+inlines empty strings and every network call fails at runtime with an opaque
+error — an app that installs, opens, and does nothing. Since 2026-09-10
+`lib/supabase.ts` throws a named error at launch instead, so this shows up on
+the first run of the first build rather than after a Play upload. If you see
+*"Cloudlynk is not configured"*, this section is the fix.
+
 ### 1.3 (Optional) Verify with a preview build first
 Before going to production, kick a preview APK to confirm the bundle wires up:
 ```bash
