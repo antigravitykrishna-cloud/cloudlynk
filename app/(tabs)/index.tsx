@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14, paddingHorizontal: 16,
     borderBottomWidth: 1, borderBottomColor: Colors.border,
   },
-  fileIcon: { width: 44, height: 44, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  fileIcon: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   fileInfo: { flex: 1, minWidth: 0 },
   fileName: { fontSize: 14, fontWeight: '700', color: Colors.text },
   fileMeta: { fontSize: 12, color: Colors.textSecondary, fontWeight: '500', marginTop: 2 },
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
   transferBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     marginHorizontal: 16, marginBottom: 12,
-    backgroundColor: Colors.brandLight, borderRadius: 10,
+    backgroundColor: Colors.brandLight, borderRadius: 12,
     paddingHorizontal: 14, paddingVertical: 10,
   },
   transferBannerText: { flex: 1, fontSize: 12, fontWeight: '700', color: Colors.brand },

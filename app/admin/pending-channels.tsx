@@ -537,7 +537,7 @@ const styles = StyleSheet.create({
   list: { paddingVertical: 8 },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: Colors.border },
   sectionTitle: { fontSize: 16, fontWeight: '800', color: Colors.text },
-  countBadge: { backgroundColor: '#FFB347', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 },
+  countBadge: { backgroundColor: '#FFB347', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 12 },
   countBadgeText: { fontSize: 11, fontWeight: '800', color: '#ffffff' },
   sectionEmpty: { fontSize: 13, color: Colors.textMuted, fontWeight: '500', paddingHorizontal: 16, paddingVertical: 16 },
   row: { paddingVertical: 14, paddingHorizontal: 16, borderBottomWidth: 0.5, borderBottomColor: Colors.border },

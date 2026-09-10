@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
   chipText: { color: '#9FB0C9', fontSize: 12, fontWeight: '700' },
   chipTextActive: { color: '#FFFFFF' },
   metaText: { fontSize: 13, color: '#9FB0C9', fontWeight: '600' },
-  progressTrack: { height: 6, backgroundColor: '#22304A', borderRadius: 3, marginTop: 8, overflow: 'hidden' },
+  progressTrack: { height: 6, backgroundColor: '#22304A', borderRadius: 4, marginTop: 8, overflow: 'hidden' },
   progressFill: { height: 6, backgroundColor: '#2E7DFF' },
   formActions: { flexDirection: 'row', gap: 10, marginBottom: 12 },
   cancelBtn: { flex: 1, backgroundColor: '#22304A', paddingVertical: 12, borderRadius: 8, alignItems: 'center' },

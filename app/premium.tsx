@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
   planName: { fontSize: 14, fontWeight: '700', color: Colors.text },
   planDuration: { fontSize: 12, color: Colors.textMuted, marginTop: 2 },
   planDescription: { fontSize: 11, color: Colors.textSecondary, marginTop: 2, fontWeight: '500' },
-  popularBadge: { alignSelf: 'flex-start', backgroundColor: Colors.brand, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, marginBottom: 4 },
+  popularBadge: { alignSelf: 'flex-start', backgroundColor: Colors.brand, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, marginBottom: 4 },
   popularBadgeText: { color: '#ffffff', fontSize: 9, fontWeight: '900', letterSpacing: 0.5 },
   planPriceWrap: { alignItems: 'flex-end' },
   planPrice: { fontSize: 20, fontWeight: '800', color: Colors.text },

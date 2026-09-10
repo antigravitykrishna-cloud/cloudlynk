@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
   cardBody: { flex: 1, justifyContent: 'center' },
   cardTitle: { fontSize: 14, fontWeight: '700', color: Colors.text, marginBottom: 4 },
   cardMeta: { fontSize: 12, color: Colors.textMuted, fontWeight: '500', marginBottom: 6 },
-  statusBadge: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, marginBottom: 4 },
+  statusBadge: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, marginBottom: 4 },
   statusBadgeText: { fontSize: 10, fontWeight: '900', letterSpacing: 0.3 },
   cardDate: { fontSize: 11, color: Colors.textMuted, fontWeight: '500' },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80, paddingHorizontal: 20 },

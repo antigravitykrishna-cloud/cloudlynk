@@ -615,7 +615,7 @@ const styles = StyleSheet.create({
   filterChip: { paddingHorizontal: 14, paddingVertical: 12, alignItems: 'center' },
   filterChipText: { fontSize: 14, color: Colors.textSecondary, fontWeight: '600' },
   filterChipTextActive: { color: Colors.text, fontWeight: '800' },
-  filterChipUnderline: { position: 'absolute', bottom: 0, left: 8, right: 8, height: 3, backgroundColor: Colors.text, borderRadius: 2 },
+  filterChipUnderline: { position: 'absolute', bottom: 0, left: 8, right: 8, height: 3, backgroundColor: Colors.text, borderRadius: 4 },
   grid: { padding: GAP },
   tile: { width: TILE, aspectRatio: 1, backgroundColor: Colors.card, borderRadius: 4, overflow: 'hidden', position: 'relative' },
   tileTall: { aspectRatio: 9 / 16 },

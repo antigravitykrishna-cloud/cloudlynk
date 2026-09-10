@@ -424,7 +424,7 @@ const styles = StyleSheet.create({
   badge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   badgeText: {
@@ -560,7 +560,7 @@ const styles = StyleSheet.create({
   deletePostButton: {
     width: 30,
     height: 30,
-    borderRadius: 6,
+    borderRadius: 8,
     backgroundColor: 'rgba(255, 77, 109, 0.12)',
     justifyContent: 'center',
     alignItems: 'center',

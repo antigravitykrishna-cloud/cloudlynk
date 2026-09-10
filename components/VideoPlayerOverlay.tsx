@@ -368,8 +368,8 @@ const styles = StyleSheet.create({
   playIcon: { color: '#fff', fontSize: 20, width: 28, textAlign: 'center' },
   timeText: { color: '#fff', fontSize: 12, fontWeight: '700', minWidth: 40, textAlign: 'center' },
   progressTrack: { flex: 1, height: 28, justifyContent: 'center' },
-  progressBg: { height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.3)', overflow: 'hidden' },
-  progressFill: { height: 4, borderRadius: 2, backgroundColor: Colors.brand },
+  progressBg: { height: 4, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.3)', overflow: 'hidden' },
+  progressFill: { height: 4, borderRadius: 4, backgroundColor: Colors.brand },
 
   skipFeedback: { position: 'absolute', top: '40%', paddingHorizontal: 20, paddingVertical: 12, backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 24, zIndex: 50 },
   skipLeft: { left: 20 },
