@@ -32,6 +32,7 @@ export default function PremiumScreen() {
 
   const [selectedPlanIndex, setSelectedPlanIndex] = useState(2);
   const [purchasing, setPurchasing] = useState(false);
+  const [restoring, setRestoring] = useState(false);
 
   const selectedPlan = plans?.[selectedPlanIndex];
 
@@ -53,6 +54,37 @@ export default function PremiumScreen() {
       showAlert('Purchase failed', err instanceof Error ? err.message : 'Please try again.');
     } finally {
       setPurchasing(false);
+    }
+  };
+
+  // Play expects a way to recover an existing entitlement without paying
+  // again. GooglePlayIapService.restorePurchases has always existed and no
+  // screen called it, so a user who reinstalled, factory reset, or moved to a
+  // new phone had no route back to a subscription they had already paid for --
+  // the only visible option was to buy it a second time.
+  const handleRestore = async () => {
+    setRestoring(true);
+    try {
+      const results = await getIapService().restorePurchases();
+      const restored = results.some(r => r.success);
+      await refreshProfile();
+      if (restored) {
+        showAlert('Subscription restored', 'Your Premium access is active again.', [
+          { text: 'OK', onPress: () => router.back() },
+        ]);
+      } else {
+        // Deliberately not phrased as a failure. The common case is someone
+        // who never subscribed on this Google account, and telling them
+        // something went wrong invites a support message about a bug.
+        showAlert(
+          'Nothing to restore',
+          'No previous purchase was found for this Google account. If you subscribed with a different account, sign in to that one on this device and try again.',
+        );
+      }
+    } catch (err: unknown) {
+      showAlert('Could not restore', err instanceof Error ? err.message : 'Please try again.');
+    } finally {
+      setRestoring(false);
     }
   };
 
@@ -216,6 +248,17 @@ export default function PremiumScreen() {
           </TouchableOpacity>
         )}
 
+        {/* Only for signed-in users: restoring resolves a Play purchase onto an
+            account, so there has to be an account to resolve it onto. A guest
+            is already being offered sign-in directly above. */}
+        {!gate && (
+          <TouchableOpacity onPress={handleRestore} disabled={restoring || purchasing} activeOpacity={0.7}>
+            <Text style={[styles.restoreLink, (restoring || purchasing) && { opacity: 0.5 }]}>
+              {restoring ? 'Restoring…' : 'Already subscribed? Restore purchase'}
+            </Text>
+          </TouchableOpacity>
+        )}
+
         <Text style={styles.legal}>
           Billed via Google Play. Cancel anytime from Play Store settings.
         </Text>
@@ -245,6 +288,14 @@ const styles = StyleSheet.create({
   gateBannerText: { color: Colors.textSecondary, fontSize: FontSize.base, lineHeight: 19 },
   proceedBtnDisabled: { backgroundColor: Colors.surfaceElevated, borderWidth: 1, borderColor: Colors.border },
   proceedBtnTextDisabled: { color: Colors.textMuted },
+  restoreLink: {
+    fontSize: FontSize.md,
+    color: Colors.textSecondary,
+    fontWeight: FontWeight.semibold,
+    textAlign: 'center',
+    marginTop: 16,
+    paddingVertical: 8,
+  },
   gateSignIn: {
     color: Colors.brandBlue, fontSize: FontSize.lg,
     fontWeight: FontWeight.semibold, textAlign: 'center', marginTop: 14,
