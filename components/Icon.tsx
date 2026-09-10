@@ -25,7 +25,7 @@ export type IconName =
   | 'document' | 'package' | 'diamond' | 'tv' | 'play' | 'plus'
   | 'settings' | 'chevron-right' | 'search' | 'trash' | 'logout'
   | 'wifi' | 'refresh' | 'tools'
-  | 'eye' | 'eye-off' | 'folder' | 'image' | 'music' | 'globe';
+  | 'eye' | 'eye-off' | 'folder' | 'image' | 'music' | 'globe' | 'mail';
 
 type Props = {
   name: IconName;
@@ -286,6 +286,19 @@ export function Icon({ name, size = 24, color = Colors.textSecondary, filled = f
           <Path d="M9.4 18V6.2l9.2-1.8V16" {...common} />
           <Circle cx="7" cy="18" r="2.5" {...common} />
           <Circle cx="16.2" cy="16" r="2.5" {...common} />
+        </>
+      )}
+
+      {/* An envelope. Added because the login screen was labelling
+          "Continue with email" with the `document` glyph — the closest thing
+          the set had — which reads as "a file", not "email", on the first
+          screen every user sees. Same 24x24 grid, same stroke: a rounded
+          rectangle with the flap drawn as a polyline so it keeps the round
+          joins the rest of the set uses. */}
+      {name === 'mail' && (
+        <>
+          <Rect x="3" y="5.5" width="18" height="13" rx="2.5" {...common} />
+          <Polyline points="3.8,7 12,13 20.2,7" {...common} fill="none" />
         </>
       )}
 

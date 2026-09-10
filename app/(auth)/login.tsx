@@ -162,7 +162,7 @@ export default function LoginScreen() {
                 disabled={busy !== null}
                 activeOpacity={0.85}
               >
-                <Icon name="document" size={18} color={Colors.text} />
+                <Icon name="mail" size={18} color={Colors.text} />
                 <Text style={styles.secondaryBtnText}>Continue with email</Text>
               </TouchableOpacity>
             </>
