@@ -623,9 +623,9 @@ const styles = StyleSheet.create({
   tilePlaceholder: { backgroundColor: '#182437', alignItems: 'center', justifyContent: 'center' },
   tileScrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.18)' },
   playIcon: { position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderRadius: 11, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' },
-  playIconText: { color: '#ffffff', fontSize: 10, marginLeft: 2, marginTop: -1 },
+  playIconText: { color: '#ffffff', fontSize: 11, marginLeft: 2, marginTop: -1 },
   tileTitleWrap: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 6, paddingVertical: 4, backgroundColor: 'rgba(0,0,0,0.45)' },
-  tileTitle: { color: '#ffffff', fontSize: 10, fontWeight: '700' },
+  tileTitle: { color: '#ffffff', fontSize: 11, fontWeight: '700' },
   sectionBlock: { marginBottom: 22 },
   hero: {
     height: 460,
@@ -649,7 +649,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.success,
   },
   heroTagText: {
-    color: '#FFFFFF', fontSize: 10,
+    color: '#FFFFFF', fontSize: 11,
     fontWeight: FontWeight.extrabold, letterSpacing: 0.8,
   },
   heroTitle: {
@@ -675,7 +675,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6, paddingVertical: 2,
   },
   premiumBadgeText: {
-    color: Colors.brandCyan, fontSize: 9,
+    color: Colors.brandCyan, fontSize: 11,
     fontWeight: FontWeight.extrabold, letterSpacing: 0.6,
   },
   sectionRow: { paddingHorizontal: 16, gap: 12 },
@@ -686,7 +686,7 @@ const styles = StyleSheet.create({
   shortsHeader: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingTop: 12, paddingBottom: 8, gap: 8 },
   shortsTitle: { fontSize: 19, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.3 },
   shortsBadge: { backgroundColor: 'rgba(46,212,122,0.16)', borderWidth: 1, borderColor: Colors.success, borderRadius: Radius.sm, paddingHorizontal: 8, paddingVertical: 3 },
-  shortsBadgeText: { fontSize: 10, fontWeight: '800', color: '#FFFFFF', letterSpacing: 0.8 },
+  shortsBadgeText: { fontSize: 11, fontWeight: '800', color: '#FFFFFF', letterSpacing: 0.8 },
   shortsRow: { paddingHorizontal: 12, gap: 10 },
   shortCard: { width: 120, borderRadius: 8, overflow: 'hidden' },
   shortImg: { width: 120, height: 205, borderRadius: 8 },

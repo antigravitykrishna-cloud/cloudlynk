@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
   videoMeta: { flex: 1 },
   videoName: { fontSize: FontSize.base, fontWeight: '700', color: Colors.text },
   videoSize: { fontSize: FontSize.xs, color: Colors.textMuted, fontWeight: '600', marginTop: 2 },
-  label: { fontSize: 10, fontWeight: '800', color: Colors.textMuted, letterSpacing: 1.2, marginBottom: 6, marginTop: 14 },
+  label: { fontSize: 11, fontWeight: '800', color: Colors.textMuted, letterSpacing: 1.2, marginBottom: 6, marginTop: 14 },
   input: {
     backgroundColor: Colors.surface,
     borderRadius: Radius.sm,
@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
   },
   typeChipActive: { borderColor: Colors.brand, backgroundColor: Colors.accentOrangeDim },
-  typeChipTxt: { fontSize: 9, color: Colors.textMuted, fontWeight: '700' },
+  typeChipTxt: { fontSize: 11, color: Colors.textMuted, fontWeight: '700' },
   thumbPicker: {
     height: 160,
     backgroundColor: Colors.surface,

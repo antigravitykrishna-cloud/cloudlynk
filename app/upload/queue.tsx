@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
   },
   stat: { alignItems: 'center' },
   statValue: { fontSize: 18, fontWeight: '900', color: Colors.text },
-  statLabel: { fontSize: 10, color: Colors.textMuted, fontWeight: '600', marginTop: 2 },
+  statLabel: { fontSize: 11, color: Colors.textMuted, fontWeight: '600', marginTop: 2 },
   controls: { flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingVertical: 10 },
   controlBtn: {
     flex: 1,
@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
   itemName: { fontSize: FontSize.base, fontWeight: '700', color: Colors.text },
   itemSize: { fontSize: FontSize.xs, color: Colors.textMuted, fontWeight: '600', marginTop: 2 },
   badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: Radius.sm },
-  badgeText: { fontSize: 10, fontWeight: '900', letterSpacing: 0.3 },
+  badgeText: { fontSize: 11, fontWeight: '900', letterSpacing: 0.3 },
   errorText: { fontSize: 11, color: Colors.danger, fontWeight: '600', lineHeight: 16, marginBottom: 8 },
   itemActions: { flexDirection: 'row', gap: 12, paddingTop: 4, borderTopWidth: 0.5, borderTopColor: Colors.border },
   actionBtn: { paddingVertical: 4, paddingHorizontal: 4 },

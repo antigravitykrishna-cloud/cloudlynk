@@ -553,7 +553,7 @@ const styles = StyleSheet.create({
   rejectBtn: { backgroundColor: '#2A1620', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: Colors.brand },
   rejectBtnText: { color: Colors.brand, fontSize: 13, fontWeight: '700' },
   typeBadge: { backgroundColor: Colors.brandLight, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
-  typeBadgeText: { fontSize: 9, fontWeight: '800', color: Colors.brand, letterSpacing: 0.3 },
+  typeBadgeText: { fontSize: 11, fontWeight: '800', color: Colors.brand, letterSpacing: 0.3 },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80, paddingHorizontal: 20 },
   emptyText: { fontSize: 16, color: Colors.text, fontWeight: '600' },
 });

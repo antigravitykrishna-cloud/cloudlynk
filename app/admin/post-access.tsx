@@ -351,7 +351,7 @@ const styles = StyleSheet.create({
   confirmBtn: { backgroundColor: '#2E7DFF', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8, minWidth: 120, alignItems: 'center' },
   confirmBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
   badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
-  badgeText: { fontSize: 10, fontWeight: '900', color: '#0B1220', letterSpacing: 0.5 },
+  badgeText: { fontSize: 11, fontWeight: '900', color: '#0B1220', letterSpacing: 0.5 },
   actionsWrap: { flexDirection: 'row', gap: 8, marginTop: 12 },
   revokeBtn: { backgroundColor: '#22304A', paddingHorizontal: 18, paddingVertical: 9, borderRadius: 8, minWidth: 90, alignItems: 'center' },
   revokeBtnText: { color: '#FF4D6D', fontSize: 12, fontWeight: '800' },

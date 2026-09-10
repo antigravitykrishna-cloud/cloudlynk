@@ -92,7 +92,7 @@ function ProgressBar({ progress, status }: { progress: number; status: string })
 const pb = StyleSheet.create({
   wrap: { height: 24, backgroundColor: Colors.surface, borderRadius: 4, overflow: 'hidden', marginTop: 8, justifyContent: 'center' },
   bar: { position: 'absolute', left: 0, top: 0, bottom: 0 },
-  label: { fontSize: 10, fontWeight: '800', color: Colors.text, textAlign: 'center', zIndex: 1 },
+  label: { fontSize: 11, fontWeight: '800', color: Colors.text, textAlign: 'center', zIndex: 1 },
 });
 
 export default function AddContentScreen() {
@@ -572,7 +572,7 @@ const styles = StyleSheet.create({
   entryFileSize: { fontSize: FontSize.xs, color: Colors.textMuted, marginTop: 2 },
   removeBtn: { padding: 6 },
   removeBtnTxt: { color: Colors.textMuted, fontSize: 16, fontWeight: '700' },
-  label: { fontSize: 10, fontWeight: '800', color: Colors.textMuted, letterSpacing: 1.2, marginBottom: 6, marginTop: 14 },
+  label: { fontSize: 11, fontWeight: '800', color: Colors.textMuted, letterSpacing: 1.2, marginBottom: 6, marginTop: 14 },
   fieldHint: { fontSize: 11, color: Colors.textMuted, marginTop: 4, lineHeight: 16 },
   input: { backgroundColor: Colors.surface, borderRadius: Radius.sm, borderWidth: 1, borderColor: Colors.border, color: Colors.text, fontSize: 14, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 4 },
   textArea: { height: 72, textAlignVertical: 'top' },

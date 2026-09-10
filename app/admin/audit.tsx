@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
   card: { backgroundColor: '#182437', borderRadius: 12, borderWidth: 1, borderColor: '#22304A', padding: 16, marginBottom: 12 },
   cardTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, gap: 10 },
   badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
-  badgeText: { fontSize: 10, fontWeight: '900', color: '#0B1220', letterSpacing: 0.5 },
+  badgeText: { fontSize: 11, fontWeight: '900', color: '#0B1220', letterSpacing: 0.5 },
   cardDate: { fontSize: 11, color: '#6B7C97', fontWeight: '500' },
   metaText: { fontSize: 13, color: '#9FB0C9', fontWeight: '500', marginBottom: 2 },
   detailText: { fontSize: 12, color: '#FFC65C', fontWeight: '600', marginTop: 6 },

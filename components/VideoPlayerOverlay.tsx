@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
 
   settingsPanel: { position: 'absolute', bottom: 130, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.92)', paddingHorizontal: 16, paddingVertical: 10, zIndex: 35 },
   compactRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 6 },
-  compactLabel: { fontSize: 10, fontWeight: '800', color: Colors.textMuted, letterSpacing: 1, marginRight: 4, minWidth: 44 },
+  compactLabel: { fontSize: 11, fontWeight: '800', color: Colors.textMuted, letterSpacing: 1, marginRight: 4, minWidth: 44 },
   compactChip: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: Radius.sm, backgroundColor: Colors.surfaceElevated, borderWidth: 1, borderColor: Colors.border },
   compactChipActive: { backgroundColor: Colors.brand, borderColor: Colors.brand },
   compactChipTxt: { fontSize: 12, fontWeight: '700', color: Colors.textSecondary },

@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
   genreBadge: { position: 'absolute', top: 6, left: 6, backgroundColor: 'rgba(0,0,0,0.7)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
   genreTxt: { fontSize: 8, fontWeight: '900', color: '#fff', letterSpacing: 0.5 },
   durationBadge: { position: 'absolute', bottom: 6, right: 6, backgroundColor: 'rgba(0,0,0,0.75)', paddingHorizontal: 5, paddingVertical: 2, borderRadius: 4 },
-  durationTxt: { fontSize: 10, color: '#fff', fontWeight: '700' },
+  durationTxt: { fontSize: 11, color: '#fff', fontWeight: '700' },
   cardTitle: { fontSize: FontSize.sm, color: Colors.text, fontWeight: FontWeight.bold, lineHeight: 16 },
   channelCard: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, paddingHorizontal: Spacing.lg, paddingVertical: Spacing.sm },
   channelIcon: { width: 44, height: 44, borderRadius: Radius.md, backgroundColor: Colors.card, alignItems: 'center', justifyContent: 'center', borderWidth: 0.5, borderColor: Colors.border },

@@ -121,15 +121,30 @@ export const Radius = {
   full: 999,
 };
 
+/**
+ * Type scale, aligned to Apple's text styles.
+ *
+ * The previous scale had eight steps and the app used twelve sizes. The two
+ * heaviest omissions were 12 (71 uses) and 15 (39 uses) — both of which are
+ * real iOS sizes (caption1 and subheadline), so the code was closer to a
+ * coherent scale than the theme was. They are named here rather than snapped
+ * away.
+ *
+ * Nothing below 11. Apple's smallest text style is caption2 at 11pt and that
+ * is their legibility floor; this app had 29 instances of 9pt and 10pt, all
+ * on metadata and badges — precisely the text people squint at.
+ */
 export const FontSize = {
-  xs: 10,
-  sm: 11,
-  md: 13,
+  xs: 11,     // caption2 — the floor
+  sm: 12,     // caption1
+  md: 13,     // footnote
   base: 14,
-  lg: 16,
+  subhead: 15, // subheadline
+  lg: 16,     // callout
   xl: 18,
-  xxl: 22,
-  xxxl: 28,
+  title: 20,  // title3
+  xxl: 22,    // title2
+  xxxl: 28,   // title1
 };
 
 export const FontWeight = {

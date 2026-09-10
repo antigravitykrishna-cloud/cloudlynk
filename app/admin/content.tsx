@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
   cardTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, gap: 10 },
   titleText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF', flex: 1 },
   badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
-  badgeText: { fontSize: 10, fontWeight: '900', color: '#0B1220', letterSpacing: 0.5 },
+  badgeText: { fontSize: 11, fontWeight: '900', color: '#0B1220', letterSpacing: 0.5 },
   metaText: { fontSize: 13, color: '#9FB0C9', fontWeight: '500', marginBottom: 2 },
   premiumText: { color: '#FFC65C', fontWeight: '700' },
   cardDate: { fontSize: 11, color: '#6B7C97', fontWeight: '500', marginTop: 4 },

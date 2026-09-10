@@ -445,7 +445,7 @@ const styles = StyleSheet.create({
   channelName: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
   channelMeta: { flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 8 },
   statusBadge: { borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
-  statusText: { fontSize: 10, fontWeight: '700' },
+  statusText: { fontSize: 11, fontWeight: '700' },
   memberCount: { fontSize: 11, color: '#6B7C97' },
   manageBtn: { backgroundColor: '#2E7DFF', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 },
   manageBtnText: { color: '#FFFFFF', fontSize: 12, fontWeight: '700' },
