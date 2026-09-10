@@ -19,7 +19,9 @@
       },
       "channel": "preview",
       "env": {
-        "APP_ENV": "preview"
+        "APP_ENV": "preview",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://wdtwjiixuueqejfraaod.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_lfLR6yXqAOzJn3sgmslILQ_f2PeCxj6"
       }
     },
     "production": {
@@ -30,7 +32,9 @@
       },
       "channel": "production",
       "env": {
-        "APP_ENV": "production"
+        "APP_ENV": "production",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://wdtwjiixuueqejfraaod.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_lfLR6yXqAOzJn3sgmslILQ_f2PeCxj6"
       }
     }
   },
