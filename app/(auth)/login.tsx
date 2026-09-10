@@ -183,6 +183,9 @@ export default function LoginScreen() {
                 autoCapitalize="none"
                 autoCorrect={false}
                 autoComplete="email"
+                // The only thing this screen asks for. Each branch mounts its
+                // own TextInput, so focus follows the step without a ref.
+                autoFocus
                 editable={busy === null}
                 onSubmitEditing={requestCode}
                 returnKeyType="send"
@@ -219,6 +222,10 @@ export default function LoginScreen() {
                 keyboardType="number-pad"
                 autoComplete="sms-otp"
                 textContentType="oneTimeCode"
+                // Focused so the SMS/email autofill suggestion can drop
+                // straight in. Without focus the platform will not offer it,
+                // which defeats the point of declaring oneTimeCode.
+                autoFocus
                 maxLength={6}
                 editable={busy === null}
                 onSubmitEditing={submitCode}
