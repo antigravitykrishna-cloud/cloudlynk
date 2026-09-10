@@ -115,7 +115,7 @@ changing it needs a Google-assisted reset.
 ## 5. Install dependencies
 
 ```bash
-cd C:/Users/MIT/OneDrive/Desktop/cloudlynk
+cd C:/dev/cloudlynk
 ```
 
 ```bash
@@ -192,7 +192,7 @@ debug-signed and it was not.
 
 Both of those errors are the same problem wearing two disguises, and neither
 message says so. Windows caps paths at **260 characters** unless
-`LongPathsEnabled` is set. This checkout sits at
+`LongPathsEnabled` is set. This checkout **used to** sit at
 
 ```
 C:\Users\MIT\OneDrive\Desktop\cloudlynk
@@ -212,14 +212,21 @@ reg query "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v LongPathsEnabled
 
 `0x0` means the cap is active. Two ways out:
 
-**A. Build through a directory junction** (no admin rights, changes nothing in
-the repo — this is the one that works). A junction is an alias for the folder;
-Gradle sees a 5-character path instead of a 133-character one, and every output
-still lands in the real project directory.
+**A. Keep the project on a short path outside OneDrive.** This is what was
+actually done on 2026-09-10 — the checkout now lives at `C:\dev\cloudlynk`
+(17 characters) and the problem stops being reachable. Nothing else is needed.
+
+If you ever have to build a checkout that is stuck on a long path, a directory
+junction gives Gradle a short alias without moving anything, and `mklink /J`
+needs no elevation (unlike `/D` symlinks):
 
 ```bash
-cd /c && cmd //c "mklink /J cl C:\\Users\\MIT\\OneDrive\\Desktop\\cloudlynk"
+cd /c && cmd //c "mklink /J cl C:\\some\\very\\long\\path\\to\\cloudlynk"
 ```
+
+> Note the junction only shortens what *you* type. Gradle canonicalises paths
+> for anything under `node_modules`, so it did **not** help with the KSP and
+> CMake failures here — only moving the checkout did.
 
 Then build from the alias instead of the real path:
 
@@ -249,11 +256,48 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v LongPathsEnabled /
 Then restart the machine. This is the better long-term fix, but it is a
 system-wide change — make it deliberately, not to unblock one build.
 
-> **OneDrive makes this worse.** The checkout is inside a synced folder, so
-> OneDrive can hold handles on files Gradle is trying to replace, and may store
-> them as cloud-only placeholders. If builds are flaky here even after fixing
-> path length, pause syncing (or move the project outside OneDrive) before
-> spending time on anything else.
+> **The project moved out of OneDrive on 2026-09-10** for exactly this reason.
+> Canonical location is now `C:\dev\cloudlynk` — 17 characters instead of 133,
+> and outside the sync root. If you find yourself working in
+> `C:\Users\MIT\OneDrive\Desktop\cloudlynk`, that is the stale copy; delete it.
+
+### The `libc++_shared.so: not a regular file` failure
+
+The most stubborn failure on this machine, and the one that wastes the most
+time because it moves around:
+
+```
+Execution failed for task ':<some-native-module>:buildCMakeRelWithDebInfo[arm64-v8a]'.
+> Cannot access output property 'soFolder' ...
+   > java.io.IOException: Cannot snapshot ...\obj\arm64-v8a\libc++_shared.so: not a regular file
+```
+
+The NDK emits `libc++_shared.so` into each native module's CMake output as a
+link rather than a copy, and Gradle 9.3.1's snapshotter refuses to fingerprint
+it. It surfaced on `react-native-nitro-modules`, then `react-native-screens`,
+then `expo-modules-core` — clearing one module just moves it to the next.
+
+**What actually works: a build with no prior CMake state at all.** Every
+successful release build here has been from a freshly installed `node_modules`.
+Partial cleans do not do it, and neither does clearing the Gradle transform
+cache — that makes it worse, by forcing a native reconfigure over half-stale
+outputs.
+
+```bash
+# From the project root
+rm -rf node_modules
+npm ci
+cd android && ./gradlew assembleRelease bundleRelease --no-daemon
+```
+
+Note `rm -rf node_modules` rather than hunting for `android/build` directories.
+A `find -maxdepth 4` misses nested copies such as
+`node_modules/expo/node_modules/expo-modules-core`, which is precisely how one
+attempt failed after appearing to clean everything.
+
+The three machine-level fixes that stop this recurring — long paths enabled,
+project out of OneDrive, and antivirus exclusions on the project, `~/.gradle`
+and any build workspace — are listed at the top of §9.
 
 ---
 
