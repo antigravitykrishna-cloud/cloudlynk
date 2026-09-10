@@ -194,7 +194,7 @@ export default function PremiumScreen() {
                 <TouchableOpacity
                   key={plan.code}
                   style={[styles.planCard, isSelected && styles.planCardSelected]}
-                  onPress={() => setSelectedPlanIndex(i)}
+                  onPress={() => { fireHaptic('selection'); setSelectedPlanIndex(i); }}
                   activeOpacity={0.8}
                 >
                   <View style={[styles.radio, isSelected && styles.radioSelected]}>

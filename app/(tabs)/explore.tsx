@@ -7,6 +7,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Icon, type IconName } from '../../components/Icon';
+import { PressScale } from '../../components/Press';
 import { ExploreSkeleton } from '../../components/Skeleton';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
@@ -35,7 +36,7 @@ const VideoTile = memo(({ item, onPress }: { item: ChannelPost; onPress: () => v
   const hasVideo = !!item.video_url || !!item.media_url;
   const isTall = item.id.charCodeAt(0) % 4 === 0;
   return (
-    <TouchableOpacity style={[styles.tile, isTall && styles.tileTall]} onPress={onPress} activeOpacity={0.85}>
+    <PressScale style={[styles.tile, isTall && styles.tileTall]} onPress={onPress} scaleTo={0.95}>
       {thumb
         ? <Image source={{ uri: thumb }} style={styles.tileImg} resizeMode="cover" />
         : <View style={[styles.tileImg, styles.tilePlaceholder]}>
@@ -53,7 +54,7 @@ const VideoTile = memo(({ item, onPress }: { item: ChannelPost; onPress: () => v
           <Text style={styles.tileTitle} numberOfLines={1}>{item.title}</Text>
         </View>
       )}
-    </TouchableOpacity>
+    </PressScale>
   );
 });
 VideoTile.displayName = 'VideoTile';
@@ -71,10 +72,10 @@ const SectionCard = memo(({ item, isShorts, onPress }: {
 }) => {
   const thumb = item.thumbnail_url ? PostService.getMediaPublicUrl(item.thumbnail_url) : null;
   return (
-    <TouchableOpacity
+    <PressScale
       style={isShorts ? styles.shortCard : styles.sectionCard}
       onPress={onPress}
-      activeOpacity={0.85}
+      scaleTo={0.95}
     >
       {thumb ? (
         <Image
@@ -101,7 +102,7 @@ const SectionCard = memo(({ item, isShorts, onPress }: {
       <Text style={isShorts ? styles.shortTitle : styles.sectionCardTitle} numberOfLines={2}>
         {item.title ?? 'Untitled'}
       </Text>
-    </TouchableOpacity>
+    </PressScale>
   );
 });
 SectionCard.displayName = 'SectionCard';
@@ -122,7 +123,7 @@ SectionCard.displayName = 'SectionCard';
 const HeroCard = memo(({ item, onPress }: { item: ChannelPost; onPress: () => void }) => {
   const thumb = item.thumbnail_url ? PostService.getMediaPublicUrl(item.thumbnail_url) : null;
   return (
-    <TouchableOpacity style={styles.hero} onPress={onPress} activeOpacity={0.92}>
+    <PressScale style={styles.hero} onPress={onPress} scaleTo={0.985}>
       {thumb ? (
         <Image source={thumb} style={styles.heroImg} contentFit="cover" transition={220} />
       ) : (
@@ -153,7 +154,7 @@ const HeroCard = memo(({ item, onPress }: { item: ChannelPost; onPress: () => vo
           <Text style={styles.heroPlayText}>Play</Text>
         </View>
       </View>
-    </TouchableOpacity>
+    </PressScale>
   );
 });
 HeroCard.displayName = 'HeroCard';
