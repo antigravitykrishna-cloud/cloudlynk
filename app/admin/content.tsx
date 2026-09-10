@@ -57,7 +57,10 @@ export default function AdminContentScreen() {
       setPosts(await AdminContentService.listPosts({ status, accessLevel: access }));
     } catch (err) {
       if (__DEV__) console.error('AdminContent load error:', err);
-      setPosts([]);
+      // A moderation queue that renders "nothing here" after a failed
+      // fetch is worse than one that errors: the admin concludes there is
+      // nothing to review and stops checking, while the queue fills up.
+      showAlert('Could not load content', err instanceof Error ? err.message : 'Check your connection and try again.');
     } finally {
       setLoading(false);
     }

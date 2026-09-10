@@ -133,6 +133,10 @@ export default function PendingChannelsScreen() {
       })));
     } catch (err) {
       if (__DEV__) console.error('loadPending error:', err);
+      // A moderation queue that renders "nothing here" after a failed
+      // fetch is worse than one that errors: the admin concludes there is
+      // nothing to review and stops checking, while the queue fills up.
+      showAlert('Could not load pending channels', err instanceof Error ? err.message : 'Check your connection and try again.');
     } finally {
       setLoading(false);
     }

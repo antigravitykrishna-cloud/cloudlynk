@@ -82,6 +82,10 @@ export default function AdminReportsScreen() {
       })));
     } catch (err) {
       if (__DEV__) console.error('AdminReports load error:', err);
+      // A moderation queue that renders "nothing here" after a failed
+      // fetch is worse than one that errors: the admin concludes there is
+      // nothing to review and stops checking, while the queue fills up.
+      showAlert('Could not load reports', err instanceof Error ? err.message : 'Check your connection and try again.');
     } finally {
       setLoading(false);
     }
