@@ -80,8 +80,30 @@ export default function MySubscriptionScreen() {
   }, [fetchStatus]));
 
   const planStatus = status?.plan_status ?? 'free';
-  const planLabel = planStatus.toUpperCase();
-  const isActive = planStatus === 'active';
+
+  // Mirrors public.is_plan_active() (v75) exactly, and for the same reason
+  // stream-playback-token does: whether someone is subscribed RIGHT NOW is one
+  // question, and every layer has to answer it identically or the app
+  // contradicts itself.
+  //
+  // `plan_status === 'active'` on its own is not that answer. expire_lapsed_plans
+  // runs hourly, so a plan whose term ended can sit at 'active' with a past
+  // plan_expires_at until the next sweep. During that window this screen said
+  // "ACTIVE - Active until <a date in the past>" while the database had already
+  // stopped serving premium content and the player was returning 403. The user
+  // is told they are subscribed by the one screen whose entire job is to tell
+  // them whether they are subscribed.
+  //
+  // 'lifetime' was also missing, so a lifetime subscriber fell through every
+  // branch: a bare badge and no explanation.
+  const expiresAt = status?.plan_expires_at ?? null;
+  const notExpired = !expiresAt || new Date(expiresAt) > new Date();
+  const isActive = planStatus === 'lifetime' || (planStatus === 'active' && notExpired);
+  const lapsedAwaitingSweep = planStatus === 'active' && !notExpired;
+  // One derived status drives the label AND the colour. Deriving them
+  // separately is how you get a green badge that reads EXPIRED.
+  const effectiveStatus = lapsedAwaitingSweep ? 'expired' : planStatus;
+  const planLabel = effectiveStatus.toUpperCase();
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -100,8 +122,8 @@ export default function MySubscriptionScreen() {
           {/* Current Plan Card */}
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Current Plan</Text>
-            <View style={[styles.badge, { backgroundColor: getStatusColor(planStatus) + '18' }]}>
-              <Text style={[styles.badgeText, { color: getStatusColor(planStatus) }]}>
+            <View style={[styles.badge, { backgroundColor: getStatusColor(effectiveStatus) + '18' }]}>
+              <Text style={[styles.badgeText, { color: getStatusColor(effectiveStatus) }]}>
                 {planLabel}
               </Text>
             </View>
@@ -115,11 +137,14 @@ export default function MySubscriptionScreen() {
                 Started {formatDate(status.plan_started_at)}
               </Text>
             )}
+            {planStatus === 'lifetime' && (
+              <Text style={styles.cardMeta}>Lifetime access. Nothing to renew.</Text>
+            )}
             {!isActive && planStatus === 'free' && (
               <Text style={styles.cardMeta}>You are on the free plan.</Text>
             )}
-            {planStatus === 'expired' && (
-              <Text style={styles.cardMeta}>Your plan expired on {formatDate(status?.plan_expires_at ?? null)}.</Text>
+            {(planStatus === 'expired' || lapsedAwaitingSweep) && (
+              <Text style={styles.cardMeta}>Your plan expired on {formatDate(expiresAt)}.</Text>
             )}
           </View>
 
