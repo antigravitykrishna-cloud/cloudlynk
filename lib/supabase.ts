@@ -159,7 +159,6 @@ export type Database = {
           avatar_url: string | null;
           storage_used: number;
           storage_limit: number;
-          plan: 'free' | 'standard' | 'premium';
           is_admin: boolean;
           role: 'user' | 'creator' | 'staff' | 'admin';
           can_upload_content: boolean;
@@ -228,8 +227,15 @@ export type Database = {
           media_size: number;
           approval_expires_at: string | null;
           created_at: string;
+          // Present in the database and missing here, which is why
+          // getDiscoverChannels needs an `as unknown as` cast at its call
+          // site: a Pick<> of the columns it really selects did not typecheck
+          // against a Row that had never heard of them.
+          link: string | null;
+          category: string | null;
+          is_official: boolean;
         };
-        Insert: Omit<Database['public']['Tables']['channels']['Row'], 'id' | 'member_count' | 'post_count' | 'media_size' | 'created_at'>;
+        Insert: Omit<Database['public']['Tables']['channels']['Row'], 'id' | 'member_count' | 'post_count' | 'media_size' | 'created_at' | 'is_official'>;
         Update: Partial<Database['public']['Tables']['channels']['Insert']>;
       };
 
