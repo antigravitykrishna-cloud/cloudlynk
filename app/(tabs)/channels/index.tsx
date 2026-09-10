@@ -39,6 +39,10 @@ export default function ChannelsScreen() {
   const [joinedChannelIds, setJoinedChannelIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  // Same distinction Explore and Feed make: an empty Discover list and a
+  // failed request are different facts, and only one of them is the user's
+  // to act on.
+  const [loadFailed, setLoadFailed] = useState(false);
 
   // isPaidUser comes from useAuth, which reads plan_status and honours
   // plan_expires_at. This screen used to compute it from `profile.plan` — a
@@ -88,9 +92,12 @@ export default function ChannelsScreen() {
         data = (await ChannelService.getDiscoverChannels(user?.id ?? '', activeFilter)) as unknown as Channel[];
       }
       setChannels(data);
+      setLoadFailed(false);
     } catch (err) {
       if (__DEV__) console.error('loadChannels error:', err);
-      setChannels([]);
+      // Leave `channels` alone — a failed refresh should not blank a list
+      // that was working, it should say the refresh failed.
+      setLoadFailed(true);
     } finally {
       setLoading(false);
     }
@@ -293,7 +300,15 @@ export default function ChannelsScreen() {
         <ScrollView contentContainerStyle={{ flexGrow: 1 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.brand} />}>
           <View style={styles.emptyState}>
             <CloudlynkLogo size={48} />
-            {activeTab === 'joined' && !user?.id ? (
+            {loadFailed ? (
+              <>
+                <Text style={styles.emptyText}>Couldn&apos;t load channels</Text>
+                <Text style={styles.emptyHint}>Check your connection and try again.</Text>
+                <TouchableOpacity style={styles.retryBtn} onPress={onRefresh} activeOpacity={0.85}>
+                  <Text style={styles.retryBtnText}>Try again</Text>
+                </TouchableOpacity>
+              </>
+            ) : activeTab === 'joined' && !user?.id ? (
               <>
                 <Text style={styles.emptyText}>Not signed in</Text>
                 <Text style={styles.emptyHint}>
@@ -448,4 +463,6 @@ const styles = StyleSheet.create({
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80, paddingHorizontal: 20 },
   emptyText: { fontSize: 16, color: Colors.text, fontWeight: '600', marginTop: 16 },
   emptyHint: { fontSize: 14, color: Colors.textSecondary, marginTop: 8, textAlign: 'center', paddingHorizontal: 40, lineHeight: 20 },
+  retryBtn: { marginTop: 18, paddingHorizontal: 24, paddingVertical: 11, borderRadius: 8, backgroundColor: Colors.brand },
+  retryBtnText: { fontSize: 14, fontWeight: '700', color: '#ffffff' },
 });
