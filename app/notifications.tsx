@@ -26,6 +26,17 @@ export default function NotificationsScreen() {
 
   const handleTap = useCallback(async (notif: Notification) => {
     if (!notif.read) await markAsRead(notif.id);
+
+    // Billing notifications (v75) carry no channel_id, so the branch below
+    // never fired for them: "Your subscription has ended -- renew any time to
+    // unlock full content again" marked itself read and went nowhere. That is
+    // the one notification with a clear next step, and it was the only one
+    // with no destination. Send it where it is telling the user to go.
+    if (notif.type === 'subscription_expired' || notif.type === 'subscription_expiring') {
+      router.push('/premium');
+      return;
+    }
+
     if (notif.channel_id) {
       router.push({ pathname: '/(tabs)/channels/[id]', params: { id: notif.channel_id } });
     }
