@@ -126,7 +126,10 @@ export default function AdminPostAccessScreen() {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.headerBack} activeOpacity={0.7}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.headerBack} activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
             <Text style={styles.headerBackTxt}>{'‹'}</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Post Access</Text>
@@ -141,7 +144,10 @@ export default function AdminPostAccessScreen() {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.headerBack} activeOpacity={0.7}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.headerBack} activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
             <Text style={styles.headerBackTxt}>{'‹'}</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Post Access</Text>
@@ -157,7 +163,10 @@ export default function AdminPostAccessScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.headerBack} activeOpacity={0.7}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.headerBack} activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
           <Text style={styles.headerBackTxt}>{'‹'}</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Post Access</Text>

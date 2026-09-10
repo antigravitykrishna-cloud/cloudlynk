@@ -98,7 +98,10 @@ export default function PremiumScreen() {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
             <Text style={styles.backTxt}>{'< Back'}</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Premium</Text>
@@ -134,7 +137,10 @@ export default function PremiumScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
             <Text style={styles.backTxt}>{'< Back'}</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Premium</Text>

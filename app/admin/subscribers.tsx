@@ -140,7 +140,12 @@ export default function AdminSubscribersScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.headerBack} onPress={() => router.back()}>
+        <TouchableOpacity
+          style={styles.headerBack}
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
           <Text style={styles.headerBackTxt}>‹</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Subscribers</Text>

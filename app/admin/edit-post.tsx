@@ -106,7 +106,10 @@ function Field({
 function Header({ title, onBack }: { title: string; onBack: () => void }) {
   return (
     <View style={styles.header}>
-      <TouchableOpacity onPress={onBack} style={styles.headerBack} activeOpacity={0.7}>
+      <TouchableOpacity onPress={onBack} style={styles.headerBack} activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
         <Text style={styles.headerBackTxt}>{'‹'}</Text>
       </TouchableOpacity>
       <Text style={styles.headerTitle}>{title}</Text>

@@ -121,7 +121,10 @@ export default function FormScreen() {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
             <Text style={styles.backTxt}>{'< Back'}</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Edit Item</Text>
@@ -143,7 +146,10 @@ export default function FormScreen() {
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
               <Text style={styles.backTxt}>{'< Back'}</Text>
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Edit Details</Text>

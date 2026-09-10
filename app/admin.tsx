@@ -146,7 +146,12 @@ export default function AdminScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.replace('/(tabs)/profile')}><Text style={styles.backTxt}>‹</Text></TouchableOpacity>
+        <TouchableOpacity
+          style={styles.backBtn}
+          onPress={() => router.replace('/(tabs)/profile')}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        ><Text style={styles.backTxt}>‹</Text></TouchableOpacity>
         <Text style={styles.headerTitle}>Admin Panel</Text>
         <View style={{ width: 36 }} />
       </View>

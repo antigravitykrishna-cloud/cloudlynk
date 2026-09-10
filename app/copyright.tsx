@@ -34,7 +34,10 @@ export default function CopyrightPolicyScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
           <Text style={styles.backTxt}>‹ Back</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Copyright &amp; IP Policy</Text>
