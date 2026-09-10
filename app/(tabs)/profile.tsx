@@ -8,7 +8,6 @@ import { ChannelService } from '../../lib/channels';
 import { GuestPrompt } from '../../components/GuestPrompt';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotifications } from '../../hooks/useNotifications';
-import { useUsageTimer } from '../../hooks/useUsageTimer';
 import { supabase } from '../../lib/supabase';
 import { Colors } from '../../constants/theme';
 import { formatBytes } from '../../lib/storage';
@@ -53,7 +52,6 @@ const SettingsRow = ({
 export default function ProfileScreen() {
   const { profile, user, signOut, refreshProfile, isAdmin, isPaidUser, planStatus } = useAuth();
   const { unreadCount } = useNotifications(user?.id);
-  const { setUsage, resetTimer } = useUsageTimer(!isPaidUser);
   const router = useRouter();
   const [myChannels, setMyChannels] = useState<any[]>([]);
   const [channelsLoading, setChannelsLoading] = useState(true);
@@ -382,16 +380,6 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-          {/* Dev tools */}
-          {__DEV__ && (
-            <View style={styles.section}>
-              <Text style={styles.sectionHeaderTitle}>DEV TOOLS</Text>
-              <View style={styles.menuGroup}>
-                <SettingsRow icon="tools" iconBg="rgba(255,179,71,0.10)" label="Force Paywall (30 min)" onPress={() => setUsage(30 * 60 * 1000)} />
-                <SettingsRow icon="refresh" iconBg="rgba(255,179,71,0.10)" label="Reset usage timer" onPress={() => resetTimer()} />
-              </View>
-            </View>
-          )}
 
           {/* Logout + Delete Account */}
           <View style={styles.bottomButtons}>
