@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, RefreshControl } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { PressScale } from '../../components/Press';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { showAlert } from '../../components/Feedback';
@@ -154,15 +156,18 @@ export default function FeedScreen() {
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.brandBlue} />}
         >
-          {items.map(item => {
+          {items.map((item, idx) => {
             const thumb = item.thumbnail_url ? PostService.getMediaPublicUrl(item.thumbnail_url) : null;
             const locked = item.access_level === 'premium' && !isPaidUser;
 
             return (
-              <TouchableOpacity
-                key={item.id}
+              // Rows arrive with a short stagger instead of the whole list
+              // appearing at once. 45ms apart, capped at 8 so a long list does
+              // not make the last row wait half a second. Capping matters more
+              // than the interval: an uncapped stagger looks broken on scroll.
+              <Animated.View key={item.id} entering={FadeInDown.delay(Math.min(idx, 8) * 45).duration(260)}>
+              <PressScale
                 style={styles.card}
-                activeOpacity={0.8}
                 onPress={() => openItem(item)}
               >
                 <View style={styles.thumbWrap}>
@@ -191,7 +196,8 @@ export default function FeedScreen() {
                 </View>
 
                 <Icon name="chevron-right" size={16} color={Colors.textMuted} />
-              </TouchableOpacity>
+              </PressScale>
+              </Animated.View>
             );
           })}
           <View style={{ height: 24 }} />

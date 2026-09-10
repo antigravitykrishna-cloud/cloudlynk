@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { fireHaptic } from '../../components/Press';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Linking } from 'react-native';
 import { showAlert } from '../../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -204,8 +205,10 @@ async function setChannelStatus(channelId: string, status: 'active' | 'rejected'
       const { error } = await setChannelStatus(channel.id, 'active');
       if (error) throw error;
       setChannels(prev => prev.filter(c => c.id !== channel.id));
+      fireHaptic('success');
       showAlert('Approved', `"${channel.name}" is now active.`);
     } catch (err: unknown) {
+      fireHaptic('error');
       showAlert('Error', err instanceof Error ? err.message : 'Approve failed');
     }
   };
@@ -223,8 +226,10 @@ async function setChannelStatus(channelId: string, status: 'active' | 'rejected'
               const { error } = await setChannelStatus(channel.id, 'rejected');
               if (error) throw error;
               setChannels(prev => prev.filter(c => c.id !== channel.id));
+              fireHaptic('warning');
               showAlert('Rejected', `"${channel.name}" has been rejected.`);
             } catch (err: unknown) {
+              fireHaptic('error');
               showAlert('Error', err instanceof Error ? err.message : 'Reject failed');
             }
           },
@@ -239,11 +244,13 @@ async function setChannelStatus(channelId: string, status: 'active' | 'rejected'
         .from('channel-videos')
         .createSignedUrl(video.storage_path, 3600);
       if (error || !data?.signedUrl) {
+        fireHaptic('error');
         showAlert('Error', 'Could not generate preview URL.');
         return;
       }
       await Linking.openURL(data.signedUrl);
     } catch (err: unknown) {
+      fireHaptic('error');
       showAlert('Error', err instanceof Error ? err.message : 'Could not open video.');
     }
   };
@@ -256,8 +263,10 @@ async function setChannelStatus(channelId: string, status: 'active' | 'rejected'
         .eq('id', video.id);
       if (error) throw error;
       setVideos(prev => prev.filter(v => v.id !== video.id));
+      fireHaptic('success');
       showAlert('Approved', `Video "${video.title ?? 'Untitled'}" is now approved.`);
     } catch (err: unknown) {
+      fireHaptic('error');
       showAlert('Error', err instanceof Error ? err.message : 'Approve failed');
     }
   };
@@ -282,8 +291,10 @@ async function setChannelStatus(channelId: string, status: 'active' | 'rejected'
                 .eq('id', video.id);
               if (error) throw error;
               setVideos(prev => prev.filter(v => v.id !== video.id));
+              fireHaptic('warning');
               showAlert('Rejected', 'Video has been rejected.');
             } catch (err: unknown) {
+              fireHaptic('error');
               showAlert('Error', err instanceof Error ? err.message : 'Reject failed');
             }
           },
@@ -300,6 +311,7 @@ async function setChannelStatus(channelId: string, status: 'active' | 'rejected'
     try {
       await Linking.openURL(post.video_url);
     } catch (err: unknown) {
+      fireHaptic('error');
       showAlert('Error', err instanceof Error ? err.message : 'Could not open video.');
     }
   };
@@ -309,8 +321,10 @@ async function setChannelStatus(channelId: string, status: 'active' | 'rejected'
       const { error } = await supabase.rpc('approve_post', { p_post_id: post.id });
       if (error) throw error;
       setPosts(prev => prev.filter(p => p.id !== post.id));
+      fireHaptic('success');
       showAlert('Approved', `"${post.title ?? 'Untitled'}" is now approved.`);
     } catch (err: unknown) {
+      fireHaptic('error');
       showAlert('Error', err instanceof Error ? err.message : 'Approve failed');
     }
   };
@@ -331,8 +345,10 @@ async function setChannelStatus(channelId: string, status: 'active' | 'rejected'
               });
               if (error) throw error;
               setPosts(prev => prev.filter(p => p.id !== post.id));
+              fireHaptic('warning');
               showAlert('Rejected', 'Post has been rejected.');
             } catch (err: unknown) {
+              fireHaptic('error');
               showAlert('Error', err instanceof Error ? err.message : 'Reject failed');
             }
           },

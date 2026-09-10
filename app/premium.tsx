@@ -8,6 +8,8 @@ import { useAuth } from '../hooks/useAuth';
 import { useSubscriptionPlans } from '../lib/subscriptionService';
 import { getIapService } from '../lib/services/iap';
 import { Icon } from '../components/Icon';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { PressScale, fireHaptic } from '../components/Press';
 
 // v52: Premium no longer sells storage — every account (free or premium)
 // gets the same 15GB. Premium instead unlocks movies/series/shorts the
@@ -45,9 +47,13 @@ export default function PremiumScreen() {
     try {
       const result = await getIapService().purchasePlan(selectedPlan.code);
       if (result.success) {
+        // A completed purchase is the single most important confirmation in
+        // the app; it should be felt as well as read.
+        fireHaptic('success');
         await refreshProfile();
         showAlert('Success', "You're now on Premium!", [{ text: 'OK', onPress: () => router.back() }]);
       } else {
+        fireHaptic('error');
         showAlert('Purchase failed', result.errorMessage ?? 'Please try again.');
       }
     } catch (err: unknown) {

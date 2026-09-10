@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { fireHaptic } from '../../components/Press';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
 import { showAlert } from '../../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -53,8 +54,10 @@ export default function PendingChannelContentScreen() {
       const { error } = await supabase.rpc('approve_channel_content', { content_id: item.id });
       if (error) throw error;
       setItems(prev => prev.filter(i => i.id !== item.id));
+      fireHaptic('success');
       showAlert('Approved', `"${item.title}" has been approved.`);
     } catch (err: unknown) {
+      fireHaptic('error');
       showAlert('Error', err instanceof Error ? err.message : 'Approve failed');
     }
   };
@@ -73,8 +76,10 @@ export default function PendingChannelContentScreen() {
       setItems(prev => prev.filter(i => i.id !== item.id));
       setRejectingId(null);
       setRejectReason('');
+      fireHaptic('warning');
       showAlert('Rejected', `"${item.title}" has been rejected.`);
     } catch (err: unknown) {
+      fireHaptic('error');
       showAlert('Error', err instanceof Error ? err.message : 'Reject failed');
     }
   };
