@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
     borderBottomWidth: 1, borderBottomColor: Colors.border,
   },
-  headerBack: { width: 32 },
+  headerBack: { width: 44 },
   headerBackTxt: { color: Colors.text, fontSize: 28, lineHeight: 30 },
   headerTitle: { color: Colors.text, fontSize: FontSize.xl, fontWeight: FontWeight.bold },
   scroll: { padding: Spacing.lg },

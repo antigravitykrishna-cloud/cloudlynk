@@ -708,7 +708,7 @@ const styles = StyleSheet.create({
   detailHero: { height: H * 0.4, position: 'relative', backgroundColor: Colors.brand },
   detailHeroImg: { width: '100%', height: '100%' },
   detailHeroPlaceholder: { alignItems: 'center', justifyContent: 'center' },
-  detailClose: { position: 'absolute', right: 16, zIndex: 10, width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' },
+  detailClose: { position: 'absolute', right: 16, zIndex: 10, width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' },
   detailCloseTxt: { color: '#ffffff', fontSize: 16, fontWeight: '700' },
   detailBody: { flex: 1, padding: 20 },
   detailBadgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },

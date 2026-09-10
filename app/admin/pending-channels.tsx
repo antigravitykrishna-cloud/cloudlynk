@@ -531,7 +531,7 @@ async function setChannelStatus(channelId: string, status: 'active' | 'rejected'
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
   header: { backgroundColor: Colors.surface, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14 },
-  headerBack: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
+  headerBack: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   headerBackTxt: { color: '#ffffff', fontSize: 28, fontWeight: '700', lineHeight: 28 },
   headerTitle: { color: '#ffffff', fontSize: 18, fontWeight: '800' },
   list: { paddingVertical: 8 },

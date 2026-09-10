@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.brand, flexDirection: 'row', alignItems: 'center',
     justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14,
   },
-  backBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
+  backBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
   backText: { color: '#fff', fontSize: 24, fontWeight: '700', marginTop: -2 },
   headerTitle: { color: '#fff', fontSize: 17, fontWeight: '800' },
   body: { flex: 1, padding: 20 },

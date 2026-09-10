@@ -189,7 +189,7 @@ export default function AdminScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, borderBottomWidth: 0.5, borderBottomColor: Colors.border },
-  backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+  backBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   backTxt: { fontSize: 26, color: Colors.accent, fontWeight: FontWeight.bold },
   headerTitle: { flex: 1, fontSize: FontSize.lg, fontWeight: FontWeight.extrabold, color: Colors.text, textAlign: 'center' },
   summaryRow: { flexDirection: 'row', margin: Spacing.lg, backgroundColor: Colors.card, borderRadius: Radius.xl, borderWidth: 0.5, borderColor: Colors.border },

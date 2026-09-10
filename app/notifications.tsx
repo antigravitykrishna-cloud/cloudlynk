@@ -130,7 +130,7 @@ export default function NotificationsScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, borderBottomWidth: 0.5, borderBottomColor: Colors.border },
-  backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+  backBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   backTxt: { fontSize: 26, color: Colors.accent, fontWeight: FontWeight.bold },
   headerTitle: { flex: 1, fontSize: FontSize.lg, fontWeight: FontWeight.extrabold, color: Colors.text, textAlign: 'center' },
   markAllBtn: { fontSize: FontSize.sm, color: Colors.accent, fontWeight: FontWeight.bold, width: 80, textAlign: 'right' },

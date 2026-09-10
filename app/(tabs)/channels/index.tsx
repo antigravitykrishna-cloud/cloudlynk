@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
   joinBtnText: { color: '#ffffff', fontSize: 13, fontWeight: '800' },
   leaveBtn: { backgroundColor: Colors.surfaceElevated, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: Colors.brand },
   leaveBtnText: { color: Colors.brand, fontSize: 13, fontWeight: '700' },
-  lockBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.surfaceElevated, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Colors.border },
+  lockBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surfaceElevated, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Colors.border },
   lockBtnIcon: { fontSize: 16 },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80, paddingHorizontal: 20 },
   emptyText: { fontSize: 16, color: Colors.text, fontWeight: '600', marginTop: 16 },

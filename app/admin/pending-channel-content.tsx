@@ -212,8 +212,8 @@ const styles = StyleSheet.create({
     borderBottomColor: '#22304A',
   },
   headerBack: {
-    width: 32,
-    height: 32,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
