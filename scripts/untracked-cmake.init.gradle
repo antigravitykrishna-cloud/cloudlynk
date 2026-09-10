@@ -1,0 +1,46 @@
+// Stop Gradle fingerprinting the NDK's hard-linked .so files.
+//
+// Gradle 9.3.1 refuses to snapshot a file whose hard-link count is > 1,
+// reporting "not a regular file". The Android NDK ships libc++_shared.so as a
+// 22-way hard link and CMake links rather than copies it into every native
+// module's output, so every buildCMake* task hits it:
+//
+//   Execution failed for task ':<module>:buildCMakeRelWithDebInfo[arm64-v8a]'.
+//   > Cannot access output property 'soFolder' ...
+//      > java.io.IOException: Cannot snapshot ...libc++_shared.so: not a regular file
+//
+// Replacing the links with real copies does not hold: CMake recreates them on
+// the next configure, so a delink-then-build loop oscillates instead of
+// converging (observed over 10 passes, including one full 49-minute build).
+//
+// Gradle's own error message names the remedy, and this applies it: mark the
+// CMake tasks as untracked so Gradle stops trying to fingerprint their outputs.
+// The cost is that those tasks always rerun rather than being up-to-date --
+// slower incremental builds, correct output. Nothing about the produced
+// binaries changes.
+//
+// Passed with -I so the repo is untouched:
+//   ./gradlew assembleRelease -I C:/dev/untracked-cmake.init.gradle
+// Untracking only the CMake tasks is not enough: they PRODUCE the linked .so,
+// but the tasks that later CONSUME it hit the same snapshot failure on their
+// inputs -- observed on :react-native-screens:mergeReleaseNativeLibs once the
+// CMake tasks stopped failing. So this covers every task that reads or writes
+// native libraries, not just the ones that build them.
+def UNTRACKED_PATTERNS = [
+    "CMake",              // configureCMake* / buildCMake*  (produces)
+    "NativeLibs",         // merge*NativeLibs               (consumes)
+    // NOT "JniLibFolders": merge*JniLibFolders is an incremental task and
+    // untracking it makes it fail outright with "Changes are not tracked,
+    // unable determine incremental changes". Untrack only what actually hits
+    // the snapshot error.
+    "StripDebugSymbols",  // strip*DebugSymbols             (consumes)
+    "ExtractNativeDebug", // extract*NativeDebugMetadata    (consumes)
+]
+
+gradle.allprojects { p ->
+    p.tasks.configureEach { t ->
+        if (UNTRACKED_PATTERNS.any { t.name.contains(it) }) {
+            t.doNotTrackState("Gradle 9 cannot snapshot the NDK's hard-linked libc++_shared.so")
+        }
+    }
+}

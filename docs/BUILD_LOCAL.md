@@ -261,6 +261,43 @@ system-wide change — make it deliberately, not to unblock one build.
 > and outside the sync root. If you find yourself working in
 > `C:\Users\MIT\OneDrive\Desktop\cloudlynk`, that is the stale copy; delete it.
 
+### THE WORKING RECIPE (2026-09-10)
+
+After a day of failures, this is the combination that produces a release
+build on this machine. Use it; the reasoning is below if you need it.
+
+```bash
+cd /c/dev/cloudlynk
+
+# 1. Break hard links on every native library in the build tree.
+find node_modules android -name "*.so" -path "*build*" | while read f; do
+  [ "$(stat -c '%h' "$f")" -gt 1 ] && cp "$f" "$f.t" && rm "$f" && mv "$f.t" "$f"
+done
+
+# 2. Build ARM-only, with the CMake tasks untracked.
+cd android && ./gradlew assembleRelease bundleRelease --no-daemon \
+  -I ../scripts/untracked-cmake.init.gradle \
+  -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
+```
+
+Result: APK 82 MB, AAB 61 MB, 12 minutes.
+
+All three parts are load-bearing:
+
+- **Delinking** clears the files that already exist.
+- **`-I untracked-cmake.init.gradle`** stops Gradle fingerprinting CMake task
+  outputs, so newly created links do not fail the build.
+- **ARM-only** removes `obj/x86/...`, which is where the failure kept landing,
+  and is the right production choice anyway — see the ABI note below.
+
+**ABI trade-off.** `arm64-v8a` + `armeabi-v7a` covers every real Android phone
+and takes the APK from 142 MB to 82 MB (x86 and x86_64 were 57.8 MB of native
+libraries between them). The cost is that the APK **will not install on an
+x86_64 emulator**, including this project's `cloudlynk_test` AVD. For an
+emulator-installable artifact, add `,x86,x86_64` to `reactNativeArchitectures`.
+For Play this matters less than it looks: an AAB is split per ABI, so a device
+only ever downloads the slice it needs.
+
 ### The `libc++_shared.so: not a regular file` failure
 
 The most stubborn failure on this machine, and the one that wastes the most
