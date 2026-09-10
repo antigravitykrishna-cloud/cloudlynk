@@ -9,7 +9,10 @@
     "build:android": "eas build --platform android",
     "build:android:preview": "eas build --platform android --profile preview",
     "submit:android": "eas submit --platform android",
-    "lint": "eslint . --ext .ts,.tsx"
+    "lint": "eslint . --ext .ts,.tsx",
+    "typecheck": "tsc --noEmit",
+    "guards": "node scripts/guards.mjs",
+    "check": "npm run typecheck && npm run guards"
   },
   "dependencies": {
     "@expo/metro-runtime": "~56.0.13",

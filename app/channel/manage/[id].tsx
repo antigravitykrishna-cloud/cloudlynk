@@ -9,6 +9,11 @@ import { PostService, ChannelPost } from '../../../lib/posts';
 import { supabase } from '../../../lib/supabase';
 import { Colors } from '../../../constants/theme';
 
+// guards-allow-select-star
+// Channel management is owner-only; anon never reaches this query.
+// See scripts/guards.mjs check 2 for why select('*') is unsafe on a
+// guest-reachable path.
+
 export default function ManageChannelScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();

@@ -17,6 +17,11 @@ import { useEvent } from 'expo';
 import { Colors } from '../../../constants/theme';
 import { Icon, type IconName } from '../../../components/Icon';
 
+// guards-allow-select-star
+// Channel detail is gated behind requireSubscription in the Channels tab, so anon never reaches this query.
+// See scripts/guards.mjs check 2 for why select('*') is unsafe on a
+// guest-reachable path.
+
 const { width: W, height: H } = Dimensions.get('window');
 const CARD_W = 120;
 const CARD_H = 170;

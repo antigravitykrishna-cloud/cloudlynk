@@ -1,0 +1,77 @@
+name: CI
+
+# Every push and PR. This is cheap (a couple of minutes) and it is the only
+# automated check the project has — there is no test suite yet.
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  # A newer push to the same branch makes the older run irrelevant.
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Typecheck and guards
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # `npm ci` rather than `npm install`: the lockfile is the point of a CI
+      # run. install would happily resolve a different tree than a developer
+      # has and validate something nobody is shipping.
+      - name: Install
+        run: npm ci --no-audit --no-fund
+
+      # The single highest-value check in this repo. A structural edit across
+      # 26 files spliced attributes into the middle of an arrow function on
+      # three of them during development; every file still "looked fine" in a
+      # diff and tsc caught all three in seconds.
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      # Bugs tsc cannot see, each one taken from a defect that actually
+      # shipped. See the comments in scripts/guards.mjs.
+      - name: Project guards
+        run: node scripts/guards.mjs
+
+      # Proves the JS bundle builds and the babel pipeline (including the
+      # reanimated plugin) is intact, without needing the Android toolchain,
+      # a keystore, or 30 minutes. A broken worklet transform is silent at
+      # runtime, so a bundle that fails here would otherwise reach a device.
+      - name: Bundle
+        run: npx expo export --platform android --output-dir /tmp/expo-export
+        env:
+          EXPO_NO_TELEMETRY: '1'
+          # Placeholders. The bundler only needs these to be present; the real
+          # values are injected at build time and are not secrets that belong
+          # in CI.
+          EXPO_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-not-a-real-key
+
+# Deliberately NOT here yet, so nobody wonders why:
+#
+#   * eslint — the config in this repo crashes on any file with a bare package
+#     import ("typescript with invalid interface loaded as resolver"). It fails
+#     identically on files nobody has touched, so wiring it up would produce a
+#     permanently red build that teaches people to ignore CI. Fix the resolver
+#     first, then add it.
+#
+#   * A release build — needs the upload keystore. Signing secrets do not go
+#     into a repo, and a 30-minute Gradle job on every push is the wrong trade
+#     when the bundle step above already catches JS and babel breakage.
+#     Release builds stay local (docs/BUILD_LOCAL.md) or move to EAS once the
+#     Expo account question is settled.
+#
+#   * Tests — there are none. That is a real gap, tracked in
+#     docs/OPEN_ITEMS.md, not something to paper over with an empty runner.

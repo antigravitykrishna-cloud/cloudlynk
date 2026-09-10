@@ -2,6 +2,11 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from './supabase';
 
+// guards-allow-select-star
+// getExplorePosts and getChannelPosts take a userId and run authenticated. The guest paths, getGuestExplorePosts and getFreeMedia, name their columns via GUEST_POST_COLUMNS and free_post_media.
+// See scripts/guards.mjs check 2 for why select('*') is unsafe on a
+// guest-reachable path.
+
 export type PostStatus = 'draft' | 'pending' | 'approved' | 'rejected';
 export type ContentType = 'post' | 'movie' | 'series' | 'short';
 

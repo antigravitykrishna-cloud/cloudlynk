@@ -1,5 +1,10 @@
 import { supabase } from './supabase';
 
+// guards-allow-select-star
+// getMyChannels / getMyOwnedChannels are membership and ownership queries keyed to a user id. getDiscoverChannels, the one path guests DO hit, names its columns via CHANNEL_LIST_COLUMNS.
+// See scripts/guards.mjs check 2 for why select('*') is unsafe on a
+// guest-reachable path.
+
 /**
  * The columns the channel LIST screens actually render, and — not by
  * coincidence — a subset of what `anon` is granted on `channels`.
