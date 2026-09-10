@@ -364,6 +364,11 @@ export default function ExploreScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selected, setSelected] = useState<ChannelPost | null>(null);
+  // Distinguishes "the catalogue is empty" from "the request failed". Without
+  // it a dropped connection renders as "No content available", which is a
+  // lie: it tells the user there is nothing to watch when the truth is that
+  // we could not find out.
+  const [loadFailed, setLoadFailed] = useState(false);
 
   const prevUserIdRef = useRef<string | undefined>(undefined);
   useEffect(() => {
@@ -481,8 +486,13 @@ export default function ExploreScreen() {
         ? await PostService.getExplorePosts(user.id, activeFilter as any)
         : await PostService.getGuestExplorePosts(activeFilter as any);
       setPosts(all as ChannelPost[]);
+      setLoadFailed(false);
     } catch (err) {
       if (__DEV__) console.error(err);
+      // Deliberately does NOT clear `posts`. If a refresh fails, keeping what
+      // is already on screen is better than blanking a working catalogue —
+      // the banner says the refresh failed, and the stale list still plays.
+      setLoadFailed(true);
     } finally {
       setLoading(false);
     }
@@ -552,7 +562,24 @@ export default function ExploreScreen() {
       ) : sectionOrder.length === 0 ? (
         <ScrollView contentContainerStyle={{ flexGrow: 1 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.brand} />}>
           <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>No content available</Text>
+            <Icon
+              name={loadFailed ? 'refresh' : 'compass'}
+              size={44}
+              color={Colors.textMuted}
+            />
+            <Text style={styles.emptyText}>
+              {loadFailed ? "Couldn't load content" : 'No content available'}
+            </Text>
+            <Text style={styles.emptyHint}>
+              {loadFailed
+                ? 'Check your connection and try again.'
+                : 'New titles appear here as soon as they are approved.'}
+            </Text>
+            {loadFailed && (
+              <TouchableOpacity style={styles.retryBtn} onPress={onRefresh} activeOpacity={0.85}>
+                <Text style={styles.retryBtnText}>Try again</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </ScrollView>
       ) : (
@@ -672,7 +699,10 @@ const styles = StyleSheet.create({
   emptyIconText: { fontSize: 56 },
   emptyIconUpload: { position: 'absolute', bottom: 20, width: 40, height: 40, borderRadius: 20, backgroundColor: '#ffffff', alignItems: 'center', justifyContent: 'center' },
   emptyIconUploadText: { fontSize: 22, fontWeight: '900', color: Colors.brand },
-  emptyText: { fontSize: 16, color: Colors.text, fontWeight: '600' },
+  emptyText: { fontSize: 16, color: Colors.text, fontWeight: '600', marginTop: 14 },
+  emptyHint: { fontSize: 14, color: Colors.textSecondary, marginTop: 6, textAlign: 'center', paddingHorizontal: 40, lineHeight: 20 },
+  retryBtn: { marginTop: 18, paddingHorizontal: 24, paddingVertical: 11, borderRadius: Radius.md, backgroundColor: Colors.accent },
+  retryBtnText: { fontSize: 14, fontWeight: FontWeight.bold, color: Colors.textInverse },
   detailModal: { flex: 1, backgroundColor: Colors.bg },
   detailHero: { height: H * 0.4, position: 'relative', backgroundColor: Colors.brand },
   detailHeroImg: { width: '100%', height: '100%' },

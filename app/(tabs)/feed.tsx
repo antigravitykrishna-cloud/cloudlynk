@@ -56,6 +56,9 @@ export default function FeedScreen() {
   const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  // "Nothing here yet" and "we could not reach the server" are different
+  // things to tell someone, and only one of them is worth retrying.
+  const [loadFailed, setLoadFailed] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -63,9 +66,12 @@ export default function FeedScreen() {
         ? ((await PostService.getExplorePosts(user.id, 'latest')) as unknown as FeedItem[])
         : await PostService.getGuestExplorePosts('latest');
       setItems(data.slice(0, 60));
+      setLoadFailed(false);
     } catch (err) {
       if (__DEV__) console.error('Feed load error:', err);
-      setItems([]);
+      // Keep whatever is already listed. Blanking a working feed because a
+      // background refresh failed loses the user their place for no gain.
+      setLoadFailed(true);
     } finally {
       setLoading(false);
     }
@@ -126,10 +132,19 @@ export default function FeedScreen() {
         >
           <View style={styles.emptyState}>
             <CloudlynkLogo size={48} />
-            <Text style={styles.emptyText}>Nothing here yet</Text>
-            <Text style={styles.emptyHint}>
-              New content from public channels shows up here as soon as it is approved.
+            <Text style={styles.emptyText}>
+              {loadFailed ? "Couldn't load the feed" : 'Nothing here yet'}
             </Text>
+            <Text style={styles.emptyHint}>
+              {loadFailed
+                ? 'Check your connection and try again.'
+                : 'New content from public channels shows up here as soon as it is approved.'}
+            </Text>
+            {loadFailed && (
+              <TouchableOpacity style={styles.retryBtn} onPress={onRefresh} activeOpacity={0.85}>
+                <Text style={styles.retryBtnText}>Try again</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </ScrollView>
       ) : (
@@ -215,4 +230,6 @@ const styles = StyleSheet.create({
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80, paddingHorizontal: 20 },
   emptyText: { fontSize: 16, color: Colors.text, fontWeight: '600', marginTop: 16 },
   emptyHint: { fontSize: 14, color: Colors.textSecondary, marginTop: 8, textAlign: 'center', paddingHorizontal: 40, lineHeight: 20 },
+  retryBtn: { marginTop: 18, paddingHorizontal: 24, paddingVertical: 11, borderRadius: 8, backgroundColor: Colors.accent },
+  retryBtnText: { fontSize: 14, fontWeight: '700', color: Colors.textInverse },
 });
