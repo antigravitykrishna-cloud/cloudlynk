@@ -187,36 +187,44 @@ export default function PremiumScreen() {
         {plansLoading ? (
           <ActivityIndicator size="large" color={Colors.brand} style={{ marginVertical: 40 }} />
         ) : (
-          <View style={styles.plansContainer}>
+          // All four plans side by side rather than stacked.
+          //
+          // Stacked rows made the reader scroll to see the range, and price
+          // comparison is the whole decision on this screen — you cannot judge
+          // whether a year is worth it without the week next to it. Four
+          // columns fit a phone at this density, so the entire ladder is
+          // visible in one glance and the popular one can be marked in place.
+          <View style={styles.planRow}>
             {(plans ?? []).map((plan, i) => {
               const isSelected = selectedPlanIndex === i;
               return (
-                <TouchableOpacity
+                <PressScale
                   key={plan.code}
-                  style={[styles.planCard, isSelected && styles.planCardSelected]}
+                  style={[styles.planTile, isSelected && styles.planTileSelected]}
                   onPress={() => { fireHaptic('selection'); setSelectedPlanIndex(i); }}
-                  activeOpacity={0.8}
+                  scaleTo={0.94}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: isSelected }}
+                  accessibilityLabel={`${plan.name}, ${plan.description}, ${plan.price_inr} rupees`}
                 >
-                  <View style={[styles.radio, isSelected && styles.radioSelected]}>
-                    {isSelected && <View style={styles.radioInner} />}
-                  </View>
-                  <View style={styles.planInfo}>
-                    {plan.is_popular && (
-                      <View style={styles.popularBadge}>
-                        <Text style={styles.popularBadgeText}>POPULAR</Text>
-                      </View>
-                    )}
-                    <Text style={styles.planName}>{plan.name}</Text>
-                    <Text style={styles.planDuration}>{plan.duration_days} days</Text>
-                    <Text style={styles.planDescription}>{plan.description}</Text>
-                  </View>
-                  <View style={styles.planPriceWrap}>
-                    <Text style={styles.planPrice}>
-                      <Text style={styles.planPriceCurrency}>{'₹'}</Text>
-                      {plan.price_inr}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
+                  {plan.is_popular && (
+                    <View style={styles.popularTag}>
+                      <Text style={styles.popularTagText}>POPULAR</Text>
+                    </View>
+                  )}
+                  <Text style={[styles.tileTerm, isSelected && styles.tileTextSelected]} numberOfLines={1}>
+                    {plan.name}
+                  </Text>
+                  <Text style={[styles.tilePrice, isSelected && styles.tileTextSelected]} numberOfLines={1}>
+                    <Text style={styles.tileCurrency}>{'₹'}</Text>{plan.price_inr}
+                  </Text>
+                  <Text style={styles.tileDuration} numberOfLines={1}>
+                    {plan.duration_days >= 365 ? '1 year'
+                      : plan.duration_days >= 180 ? '6 months'
+                      : plan.duration_days >= 30 ? '1 month'
+                      : `${plan.duration_days} days`}
+                  </Text>
+                </PressScale>
               );
             })}
           </View>
@@ -327,6 +335,37 @@ const styles = StyleSheet.create({
   benefitText: { fontSize: 14, color: '#9FB0C9', fontWeight: '500', flex: 1 },
   planSectionTitle: { fontSize: 15, fontWeight: '800', color: Colors.text, marginLeft: 18, marginTop: 24, marginBottom: 12 },
   plansContainer: { paddingHorizontal: 16, gap: 10 },
+  // Four-up plan ladder. Equal flex so no plan looks favoured by width —
+  // emphasis is carried by the POPULAR tag and the selected border, both of
+  // which are deliberate, where a wider column would be accidental.
+  planRow: { flexDirection: 'row', paddingHorizontal: 16, gap: 8 },
+  planTile: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 4,
+    borderRadius: Radius.md,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    backgroundColor: Colors.bg,
+    minHeight: 104,
+    justifyContent: 'center',
+  },
+  planTileSelected: { borderColor: Colors.brand, backgroundColor: Colors.accentOrangeDim, borderWidth: 2 },
+  // Sits on the border rather than inside the tile, so it does not steal
+  // vertical space from the price it is advertising.
+  popularTag: {
+    position: 'absolute', top: -9, alignSelf: 'center',
+    backgroundColor: Colors.brand, paddingHorizontal: 7, paddingVertical: 2,
+    borderRadius: Radius.xs,
+  },
+  popularTagText: { fontSize: 9, fontWeight: '800', color: '#ffffff', letterSpacing: 0.4 },
+  tileTerm: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: Colors.textSecondary },
+  tilePrice: { fontSize: FontSize.title, fontWeight: FontWeight.extrabold, color: Colors.text, marginTop: 4 },
+  tileCurrency: { fontSize: FontSize.md, fontWeight: FontWeight.bold },
+  tileDuration: { fontSize: FontSize.xs, color: Colors.textMuted, marginTop: 3 },
+  tileTextSelected: { color: Colors.text },
+
   planCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.bg, borderWidth: 1.5, borderColor: Colors.border, borderRadius: 12, padding: 14, gap: 12 },
   planCardSelected: { borderColor: Colors.brand, backgroundColor: Colors.accentOrangeDim },
   radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: '#9FB0C9', alignItems: 'center', justifyContent: 'center' },

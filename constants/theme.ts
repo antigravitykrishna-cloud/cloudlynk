@@ -113,6 +113,10 @@ export const Spacing = {
 };
 
 export const Radius = {
+  // Small chips and badges need a tighter corner than sm. It was already in
+  // use in 18 places as a bare 4 — naming it makes it part of the system
+  // rather than a value people re-guess.
+  xs: 4,
   sm: 8,
   md: 12,
   lg: 16,
