@@ -147,3 +147,67 @@ It is kept because accounts created before the change still have passwords and
 `signInWithPassword` still works. But it is now unreachable UI carrying its own
 validation logic. Either surface it deliberately ("sign in with a password
 instead") or delete it once no one relies on it.
+
+---
+
+## Push notifications are not delivered — only half of requirement 4 works
+
+**Audited 2026-09-10. Both halves of the pipeline are missing, and the second
+depends on a decision that has not been made.**
+
+The brief says "after subscription expiry, the user should receive a specified
+notification". What exists today:
+
+- ✅ `expire_lapsed_plans()` inserts a `notifications` row (v75, verified live)
+- ✅ The bell shows it, with an icon and colour, and tapping it opens `/premium`
+- ❌ **Nothing is pushed to the device**
+
+So a lapsed subscriber only learns their access ended if they open the app and
+check the bell — and someone whose subscription just lapsed is precisely the
+person least likely to open the app. The notification is doing none of the work
+it exists to do.
+
+### Both halves are missing
+
+**1. No tokens are being collected.**
+
+```sql
+select count(*) from profiles where fcm_token is not null and fcm_token <> '';
+-- 0
+```
+
+`NotificationService.registerForPushNotificationsAsync` needs a physical device
+(`Device.isDevice`) and a `projectId` from `Constants.expoConfig.extra.eas`. It
+swallows every failure into a `__DEV__`-only warning and returns null, so a
+production failure here is completely silent.
+
+**2. Nothing sends.** `lib/services/push.ts` is `NoOpPushService` — `getToken`
+returns null, `requestPermission` returns false. There is no call to Expo's
+push API anywhere in the repo, no sending edge function, and no cron for one.
+
+### Why this is not built yet
+
+Token collection is keyed to the EAS `projectId`, and that project
+(`4224a968-e720-43b6-92a8-c26458f2a7a0`) belongs to a **different Expo account**
+than the one now in use. Whether it stays or is replaced changes what tokens
+are minted. Writing a sender before that is settled means building against an
+identifier that may change, to deliver to zero recipients.
+
+### What it takes, once the EAS account is settled
+
+1. **Verify tokens actually arrive.** Install on a real device, sign in, then
+   check `fcm_token` is populated. Until this returns rows, nothing else
+   matters. Consider surfacing the failure rather than a `__DEV__` warning.
+2. **Add `notifications.pushed_at timestamptz`** so a sender is idempotent and
+   a retry cannot double-send.
+3. **Edge function** — select rows where `pushed_at is null` joined to a
+   non-null `fcm_token`, POST to `https://exp.host/--/api/v2/push/send` in
+   batches of 100, stamp `pushed_at`. service_role only.
+4. **Schedule it** every few minutes. `pg_cron` is installed; `pg_net` is
+   **not**, so either enable `pg_net` to call the function from SQL, or drive
+   it from an external scheduler.
+5. **Handle `DeviceNotRegistered`** in Expo's response by clearing the stored
+   token, or the same dead token is retried forever.
+
+Until then, treat requirement 4 as **in-app only** and say so to the client
+rather than letting them believe lapsed subscribers are being told.
