@@ -126,7 +126,14 @@ const HeroCard = memo(({ item, onPress }: { item: ChannelPost; onPress: () => vo
       {thumb ? (
         <Image source={thumb} style={styles.heroImg} contentFit="cover" transition={220} />
       ) : (
-        <View style={[styles.heroImg, styles.shortPlaceholder]} />
+        // A thumbnail-less hero is 460px tall, so an empty placeholder reads
+        // as a rendering failure rather than as missing artwork — the app
+        // opens on a wall of flat colour with a title floating at the bottom.
+        // The detail screen already draws an icon in the same situation
+        // (detailHeroPlaceholder); this just brings the hero into line.
+        <View style={[styles.heroImg, styles.heroPlaceholder]}>
+          <Icon name={item.content_type === 'series' ? 'tv' : 'film'} size={56} color={Colors.textMuted} />
+        </View>
       )}
       <LinearGradient
         colors={['transparent', 'rgba(11,18,32,0.55)', 'rgba(11,18,32,0.97)']}
@@ -628,6 +635,7 @@ const styles = StyleSheet.create({
   shortCard: { width: 120, borderRadius: 8, overflow: 'hidden' },
   shortImg: { width: 120, height: 205, borderRadius: 8 },
   shortPlaceholder: { backgroundColor: '#182437', alignItems: 'center', justifyContent: 'center' },
+  heroPlaceholder: { backgroundColor: '#182437', alignItems: 'center', justifyContent: 'center' },
   shortTitle: { fontSize: 11, fontWeight: '600', color: '#FFFFFF', marginTop: 4 },
   shortsEmpty: { paddingHorizontal: 12, paddingVertical: 20, alignItems: 'center' },
   shortsEmptyText: { fontSize: 13, color: '#6B7C97', fontWeight: '500' },
