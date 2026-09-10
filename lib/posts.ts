@@ -244,6 +244,39 @@ export const PostService = {
       results.push(...(data ?? []));
     }
 
+    // 3. v79: the locked premium catalogue.
+    //
+    //    Steps 1 and 2 return only what this viewer is ENTITLED to, because
+    //    channel_posts_select_v57 filters premium rows out for anyone without
+    //    an active plan. That is correct for playback and wrong for browsing:
+    //    it meant a signed-in free user saw no premium content at all, while a
+    //    guest -- who reaches those rows through channel_posts_select_anon --
+    //    saw the whole locked catalogue. Signing up made the catalogue
+    //    disappear.
+    //
+    //    premium_preview (v79) is the browse-only counterpart. It has no
+    //    video_url or media_url column at all, so it cannot hand back a
+    //    playable identifier regardless of who queries it -- the same
+    //    construction free_post_media uses for guests, with the opposite
+    //    selection.
+    //
+    //    Pushed LAST on purpose: the dedup below keeps the first occurrence of
+    //    each id, so a post the viewer is genuinely entitled to (with its real
+    //    video_url, from steps 1-2) always wins over its own preview row.
+    //
+    //    Failure here is non-fatal. A viewer who cannot load previews should
+    //    still get their entitled content rather than an empty screen.
+    try {
+      const { data: previews } = await supabase
+        .from('premium_preview')
+        .select('*')
+        .order(orderCol, { ascending: false })
+        .limit(100);
+      results.push(...(previews ?? []));
+    } catch (err) {
+      if (__DEV__) console.warn('premium_preview unavailable:', err);
+    }
+
     // Deduplicate by id (a joined channel might also be public)
     const seen = new Set<string>();
     const unique = results.filter(p => {
