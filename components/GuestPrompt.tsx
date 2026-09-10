@@ -41,20 +41,25 @@ export function GuestPrompt({
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.message}>{message}</Text>
 
+      {/* Both routes go to /(auth)/login, and there is only one button.
+          This used to send "Create free account" to /(auth)/signup -- the old
+          email + password + full name form -- so the primary call to action of
+          a passwordless app dropped a new user onto the exact form the
+          passwordless rebuild existed to remove, while the secondary link
+          quietly went to the good screen. Backwards, on the busiest signup
+          path in the app.
+          /(auth)/login is now a chooser (guest / Google / emailed code) that
+          signs in and creates the account in the same step, so "sign in" and
+          "sign up" are not different destinations any more and offering them
+          as two choices only invites the wrong one. */}
       <TouchableOpacity
         style={styles.primaryBtn}
-        onPress={() => router.push('/(auth)/signup')}
-        activeOpacity={0.85}
-      >
-        <Text style={styles.primaryTxt}>Create free account</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.ghostBtn}
         onPress={() => router.push('/(auth)/login')}
-        activeOpacity={0.8}
+        activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel="Continue — sign in or create an account"
       >
-        <Text style={styles.ghostTxt}>I already have an account</Text>
+        <Text style={styles.primaryTxt}>Continue</Text>
       </TouchableOpacity>
 
       {linkLabel && linkHref ? (
