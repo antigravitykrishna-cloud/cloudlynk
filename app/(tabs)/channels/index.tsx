@@ -11,6 +11,8 @@ import { Colors } from '../../../constants/theme';
 import { Database } from '../../../lib/supabase';
 import { ListSkeleton } from '../../../components/Skeleton';
 import { Icon } from '../../../components/Icon';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { fireHaptic } from '../../../components/Press';
 
 type Channel = Database['public']['Tables']['channels']['Row'];
 type TabKey = 'discover' | 'feed' | 'joined';
@@ -161,11 +163,13 @@ export default function ChannelsScreen() {
     if (!user?.id) return;
     try {
       await ChannelService.joinChannel(channel.id, user.id);
+      fireHaptic('success');
       await loadChannels();
       await loadMemberships();
       router.push({ pathname: '/(tabs)/channels/[id]', params: { id: channel.id } });
     } catch (err: unknown) {
       const msg = err instanceof Error && err.message ? err.message : 'Could not join channel.';
+      fireHaptic('error');
       showAlert('Cannot join channel', msg);
     }
   };
@@ -334,13 +338,22 @@ export default function ChannelsScreen() {
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.brand} />}
         >
-          {sortedChannels.map(channel => {
+          {sortedChannels.map((channel, idx) => {
             const memberCount = (channel.member_count ?? 0).toLocaleString();
             const contentCount = (channel.post_count ?? 0).toLocaleString();
             const isMember = joinedChannelIds.has(channel.id);
             const isPending = channel.status === 'pending';
             return (
-              <View key={channel.id} style={styles.channelRow}>
+              // Same staggered entrance as Feed, same 8-row cap, so the two
+              // list screens feel like one app rather than two.
+              // The row stays a plain View: its avatar, body and Join button
+              // are deliberately SIBLING touchables, not nested, and wrapping
+              // the row in a pressable would swallow the Join tap.
+              <Animated.View
+                key={channel.id}
+                entering={FadeInDown.delay(Math.min(idx, 8) * 45).duration(260)}
+                style={styles.channelRow}
+              >
                 {isPending && (
                   <View style={styles.pendingBadge}>
                     <Text style={styles.pendingBadgeText}>PENDING</Text>
@@ -408,7 +421,7 @@ export default function ChannelsScreen() {
                     <Icon name="lock" size={14} color={Colors.textMuted} />
                   </TouchableOpacity>
                 )}
-              </View>
+              </Animated.View>
             );
           })}
           <View style={{ height: 24 }} />
