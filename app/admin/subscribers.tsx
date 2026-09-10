@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { showAlert } from '../../components/Feedback';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -97,6 +98,7 @@ export default function AdminSubscribersScreen() {
       if (!countRes.error) setCounts(((countRes.data ?? [])[0] ?? null) as Counts | null);
     } catch (err) {
       if (__DEV__) console.error('AdminSubscribers load error:', err);
+      showAlert('Could not load subscribers', err instanceof Error ? err.message : 'Check your connection and try again.');
       setRows([]);
     } finally {
       setLoading(false);

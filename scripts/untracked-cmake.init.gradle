@@ -27,7 +27,8 @@
 // CMake tasks stopped failing. So this covers every task that reads or writes
 // native libraries, not just the ones that build them.
 def UNTRACKED_PATTERNS = [
-    "CMake",              // configureCMake* / buildCMake*  (produces)
+    "CMake",
+    "externalNativeBuild", // externalNativeBuild<Variant> -- same snapshot failure, different task name              // configureCMake* / buildCMake*  (produces)
     "NativeLibs",         // merge*NativeLibs               (consumes)
     // NOT "JniLibFolders": merge*JniLibFolders is an incremental task and
     // untracking it makes it fail outright with "Changes are not tracked,

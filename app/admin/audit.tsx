@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { showAlert } from '../../components/Feedback';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator,
 } from 'react-native';
@@ -50,6 +51,7 @@ export default function AdminAuditScreen() {
       setEntries(await AdminContentService.listAuditLog(100, targetType));
     } catch (err) {
       if (__DEV__) console.error('AdminAudit load error:', err);
+      showAlert('Could not load the audit log', err instanceof Error ? err.message : 'Check your connection and try again.');
       setEntries([]);
     } finally {
       setLoading(false);
