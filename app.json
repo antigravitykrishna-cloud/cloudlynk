@@ -38,6 +38,28 @@
         "android.permission.ACCESS_NETWORK_STATE",
         "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
         "com.android.vending.BILLING"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "thecloudlynk.com",
+              "pathPrefix": "/c"
+            },
+            {
+              "scheme": "https",
+              "host": "www.thecloudlynk.com",
+              "pathPrefix": "/c"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
       ]
     },
     "web": {
