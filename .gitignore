@@ -84,3 +84,4 @@ apk/
 
 # Kotlin incremental build state (Gradle 9 / AGP 8.12)
 android/.kotlin/
+deno.lock
