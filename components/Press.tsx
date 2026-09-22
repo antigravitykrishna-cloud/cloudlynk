@@ -53,13 +53,15 @@ type Props = Omit<PressableProps, 'style'> & {
   children?: React.ReactNode;
 };
 
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
 export const PressScale = forwardRef<React.ComponentRef<typeof Pressable>, Props>(
   function PressScale({ style, scaleTo = 0.97, haptic, onPress, disabled, children, ...rest }, ref) {
     const scale = useSharedValue(1);
     const animated = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
     return (
-      <Pressable
+      <AnimatedPressable
         ref={ref}
         disabled={disabled}
         onPressIn={() => {
@@ -77,9 +79,15 @@ export const PressScale = forwardRef<React.ComponentRef<typeof Pressable>, Props
         // competing responses to one tap. The scale is the response.
         android_ripple={Platform.OS === 'android' ? null : undefined}
         {...rest}
+        // The style goes on the Pressable itself, not on a child view. With it
+        // on a child, the Pressable was an unstyled wrapper sized to its
+        // content, so `flex: 1` in a caller's style did nothing -- which is
+        // why the four Premium plan tiles bunched up on the left instead of
+        // sharing the row.
+        style={[style, animated]}
       >
-        <Animated.View style={[style, animated]}>{children}</Animated.View>
-      </Pressable>
+        {children}
+      </AnimatedPressable>
     );
   },
 );

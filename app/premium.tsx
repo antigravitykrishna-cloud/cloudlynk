@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { showAlert } from '../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { setPostLoginRoute } from '../lib/postLogin';
 import { Colors, Radius, FontSize, FontWeight } from '../constants/theme';
 import { useAuth } from '../hooks/useAuth';
 import { useSubscriptionPlans } from '../lib/subscriptionService';
@@ -38,6 +39,31 @@ export default function PremiumScreen() {
 
   const selectedPlan = plans?.[selectedPlanIndex];
 
+  // ?plan=<code> preselects a plan. The signed-out Profile tab links here
+  // with the plan the person tapped, so after signing in they land on the
+  // plan they chose instead of whichever one this screen defaults to.
+  const { plan: planParam } = useLocalSearchParams<{ plan?: string }>();
+  useEffect(() => {
+    if (!planParam || !plans) return;
+    const i = plans.findIndex(p => p.code === planParam);
+    if (i >= 0) setSelectedPlanIndex(i);
+  }, [planParam, plans]);
+
+  // Arriving from sign-in replaces the login screen, so there may be nothing
+  // underneath to go back to.
+  const goBack = () => (router.canGoBack() ? router.back() : router.replace('/(tabs)/profile'));
+
+  // A guest is sent to sign in first; remember the plan so they come back
+  // to it rather than to Explore.
+  const signInForPlan = () => {
+    setPostLoginRoute(
+      selectedPlan
+        ? { pathname: '/premium', params: { plan: selectedPlan.code } }
+        : '/premium',
+    );
+    router.push('/(auth)/login');
+  };
+
   // Google Play policy requires digital content to be sold exclusively
   // through Play Billing — the app never offers an alternate payment method
   // to unlock in-app content.
@@ -51,7 +77,7 @@ export default function PremiumScreen() {
         // the app; it should be felt as well as read.
         fireHaptic('success');
         await refreshProfile();
-        showAlert('Success', "You're now on Premium!", [{ text: 'OK', onPress: () => router.back() }]);
+        showAlert('Success', "You're now on Premium!", [{ text: 'OK', onPress: goBack }]);
       } else {
         fireHaptic('error');
         showAlert('Purchase failed', result.errorMessage ?? 'Please try again.');
@@ -76,7 +102,7 @@ export default function PremiumScreen() {
       await refreshProfile();
       if (restored) {
         showAlert('Subscription restored', 'Your Premium access is active again.', [
-          { text: 'OK', onPress: () => router.back() },
+          { text: 'OK', onPress: goBack },
         ]);
       } else {
         // Deliberately not phrased as a failure. The common case is someone
@@ -98,7 +124,7 @@ export default function PremiumScreen() {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}
+          <TouchableOpacity onPress={goBack} style={styles.backBtn} activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
@@ -137,7 +163,7 @@ export default function PremiumScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}
+          <TouchableOpacity onPress={goBack} style={styles.backBtn} activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
@@ -209,7 +235,7 @@ export default function PremiumScreen() {
                 >
                   {plan.is_popular && (
                     <View style={styles.popularTag}>
-                      <Text style={styles.popularTagText}>POPULAR</Text>
+                      <Text style={styles.popularTagText} numberOfLines={1}>POPULAR</Text>
                     </View>
                   )}
                   <Text style={[styles.tileTerm, isSelected && styles.tileTextSelected]} numberOfLines={1}>
@@ -242,7 +268,7 @@ export default function PremiumScreen() {
           // The one-tap chooser, not the old password form — see the note in
           // app/(tabs)/explore.tsx. A guest here is mid-purchase, which is the
           // worst possible moment to ask for a password they have to invent.
-          onPress={gate === 'guest' ? () => router.push('/(auth)/login') : handleProceed}
+          onPress={gate === 'guest' ? signInForPlan : handleProceed}
           disabled={gate === 'pending' || gate === 'rejected' || plansLoading || (!gate && !selectedPlan) || purchasing}
           activeOpacity={0.8}
         >
@@ -263,7 +289,7 @@ export default function PremiumScreen() {
         </TouchableOpacity>
 
         {gate === 'guest' && (
-          <TouchableOpacity onPress={() => router.push('/(auth)/login')} activeOpacity={0.7}>
+          <TouchableOpacity onPress={signInForPlan} activeOpacity={0.7}>
             <Text style={styles.gateSignIn}>I already have an account</Text>
           </TouchableOpacity>
         )}

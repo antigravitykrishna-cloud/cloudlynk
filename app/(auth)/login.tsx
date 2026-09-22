@@ -10,6 +10,7 @@ import { isGoogleAuthLive } from '../../lib/config';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '../../constants/theme';
 import Constants from 'expo-constants';
 import { Icon } from '../../components/Icon';
+import { setPostLoginRoute } from '../../lib/postLogin';
 
 // One-tap entry: guest, Google, or an emailed code. No password field, no
 // name field.
@@ -52,6 +53,9 @@ export default function LoginScreen() {
 
   function continueAsGuest() {
     setBusy('guest');
+    // Choosing guest abandons whatever sign-in was for, e.g. a plan a guest
+    // tapped on Profile. Drop it so a later sign-in does not replay it.
+    setPostLoginRoute(null);
     // No await and no network call — there is nothing to sign in to. Straight
     // to the content surface, same destination app/_layout.tsx sends a
     // session-less launch to.

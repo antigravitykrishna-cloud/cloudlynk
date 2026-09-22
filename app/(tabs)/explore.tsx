@@ -461,15 +461,13 @@ export default function ExploreScreen() {
     //
     // Admins are exempt: they hold access without a plan, and the row they
     // received came from channel_posts with a real video_url.
+    //
+    // Straight to the plans, no "Premium title / See plans" dialog first: the
+    // client asked for it, and a signed-in person who taps a locked title has
+    // already said what they want. The dialog was one extra tap that could
+    // only lose them.
     if (item.access_level === 'premium' && !isPaidUser && !isAdmin) {
-      showAlert(
-        'Premium title',
-        'Subscribe to watch this in full. One subscription unlocks every premium title while it is active.',
-        [
-          { text: 'Not now', style: 'cancel' },
-          { text: 'See Premium plans', onPress: () => router.push('/premium') },
-        ],
-      );
+      router.push('/premium');
       return;
     }
 

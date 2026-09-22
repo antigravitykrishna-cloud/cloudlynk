@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { ChannelService } from '../../lib/channels';
-import { GuestPrompt } from '../../components/GuestPrompt';
+import { GuestPlans } from '../../components/GuestPlans';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotifications } from '../../hooks/useNotifications';
 import { supabase } from '../../lib/supabase';
@@ -111,19 +111,14 @@ export default function ProfileScreen() {
     router.push('/premium');
   };
 
+  // Signed out: the plans, not a sign-in wall -- see components/GuestPlans.tsx.
   // v61: guests reach this tab but every query here early-returns on
   // !user?.id, so without this they get a blank screen and assume the app
   // is broken rather than that the feature needs an account.
   if (!user?.id) {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
-        <GuestPrompt
-          icon="user"
-          title="Your profile lives here"
-          message="Sign in to manage your storage, subscription, uploads and privacy settings."
-          linkLabel="See Premium plans"
-          linkHref="/premium"
-        />
+        <GuestPlans />
       </SafeAreaView>
     );
   }

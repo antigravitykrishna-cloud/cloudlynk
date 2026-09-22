@@ -15,6 +15,7 @@ import { useGeoCheck } from '../hooks/useGeoCheck';
 import { ComplianceService } from '../lib/compliance';
 import { Colors } from '../constants/theme';
 import { Icon } from '../components/Icon';
+import { peekPostLoginRoute, setPostLoginRoute } from '../lib/postLogin';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -98,7 +99,16 @@ export default function RootLayout() {
     // find later. Routing to '/(tabs)' would resolve to the first declared
     // screen, which is index (Cloud) — so name the route explicitly rather
     // than relying on tab order, which a later reorder would silently change.
-    if (inAuthGroup) router.replace('/(tabs)/explore');
+    //
+    // Unless the person was part-way through something when they were asked
+    // to sign in -- a guest who tapped a plan goes back to that plan.
+    if (inAuthGroup) {
+      router.replace(peekPostLoginRoute() ?? '/(tabs)/explore');
+    } else {
+      // Signed in, profile complete, and out of the auth screens: the
+      // destination has been reached, so it must not fire again.
+      setPostLoginRoute(null);
+    }
   }, [session, profile, profileChecked, loading, geoLoading, isBlocked, segments, router]);
 
   if (isBlocked && !geoLoading) {

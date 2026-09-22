@@ -4,7 +4,6 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { PressScale } from '../../components/Press';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { showAlert } from '../../components/Feedback';
 import { CloudlynkLogo } from '../../components/CloudlynkLogo';
 import { useAuth } from '../../hooks/useAuth';
 import { PostService, GuestChannelPost } from '../../lib/posts';
@@ -23,10 +22,14 @@ import { Icon } from '../../components/Icon';
 //
 // Guests reach the same rows through channel_posts_select_anon (v61/v66),
 // which already restricts to approved posts in public active channels and
-// withholds video_url at the column grant. Premium rows are visible here on
-// purpose: the locked catalogue is the reason to subscribe. Nothing on this
-// screen plays anything — tapping routes to the channel, where the existing
-// gates decide what happens next.
+// withholds video_url at the column grant. Nothing on this screen plays
+// anything — tapping routes to the channel, where the existing gates decide
+// what happens next.
+//
+// Premium rows are NOT listed for anyone without an active plan. The client
+// did not want a wall of padlocked titles; until someone subscribes, the
+// premium part of the feed is replaced by a single card asking them to pick a
+// plan. Free rows (if any) still show underneath it.
 
 type FeedItem = GuestChannelPost;
 
@@ -92,31 +95,29 @@ export default function FeedScreen() {
   };
 
   const openItem = (item: FeedItem) => {
-    const locked = item.access_level === 'premium' && !isPaidUser;
-    if (locked) {
-      if (!user?.id) {
-        showAlert(
-          'Create an account first',
-          'This one is premium. Sign in — guest, Google or email — then subscribe to watch it in full.',
-          [
-            { text: 'Not now', style: 'cancel' },
-            { text: 'Continue', onPress: () => router.push('/(auth)/login') },
-          ],
-        );
-      } else {
-        showAlert(
-          'Premium content',
-          'Subscribe to watch this in full. Your subscription unlocks every premium post while it is active.',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Upgrade', onPress: () => router.push('/premium') },
-          ],
-        );
-      }
-      return;
-    }
     router.push({ pathname: '/(tabs)/channels/[id]', params: { id: item.channel_id } });
   };
+
+  // What is listed. Premium rows are withheld until there is an active plan
+  // -- see the note at the top of this file.
+  const visible = isPaidUser ? items : items.filter(i => i.access_level !== 'premium');
+  const showSubscribe = !isPaidUser && !loading;
+
+  const subscribeCard = (
+    <Animated.View entering={FadeInDown.duration(280)} style={styles.subCard}>
+      <View style={styles.subIcon}>
+        <Icon name="lock" size={22} color={Colors.brandCyan} />
+      </View>
+      <Text style={styles.subTitle}>Subscribe to unlock the feed</Text>
+      <Text style={styles.subText}>
+        Premium channels, movies and web series show up here as soon as you subscribe to a plan.
+      </Text>
+      <PressScale style={styles.subBtn} onPress={() => router.push('/premium')} haptic="light"
+        accessibilityRole="button" accessibilityLabel="See plans">
+        <Text style={styles.subBtnText}>See plans</Text>
+      </PressScale>
+    </Animated.View>
+  );
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -127,7 +128,14 @@ export default function FeedScreen() {
 
       {loading ? (
         <ListSkeleton rows={6} />
-      ) : items.length === 0 ? (
+      ) : visible.length === 0 && showSubscribe && !loadFailed ? (
+        <ScrollView
+          contentContainerStyle={styles.subOnly}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.brandBlue} />}
+        >
+          {subscribeCard}
+        </ScrollView>
+      ) : visible.length === 0 ? (
         <ScrollView
           contentContainerStyle={{ flexGrow: 1 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.brandBlue} />}
@@ -156,9 +164,9 @@ export default function FeedScreen() {
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.brandBlue} />}
         >
-          {items.map((item, idx) => {
+          {showSubscribe && subscribeCard}
+          {visible.map((item, idx) => {
             const thumb = item.thumbnail_url ? PostService.getMediaPublicUrl(item.thumbnail_url) : null;
-            const locked = item.access_level === 'premium' && !isPaidUser;
 
             return (
               // Rows arrive with a short stagger instead of the whole list
@@ -178,11 +186,6 @@ export default function FeedScreen() {
                       <Icon name="film" size={22} color={Colors.textMuted} />
                     </View>
                   )}
-                  {locked && (
-                    <View style={styles.lockBadge}>
-                      <Icon name="lock" size={12} color="#FFFFFF" />
-                    </View>
-                  )}
                 </View>
 
                 <View style={styles.cardBody}>
@@ -192,7 +195,6 @@ export default function FeedScreen() {
                   <Text style={styles.cardMeta} numberOfLines={1}>
                     {subtitleFor(item)}
                   </Text>
-                  {locked && <Text style={styles.lockedNote}>Premium · subscribe to watch</Text>}
                 </View>
 
                 <Icon name="chevron-right" size={16} color={Colors.textMuted} />
@@ -224,15 +226,26 @@ const styles = StyleSheet.create({
   thumbWrap: { width: 96, height: 64, borderRadius: 8, overflow: 'hidden' },
   thumb: { width: '100%', height: '100%', borderRadius: 8 },
   thumbFallback: { backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
-  lockBadge: {
-    position: 'absolute', top: 6, right: 6,
-    width: 22, height: 22, borderRadius: 11,
-    backgroundColor: 'rgba(0,0,0,0.72)', alignItems: 'center', justifyContent: 'center',
-  },
   cardBody: { flex: 1 },
   cardTitle: { color: Colors.text, fontSize: 15, fontWeight: '700', lineHeight: 20 },
   cardMeta: { color: Colors.textSecondary, fontSize: 12, fontWeight: '500', marginTop: 4 },
-  lockedNote: { color: '#e3b341', fontSize: 12, fontWeight: '700', marginTop: 4 },
+  subOnly: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 16, paddingVertical: 24 },
+  subCard: {
+    backgroundColor: Colors.surface, borderRadius: 20,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border,
+    padding: 22, marginBottom: 14, alignItems: 'center',
+  },
+  subIcon: {
+    width: 52, height: 52, borderRadius: 26, backgroundColor: Colors.accentGreenDim,
+    alignItems: 'center', justifyContent: 'center', marginBottom: 14,
+  },
+  subTitle: { color: Colors.text, fontSize: 20, fontWeight: '700', letterSpacing: -0.3, textAlign: 'center' },
+  subText: { color: Colors.textSecondary, fontSize: 15, lineHeight: 21, textAlign: 'center', marginTop: 6, maxWidth: 320 },
+  subBtn: {
+    marginTop: 18, backgroundColor: Colors.brandBlue, borderRadius: 999,
+    paddingVertical: 13, paddingHorizontal: 36,
+  },
+  subBtnText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80, paddingHorizontal: 20 },
   emptyText: { fontSize: 16, color: Colors.text, fontWeight: '600', marginTop: 16 },
   emptyHint: { fontSize: 14, color: Colors.textSecondary, marginTop: 8, textAlign: 'center', paddingHorizontal: 40, lineHeight: 20 },

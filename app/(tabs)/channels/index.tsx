@@ -139,17 +139,11 @@ export default function ChannelsScreen() {
       );
       return false;
     }
+    // Signed in without a plan: straight to the plans. The old "Subscription
+    // Required / Upgrade" dialog in between was an extra tap the client asked
+    // to remove.
     if (!isPaidUser) {
-      showAlert(
-        'Subscription Required',
-        verb === 'join'
-          ? 'A subscription is required to join this channel. Upgrade to continue.'
-          : 'A subscription is required to view this channel. Upgrade to continue.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Upgrade', onPress: () => router.push('/premium') },
-        ],
-      );
+      router.push('/premium');
       return false;
     }
     return true;
