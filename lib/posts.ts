@@ -95,6 +95,68 @@ export const PostService = {
 
   // ── Read ────────────────────────────────────────────────────
 
+  /**
+   * A channel's approved posts for a guest. Named columns only -- anon is not
+   * granted video_url, and asking for it would fail the whole request. RLS
+   * (channel_posts_select_anon) limits this to public, active channels.
+   * Rows are for listing; a guest who taps one is sent to the plans.
+   */
+  async getGuestChannelPosts(channelId: string): Promise<GuestChannelPost[]> {
+    const { data, error } = await supabase
+      .from('channel_posts')
+      .select(GUEST_POST_COLUMNS)
+      .eq('channel_id', channelId)
+      .eq('status', 'approved')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data ?? []) as unknown as GuestChannelPost[];
+  },
+
+  /**
+   * A channel's premium titles as metadata only (the v79 premium_preview
+   * view, which has no video_url column at all). For a signed-in user without
+   * a plan, whose channel_posts read returns free rows only: this is what
+   * lets them see what the channel has before paying for it.
+   */
+  async getChannelPremiumPreviews(channelId: string): Promise<GuestChannelPost[]> {
+    const { data, error } = await supabase
+      .from('premium_preview')
+      .select(GUEST_POST_COLUMNS)
+      .eq('channel_id', channelId)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data ?? []) as unknown as GuestChannelPost[];
+  },
+
+  /**
+   * The Feed tab: newest approved posts from the channels this user has
+   * joined, and nothing else. Someone who has joined nothing gets [] and the
+   * Feed says "Join channels to get content here!".
+   *
+   * Named columns, no video_url: the Feed only lists and links to the
+   * channel; playback goes through the channel screen's own gates. RLS still
+   * decides which rows come back -- premium rows only with an active plan.
+   */
+  async getJoinedFeedPosts(userId: string, limit = 60): Promise<GuestChannelPost[]> {
+    const { data: memberships, error: mErr } = await supabase
+      .from('channel_members')
+      .select('channel_id')
+      .eq('user_id', userId);
+    if (mErr) throw mErr;
+    const channelIds = (memberships ?? []).map(m => m.channel_id);
+    if (channelIds.length === 0) return [];
+
+    const { data, error } = await supabase
+      .from('channel_posts')
+      .select(GUEST_POST_COLUMNS)
+      .in('channel_id', channelIds)
+      .eq('status', 'approved')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    return (data ?? []) as unknown as GuestChannelPost[];
+  },
+
   async getChannelPosts(channelId: string, userId: string): Promise<ChannelPost[]> {
     const { data: approved, error: e1 } = await supabase
       .from('channel_posts')

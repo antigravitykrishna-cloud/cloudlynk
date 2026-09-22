@@ -7,7 +7,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../../hooks/useAuth';
 import { useRecordProgress, getSavedPosition } from '../../../hooks/useWatchHistory';
-import { ChannelService, BlockService, ReportService } from '../../../lib/channels';
+import { ChannelService, BlockService, ReportService, CHANNEL_LIST_COLUMNS } from '../../../lib/channels';
+import { LoginSheet } from '../../../components/LoginSheet';
 import { PostService, ChannelPost, ContentType, GENRES } from '../../../lib/posts';
 import { StreamService, VideoMeta, STREAM_MAX_MB } from '../../../lib/stream';
 import { Database, supabase } from '../../../lib/supabase';
@@ -18,7 +19,9 @@ import { Colors } from '../../../constants/theme';
 import { Icon, type IconName } from '../../../components/Icon';
 
 // guards-allow-select-star
-// Channel detail is gated behind requireSubscription in the Channels tab, so anon never reaches this query.
+// Guests DO reach this screen now (opening a channel is ungated). Their path
+// in load() names its columns -- CHANNEL_LIST_COLUMNS, getGuestChannelPosts --
+// and only the signed-in path uses select('*').
 // See scripts/guards.mjs check 2 for why select('*') is unsafe on a
 // guest-reachable path.
 
@@ -637,9 +640,10 @@ CreateModal.displayName = 'CreateModal';
 // ── Main screen
 export default function ChannelDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { user, canUpload, isAdmin } = useAuth();
+  const { user, canUpload, isAdmin, isPaidUser } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const [signInSheet, setSignInSheet] = useState(false);
 
   const [channel, setChannel] = useState<Channel | null>(null);
   const [posts, setPosts] = useState<ChannelPost[]>([]);
@@ -664,8 +668,25 @@ export default function ChannelDetailScreen() {
   }, [user?.id]);
 
   const load = useCallback(async () => {
-    if (!id || !user?.id) return;
+    if (!id) return;
     try {
+      if (!user?.id) {
+        // Guest: look, but not play. Named columns throughout -- anon is not
+        // granted every column, and one it cannot read fails the whole
+        // request rather than coming back null.
+        const [{ data: ch, error: chErr }, guestPosts] = await Promise.all([
+          supabase.from('channels').select(CHANNEL_LIST_COLUMNS).eq('id', id).maybeSingle(),
+          PostService.getGuestChannelPosts(id),
+        ]);
+        if (chErr) throw chErr;
+        setChannel(ch as unknown as Channel);
+        setIsMember(false);
+        const list = guestPosts as unknown as ChannelPost[];
+        setPosts(list);
+        setGrouped(PostService.groupByGenre(list));
+        return;
+      }
+
       const { data: ch } = await supabase
         .from('channels').select('*').eq('id', id).single();
       setChannel(ch as Channel);
@@ -676,13 +697,24 @@ export default function ChannelDetailScreen() {
       // Owners are implicitly members even without a channel_members row
       setIsMember(!!mem || (ch as Channel)?.owner_id === user.id);
 
-      const [allPosts, blockedIds] = await Promise.all([
+      const entitled = isPaidUser || isAdmin;
+      const [allPosts, blockedIds, previews] = await Promise.all([
         PostService.getChannelPosts(id, user.id),
         BlockService.getBlockedUserIds(user.id).catch(() => [] as string[]),
+        // Without a plan, RLS returns this channel's free rows only. The
+        // premium titles come from premium_preview (metadata, no video) so
+        // the person can see what they would be paying for.
+        entitled
+          ? Promise.resolve([] as ChannelPost[])
+          : PostService.getChannelPremiumPreviews(id)
+              .then(r => r as unknown as ChannelPost[])
+              .catch(() => [] as ChannelPost[]),
       ]);
+      const seen = new Set(allPosts.map(p => p.id));
+      const merged = [...allPosts, ...previews.filter(p => !seen.has(p.id))];
       const visiblePosts = blockedIds.length
-        ? allPosts.filter(p => !blockedIds.includes(p.author_id))
-        : allPosts;
+        ? merged.filter(p => !blockedIds.includes(p.author_id))
+        : merged;
       setPosts(visiblePosts);
       setGrouped(PostService.groupByGenre(visiblePosts));
     } catch (err: any) {
@@ -690,7 +722,7 @@ export default function ChannelDetailScreen() {
     } finally {
       setLoading(false);
     }
-  }, [id, user?.id]);
+  }, [id, user?.id, isPaidUser, isAdmin]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -698,14 +730,34 @@ export default function ChannelDetailScreen() {
     setRefreshing(true); await load(); setRefreshing(false);
   }, [load]);
 
+  // Joining needs a plan, same rule as the Join button on the Channels tab:
+  // a guest gets the sign-in sheet, a signed-in person without a plan goes
+  // straight to the plans.
   const handleJoin = async () => {
-    if (!id || !user?.id) return;
+    if (!id) return;
+    if (!user?.id) { setSignInSheet(true); return; }
+    if (!isPaidUser && !isAdmin && channel?.owner_id !== user.id) { router.push('/premium'); return; }
     setJoining(true);
     try {
       await ChannelService.joinChannel(id, user.id);
       setIsMember(true); await load();
     } catch (err: any) { showAlert('Error', err.message); }
     finally { setJoining(false); }
+  };
+
+  // Tapping a title. Anyone can see what a channel has; watching needs the
+  // right to. Everyone else goes straight to the plans, no dialog first, per
+  // the client's reference flow. Free titles still play for a signed-in
+  // user; a guest is asked to pick a plan (and sign in) for any title.
+  const openPost = (item: ChannelPost) => {
+    const canWatch =
+      isPaidUser || isAdmin || channel?.owner_id === user?.id ||
+      (!!user?.id && item.access_level !== 'premium');
+    if (!canWatch) {
+      router.push('/premium');
+      return;
+    }
+    setSelected(item);
   };
 
   const hero = grouped['Featured']?.[0] ?? null;
@@ -750,18 +802,14 @@ export default function ChannelDetailScreen() {
                     {hero.genre}{hero.release_year ? ` · ${hero.release_year}` : ''}{hero.duration_min ? ` · ${formatDuration(hero.duration_min)}` : ''}
                   </Text>
                 )}
-                {isMember ? (
-                  <View style={styles.heroActions}>
-                    <TouchableOpacity style={styles.heroPlayBtn} onPress={() => setSelected(hero)}>
-                      <Text style={styles.heroPlayTxt}>{'▶  Play'}</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.heroInfoBtn} onPress={() => setSelected(hero)}>
-                      <Text style={styles.heroInfoTxt}>{'ⓘ  More Info'}</Text>
-                    </TouchableOpacity>
-                  </View>
-                ) : (
-                  <Text style={styles.heroLockedHint}>{'Subscribe to play'}</Text>
-                )}
+                <View style={styles.heroActions}>
+                  <TouchableOpacity style={styles.heroPlayBtn} onPress={() => openPost(hero)}>
+                    <Text style={styles.heroPlayTxt}>{'▶  Play'}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.heroInfoBtn} onPress={() => openPost(hero)}>
+                    <Text style={styles.heroInfoTxt}>{'ⓘ  More Info'}</Text>
+                  </TouchableOpacity>
+                </View>
               </>
             ) : (
               <>
@@ -773,7 +821,7 @@ export default function ChannelDetailScreen() {
             )}
             {!isMember && channel?.status === 'active' && (
               <TouchableOpacity style={styles.joinBtn} onPress={handleJoin} disabled={joining}>
-                {joining ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.joinTxt}>+ Subscribe to Channel</Text>}
+                {joining ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.joinTxt}>+ Join Channel</Text>}
               </TouchableOpacity>
             )}
             {isMember && <View style={styles.memberBadge}><Text style={styles.memberTxt}>{'✓ Subscribed'}</Text></View>}
@@ -820,27 +868,12 @@ export default function ChannelDetailScreen() {
           </View>
         )}
 
-        {!isMember ? (
-          <View style={styles.lockedContentCard}>
-            <Icon name="lock" size={16} color={Colors.textMuted} />
-            <Text style={styles.lockedContentTitle}>Subscribe to view content</Text>
-            <Text style={styles.lockedContentDesc}>
-              Join this channel to watch its movies, series, and short films.
-            </Text>
-            {channel?.status === 'active' && (
-              <TouchableOpacity style={styles.lockedContentBtn} onPress={handleJoin} disabled={joining}>
-                {joining
-                  ? <ActivityIndicator color="#fff" size="small" />
-                  : <Text style={styles.lockedContentBtnTxt}>+ Subscribe to Channel</Text>}
-              </TouchableOpacity>
-            )}
-          </View>
-        ) : !hasContent ? (
+        {!hasContent ? (
           <View style={styles.emptyState}>
             <Icon name="film" size={52} color={Colors.textMuted} />
             <Text style={styles.emptyTitle}>No content yet</Text>
             <Text style={styles.emptyDesc}>Be the first to add a movie or series to this channel.</Text>
-            {canUpload && (
+            {isMember && canUpload && (
               <TouchableOpacity
                 style={styles.emptyAddBtn}
                 onPress={() => router.push({ pathname: '/upload/add-content', params: { channelId: id } })}
@@ -850,13 +883,19 @@ export default function ChannelDetailScreen() {
             )}
           </View>
         ) : (
-          groupKeys.map(g => <GenreRow key={g} genre={g} items={grouped[g]} onSelect={setSelected} />)
+          groupKeys.map(g => <GenreRow key={g} genre={g} items={grouped[g]} onSelect={openPost} />)
         )}
 
         <View style={{ height: 40 }} />
       </ScrollView>
 
       <DetailModal selected={selected} onClose={() => setSelected(null)} userId={user?.id} channelId={id} />
+      <LoginSheet
+        visible={signInSheet}
+        onClose={() => setSignInSheet(false)}
+        message="Sign in to join this channel. It only takes a moment."
+        returnTo={id ? { pathname: '/(tabs)/channels/[id]', params: { id } } : null}
+      />
     </View>
   );
 }

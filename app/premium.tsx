@@ -4,6 +4,7 @@ import { showAlert } from '../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { setPostLoginRoute } from '../lib/postLogin';
+import { GuestPlans } from '../components/GuestPlans';
 import { Colors, Radius, FontSize, FontWeight } from '../constants/theme';
 import { useAuth } from '../hooks/useAuth';
 import { useSubscriptionPlans } from '../lib/subscriptionService';
@@ -140,6 +141,17 @@ export default function PremiumScreen() {
             You now have full access to Premium movies, series, and shorts across Cloudlynk.
           </Text>
         </View>
+      </SafeAreaView>
+    );
+  }
+
+  // A guest gets the same plan picker as the signed-out Profile tab: choose,
+  // Next, then a sign-in sheet. The client's reference flow, and one screen
+  // for one job rather than two slightly different paywalls.
+  if (!user) {
+    return (
+      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+        <GuestPlans onBack={goBack} initialPlan={planParam} />
       </SafeAreaView>
     );
   }

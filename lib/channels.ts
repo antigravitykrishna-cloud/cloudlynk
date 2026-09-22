@@ -23,7 +23,7 @@ import { supabase } from './supabase';
  * Naming the columns also works for authenticated callers, who are granted a
  * superset — so there is one query for both roles rather than a fork.
  */
-const CHANNEL_LIST_COLUMNS =
+export const CHANNEL_LIST_COLUMNS =
   'id, owner_id, name, description, category, is_public, is_official, ' +
   'status, member_count, post_count, created_at';
 

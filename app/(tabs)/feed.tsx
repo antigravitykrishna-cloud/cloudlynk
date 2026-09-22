@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, RefreshControl } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { PressScale } from '../../components/Press';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,25 +11,19 @@ import { Colors } from '../../constants/theme';
 import { ListSkeleton } from '../../components/Skeleton';
 import { Icon } from '../../components/Icon';
 
-// The Feed tab: newest approved content across every public channel, for
-// guests and signed-in users alike.
+// The Feed tab: newest content from the channels you have joined -- the
+// client's reference flow.
 //
-// Deliberately NOT membership-scoped. FeedService.getHomeFeed exists and does
-// that, but it returns [] the moment someone has joined nothing — which is
-// every guest and every new account, i.e. exactly the people this tab has to
-// convince. A chronological public feed is never empty, and channels the user
-// has joined surface in it anyway.
+//   guest                     -> "Join channels to get content here!"
+//   signed in, joined nothing -> the same, with the next step for them
+//   joined channels           -> their newest approved posts
 //
-// Guests reach the same rows through channel_posts_select_anon (v61/v66),
-// which already restricts to approved posts in public active channels and
-// withholds video_url at the column grant. Nothing on this screen plays
-// anything — tapping routes to the channel, where the existing gates decide
-// what happens next.
-//
-// Premium rows are NOT listed for anyone without an active plan. The client
-// did not want a wall of padlocked titles; until someone subscribes, the
-// premium part of the feed is replaced by a single card asking them to pick a
-// plan. Free rows (if any) still show underneath it.
+// Joining a channel needs a plan (app/(tabs)/channels/index.tsx), so premium
+// content only reaches this list once someone has subscribed. The premium
+// filter below is for the leftover case of a member whose plan has lapsed:
+// their channels' premium rows are withheld and a subscribe card sits on top.
+// Nothing on this screen plays anything -- tapping routes to the channel,
+// where the existing gates decide what happens next.
 
 type FeedItem = GuestChannelPost;
 
@@ -67,10 +61,8 @@ export default function FeedScreen() {
 
   const load = useCallback(async () => {
     try {
-      const data = user?.id
-        ? ((await PostService.getExplorePosts(user.id, 'latest')) as unknown as FeedItem[])
-        : await PostService.getGuestExplorePosts('latest');
-      setItems(data.slice(0, 60));
+      // A guest has joined nothing, so there is nothing to fetch.
+      setItems(user?.id ? await PostService.getJoinedFeedPosts(user.id) : []);
       setLoadFailed(false);
     } catch (err) {
       if (__DEV__) console.error('Feed load error:', err);
@@ -101,16 +93,23 @@ export default function FeedScreen() {
   // What is listed. Premium rows are withheld until there is an active plan
   // -- see the note at the top of this file.
   const visible = isPaidUser ? items : items.filter(i => i.access_level !== 'premium');
-  const showSubscribe = !isPaidUser && !loading;
+  const showSubscribe = !isPaidUser && visible.length < items.length;
+
+  // The empty state's next step depends on who is looking.
+  const emptyAction = !user?.id
+    ? { hint: 'Browse channels and join the ones you like. Their newest videos show up here.', label: 'Browse channels', go: () => router.push('/(tabs)/channels') }
+    : !isPaidUser
+    ? { hint: 'Subscribe to a plan to join channels. Their newest videos show up here.', label: 'See plans', go: () => router.push('/premium') }
+    : { hint: 'Channels you join show their newest videos here.', label: 'Browse channels', go: () => router.push('/(tabs)/channels') };
 
   const subscribeCard = (
     <Animated.View entering={FadeInDown.duration(280)} style={styles.subCard}>
       <View style={styles.subIcon}>
         <Icon name="lock" size={22} color={Colors.brandCyan} />
       </View>
-      <Text style={styles.subTitle}>Subscribe to unlock the feed</Text>
+      <Text style={styles.subTitle}>Your plan has ended</Text>
       <Text style={styles.subText}>
-        Premium channels, movies and web series show up here as soon as you subscribe to a plan.
+        Premium videos from your channels show up here again as soon as you subscribe to a plan.
       </Text>
       <PressScale style={styles.subBtn} onPress={() => router.push('/premium')} haptic="light"
         accessibilityRole="button" accessibilityLabel="See plans">
@@ -128,34 +127,28 @@ export default function FeedScreen() {
 
       {loading ? (
         <ListSkeleton rows={6} />
-      ) : visible.length === 0 && showSubscribe && !loadFailed ? (
-        <ScrollView
-          contentContainerStyle={styles.subOnly}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.brandBlue} />}
-        >
-          {subscribeCard}
-        </ScrollView>
       ) : visible.length === 0 ? (
         <ScrollView
           contentContainerStyle={{ flexGrow: 1 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.brandBlue} />}
         >
-          <View style={styles.emptyState}>
-            <CloudlynkLogo size={48} />
+          <Animated.View entering={FadeInDown.duration(280)} style={styles.emptyState}>
+            <CloudlynkLogo size={72} />
             <Text style={styles.emptyText}>
-              {loadFailed ? "Couldn't load the feed" : 'Nothing here yet'}
+              {loadFailed ? "Couldn't load the feed" : 'Join channels to get content here!'}
             </Text>
             <Text style={styles.emptyHint}>
-              {loadFailed
-                ? 'Check your connection and try again.'
-                : 'New content from public channels shows up here as soon as it is approved.'}
+              {loadFailed ? 'Check your connection and try again.' : emptyAction.hint}
             </Text>
-            {loadFailed && (
-              <TouchableOpacity style={styles.retryBtn} onPress={onRefresh} activeOpacity={0.85}>
-                <Text style={styles.retryBtnText}>Try again</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+            <PressScale
+              style={styles.retryBtn}
+              onPress={loadFailed ? onRefresh : emptyAction.go}
+              haptic="light"
+              accessibilityRole="button"
+            >
+              <Text style={styles.retryBtnText}>{loadFailed ? 'Try again' : emptyAction.label}</Text>
+            </PressScale>
+          </Animated.View>
         </ScrollView>
       ) : (
         <ScrollView
@@ -229,7 +222,6 @@ const styles = StyleSheet.create({
   cardBody: { flex: 1 },
   cardTitle: { color: Colors.text, fontSize: 15, fontWeight: '700', lineHeight: 20 },
   cardMeta: { color: Colors.textSecondary, fontSize: 12, fontWeight: '500', marginTop: 4 },
-  subOnly: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 16, paddingVertical: 24 },
   subCard: {
     backgroundColor: Colors.surface, borderRadius: 20,
     borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border,
@@ -247,8 +239,8 @@ const styles = StyleSheet.create({
   },
   subBtnText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80, paddingHorizontal: 20 },
-  emptyText: { fontSize: 16, color: Colors.text, fontWeight: '600', marginTop: 16 },
+  emptyText: { fontSize: 20, color: Colors.text, fontWeight: '700', marginTop: 20, textAlign: 'center', letterSpacing: -0.3 },
   emptyHint: { fontSize: 14, color: Colors.textSecondary, marginTop: 8, textAlign: 'center', paddingHorizontal: 40, lineHeight: 20 },
-  retryBtn: { marginTop: 18, paddingHorizontal: 24, paddingVertical: 11, borderRadius: 8, backgroundColor: Colors.accent },
-  retryBtnText: { fontSize: 14, fontWeight: '700', color: Colors.textInverse },
+  retryBtn: { marginTop: 22, paddingHorizontal: 28, paddingVertical: 13, borderRadius: 999, backgroundColor: Colors.brandBlue },
+  retryBtnText: { fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
 });

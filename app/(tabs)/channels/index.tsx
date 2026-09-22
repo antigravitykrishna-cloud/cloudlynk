@@ -1,6 +1,7 @@
 import { CloudlynkLogo } from '../../../components/CloudlynkLogo';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, RefreshControl, ActivityIndicator } from 'react-native';
 import { showAlert } from '../../../components/Feedback';
+import { LoginSheet } from '../../../components/LoginSheet';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -45,6 +46,7 @@ export default function ChannelsScreen() {
   // failed request are different facts, and only one of them is the user's
   // to act on.
   const [loadFailed, setLoadFailed] = useState(false);
+  const [signInSheet, setSignInSheet] = useState(false);
 
   // isPaidUser comes from useAuth, which reads plan_status and honours
   // plan_expires_at. This screen used to compute it from `profile.plan` — a
@@ -121,27 +123,17 @@ export default function ChannelsScreen() {
       (c.description ?? '').toLowerCase().includes(q);
   });
 
-  // Guests browse this tab freely; joining is where the wall is. A guest is
-  // sent to sign-up rather than to the paywall because there is nothing to
-  // attach a subscription to yet — /premium with no session would dead-end.
+  // Anyone can browse channels and open one; joining is where the wall is.
+  //   guest               -> "Please sign in" sheet over the list
+  //   signed in, no plan  -> straight to the plans
   // Returns true when the caller may proceed.
-  const requireSubscription = (verb: 'join' | 'open'): boolean => {
+  const requireSubscription = (): boolean => {
     if (!user?.id) {
-      showAlert(
-        'Create an account first',
-        verb === 'join'
-          ? 'Joining a channel needs an account. It takes one tap — guest, Google or email.'
-          : 'Opening a channel needs an account. It takes one tap — guest, Google or email.',
-        [
-          { text: 'Not now', style: 'cancel' },
-          { text: 'Continue', onPress: () => router.push('/(auth)/login') },
-        ],
-      );
+      setSignInSheet(true);
       return false;
     }
-    // Signed in without a plan: straight to the plans. The old "Subscription
-    // Required / Upgrade" dialog in between was an extra tap the client asked
-    // to remove.
+    // No "Subscription Required / Upgrade" dialog in between: the client
+    // asked for it gone, and the tap on Join already said what they want.
     if (!isPaidUser) {
       router.push('/premium');
       return false;
@@ -150,7 +142,7 @@ export default function ChannelsScreen() {
   };
 
   const handleJoinPress = (channel: Channel) => {
-    if (!requireSubscription('join')) return;
+    if (!requireSubscription()) return;
     handleJoin(channel);
   };
 
@@ -220,13 +212,10 @@ export default function ChannelsScreen() {
     );
   };
 
+  // Opening a channel is never gated: guests and people without a plan can
+  // look inside and see what it has. What is gated is joining it and
+  // watching its content -- see app/(tabs)/channels/[id].tsx.
   const handleRowPress = (channel: Channel) => {
-    // Owners, admins and existing members skip the gate entirely — including
-    // a member whose subscription has since lapsed, who should reach the
-    // channel and find its premium posts locked rather than be bounced from
-    // a channel they belong to.
-    const exempt = isAdmin || channel.owner_id === user?.id || joinedChannelIds.has(channel.id);
-    if (!exempt && !requireSubscription('open')) return;
     router.push({ pathname: '/(tabs)/channels/[id]', params: { id: channel.id } });
   };
 
@@ -399,21 +388,16 @@ export default function ChannelsScreen() {
                   >
                     <Text style={styles.leaveBtnText}>Leave</Text>
                   </TouchableOpacity>
-                ) : isPaidUser ? (
+                ) : (
+                  // Join for everyone, as in the client's reference. What
+                  // happens on the tap depends on who is asking -- see
+                  // requireSubscription above.
                   <TouchableOpacity
                     style={styles.joinBtn}
                     onPress={() => handleJoinPress(channel)}
                     activeOpacity={0.7}
                   >
                     <Text style={styles.joinBtnText}>Join</Text>
-                  </TouchableOpacity>
-                ) : (
-                  <TouchableOpacity
-                    style={styles.lockBtn}
-                    onPress={() => handleJoinPress(channel)}
-                    activeOpacity={0.7}
-                  >
-                    <Icon name="lock" size={14} color={Colors.textMuted} />
                   </TouchableOpacity>
                 )}
               </Animated.View>
@@ -422,6 +406,12 @@ export default function ChannelsScreen() {
           <View style={{ height: 24 }} />
         </ScrollView>
       )}
+      <LoginSheet
+        visible={signInSheet}
+        onClose={() => setSignInSheet(false)}
+        message="Sign in to join channels. It only takes a moment."
+        returnTo="/(tabs)/channels"
+      />
     </SafeAreaView>
   );
 }
