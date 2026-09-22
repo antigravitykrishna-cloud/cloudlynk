@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { showAlert } from '../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,6 +9,13 @@ import { Colors, Radius, FontSize, FontWeight } from '../constants/theme';
 import { useAuth } from '../hooks/useAuth';
 import { useSubscriptionPlans } from '../lib/subscriptionService';
 import { getIapService } from '../lib/services/iap';
+import { config } from '../lib/config';
+import {
+  createGatewayOrder, getGatewayMethods, openRazorpay, waitForPayment,
+  type GatewayMethod, type OrderStatus, type SabpaisaOrder,
+} from '../lib/payments';
+import { PaymentSheet, type PaymentChoice } from '../components/PaymentSheet';
+import { SabpaisaCheckout } from '../components/SabpaisaCheckout';
 import { Icon } from '../components/Icon';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { PressScale, fireHaptic } from '../components/Press';
@@ -68,17 +75,59 @@ export default function PremiumScreen() {
   // Google Play policy requires digital content to be sold exclusively
   // through Play Billing — the app never offers an alternate payment method
   // to unlock in-app content.
-  const handleProceed = async () => {
+  // ── Paying ────────────────────────────────────────────────────────────
+  //
+  // Google Play plus, when the server has their keys, UPI / Razorpay /
+  // Sabpaisa. How they are offered depends on config.alternativeBilling
+  // (lib/config.ts):
+  //   user_choice  Google Play's own choice screen comes first. If the
+  //                person picks our option there, Google hands over a token
+  //                and our payment sheet opens with the gateways.
+  //   test         our sheet straight away, Google Play as one of its rows
+  //                (sideloaded test builds only).
+  //   off          Google Play only.
+  const [gatewayMethods, setGatewayMethods] = useState<GatewayMethod[]>([]);
+  const [sheet, setSheet] = useState<{ choices: PaymentChoice[]; token?: string } | null>(null);
+  const [sabpaisaOrder, setSabpaisaOrder] = useState<SabpaisaOrder | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const sabpaisaOrderId = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!user?.id || config.alternativeBilling === 'off') return;
+    getGatewayMethods().then(setGatewayMethods);
+  }, [user?.id]);
+
+  const onPaid = async () => {
+    // A completed purchase is the single most important confirmation in
+    // the app; it should be felt as well as read.
+    fireHaptic('success');
+    await refreshProfile();
+    showAlert('Success', "You're now on Premium!", [{ text: 'OK', onPress: goBack }]);
+  };
+
+  const reportGatewayResult = async (status: OrderStatus) => {
+    if (status === 'paid') return onPaid();
+    fireHaptic(status === 'failed' ? 'error' : 'warning');
+    if (status === 'failed') {
+      showAlert('Payment failed', 'No money was taken for this attempt. You can try again or pick another way to pay.');
+    } else {
+      showAlert(
+        'Waiting for confirmation',
+        'Your bank has not confirmed the payment yet. If money was deducted, Premium switches on by itself within a few minutes -- you do not need to pay again.',
+      );
+    }
+  };
+
+  const playPurchase = async (userChoiceBilling: boolean) => {
     if (!selectedPlan) return;
     setPurchasing(true);
     try {
-      const result = await getIapService().purchasePlan(selectedPlan.code);
-      if (result.success) {
-        // A completed purchase is the single most important confirmation in
-        // the app; it should be felt as well as read.
-        fireHaptic('success');
-        await refreshProfile();
-        showAlert('Success', "You're now on Premium!", [{ text: 'OK', onPress: goBack }]);
+      const result = await getIapService().purchasePlan(selectedPlan.code, { userChoiceBilling });
+      if (result.alternativeBillingToken) {
+        // Picked our option on Google's choice screen.
+        setSheet({ choices: gatewayMethods, token: result.alternativeBillingToken });
+      } else if (result.success) {
+        await onPaid();
       } else {
         fireHaptic('error');
         showAlert('Purchase failed', result.errorMessage ?? 'Please try again.');
@@ -87,6 +136,61 @@ export default function PremiumScreen() {
       showAlert('Purchase failed', err instanceof Error ? err.message : 'Please try again.');
     } finally {
       setPurchasing(false);
+    }
+  };
+
+  const handleProceed = async () => {
+    if (!selectedPlan) return;
+    if (config.alternativeBilling === 'test' && gatewayMethods.length > 0) {
+      const order: PaymentChoice[] = ['upi', 'play', 'razorpay', 'sabpaisa'];
+      setSheet({ choices: order.filter(c => c === 'play' || gatewayMethods.includes(c as GatewayMethod)) });
+      return;
+    }
+    await playPurchase(config.alternativeBilling === 'user_choice' && gatewayMethods.length > 0);
+  };
+
+  const payWith = async (choice: PaymentChoice) => {
+    if (!selectedPlan) return;
+    if (choice === 'play') {
+      setSheet(null);
+      await playPurchase(false);
+      return;
+    }
+    setPurchasing(true);
+    try {
+      const order = await createGatewayOrder(selectedPlan.code, choice, sheet?.token);
+      setSheet(null);
+      if (order.provider === 'razorpay') {
+        const result = await openRazorpay(order);
+        setConfirming(true);
+        // Without a checkout result the person most likely backed out, so do
+        // not keep them waiting long -- but still ask, because a UPI payment
+        // can go through even when the UPI app never reports back.
+        await reportGatewayResult(await waitForPayment(order.orderId, result ?? undefined, result ? 45_000 : 8_000)
+          .then(st => (st === 'pending' && !result ? 'failed' : st)));
+      } else {
+        sabpaisaOrderId.current = order.orderId;
+        setSabpaisaOrder(order);
+      }
+    } catch (err: unknown) {
+      showAlert('Payment failed', err instanceof Error ? err.message : 'Please try again.');
+    } finally {
+      setConfirming(false);
+      setPurchasing(false);
+    }
+  };
+
+  const onSabpaisaDone = async (how: 'returned' | 'closed') => {
+    setSabpaisaOrder(null);
+    const id = sabpaisaOrderId.current;
+    sabpaisaOrderId.current = null;
+    if (!id) return;
+    setConfirming(true);
+    try {
+      const status = await waitForPayment(id, undefined, how === 'returned' ? 45_000 : 8_000);
+      await reportGatewayResult(status === 'pending' && how === 'closed' ? 'failed' : status);
+    } finally {
+      setConfirming(false);
     }
   };
 
@@ -318,11 +422,32 @@ export default function PremiumScreen() {
         )}
 
         <Text style={styles.legal}>
-          Billed via Google Play. Cancel anytime from Play Store settings.
+          {gatewayMethods.length > 0
+            ? 'Pay with Google Play, UPI or a card. Google Play plans renew until cancelled in Play Store settings; UPI and card payments buy a fixed period and do not renew.'
+            : 'Billed via Google Play. Cancel anytime from Play Store settings.'}
         </Text>
 
         <View style={{ height: 24 }} />
       </ScrollView>
+
+      {selectedPlan && (
+        <PaymentSheet
+          visible={!!sheet}
+          choices={sheet?.choices ?? []}
+          priceInr={selectedPlan.price_inr}
+          planName={selectedPlan.name}
+          busy={purchasing}
+          onSelect={payWith}
+          onClose={() => setSheet(null)}
+        />
+      )}
+      <SabpaisaCheckout order={sabpaisaOrder} onDone={onSabpaisaDone} />
+      {confirming && (
+        <View style={styles.confirmOverlay}>
+          <ActivityIndicator color="#FFFFFF" size="large" />
+          <Text style={styles.confirmText}>Confirming your payment…</Text>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -421,6 +546,11 @@ const styles = StyleSheet.create({
   proceedBtn: { marginHorizontal: 16, marginTop: 20, backgroundColor: Colors.brand, borderRadius: 12, paddingVertical: 16, alignItems: 'center' },
   proceedBtnText: { color: '#ffffff', fontSize: 16, fontWeight: '800', letterSpacing: 0.3 },
   legal: { textAlign: 'center', fontSize: 11, color: Colors.textMuted, marginTop: 12, paddingHorizontal: 24 },
+  confirmOverlay: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(11,18,32,0.88)',
+    alignItems: 'center', justifyContent: 'center', gap: 14,
+  },
+  confirmText: { color: Colors.text, fontSize: FontSize.lg, fontWeight: FontWeight.semibold },
   pendingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 },
   pendingIcon: { fontSize: 48, marginBottom: 16 },
   pendingTitle: { fontSize: 20, fontWeight: '800', color: Colors.text, marginBottom: 8, textAlign: 'center' },

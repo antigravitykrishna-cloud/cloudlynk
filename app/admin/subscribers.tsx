@@ -12,14 +12,11 @@ import { supabase } from '../../lib/supabase';
 // limit — the reason it is an RPC and not admin_search_users plus a client
 // filter.
 //
-// Read-only on purpose. Nothing here can change a plan, because nothing
-// SHOULD: plan_status is written by verify-play-receipt and
-// play-rtdn-webhook from what Google reports, and by the hourly sweeper when
-// a term runs out. An admin button that set someone's plan by hand would be
-// a fourth writer racing the other three, and the entitlement would be
-// overwritten by the next RTDN message anyway. Grants for individual posts
-// are the supported way to give someone access without a subscription —
-// app/admin/post-access.tsx and the Grants panel in user-approvals.
+// Tap a subscriber to open their account (app/admin/user/[id]), where an
+// admin can add days, make Premium lifetime, or remove it (v82, audited).
+// Those hand edits are for support cases: for a Google Play subscriber,
+// Google's own renewal and cancellation messages still update the plan
+// afterwards, as they should.
 //
 // The `isAdmin` check below is UX only. Both RPCs re-verify is_admin
 // server-side; that is the actual boundary.
@@ -218,7 +215,8 @@ export default function AdminSubscribersScreen() {
             }
 
             return (
-              <View key={row.id} style={styles.card}>
+              <TouchableOpacity key={row.id} style={styles.card} activeOpacity={0.75}
+                onPress={() => router.push(`/admin/user/${row.id}` as never)}>
                 <View style={styles.cardTopRow}>
                   <Text style={styles.nameText} numberOfLines={1}>
                     {row.full_name?.trim() || row.email}
@@ -247,7 +245,7 @@ export default function AdminSubscribersScreen() {
                     Account {row.account_status} — content hidden regardless of plan.
                   </Text>
                 )}
-              </View>
+              </TouchableOpacity>
             );
           })}
           <View style={{ height: 24 }} />

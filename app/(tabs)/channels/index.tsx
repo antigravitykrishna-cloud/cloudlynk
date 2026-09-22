@@ -123,18 +123,16 @@ export default function ChannelsScreen() {
       (c.description ?? '').toLowerCase().includes(q);
   });
 
-  // Anyone can browse channels and open one; joining is where the wall is.
-  //   guest               -> "Please sign in" sheet over the list
-  //   signed in, no plan  -> straight to the plans
-  // Returns true when the caller may proceed.
-  const requireSubscription = (): boolean => {
+  // Anyone can browse channels and open one. Joining needs an account --
+  // a guest gets the "Please sign in" sheet. It does not need a plan for a
+  // public channel (v81): the plan is asked for when they try to watch.
+  // A hidden (non-public) channel still needs a plan to join.
+  const requireAccount = (channel: Channel): boolean => {
     if (!user?.id) {
       setSignInSheet(true);
       return false;
     }
-    // No "Subscription Required / Upgrade" dialog in between: the client
-    // asked for it gone, and the tap on Join already said what they want.
-    if (!isPaidUser) {
+    if (!channel.is_public && !isPaidUser && !isAdmin) {
       router.push('/premium');
       return false;
     }
@@ -142,7 +140,7 @@ export default function ChannelsScreen() {
   };
 
   const handleJoinPress = (channel: Channel) => {
-    if (!requireSubscription()) return;
+    if (!requireAccount(channel)) return;
     handleJoin(channel);
   };
 
@@ -391,7 +389,7 @@ export default function ChannelsScreen() {
                 ) : (
                   // Join for everyone, as in the client's reference. What
                   // happens on the tap depends on who is asking -- see
-                  // requireSubscription above.
+                  // requireAccount above.
                   <TouchableOpacity
                     style={styles.joinBtn}
                     onPress={() => handleJoinPress(channel)}

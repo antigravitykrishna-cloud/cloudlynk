@@ -133,9 +133,10 @@ export const PostService = {
    * joined, and nothing else. Someone who has joined nothing gets [] and the
    * Feed says "Join channels to get content here!".
    *
-   * Named columns, no video_url: the Feed only lists and links to the
-   * channel; playback goes through the channel screen's own gates. RLS still
-   * decides which rows come back -- premium rows only with an active plan.
+   * Named columns, no video_url: the Feed only lists. Without a plan, RLS
+   * returns the free rows only, so the premium titles are merged in from
+   * premium_preview (metadata, no video) -- the Feed shows everything the
+   * joined channels have, and tapping a locked one leads to the plans.
    */
   async getJoinedFeedPosts(userId: string, limit = 60): Promise<GuestChannelPost[]> {
     const { data: memberships, error: mErr } = await supabase
@@ -146,15 +147,30 @@ export const PostService = {
     const channelIds = (memberships ?? []).map(m => m.channel_id);
     if (channelIds.length === 0) return [];
 
-    const { data, error } = await supabase
-      .from('channel_posts')
-      .select(GUEST_POST_COLUMNS)
-      .in('channel_id', channelIds)
-      .eq('status', 'approved')
-      .order('created_at', { ascending: false })
-      .limit(limit);
-    if (error) throw error;
-    return (data ?? []) as unknown as GuestChannelPost[];
+    const [posts, previews] = await Promise.all([
+      supabase
+        .from('channel_posts')
+        .select(GUEST_POST_COLUMNS)
+        .in('channel_id', channelIds)
+        .eq('status', 'approved')
+        .order('created_at', { ascending: false })
+        .limit(limit),
+      supabase
+        .from('premium_preview')
+        .select(GUEST_POST_COLUMNS)
+        .in('channel_id', channelIds)
+        .order('created_at', { ascending: false })
+        .limit(limit),
+    ]);
+    if (posts.error) throw posts.error;
+    const rows = (posts.data ?? []) as unknown as GuestChannelPost[];
+    // A missing preview list only costs the locked titles; do not fail the Feed.
+    const seen = new Set(rows.map(r => r.id));
+    for (const p of (previews.data ?? []) as unknown as GuestChannelPost[]) {
+      if (!seen.has(p.id)) rows.push(p);
+    }
+    rows.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+    return rows.slice(0, limit);
   },
 
   async getChannelPosts(channelId: string, userId: string): Promise<ChannelPost[]> {

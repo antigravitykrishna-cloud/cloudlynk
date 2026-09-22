@@ -21,11 +21,18 @@ export interface PurchaseResult {
   purchaseToken: string | null;
   expiresAt: string | null;
   errorMessage?: string;
+  /**
+   * Set when, on Google's user choice billing screen, the person picked the
+   * app's own payment option instead of Google Play. Nothing was bought yet:
+   * the app now shows its payment methods, and this token travels with the
+   * order so the server can report the sale to Google (lib/payments.ts).
+   */
+  alternativeBillingToken?: string;
 }
 
 export interface IIapService {
   getProducts(): Promise<IapProduct[]>;
-  purchasePlan(planCode: string): Promise<PurchaseResult>;
+  purchasePlan(planCode: string, opts?: { userChoiceBilling?: boolean }): Promise<PurchaseResult>;
   restorePurchases(): Promise<PurchaseResult[]>;
   // `planCode` is advisory only — the server derives the authoritative plan
   // from Google's own record of the purchase token (see verify-play-receipt).

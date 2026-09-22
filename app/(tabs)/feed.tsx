@@ -15,15 +15,13 @@ import { Icon } from '../../components/Icon';
 // client's reference flow.
 //
 //   guest                     -> "Join channels to get content here!"
-//   signed in, joined nothing -> the same, with the next step for them
-//   joined channels           -> their newest approved posts
+//   signed in, joined nothing -> the same, with a way to the channels
+//   joined channels           -> their newest posts, premium ones included
 //
-// Joining a channel needs a plan (app/(tabs)/channels/index.tsx), so premium
-// content only reaches this list once someone has subscribed. The premium
-// filter below is for the leftover case of a member whose plan has lapsed:
-// their channels' premium rows are withheld and a subscribe card sits on top.
-// Nothing on this screen plays anything -- tapping routes to the channel,
-// where the existing gates decide what happens next.
+// Anyone signed in can join a public channel (v81); watching premium needs a
+// plan. So premium titles are listed with a lock, and tapping one goes
+// straight to the plans. Tapping anything else opens its channel, where the
+// existing playback gates apply.
 
 type FeedItem = GuestChannelPost;
 
@@ -86,37 +84,24 @@ export default function FeedScreen() {
     setRefreshing(false);
   };
 
+  const isLocked = (item: FeedItem) => item.access_level === 'premium' && !isPaidUser;
+
   const openItem = (item: FeedItem) => {
+    if (isLocked(item)) {
+      router.push('/premium');
+      return;
+    }
     router.push({ pathname: '/(tabs)/channels/[id]', params: { id: item.channel_id } });
   };
 
-  // What is listed. Premium rows are withheld until there is an active plan
-  // -- see the note at the top of this file.
-  const visible = isPaidUser ? items : items.filter(i => i.access_level !== 'premium');
-  const showSubscribe = !isPaidUser && visible.length < items.length;
-
-  // The empty state's next step depends on who is looking.
-  const emptyAction = !user?.id
-    ? { hint: 'Browse channels and join the ones you like. Their newest videos show up here.', label: 'Browse channels', go: () => router.push('/(tabs)/channels') }
-    : !isPaidUser
-    ? { hint: 'Subscribe to a plan to join channels. Their newest videos show up here.', label: 'See plans', go: () => router.push('/premium') }
-    : { hint: 'Channels you join show their newest videos here.', label: 'Browse channels', go: () => router.push('/(tabs)/channels') };
-
-  const subscribeCard = (
-    <Animated.View entering={FadeInDown.duration(280)} style={styles.subCard}>
-      <View style={styles.subIcon}>
-        <Icon name="lock" size={22} color={Colors.brandCyan} />
-      </View>
-      <Text style={styles.subTitle}>Your plan has ended</Text>
-      <Text style={styles.subText}>
-        Premium videos from your channels show up here again as soon as you subscribe to a plan.
-      </Text>
-      <PressScale style={styles.subBtn} onPress={() => router.push('/premium')} haptic="light"
-        accessibilityRole="button" accessibilityLabel="See plans">
-        <Text style={styles.subBtnText}>See plans</Text>
-      </PressScale>
-    </Animated.View>
-  );
+  // The empty state's next step: sign-in comes later, when they join.
+  const emptyAction = {
+    hint: user?.id
+      ? 'Join the channels you like. Their newest videos show up here.'
+      : 'Browse channels and join the ones you like. Their newest videos show up here.',
+    label: 'Browse channels',
+    go: () => router.push('/(tabs)/channels'),
+  };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -127,7 +112,7 @@ export default function FeedScreen() {
 
       {loading ? (
         <ListSkeleton rows={6} />
-      ) : visible.length === 0 ? (
+      ) : items.length === 0 ? (
         <ScrollView
           contentContainerStyle={{ flexGrow: 1 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.brandBlue} />}
@@ -157,9 +142,9 @@ export default function FeedScreen() {
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.brandBlue} />}
         >
-          {showSubscribe && subscribeCard}
-          {visible.map((item, idx) => {
+          {items.map((item, idx) => {
             const thumb = item.thumbnail_url ? PostService.getMediaPublicUrl(item.thumbnail_url) : null;
+            const locked = isLocked(item);
 
             return (
               // Rows arrive with a short stagger instead of the whole list
@@ -177,6 +162,11 @@ export default function FeedScreen() {
                   ) : (
                     <View style={[styles.thumb, styles.thumbFallback]}>
                       <Icon name="film" size={22} color={Colors.textMuted} />
+                    </View>
+                  )}
+                  {locked && (
+                    <View style={styles.lockBadge}>
+                      <Icon name="lock" size={12} color="#FFFFFF" />
                     </View>
                   )}
                 </View>
@@ -222,22 +212,11 @@ const styles = StyleSheet.create({
   cardBody: { flex: 1 },
   cardTitle: { color: Colors.text, fontSize: 15, fontWeight: '700', lineHeight: 20 },
   cardMeta: { color: Colors.textSecondary, fontSize: 12, fontWeight: '500', marginTop: 4 },
-  subCard: {
-    backgroundColor: Colors.surface, borderRadius: 20,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border,
-    padding: 22, marginBottom: 14, alignItems: 'center',
+  lockBadge: {
+    position: 'absolute', top: 6, right: 6,
+    width: 22, height: 22, borderRadius: 11,
+    backgroundColor: 'rgba(0,0,0,0.72)', alignItems: 'center', justifyContent: 'center',
   },
-  subIcon: {
-    width: 52, height: 52, borderRadius: 26, backgroundColor: Colors.accentGreenDim,
-    alignItems: 'center', justifyContent: 'center', marginBottom: 14,
-  },
-  subTitle: { color: Colors.text, fontSize: 20, fontWeight: '700', letterSpacing: -0.3, textAlign: 'center' },
-  subText: { color: Colors.textSecondary, fontSize: 15, lineHeight: 21, textAlign: 'center', marginTop: 6, maxWidth: 320 },
-  subBtn: {
-    marginTop: 18, backgroundColor: Colors.brandBlue, borderRadius: 999,
-    paddingVertical: 13, paddingHorizontal: 36,
-  },
-  subBtnText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80, paddingHorizontal: 20 },
   emptyText: { fontSize: 20, color: Colors.text, fontWeight: '700', marginTop: 20, textAlign: 'center', letterSpacing: -0.3 },
   emptyHint: { fontSize: 14, color: Colors.textSecondary, marginTop: 8, textAlign: 'center', paddingHorizontal: 40, lineHeight: 20 },

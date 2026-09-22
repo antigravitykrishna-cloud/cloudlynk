@@ -730,13 +730,17 @@ export default function ChannelDetailScreen() {
     setRefreshing(true); await load(); setRefreshing(false);
   }, [load]);
 
-  // Joining needs a plan, same rule as the Join button on the Channels tab:
-  // a guest gets the sign-in sheet, a signed-in person without a plan goes
-  // straight to the plans.
+  // Same rule as the Join button on the Channels tab: a guest gets the
+  // sign-in sheet; a signed-in account joins a public channel without a plan
+  // (v81) and is asked for one only when it tries to watch. A hidden channel
+  // still needs a plan to join.
   const handleJoin = async () => {
     if (!id) return;
     if (!user?.id) { setSignInSheet(true); return; }
-    if (!isPaidUser && !isAdmin && channel?.owner_id !== user.id) { router.push('/premium'); return; }
+    if (channel && !channel.is_public && !isPaidUser && !isAdmin && channel.owner_id !== user.id) {
+      router.push('/premium');
+      return;
+    }
     setJoining(true);
     try {
       await ChannelService.joinChannel(id, user.id);

@@ -38,7 +38,7 @@ for (const [name, path] of files) {
   }
 }
 
-const GUARD_HELPERS = ['is_owner_or_admin'];
+const GUARD_HELPERS = ['is_owner_or_admin', 'is_active_admin'];
 
 /**
  * Which guard, if any, this body relies on. Plain substring matching rather

@@ -3,6 +3,20 @@ import Constants from 'expo-constants';
 export type IapProvider = 'google_play' | 'noop';
 export type AppEnv = 'development' | 'staging' | 'production';
 
+/**
+ * How Razorpay / UPI / Sabpaisa are offered next to Google Play.
+ *
+ *   'user_choice'  (default) Google Play's user choice billing: on Pay,
+ *                  Google shows its own choice screen; picking the app's
+ *                  option opens our payment methods, and every such sale is
+ *                  reported to Google. The only mode allowed on Play.
+ *   'test'         our payment sheet straight away, Google Play as one of
+ *                  its rows, nothing reported to Google. For sideloaded test
+ *                  APKs ONLY -- scripts/audit-apk.mjs fails a build with it.
+ *   'off'          Google Play only.
+ */
+export type AlternativeBilling = 'user_choice' | 'test' | 'off';
+
 export interface AppConfig {
   appEnv: AppEnv;
   iapProvider: IapProvider;
@@ -14,6 +28,7 @@ export interface AppConfig {
   admobRewardedId: string;
   geoCheckWorkerUrl: string;
   googleWebClientId: string;
+  alternativeBilling: AlternativeBilling;
   sentryDsn: string;
   supportEmail: string;
   privacyPolicyUrl: string;
@@ -43,6 +58,7 @@ export const config: AppConfig = {
   // returns a token minted for the web client when it is passed as the
   // webClientId. Setup steps are in DEPLOY.md §0.4.
   googleWebClientId: readEnv('GOOGLE_WEB_CLIENT_ID'),
+  alternativeBilling: readEnv('ALTERNATIVE_BILLING', 'user_choice') as AlternativeBilling,
   sentryDsn: readEnv('SENTRY_DSN'),
   supportEmail: readEnv('SUPPORT_EMAIL', 'help.cupibs@gmail.com'),
   privacyPolicyUrl: readEnv('PRIVACY_POLICY_URL'),

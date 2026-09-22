@@ -243,7 +243,13 @@ const CHECKS = [
   ['No service-role key',       /SUPABASE_SERVICE_ROLE|service_role_key|SUPABASE_SECRET_KEY/, 'fail'],
   ['No Cloudflare API token',   /CLOUDFLARE_STREAM_API_TOKEN|CLOUDFLARE_R2_SECRET/,           'fail'],
   ['No dev-client',             /expo\/modules\/devlauncher|DevLauncherController/,           'fail'],
-  ['No UPI payment flow',       /upi:\/\/pay/,                                                'fail'],
+  // Not "no UPI" any more: UPI now goes through Razorpay / Sabpaisa, whose
+  // SDKs and pages legitimately open upi://pay links. What must never ship
+  // is a payee hard-coded into the app -- money sent straight to a UPI ID,
+  // which nothing can confirm (see supabase/functions/payments).
+  ['No hard-coded UPI payee',   /upi:\/\/pay\?pa=[^&"'\s]+/,                               'fail'],
+  // ALTERNATIVE_BILLING=test skips Google's choice screen. Sideload only.
+  ['Not a test-billing build',  /"ALTERNATIVE_BILLING"\s*:\s*"test"/,                        'fail'],
   // Text only, via the 4th element. Applied to dex this matches raw bytecode
   // that happens to spell "1TB" — it fired on five separate dex files in a
   // bundle that makes no storage claim anywhere. A user-visible claim can only

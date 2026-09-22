@@ -77,13 +77,16 @@ export class GooglePlayIapService implements IIapService {
    * minutes in case the user backgrounds the app mid-flow without canceling.
    * Whichever of those settles first tears down both listeners.
    */
-  private awaitPurchaseResult(RNIap: any, productId: string, dispatch: () => Promise<unknown>): Promise<any> {
+  private awaitPurchaseResult(
+    RNIap: any, productId: string, dispatch: () => Promise<unknown>, userChoice = false,
+  ): Promise<any> {
     return new Promise((resolve, reject) => {
       let settled = false;
       const cleanup = () => {
         clearTimeout(timeout);
         updateSub.remove();
         errorSub.remove();
+        choiceSub?.remove();
       };
 
       const timeout = setTimeout(() => {
@@ -99,6 +102,17 @@ export class GooglePlayIapService implements IIapService {
         cleanup();
         resolve(purchase);
       });
+      // User choice billing: if the person picks the app's own payment
+      // option on Google's screen, no purchase happens here -- Google hands
+      // over a token instead, and the caller opens our payment methods.
+      const choiceSub = userChoice && typeof RNIap.userChoiceBillingListenerAndroid === 'function'
+        ? RNIap.userChoiceBillingListenerAndroid((details: any) => {
+            if (settled || !details?.externalTransactionToken) return;
+            settled = true;
+            cleanup();
+            resolve({ __alternativeBillingToken: details.externalTransactionToken });
+          })
+        : null;
       const errorSub = RNIap.purchaseErrorListener((error: any) => {
         if (settled) return;
         settled = true;
@@ -115,7 +129,7 @@ export class GooglePlayIapService implements IIapService {
     });
   }
 
-  async purchasePlan(planCode: string): Promise<PurchaseResult> {
+  async purchasePlan(planCode: string, opts?: { userChoiceBilling?: boolean }): Promise<PurchaseResult> {
     if (Platform.OS !== 'android') {
       return { success: false, planCode, purchaseToken: null, expiresAt: null, errorMessage: 'Google Play Billing is Android-only.' };
     }
@@ -128,7 +142,11 @@ export class GooglePlayIapService implements IIapService {
       // this file still loads in environments without the native module linked
       // (e.g. Expo Go, or before a dev build has been rebuilt).
       const RNIap = require('react-native-iap');
-      await RNIap.initConnection();
+      const userChoice = !!opts?.userChoiceBilling;
+      // With user choice billing on, Google shows its choice screen before
+      // the purchase. If the account is not enrolled in the program, or the
+      // user is outside India, Play simply runs the normal purchase.
+      await RNIap.initConnection(userChoice ? { alternativeBillingModeAndroid: 'user-choice' } : undefined);
       try {
         const products = await RNIap.fetchProducts({ skus: [plan.iapProductId], type: 'subs' });
         const product = Array.isArray(products) ? products[0] : null;
@@ -145,8 +163,16 @@ export class GooglePlayIapService implements IIapService {
           RNIap.requestPurchase({
             request: { google: { skus: [plan.iapProductId], subscriptionOffers: [{ sku: plan.iapProductId, offerToken }] } },
             type: 'subs',
-          })
+          }),
+          userChoice,
         );
+
+        if (purchase?.__alternativeBillingToken) {
+          return {
+            success: false, planCode, purchaseToken: null, expiresAt: null,
+            alternativeBillingToken: purchase.__alternativeBillingToken as string,
+          };
+        }
 
         const purchaseToken: string | null = purchase?.purchaseToken ?? null;
         if (!purchaseToken) {

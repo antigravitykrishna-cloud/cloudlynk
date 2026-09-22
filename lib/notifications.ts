@@ -13,6 +13,8 @@ export type NotificationType =
   // notify_expiring_plans), never by the client — there is no
   // NotificationService.create for these.
   | 'subscription_expiring'
+  // v82: an admin announcement (Admin -> Announcement).
+  | 'announcement'
   | 'subscription_expired';
 
 export type Notification = {
@@ -41,6 +43,8 @@ export const NOTIF_META: Record<NotificationType, { icon: IconName; color: strin
   // Amber, not red: the subscription still works when this one arrives.
   subscription_expiring: { icon: 'diamond', color: '#e3b341', dimColor: 'rgba(227,179,65,0.12)' },
   subscription_expired:  { icon: 'lock',    color: '#f85149', dimColor: 'rgba(248,81,73,0.12)' },
+  // Sent by an admin from Admin -> Announcement (v82).
+  announcement:          { icon: 'bell',    color: '#2E7DFF', dimColor: 'rgba(46,125,255,0.12)' },
 };
 
 export const NotificationService = {

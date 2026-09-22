@@ -8,7 +8,27 @@ import { PostService, ChannelPost } from '../lib/posts';
 import { NotificationService } from '../lib/notifications';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '../constants/theme';
 import { formatTimeAgo } from '../lib/storage';
-import { Icon } from '../components/Icon';
+import { Icon, type IconName } from '../components/Icon';
+import { ToolTile } from '../components/AdminUI';
+
+// Every admin tool, in one grid at the top of the panel. The client runs the
+// app from here, so nothing an admin can do should need hunting for.
+const TOOLS: { icon: IconName; label: string; hint: string; tint: string; href: string }[] = [
+  { icon: 'user',         label: 'Users',            hint: 'Premium, admins, uploads, bans',  tint: 'rgba(46,125,255,0.22)',  href: '/admin/users' },
+  { icon: 'check-circle', label: 'User approvals',   hint: 'Approve new accounts',             tint: 'rgba(46,212,122,0.2)',   href: '/admin/user-approvals' },
+  { icon: 'diamond',      label: 'Subscribers',      hint: 'Active, ending, expired',          tint: 'rgba(227,179,65,0.2)',   href: '/admin/subscribers' },
+  { icon: 'chart',        label: 'Payments',         hint: 'UPI, Razorpay, Sabpaisa',          tint: 'rgba(0,212,255,0.18)',   href: '/admin/payments' },
+  { icon: 'package',      label: 'Plans & prices',   hint: 'Names, prices, on sale',           tint: 'rgba(180,169,255,0.2)',  href: '/admin/plans' },
+  { icon: 'broadcast',    label: 'Channels',         hint: 'Edit, hide, suspend, delete',      tint: 'rgba(46,125,255,0.22)',  href: '/admin/channels' },
+  { icon: 'clipboard',    label: 'Pending channels', hint: 'New channels to review',           tint: 'rgba(255,179,71,0.2)',   href: '/admin/pending-channels' },
+  { icon: 'edit',         label: 'Pending content',  hint: 'Uploads to review',                tint: 'rgba(255,179,71,0.2)',   href: '/admin/pending-channel-content' },
+  { icon: 'film',         label: 'Content & access', hint: 'Publish, free/premium, edit',      tint: 'rgba(180,169,255,0.2)',  href: '/admin/content' },
+  { icon: 'upload',       label: 'Upload',           hint: 'Add videos to any channel',        tint: 'rgba(46,125,255,0.22)',  href: '/admin/upload' },
+  { icon: 'bell',         label: 'Announcement',     hint: 'Message all users',                tint: 'rgba(0,212,255,0.18)',   href: '/admin/broadcast' },
+  { icon: 'flag',         label: 'Reports',          hint: 'Reported content and users',       tint: 'rgba(255,77,109,0.2)',   href: '/admin/reports' },
+  { icon: 'chart',        label: 'Channel activity', hint: 'What is growing',                  tint: 'rgba(46,212,122,0.2)',   href: '/admin/channel-activity' },
+  { icon: 'history',      label: 'Audit log',        hint: 'Every admin action',               tint: 'rgba(159,176,201,0.18)', href: '/admin/audit' },
+];
 
 type PendingChannel = {
   id: string; name: string; description: string | null;
@@ -155,22 +175,29 @@ export default function AdminScreen() {
         <Text style={styles.headerTitle}>Admin Panel</Text>
         <View style={{ width: 36 }} />
       </View>
+      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.accent} />}>
+        <View style={styles.toolGrid}>
+          {TOOLS.map(t => (
+            <ToolTile key={t.href} icon={t.icon} label={t.label} hint={t.hint} tint={t.tint}
+              onPress={() => router.push(t.href as never)} />
+          ))}
+        </View>
+        <Text style={styles.queueLabel}>REVIEW QUEUE</Text>
       <View style={styles.summaryRow}>
-        <View style={styles.summaryItem}><Text style={styles.summaryVal}>{pendingChannels.length}</Text><Text style={styles.summaryLbl}>Channels</Text></View>
-        <View style={[styles.summaryItem, { borderLeftWidth: 0.5, borderLeftColor: Colors.border }]}><Text style={styles.summaryVal}>{pendingPosts.length}</Text><Text style={styles.summaryLbl}>Posts</Text></View>
-      </View>
-      <View style={styles.tabRow}>
-        {(['channels', 'posts'] as const).map(tab => (
-          <TouchableOpacity key={tab} style={[styles.tab, activeTab === tab && styles.tabActive]} onPress={() => setActiveTab(tab)}>
-            <Text style={[styles.tabTxt, activeTab === tab && styles.tabTxtActive]}>
-              {tab === 'channels' ? `Channels (${pendingChannels.length})` : `Posts (${pendingPosts.length})`}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-      {loading ? <ActivityIndicator color={Colors.accent} style={{ marginTop: 60 }} /> : (
-        <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.accent} />}>
+          <View style={styles.summaryItem}><Text style={styles.summaryVal}>{pendingChannels.length}</Text><Text style={styles.summaryLbl}>Channels</Text></View>
+          <View style={[styles.summaryItem, { borderLeftWidth: 0.5, borderLeftColor: Colors.border }]}><Text style={styles.summaryVal}>{pendingPosts.length}</Text><Text style={styles.summaryLbl}>Posts</Text></View>
+        </View>
+        <View style={styles.tabRow}>
+          {(['channels', 'posts'] as const).map(tab => (
+            <TouchableOpacity key={tab} style={[styles.tab, activeTab === tab && styles.tabActive]} onPress={() => setActiveTab(tab)}>
+              <Text style={[styles.tabTxt, activeTab === tab && styles.tabTxtActive]}>
+                {tab === 'channels' ? `Channels (${pendingChannels.length})` : `Posts (${pendingPosts.length})`}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        {loading ? <ActivityIndicator color={Colors.accent} style={{ marginTop: 40 }} /> : (<>
           {activeTab === 'channels'
             ? pendingChannels.length === 0
               ? <View style={styles.emptyState}><Icon name="check-circle" size={44} color={Colors.success} /><Text style={styles.emptyTitle}>All caught up</Text><Text style={styles.emptyDesc}>No channels waiting.</Text></View>
@@ -179,9 +206,9 @@ export default function AdminScreen() {
               ? <View style={styles.emptyState}><Icon name="check-circle" size={44} color={Colors.success} /><Text style={styles.emptyTitle}>All caught up</Text><Text style={styles.emptyDesc}>No posts waiting.</Text></View>
               : pendingPosts.map(post => <PostCard key={post.id} post={post} />)
           }
-          <View style={{ height: 32 }} />
-        </ScrollView>
-      )}
+        </>)}
+        <View style={{ height: 32 }} />
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -192,6 +219,8 @@ const styles = StyleSheet.create({
   backBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   backTxt: { fontSize: 26, color: Colors.accent, fontWeight: FontWeight.bold },
   headerTitle: { flex: 1, fontSize: FontSize.lg, fontWeight: FontWeight.extrabold, color: Colors.text, textAlign: 'center' },
+  toolGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingTop: Spacing.lg },
+  queueLabel: { color: Colors.textMuted, fontSize: FontSize.sm, fontWeight: FontWeight.semibold, letterSpacing: 0.6, marginLeft: Spacing.lg + 4, marginTop: Spacing.md },
   summaryRow: { flexDirection: 'row', margin: Spacing.lg, backgroundColor: Colors.card, borderRadius: Radius.xl, borderWidth: 0.5, borderColor: Colors.border },
   summaryItem: { flex: 1, alignItems: 'center', paddingVertical: Spacing.lg },
   summaryVal: { fontSize: FontSize.xxxl, fontWeight: FontWeight.extrabold, color: Colors.accent },
