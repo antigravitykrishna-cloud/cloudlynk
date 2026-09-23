@@ -105,6 +105,24 @@ Deno.serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } },
     );
 
+    // One purchase, one account. Without this, anyone holding a purchase
+    // token -- the buyer passing it around, or a modified app -- could call
+    // this function from any number of accounts, and each would be granted
+    // Premium (the upsert below would even move the token to the newest
+    // caller). The first account to verify a token owns it.
+    const { data: existing } = await supabaseAdmin
+      .from("iap_purchases")
+      .select("user_id")
+      .eq("purchase_token", purchaseToken)
+      .maybeSingle();
+    if (existing?.user_id && existing.user_id !== user.id) {
+      console.warn(`verify-play-receipt: token already belongs to another account (caller ${user.id})`);
+      return jsonResponse({
+        valid: false,
+        error: "This purchase is linked to a different Cloudlynk account. Sign in with the account you bought it on.",
+      }, 409);
+    }
+
     // Acknowledge BEFORE granting access is not required, but must happen
     // within 3 days of purchase regardless — do it here, at the one moment
     // we're guaranteed to see this purchase token for the first time.

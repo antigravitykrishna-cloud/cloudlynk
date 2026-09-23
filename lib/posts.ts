@@ -179,7 +179,10 @@ export const PostService = {
       .select('*, author:profiles!channel_posts_author_id_fkey(id, full_name, avatar_url)')
       .eq('channel_id', channelId)
       .eq('status', 'approved')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      // Newest 300 -- a channel page is rows of recent titles, and an
+      // unbounded read grows with the channel forever.
+      .limit(300);
     if (e1) throw e1;
 
     const { data: mine, error: e2 } = await supabase

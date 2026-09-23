@@ -106,11 +106,20 @@ export default function PremiumScreen() {
     showAlert('Success', "You're now on Premium!", [{ text: 'OK', onPress: goBack }]);
   };
 
-  const reportGatewayResult = async (status: OrderStatus) => {
+  // 'abandoned' = the person closed the checkout and the gateway has not
+  // confirmed anything. It is NOT 'failed': a UPI payment can still complete
+  // after the checkout closes, and the server grants Premium when it does, so
+  // telling them "no money was taken" could be false.
+  const reportGatewayResult = async (status: OrderStatus | 'abandoned') => {
     if (status === 'paid') return onPaid();
     fireHaptic(status === 'failed' ? 'error' : 'warning');
     if (status === 'failed') {
-      showAlert('Payment failed', 'No money was taken for this attempt. You can try again or pick another way to pay.');
+      showAlert('Payment failed', 'The payment did not go through. You can try again or pick another way to pay.');
+    } else if (status === 'abandoned') {
+      showAlert(
+        'Payment not completed',
+        'We have not received a payment. If money was deducted anyway, Premium switches on by itself within a few minutes -- you do not need to pay again.',
+      );
     } else {
       showAlert(
         'Waiting for confirmation',
@@ -168,8 +177,8 @@ export default function PremiumScreen() {
         // Without a checkout result the person most likely backed out, so do
         // not keep them waiting long -- but still ask, because a UPI payment
         // can go through even when the UPI app never reports back.
-        await reportGatewayResult(await waitForPayment(order.orderId, result ?? undefined, result ? 45_000 : 8_000)
-          .then(st => (st === 'pending' && !result ? 'failed' : st)));
+        const st = await waitForPayment(order.orderId, result ?? undefined, result ? 45_000 : 8_000);
+        await reportGatewayResult(st === 'pending' && !result ? 'abandoned' : st);
       } else {
         sabpaisaOrderId.current = order.orderId;
         setSabpaisaOrder(order);
@@ -190,7 +199,7 @@ export default function PremiumScreen() {
     setConfirming(true);
     try {
       const status = await waitForPayment(id, undefined, how === 'returned' ? 45_000 : 8_000);
-      await reportGatewayResult(status === 'pending' && how === 'closed' ? 'failed' : status);
+      await reportGatewayResult(status === 'pending' && how === 'closed' ? 'abandoned' : status);
     } finally {
       setConfirming(false);
     }

@@ -205,7 +205,9 @@ export const StorageService = {
       query = query.eq('category', category);
     }
 
-    const { data, error } = await query;
+    // Bounded: the Cloud tab shows the newest files; a very large library
+    // should not be pulled into memory in one request.
+    const { data, error } = await query.limit(500);
     if (error) throw error;
     return data ?? [];
   },

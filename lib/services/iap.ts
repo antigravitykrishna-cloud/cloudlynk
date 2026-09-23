@@ -246,9 +246,22 @@ export class GooglePlayIapService implements IIapService {
       return { success: false, planCode: claimed, purchaseToken, expiresAt: null, errorMessage: 'RECEIPT_VERIFIER_URL is not configured — set up the server-side Play receipt verifier before going live.' };
     }
     try {
+      // The verifier grants Premium to the signed-in caller, so it needs the
+      // session. This call used to send no Authorization header at all, and
+      // the function answered every real purchase with 401 -- money taken,
+      // nothing granted.
+      const { supabase } = require('../supabase');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        return { success: false, planCode: claimed, purchaseToken, expiresAt: null, errorMessage: 'Please sign in again, then use "Restore purchase".' };
+      }
       const res = await fetch(config.receiptVerifierUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+          apikey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '',
+        },
         // `planCode` is advisory — the server derives the real plan from
         // Google's record of the token and returns it as `json.planCode`.
         body: JSON.stringify({ purchaseToken, planCode, packageName: config.googlePlayPackageName }),

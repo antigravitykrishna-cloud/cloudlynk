@@ -122,8 +122,8 @@ android {
         // Play rejects any upload whose versionCode is not strictly greater
         // than the last one it accepted. Nothing has been uploaded yet, so 8
         // is a free choice; after the first upload this must only ever go up.
-        versionCode 12
-        versionName "0.7.5"
+        versionCode 13
+        versionName "0.7.6"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
 
