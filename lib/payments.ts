@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { Colors } from '../constants/theme';
+import { metaDeviceSignals } from './metaAds';
 
 // Razorpay (incl. its UPI app-list checkout) and Sabpaisa, from the app side.
 //
@@ -67,10 +68,13 @@ export async function getGatewayMethods(): Promise<GatewayMethod[]> {
   }
 }
 
-export function createGatewayOrder(
+export async function createGatewayOrder(
   planCode: string, method: GatewayMethod, externalTransactionToken?: string,
 ): Promise<GatewayOrder> {
-  return call<GatewayOrder>('create-order', { planCode, method, externalTransactionToken });
+  // Lets the server report the confirmed purchase to Meta against this phone
+  // (lib/metaAds.ts). null when ad measurement is off or not configured.
+  const meta = await metaDeviceSignals();
+  return call<GatewayOrder>('create-order', { planCode, method, externalTransactionToken, meta });
 }
 
 export async function verifyGatewayOrder(

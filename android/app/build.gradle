@@ -126,6 +126,14 @@ android {
         versionName "0.7.4"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
+
+        // Meta (Facebook) SDK for ad measurement. The IDs live in app.json
+        // `extra` (META_APP_ID / META_CLIENT_TOKEN) so the JS side and the
+        // native side read one source. Empty = the SDK is never started and
+        // the app sends nothing to Meta. See MainApplication.kt.
+        def appJsonExtra = new groovy.json.JsonSlurper().parse(rootProject.file('../app.json')).expo?.extra ?: [:]
+        buildConfigField "String", "META_APP_ID", "\"${appJsonExtra.META_APP_ID ?: ''}\""
+        buildConfigField "String", "META_CLIENT_TOKEN", "\"${appJsonExtra.META_CLIENT_TOKEN ?: ''}\""
     }
     signingConfigs {
         debug {

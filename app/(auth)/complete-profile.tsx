@@ -15,6 +15,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingVi
 import { showAlert } from '../../components/Feedback';
 import { Link } from 'expo-router';
 import { useState } from 'react';
+import { logRegistration } from '../../lib/metaAds';
 import { useAuth } from '../../hooks/useAuth';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '../../constants/theme';
 
@@ -48,6 +49,11 @@ export default function CompleteProfileScreen() {
     setLoading(true);
     try {
       await completeProfile(parsedBirthYear);
+      // A birth year is only asked once, on a brand-new account -- so this is
+      // a completed sign-up, not a returning user re-accepting new policies.
+      if (needsBirthYear) {
+        logRegistration(user?.app_metadata?.provider === 'google' ? 'google' : 'email');
+      }
       // No further navigation needed — RootLayout's redirect effect re-runs
       // once `profile` updates and sends this session on to /(tabs).
     } catch (err: any) {

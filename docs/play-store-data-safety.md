@@ -32,9 +32,11 @@ types?"
 | Personal info | **Other info** (birth year) | Yes | No | Required | 18+ age gate for content rating | `profiles.birth_year`, set once via `set_birth_year` (v51) |
 | Photos and videos | **Photos**, **Videos** | Yes | No | Optional | User's own cloud storage + channel content they publish | `files`, `channel_posts`, `channel_videos`, `stream_videos`, `profiles.avatar_url` |
 | Files and docs | **Files and docs** | Yes | No | Optional | The cloud-storage feature itself | `files` + `user-files` bucket |
-| App activity | **App interactions** | Yes | No | Optional | Watch history, resume position, view counts | `watch_history`, `channel_posts.view_count` |
-| Financial info | **Purchase history** | Yes | No | Optional | Granting and restoring the subscription | `iap_purchases`; token from Play Billing |
-| Device or other IDs | **Device or other IDs** | Yes | No | Optional | Push notifications only | `profiles.fcm_token` — an Expo push token ([lib/notifications.ts:156](../lib/notifications.ts:156)) |
+| App activity | **App interactions** | Yes | **Yes (Meta)** | Optional | Watch history, resume position, view counts; install / open / sign-up / checkout events sent to Meta for **Advertising or marketing** and **Analytics** (ad measurement), only when `META_APP_ID` is set and the user has not turned Ad measurement off | `watch_history`, `channel_posts.view_count`; Meta SDK ([lib/metaAds.ts](../lib/metaAds.ts)) |
+| Financial info | **Purchase history** | Yes | **Yes (Meta)** | Optional | Granting and restoring the subscription; purchase events (plan, amount) sent to Meta for **Advertising or marketing** (ad measurement) | `iap_purchases`, `payment_orders`; Play Billing; Meta SDK + Conversions API (`supabase/functions/_shared/meta-capi.ts`) |
+| Financial info | **Other financial info** (payment references) | Yes | No | Optional | UPI / card / net-banking orders through Razorpay and Sabpaisa (processors); card numbers and UPI PINs never reach us | `payment_orders` |
+| Personal info | **Email address** (hashed, purchases only) | — | **Yes (Meta)** | Optional | SHA-256 hash sent with gateway purchase events for ad measurement | Conversions API |
+| Device or other IDs | **Device or other IDs** | Yes | **Yes (Meta)** | Optional | Push notifications (Expo push token); **Advertising ID** and Meta anonymous ID for ad measurement (**Advertising or marketing**, **Analytics**) | `profiles.fcm_token`; `payment_orders.meta_device`; Meta SDK |
 
 **Ephemeral, so declared as not collected:** search terms. `lib/search.ts` runs
 `SELECT` queries against `channels` and `channel_posts` and persists nothing —
@@ -49,7 +51,6 @@ State **No** for all of these. Each was verified, not assumed:
 | Data type | Why "No" |
 |---|---|
 | **Location** (precise or approximate) | No location permission in the merged manifest. The optional geo-check Worker reads `request.cf.country` at Cloudflare's edge and stores nothing ([hooks/useGeoCheck.ts](../hooks/useGeoCheck.ts)); `GEO_CHECK_WORKER_URL` is currently empty in `app.json`, so it is not even called. |
-| **Advertising ID** | AdMob is linked but **no ad is ever rendered** (`lib/adsConfig.ts`), and `AD_ID` + the three `ACCESS_ADSERVICES_*` permissions are stripped from the merged manifest by `plugins/withRemoveAndroidPermissions.js`. **If ads are enabled later this answer must change to Yes.** |
 | **Crash logs / diagnostics** | Sentry is a code path only — `SENTRY_DSN` is empty in `app.json`, so `isSentryLive()` is false and nothing initialises. |
 | **Audio / voice** | `RECORD_AUDIO` removed; no recording API is called. |
 | **Camera capture** | `CAMERA` removed; only `launchImageLibraryAsync` is used (`lib/posts.ts`, `lib/channelVideos.ts`, `lib/storage.ts`). |
@@ -59,8 +60,16 @@ State **No** for all of these. Each was verified, not assumed:
 
 ## 3. Data sharing
 
-**Nothing is shared with third parties.** No analytics SDK, no ad network
-serving, no data broker, no advertising partner.
+**Shared with Meta (v0.7.5+), for ad measurement only** -- which Meta ads led to
+installs and purchases. App events (install, open, sign-up, checkout started,
+purchase), the advertising ID, Meta's anonymous app ID, and for gateway
+purchases a SHA-256 hash of the email. Never files, channel content or watch
+history. Off when `META_APP_ID` is empty (no SDK start) or when the user turns
+**Settings -> Ad measurement** off. No ads are shown in the app; no data broker.
+
+**Play Console also asks, separately:** "Does your app use advertising ID?" ->
+**Yes**, purpose **Analytics** and **Advertising or marketing**. The manifest
+declares `com.google.android.gms.permission.AD_ID` from v0.7.5.
 
 Processors (Play does not count these as "sharing" — they act on our
 instructions):
@@ -68,6 +77,7 @@ instructions):
 - **Supabase** — database, auth, storage, edge functions
 - **Cloudflare** — Stream (video), R2 (object storage)
 - **Google Play Billing** — payment processing; **we never see card details**
+- **Razorpay, Sabpaisa** — UPI / card / net-banking payment processing
 - **Expo push service** — delivery of the notification payload
 
 ---

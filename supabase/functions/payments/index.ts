@@ -38,6 +38,7 @@ import {
   sabpaisaDecrypt,
   sabpaisaEnquire,
 } from "../_shared/gateways.ts";
+import { cleanMetaDevice, metaConfigured, sendMetaPurchase, type MetaDevice } from "../_shared/meta-capi.ts";
 
 type Method = "upi" | "razorpay" | "sabpaisa";
 
@@ -55,6 +56,8 @@ interface Order {
   google_reported_at: string | null;
   entitlement_expires_at: string | null;
   paid_at: string | null;
+  meta_device: MetaDevice | null;
+  meta_sent_at: string | null;
 }
 
 function admin(): SupabaseClient {
@@ -112,7 +115,34 @@ async function markPaid(db: SupabaseClient, order: Order, paymentId: string, raw
   if (error) throw error;
   const fresh = (await loadOrder(db, order.id)) ?? order;
   await reportIfNeeded(db, fresh);
+  await reportToMeta(db, fresh);
   return expiresAt as string | null;
+}
+
+/** Tells Meta about a confirmed purchase (the client's Meta ads). Skipped
+ *  when the buyer turned ad measurement off (no meta_device on the order)
+ *  or Meta is not configured. Never blocks or undoes the grant. */
+async function reportToMeta(db: SupabaseClient, order: Order) {
+  if (order.status !== "paid" || order.meta_sent_at || !order.meta_device || !metaConfigured()) return;
+  try {
+    const { data: prof } = order.user_id
+      ? await db.from("profiles").select("email").eq("id", order.user_id).maybeSingle()
+      : { data: null };
+    await sendMetaPurchase({
+      orderId: order.id,
+      email: (prof as { email?: string } | null)?.email ?? null,
+      amountInr: order.amount_inr,
+      planCode: order.plan_code,
+      paidAt: order.paid_at ?? new Date().toISOString(),
+      device: order.meta_device,
+    });
+    await db.from("payment_orders").update({ meta_sent_at: new Date().toISOString(), meta_error: null }).eq("id", order.id);
+  } catch (err) {
+    console.error("payments: Meta report failed", order.id, err);
+    await db.from("payment_orders")
+      .update({ meta_error: String((err as Error)?.message ?? err).slice(0, 500) })
+      .eq("id", order.id);
+  }
 }
 
 async function reportIfNeeded(db: SupabaseClient, order: Order) {
@@ -209,6 +239,7 @@ async function handleCreateOrder(req: Request) {
     method,
     provider,
     external_transaction_token: externalTransactionToken,
+    meta_device: cleanMetaDevice(body?.meta),
   }).select("*").single();
   if (insErr || !inserted) {
     console.error("payments: insert failed", insErr);
@@ -268,6 +299,7 @@ async function handleVerify(req: Request) {
 
   if (order.status === "paid") {
     await reportIfNeeded(db, order);
+    await reportToMeta(db, order);
     return jsonResponse({ status: "paid", expiresAt: order.entitlement_expires_at });
   }
   if (order.status === "failed") return jsonResponse({ status: "failed" });

@@ -79,7 +79,7 @@ const MERGE_REMOVE_MARKER = [
   'android.permission.WRITE_EXTERNAL_STORAGE',
   'android.permission.CAMERA',
   'android.permission.RECORD_AUDIO',
-  'com.google.android.gms.permission.AD_ID',
+  // AD_ID is kept: the Meta SDK uses it for ad measurement (v0.7.5).
   'android.permission.ACCESS_ADSERVICES_AD_ID',
   'android.permission.ACCESS_ADSERVICES_ATTRIBUTION',
   'android.permission.ACCESS_ADSERVICES_TOPICS',

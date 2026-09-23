@@ -29,6 +29,7 @@ export interface AppConfig {
   geoCheckWorkerUrl: string;
   googleWebClientId: string;
   alternativeBilling: AlternativeBilling;
+  metaAppId: string;
   sentryDsn: string;
   supportEmail: string;
   privacyPolicyUrl: string;
@@ -59,6 +60,9 @@ export const config: AppConfig = {
   // webClientId. Setup steps are in DEPLOY.md §0.4.
   googleWebClientId: readEnv('GOOGLE_WEB_CLIENT_ID'),
   alternativeBilling: readEnv('ALTERNATIVE_BILLING', 'user_choice') as AlternativeBilling,
+  // Meta ad measurement -- lib/metaAds.ts. The native side reads the same
+  // value from app.json at build time (android/app/build.gradle).
+  metaAppId: readEnv('META_APP_ID'),
   sentryDsn: readEnv('SENTRY_DSN'),
   supportEmail: readEnv('SUPPORT_EMAIL', 'help.cupibs@gmail.com'),
   privacyPolicyUrl: readEnv('PRIVACY_POLICY_URL'),

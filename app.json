@@ -120,6 +120,8 @@
       "ADMOB_REWARDED_ID": "",
       "ADMOB_ENABLED": false,
       "SENTRY_DSN": "",
+      "META_APP_ID": "",
+      "META_CLIENT_TOKEN": "",
       "SUPPORT_EMAIL": "help.cupibs@gmail.com",
       "PRIVACY_POLICY_URL": "https://thecloudlynk.com/privacy-policy",
       "TERMS_URL": "https://thecloudlynk.com/terms",

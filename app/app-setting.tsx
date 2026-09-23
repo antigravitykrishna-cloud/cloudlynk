@@ -1,4 +1,6 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
+import { useEffect, useState } from 'react';
+import { getMetaMeasurement, metaConfigured, setMetaMeasurement } from '../lib/metaAds';
 import { showAlert } from '../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -16,6 +18,13 @@ type MenuRow = {
 export default function AppSettingScreen() {
   const router = useRouter();
   const { signOut } = useAuth();
+
+  // Ad measurement (lib/metaAds.ts). Only shown in builds that have a Meta
+  // app ID -- a switch for something the app does not do would be noise.
+  const showMeta = metaConfigured();
+  const [metaOn, setMetaOn] = useState(true);
+  useEffect(() => { if (showMeta) getMetaMeasurement().then(setMetaOn); }, [showMeta]);
+  const toggleMeta = (on: boolean) => { setMetaOn(on); setMetaMeasurement(on); };
 
   const handleSignOut = () => {
     showAlert('Sign out', 'Are you sure you want to sign out?', [
@@ -73,6 +82,24 @@ export default function AppSettingScreen() {
           ))}
         </View>
 
+        {showMeta && (
+          <View style={styles.menuGroup}>
+            <View style={[styles.menuRow, styles.menuRowLast]}>
+              <View style={styles.menuIcon}>
+                <Icon name="chart" size={17} color={Colors.brandBlue} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.menuLabel}>Ad measurement</Text>
+                <Text style={styles.menuHint}>
+                  Lets Meta know when an ad led to installing or buying, using this device's advertising ID. Turning it off stops that.
+                </Text>
+              </View>
+              <Switch value={metaOn} onValueChange={toggleMeta}
+                trackColor={{ false: Colors.borderStrong, true: Colors.brandBlue }} />
+            </View>
+          </View>
+        )}
+
         {/* Version info */}
         <View style={styles.versionBlock}>
           <Text style={styles.versionText}>Cloudlynk · v{Constants.expoConfig?.version ?? '0.0.0'}</Text>
@@ -108,6 +135,7 @@ const styles = StyleSheet.create({
   menuIcon: { width: 32, height: 32, borderRadius: 8, backgroundColor: '#182437', alignItems: 'center', justifyContent: 'center' },
   menuLabel: { flex: 1, fontSize: 14, fontWeight: '600', color: Colors.text },
   chevron: { fontSize: 18, color: Colors.textMuted },
+  menuHint: { fontSize: 12, color: Colors.textMuted, marginTop: 3, lineHeight: 16 },
   versionBlock: { alignItems: 'center', paddingVertical: 16 },
   versionText: { fontSize: 12, color: Colors.text, fontWeight: '700' },
   versionSub: { fontSize: 11, color: Colors.textMuted, fontWeight: '500', marginTop: 2 },

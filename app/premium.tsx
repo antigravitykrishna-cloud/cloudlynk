@@ -16,6 +16,7 @@ import {
 } from '../lib/payments';
 import { PaymentSheet, type PaymentChoice } from '../components/PaymentSheet';
 import { SabpaisaCheckout } from '../components/SabpaisaCheckout';
+import { logCheckoutStarted } from '../lib/metaAds';
 import { Icon } from '../components/Icon';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { PressScale, fireHaptic } from '../components/Press';
@@ -141,6 +142,7 @@ export default function PremiumScreen() {
 
   const handleProceed = async () => {
     if (!selectedPlan) return;
+    logCheckoutStarted(selectedPlan.code, selectedPlan.price_inr);
     if (config.alternativeBilling === 'test' && gatewayMethods.length > 0) {
       const order: PaymentChoice[] = ['upi', 'play', 'razorpay', 'sabpaisa'];
       setSheet({ choices: order.filter(c => c === 'play' || gatewayMethods.includes(c as GatewayMethod)) });
