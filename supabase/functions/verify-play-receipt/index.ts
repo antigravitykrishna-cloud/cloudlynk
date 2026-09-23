@@ -36,6 +36,7 @@ const EXPECTED_PRODUCT_ID = "cloudlynk_premium";
 // (see DEFAULT_PLANS in lib/services/iap.ts), but kept as an explicit map so
 // a future rename of one side doesn't silently mis-grant.
 const BASE_PLAN_ID_TO_PLAN_CODE: Record<string, string> = {
+  "trial-3d": "trial",
   "silver-7d": "silver-7d",
   "gold-1m": "gold-1m",
   "platinum-6m": "platinum-6m",

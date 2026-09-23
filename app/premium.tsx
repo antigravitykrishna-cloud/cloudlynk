@@ -329,42 +329,44 @@ export default function PremiumScreen() {
         {plansLoading ? (
           <ActivityIndicator size="large" color={Colors.brand} style={{ marginVertical: 40 }} />
         ) : (
-          // All four plans side by side rather than stacked.
-          //
-          // Stacked rows made the reader scroll to see the range, and price
-          // comparison is the whole decision on this screen — you cannot judge
-          // whether a year is worth it without the week next to it. Four
-          // columns fit a phone at this density, so the entire ladder is
-          // visible in one glance and the popular one can be marked in place.
-          <View style={styles.planRow}>
+          // One row per plan, radio style -- the same list the signed-out
+          // Profile shows (components/GuestPlans.tsx), so choosing a plan looks
+          // the same before and after signing in. Side-by-side tiles stopped
+          // fitting once the lineup grew to five plans.
+          <View style={styles.planList}>
             {(plans ?? []).map((plan, i) => {
               const isSelected = selectedPlanIndex === i;
               return (
                 <PressScale
                   key={plan.code}
-                  style={[styles.planTile, isSelected && styles.planTileSelected]}
+                  style={[styles.planRowItem, isSelected && styles.planRowItemSelected]}
                   onPress={() => { fireHaptic('selection'); setSelectedPlanIndex(i); }}
-                  scaleTo={0.94}
-                  accessibilityRole="button"
+                  scaleTo={0.98}
+                  accessibilityRole="radio"
                   accessibilityState={{ selected: isSelected }}
                   accessibilityLabel={`${plan.name}, ${plan.description}, ${plan.price_inr} rupees`}
                 >
-                  {plan.is_popular && (
-                    <View style={styles.popularTag}>
-                      <Text style={styles.popularTagText} numberOfLines={1}>POPULAR</Text>
+                  <View style={[styles.radio, isSelected && styles.radioSelected]}>
+                    {isSelected && <View style={styles.radioInner} />}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <Text style={styles.planName}>{plan.name}</Text>
+                      {plan.is_popular && (
+                        <View style={styles.popularBadge}>
+                          <Text style={styles.popularBadgeText} numberOfLines={1}>POPULAR</Text>
+                        </View>
+                      )}
                     </View>
-                  )}
-                  <Text style={[styles.tileTerm, isSelected && styles.tileTextSelected]} numberOfLines={1}>
-                    {plan.name}
-                  </Text>
-                  <Text style={[styles.tilePrice, isSelected && styles.tileTextSelected]} numberOfLines={1}>
-                    <Text style={styles.tileCurrency}>{'₹'}</Text>{plan.price_inr}
-                  </Text>
-                  <Text style={styles.tileDuration} numberOfLines={1}>
-                    {plan.duration_days >= 365 ? '1 year'
-                      : plan.duration_days >= 180 ? '6 months'
-                      : plan.duration_days >= 30 ? '1 month'
-                      : `${plan.duration_days} days`}
+                    <Text style={styles.planDuration}>
+                      {plan.duration_days >= 365 ? '1 year'
+                        : plan.duration_days >= 180 ? '6 months'
+                        : plan.duration_days >= 30 ? '1 month'
+                        : `${plan.duration_days} days`}
+                    </Text>
+                  </View>
+                  <Text style={styles.planPrice}>
+                    <Text style={styles.planPriceCurrency}>{'₹ '}</Text>{plan.price_inr}
                   </Text>
                 </PressScale>
               );
@@ -501,6 +503,13 @@ const styles = StyleSheet.create({
   // Four-up plan ladder. Equal flex so no plan looks favoured by width —
   // emphasis is carried by the POPULAR tag and the selected border, both of
   // which are deliberate, where a wider column would be accidental.
+  planList: { paddingHorizontal: 16, gap: 10 },
+  planRowItem: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    backgroundColor: Colors.card, borderRadius: Radius.lg,
+    borderWidth: 1.5, borderColor: Colors.border, paddingVertical: 16, paddingHorizontal: 16,
+  },
+  planRowItemSelected: { borderColor: Colors.brand, backgroundColor: Colors.accentOrangeDim },
   planRow: { flexDirection: 'row', paddingHorizontal: 16, gap: 8 },
   planTile: {
     flex: 1,
@@ -535,11 +544,11 @@ const styles = StyleSheet.create({
   radioSelected: { borderColor: Colors.brand },
   radioInner: { width: 12, height: 12, borderRadius: 6, backgroundColor: Colors.brand },
   planInfo: { flex: 1 },
-  planName: { fontSize: 14, fontWeight: '700', color: Colors.text },
-  planDuration: { fontSize: 12, color: Colors.textMuted, marginTop: 2 },
+  planName: { fontSize: 16, fontWeight: '700', color: Colors.text },
+  planDuration: { fontSize: 14, color: Colors.textSecondary, marginTop: 3 },
   planDescription: { fontSize: 11, color: Colors.textSecondary, marginTop: 2, fontWeight: '500' },
-  popularBadge: { alignSelf: 'flex-start', backgroundColor: Colors.brand, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, marginBottom: 4 },
-  popularBadgeText: { color: '#ffffff', fontSize: 11, fontWeight: '900', letterSpacing: 0.5 },
+  popularBadge: { backgroundColor: Colors.brand, paddingHorizontal: 6, paddingVertical: 2, borderRadius: Radius.xs },
+  popularBadgeText: { color: '#ffffff', fontSize: 9, fontWeight: '800', letterSpacing: 0.4 },
   planPriceWrap: { alignItems: 'flex-end' },
   planPrice: { fontSize: 20, fontWeight: '800', color: Colors.text },
   planPriceCurrency: { fontSize: 12, fontWeight: '700', color: Colors.text },

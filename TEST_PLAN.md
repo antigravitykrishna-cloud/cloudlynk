@@ -68,7 +68,7 @@ Do not file these; they are understood and tracked.
 Run only after `IAP_PROVIDER` is `google_play` and the four base plans are
 **Activated** in Play Console.
 
-1. Premium screen shows Silver ₹199 / Gold ₹259 / Platinum ₹599 / Diamond ₹999.
+1. Premium screen shows Trial ₹99 / Silver ₹149 / Gold ₹259 / Platinum ₹599 / Diamond ₹999.
 2. Buy the cheapest with a licence-tester account.
 3. **Expect:** a success haptic, then premium content plays.
 4. Confirm in Supabase: `plan_status = 'active'`, `plan_expires_at` set.

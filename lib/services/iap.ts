@@ -11,7 +11,9 @@ import { IIapService, IapProduct, PurchaseResult } from './types';
 // purchasePlan(). See BACKEND_REFERENCE.md "Payments — Google Play Billing".
 const PREMIUM_PRODUCT_ID = 'cloudlynk_premium';
 const DEFAULT_PLANS: IapProduct[] = [
-  { code: 'silver-7d', name: 'Silver', description: '7-day access', durationDays: 7, priceInr: 199, iapProductId: PREMIUM_PRODUCT_ID, basePlanId: 'silver-7d', isPopular: false, sortOrder: 1 },
+  // Play base plan 'trial-3d' must be PREPAID: Play cannot auto-renew every 3 days.
+  { code: 'trial', name: 'Trial', description: '3-day access', durationDays: 3, priceInr: 99, iapProductId: PREMIUM_PRODUCT_ID, basePlanId: 'trial-3d', isPopular: false, sortOrder: 0 },
+  { code: 'silver-7d', name: 'Silver', description: '7-day access', durationDays: 7, priceInr: 149, iapProductId: PREMIUM_PRODUCT_ID, basePlanId: 'silver-7d', isPopular: false, sortOrder: 1 },
   { code: 'gold-1m', name: 'Gold', description: '1-month access', durationDays: 30, priceInr: 259, iapProductId: PREMIUM_PRODUCT_ID, basePlanId: 'gold-1m', isPopular: true, sortOrder: 2 },
   { code: 'platinum-6m', name: 'Platinum', description: '6-month access', durationDays: 180, priceInr: 599, iapProductId: PREMIUM_PRODUCT_ID, basePlanId: 'platinum-6m', isPopular: false, sortOrder: 3 },
   { code: 'diamond-1y', name: 'Diamond', description: '1-year access', durationDays: 365, priceInr: 999, iapProductId: PREMIUM_PRODUCT_ID, basePlanId: 'diamond-1y', isPopular: false, sortOrder: 4 },

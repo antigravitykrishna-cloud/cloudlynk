@@ -133,7 +133,8 @@ Once the Console account exists:
 
 | Base plan ID | Billing period | Price | Type |
 |---|---|---|---|
-| `silver-7d` | 1 week | ₹199 | Auto-renewing |
+| `trial-3d` | 3 days | ₹99 | **Prepaid** (Play cannot auto-renew every 3 days) |
+| `silver-7d` | 1 week | ₹149 | Auto-renewing |
 | `gold-1m` | 1 month | ₹259 | Auto-renewing |
 | `platinum-6m` | 6 months | ₹599 | Auto-renewing |
 | `diamond-1y` | 1 year | ₹999 | Auto-renewing |
