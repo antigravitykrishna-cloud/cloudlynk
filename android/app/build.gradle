@@ -122,8 +122,8 @@ android {
         // Play rejects any upload whose versionCode is not strictly greater
         // than the last one it accepted. Nothing has been uploaded yet, so 8
         // is a free choice; after the first upload this must only ever go up.
-        versionCode 11
-        versionName "0.7.4"
+        versionCode 12
+        versionName "0.7.5"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
 
@@ -249,6 +249,10 @@ See android/gradle.properties.example.""")
 }
 
 dependencies {
+    // Meta SDK, used directly by MainApplication.kt to start ad measurement.
+    // react-native-fbsdk-next depends on it as `implementation`, which keeps
+    // it off this module's classpath; same version range as that library.
+    implementation "com.facebook.android:facebook-core:18.+"
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
 
