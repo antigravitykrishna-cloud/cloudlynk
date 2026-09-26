@@ -47,17 +47,10 @@ export function GuestPlans({
 } = {}) {
   const { data: plans, isLoading, isError, refetch } = useSubscriptionPlans();
 
-  const [selectedCode, setSelectedCode] = useState<string | null>(null);
-  const [sheetOpen, setSheetOpen] = useState(false);
-
   // Start on the plan marked popular, else the first -- so Next works
   // without a tap, and the default is the one the business wants to sell.
-  useEffect(() => {
-    if (selectedCode || !plans?.length) return;
-    setSelectedCode(
-      (plans.find(p => p.code === initialPlan) ?? plans.find(p => p.is_popular) ?? plans[0]).code,
-    );
-  }, [plans, selectedCode, initialPlan]);
+  const [selectedCode, setSelectedCode] = useDefaultPlan(plans, initialPlan);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   const selected: SubscriptionPlan | undefined = plans?.find(p => p.code === selectedCode);
 
@@ -94,64 +87,14 @@ export function GuestPlans({
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Animated.View entering={FadeInDown.duration(280)} style={styles.benefitsCard}>
-          <View style={styles.pill}><Text style={styles.pillText}>Premium</Text></View>
-          {BENEFITS.map(b => (
-            <View key={b} style={styles.benefitRow}>
-              <Icon name="check-circle" size={18} color={Colors.brandBlue} />
-              <Text style={styles.benefitText}>{b}</Text>
-            </View>
-          ))}
-        </Animated.View>
-
-        {isLoading ? (
-          <ActivityIndicator color={Colors.brandBlue} style={{ marginVertical: Spacing.xxxl }} />
-        ) : isError || !plans?.length ? (
-          <View style={styles.errorBox}>
-            <Text style={styles.errorText}>Couldn’t load the plans.</Text>
-            <TouchableOpacity onPress={() => refetch()} activeOpacity={0.7}>
-              <Text style={styles.retry}>Try again</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          plans.map((plan, i) => {
-            const isSelected = plan.code === selectedCode;
-            return (
-              <Animated.View key={plan.code} entering={FadeInDown.delay(60 + i * 50).duration(260)}>
-                <PressScale
-                  style={[styles.planRow, isSelected && styles.planRowSelected]}
-                  onPress={() => { fireHaptic('selection'); setSelectedCode(plan.code); }}
-                  scaleTo={0.98}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: isSelected }}
-                  accessibilityLabel={`${plan.name}, ${durationLabel(plan.duration_days)}, ${plan.price_inr} rupees`}
-                >
-                  <View style={[styles.radio, isSelected && styles.radioSelected]}>
-                    {isSelected && <View style={styles.radioDot} />}
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <View style={styles.nameRow}>
-                      <Text style={styles.planName}>{plan.name}</Text>
-                      {plan.is_popular && (
-                        <View style={styles.popularTag}>
-                          <Text style={styles.popularTagText}>POPULAR</Text>
-                        </View>
-                      )}
-                    </View>
-                    <Text style={styles.planDuration}>{durationLabel(plan.duration_days)}</Text>
-                  </View>
-                  <Text style={styles.price}>
-                    <Text style={styles.currency}>₹ </Text>{plan.price_inr}
-                  </Text>
-                </PressScale>
-              </Animated.View>
-            );
-          })
-        )}
-
-        <Text style={styles.footnote}>
-          Billed through Google Play. A free account includes 15 GB of storage.
-        </Text>
+        <PlanList
+          plans={plans}
+          isLoading={isLoading}
+          isError={isError}
+          refetch={refetch}
+          selectedCode={selectedCode}
+          onSelect={setSelectedCode}
+        />
       </ScrollView>
 
       <View style={styles.bottomBar}>
@@ -176,6 +119,101 @@ export function GuestPlans({
       />
     </View>
   );
+}
+
+/**
+ * The benefits card and the plan radio rows, with no header or button, so a
+ * screen can put it wherever it wants: the whole page for a guest
+ * (GuestPlans), or the top of Profile for a signed-in member without a plan.
+ */
+export function PlanList({
+  plans, isLoading, isError, refetch, selectedCode, onSelect,
+}: {
+  plans: SubscriptionPlan[] | undefined;
+  isLoading: boolean;
+  isError: boolean;
+  refetch: () => unknown;
+  selectedCode: string | null;
+  onSelect: (code: string) => void;
+}) {
+  const setSelectedCode = onSelect;
+  return (
+    <>
+    <Animated.View entering={FadeInDown.duration(280)} style={styles.benefitsCard}>
+      <View style={styles.pill}><Text style={styles.pillText}>Premium</Text></View>
+      {BENEFITS.map(b => (
+        <View key={b} style={styles.benefitRow}>
+          <Icon name="check-circle" size={18} color={Colors.brandBlue} />
+          <Text style={styles.benefitText}>{b}</Text>
+        </View>
+      ))}
+    </Animated.View>
+
+    {isLoading ? (
+      <ActivityIndicator color={Colors.brandBlue} style={{ marginVertical: Spacing.xxxl }} />
+    ) : isError || !plans?.length ? (
+      <View style={styles.errorBox}>
+        <Text style={styles.errorText}>Couldn’t load the plans.</Text>
+        <TouchableOpacity onPress={() => refetch()} activeOpacity={0.7}>
+          <Text style={styles.retry}>Try again</Text>
+        </TouchableOpacity>
+      </View>
+    ) : (
+      plans.map((plan, i) => {
+        const isSelected = plan.code === selectedCode;
+        return (
+          <Animated.View key={plan.code} entering={FadeInDown.delay(60 + i * 50).duration(260)}>
+            <PressScale
+              style={[styles.planRow, isSelected && styles.planRowSelected]}
+              onPress={() => { fireHaptic('selection'); setSelectedCode(plan.code); }}
+              scaleTo={0.98}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: isSelected }}
+              accessibilityLabel={`${plan.name}, ${durationLabel(plan.duration_days)}, ${plan.price_inr} rupees`}
+            >
+              <View style={[styles.radio, isSelected && styles.radioSelected]}>
+                {isSelected && <View style={styles.radioDot} />}
+              </View>
+              <View style={{ flex: 1 }}>
+                <View style={styles.nameRow}>
+                  <Text style={styles.planName}>{plan.name}</Text>
+                  {plan.is_popular && (
+                    <View style={styles.popularTag}>
+                      <Text style={styles.popularTagText}>POPULAR</Text>
+                    </View>
+                  )}
+                </View>
+                <Text style={styles.planDuration}>{durationLabel(plan.duration_days)}</Text>
+              </View>
+              <Text style={styles.price}>
+                <Text style={styles.currency}>₹ </Text>{plan.price_inr}
+              </Text>
+            </PressScale>
+          </Animated.View>
+        );
+      })
+    )}
+
+    <Text style={styles.footnote}>
+      Billed through Google Play. A free account includes 15 GB of storage.
+    </Text>
+    </>
+  );
+}
+
+/** Starts on the requested plan, else the popular one, else the first. */
+export function useDefaultPlan(
+  plans: SubscriptionPlan[] | undefined,
+  initialPlan?: string,
+): [string | null, (code: string) => void] {
+  const [selectedCode, setSelectedCode] = useState<string | null>(null);
+  useEffect(() => {
+    if (selectedCode || !plans?.length) return;
+    setSelectedCode(
+      (plans.find(p => p.code === initialPlan) ?? plans.find(p => p.is_popular) ?? plans[0]).code,
+    );
+  }, [plans, selectedCode, initialPlan]);
+  return [selectedCode, setSelectedCode];
 }
 
 const styles = StyleSheet.create({

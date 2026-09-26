@@ -179,6 +179,8 @@ export type Database = {
           community_guidelines_version: string | null;
           privacy_version: string | null;
           birth_year: number | null;
+          // v88: set by confirm_adult() -- the 18+ answer from the age gate.
+          adult_confirmed_at: string | null;
           // Added by supabase/migrations/20260905120000_v55_user_approval_gate.sql.
           // PRE-purchase vetting gate: 'pending' accounts keep a full free tier
           // but don't reach the subscribe flow. Never consulted after payment —

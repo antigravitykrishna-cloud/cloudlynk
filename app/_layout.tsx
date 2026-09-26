@@ -22,12 +22,15 @@ SplashScreen.preventAutoHideAsync();
 const services = createServices();
 
 export default function RootLayout() {
-  const { session, profile, profileChecked, loading } = useAuth();
+  const { session, profile, profileChecked, loading, isPaidUser, approvalStatus } = useAuth();
   const { isBlocked, country, loading: geoLoading } = useGeoCheck();
   const segments = useSegments();
   // Guards the one-shot cold-start redirect below. A ref, not state: flipping
   // it must not trigger another render of the routing effect.
   const didInitialGuestRoute = useRef(false);
+  // The plans page is opened once per app launch / sign-in for an account
+  // without a plan (see below).
+  const didShowPlans = useRef(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -61,6 +64,7 @@ export default function RootLayout() {
       // One-shot, so this only steers the FIRST routing decision. Without the
       // ref, a guest tapping the Cloud tab would be bounced straight back to
       // Explore and the other tabs would be unreachable.
+      didShowPlans.current = false;
       if (!inAuthGroup && !didInitialGuestRoute.current) {
         didInitialGuestRoute.current = true;
         router.replace('/(tabs)/explore');
@@ -108,8 +112,18 @@ export default function RootLayout() {
       // Signed in, profile complete, and out of the auth screens: the
       // destination has been reached, so it must not fire again.
       setPostLoginRoute(null);
+
+      // Until they subscribe, every launch and every sign-in opens the plans
+      // first. It is an ordinary screen the person can close -- the free
+      // tier stays reachable -- and it is skipped when they are already on
+      // it (a guest who picked a plan comes back to /premium). Rejected
+      // accounts cannot buy, so showing them plans would only frustrate.
+      if (!didShowPlans.current && !isPaidUser && approvalStatus !== 'rejected') {
+        didShowPlans.current = true;
+        if ((segments[0] as string) !== 'premium') router.push('/premium');
+      }
     }
-  }, [session, profile, profileChecked, loading, geoLoading, isBlocked, segments, router]);
+  }, [session, profile, profileChecked, loading, geoLoading, isBlocked, segments, router, isPaidUser, approvalStatus]);
 
   if (isBlocked && !geoLoading) {
     return (

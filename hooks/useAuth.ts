@@ -219,11 +219,15 @@ export function useAuth() {
   // calling it again threw before acceptTerms could run, stranding the
   // account on this screen with no way forward. Skip it in that case and
   // go straight to the acceptance, which is the part actually missing.
-  async function completeProfile(birthYear?: number) {
+  //
+  // v88: the 18+ answer comes from the age gate (confirm_adult), so a birth
+  // year is no longer asked for after sign-in.
+  async function completeProfile() {
     if (!user) throw new Error('Not authenticated');
-    if (!profile?.birth_year) {
-      if (!birthYear) throw new Error('Birth year is required.');
-      const { error } = await supabase.rpc('set_birth_year', { p_birth_year: birthYear });
+    const adultOnFile = !!profile?.adult_confirmed_at
+      || (!!profile?.birth_year && new Date().getFullYear() - profile.birth_year >= 18);
+    if (!adultOnFile) {
+      const { error } = await supabase.rpc('confirm_adult' as never);
       if (error) throw error;
     }
     await ComplianceService.acceptTerms();

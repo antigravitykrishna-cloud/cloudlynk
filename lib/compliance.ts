@@ -39,9 +39,13 @@ export const ComplianceService = {
     terms_version?: string | null;
     community_guidelines_version?: string | null;
     birth_year?: number | null;
+    adult_confirmed_at?: string | null;
   } | null): boolean {
     if (!profile) return false;
-    const isAdult = !!profile.birth_year && new Date().getFullYear() - profile.birth_year >= 18;
+    // v88: the age gate's "I am 18 or older" (adult_confirmed_at). Older
+    // accounts that typed a birth year at signup still count.
+    const isAdult = !!profile.adult_confirmed_at
+      || (!!profile.birth_year && new Date().getFullYear() - profile.birth_year >= 18);
     return (
       isAdult &&
       !!profile.terms_accepted_at &&

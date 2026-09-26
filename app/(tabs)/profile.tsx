@@ -5,7 +5,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { ChannelService } from '../../lib/channels';
-import { GuestPlans } from '../../components/GuestPlans';
+import { GuestPlans, PlanList, useDefaultPlan } from '../../components/GuestPlans';
+import { useSubscriptionPlans } from '../../lib/subscriptionService';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotifications } from '../../hooks/useNotifications';
 import { supabase } from '../../lib/supabase';
@@ -50,7 +51,11 @@ const SettingsRow = ({
 );
 
 export default function ProfileScreen() {
-  const { profile, user, signOut, refreshProfile, isAdmin, isPaidUser, planStatus } = useAuth();
+  const { profile, user, signOut, refreshProfile, isAdmin, isPaidUser, planStatus, approvalStatus } = useAuth();
+  // Until they subscribe, the plans are the first thing on Profile.
+  const showPlans = !!user?.id && !isPaidUser && approvalStatus !== 'rejected';
+  const plansQuery = useSubscriptionPlans();
+  const [pickedPlan, setPickedPlan] = useDefaultPlan(showPlans ? plansQuery.data : undefined);
   const { unreadCount } = useNotifications(user?.id);
   const router = useRouter();
   const [myChannels, setMyChannels] = useState<any[]>([]);
@@ -155,13 +160,37 @@ export default function ProfileScreen() {
 
         {/* White body */}
         <View style={styles.body}>
+          {showPlans && (
+            <View style={styles.plansBlock}>
+              <Text style={styles.plansTitle}>Choose your plan</Text>
+              <PlanList
+                plans={plansQuery.data}
+                isLoading={plansQuery.isLoading}
+                isError={plansQuery.isError}
+                refetch={plansQuery.refetch}
+                selectedCode={pickedPlan}
+                onSelect={setPickedPlan}
+              />
+              <TouchableOpacity
+                style={[styles.plansBtn, !pickedPlan && { opacity: 0.5 }]}
+                disabled={!pickedPlan}
+                onPress={() => router.push({ pathname: '/premium', params: { plan: pickedPlan ?? '' } } as never)}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.plansBtnText}>Continue</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           {/* Plan badge */}
+          {!showPlans && (
           <TouchableOpacity style={styles.planBadge} onPress={handlePlanPress} activeOpacity={0.7}>
             <Text style={styles.planBadgeText}>
               {'✦ '}{planName}{' PLAN'}
             </Text>
             {!isPaidUser && <Text style={styles.planUpgradeText}>{'  · Tap to Upgrade'}</Text>}
           </TouchableOpacity>
+          )}
 
           {/* Storage card */}
           <View style={styles.card}>
@@ -407,6 +436,10 @@ const styles = StyleSheet.create({
   headerActionBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
   headerActionIcon: { fontSize: 18 },
   body: { backgroundColor: Colors.bg, paddingTop: 16 },
+  plansBlock: { marginBottom: 20 },
+  plansTitle: { color: Colors.text, fontSize: 20, fontWeight: '800', marginBottom: 12 },
+  plansBtn: { backgroundColor: Colors.brandBlue, borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 4 },
+  plansBtnText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
   planBadge: { alignSelf: 'center', flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.brandLight, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: Colors.brand, marginBottom: 16 },
   planBadgeText: { fontSize: 13, fontWeight: '900', color: Colors.brand, letterSpacing: 0.5 },
   planUpgradeText: { fontSize: 12, color: Colors.textMuted, fontWeight: '600' },

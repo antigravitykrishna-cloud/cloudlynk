@@ -21,6 +21,15 @@ import { config } from '../lib/config';
 
 const STORAGE_KEY = 'cloudlynk.ageConfirmed.v1';
 
+/** Whether this device already answered "I am 18 or older" on the gate. */
+export async function hasConfirmedAgeOnDevice(): Promise<boolean> {
+  try {
+    return (await AsyncStorage.getItem(STORAGE_KEY)) === 'true';
+  } catch {
+    return false;
+  }
+}
+
 export function AgeGate({ enabled }: { enabled: boolean }) {
   // `null` means "not yet read from storage" — distinct from false, so the
   // modal does not flash open for a returning visitor while the async read is
@@ -92,6 +101,13 @@ export function AgeGate({ enabled }: { enabled: boolean }) {
                 Continuing means you accept our{' '}
                 <Text
                   style={styles.link}
+                  onPress={() => Linking.openURL(config.termsUrl).catch(() => {})}
+                >
+                  Terms
+                </Text>
+                ,{' '}
+                <Text
+                  style={styles.link}
                   onPress={() => Linking.openURL(config.communityGuidelinesUrl).catch(() => {})}
                 >
                   Community Guidelines
@@ -99,9 +115,9 @@ export function AgeGate({ enabled }: { enabled: boolean }) {
                 {' '}and{' '}
                 <Text
                   style={styles.link}
-                  onPress={() => Linking.openURL(config.termsUrl).catch(() => {})}
+                  onPress={() => Linking.openURL(config.privacyPolicyUrl).catch(() => {})}
                 >
-                  Terms
+                  Privacy Policy
                 </Text>
                 .
               </Text>
