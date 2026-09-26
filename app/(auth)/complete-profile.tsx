@@ -32,7 +32,9 @@ export default function CompleteProfileScreen() {
   async function finish() {
     await completeProfile();
     if (isNewAccount) {
-      logRegistration(user?.app_metadata?.provider === 'google' ? 'google' : 'email');
+      logRegistration(
+        user?.is_anonymous ? 'guest' : user?.app_metadata?.provider === 'google' ? 'google' : 'email',
+      );
     }
     // No navigation: RootLayout's redirect re-runs once `profile` updates.
   }

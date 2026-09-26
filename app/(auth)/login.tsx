@@ -17,13 +17,12 @@ import { setPostLoginRoute } from '../../lib/postLogin';
 //
 // Three things this screen deliberately does NOT do:
 //
-//   * Guest is not Supabase anonymous auth. It simply enters the app with no
-//     session, which is what "guest" has meant since v61 and what the whole
-//     anon RLS layer (channel_posts_select_anon, the column grant that
-//     withholds video_url) is built around. signInAnonymously would hand a
-//     guest the `authenticated` role and a profile row, silently promoting
-//     them past every policy written for anon — a security change wearing a
-//     login button's clothes.
+//   * v89: "Continue as guest" creates a guest ACCOUNT (Supabase anonymous
+//     sign-in) with its own id, so a guest can join channels and buy a plan.
+//     That hands them the `authenticated` role, so the v89 migration blocks
+//     uploads and publishing for guests at the database, and they go through
+//     admin approval like everyone else. Saving the account later (Google or
+//     email, app/save-account.tsx) keeps the same id.
 //
 //   * It does not collect a name. handle_new_user is happy with none, and
 //     nothing in the app requires one.
@@ -41,7 +40,7 @@ const APP_VERSION = Constants.expoConfig?.version ?? '0.0.0';
 type Mode = 'choose' | 'email' | 'code';
 
 export default function LoginScreen() {
-  const { sendEmailCode, verifyEmailCode, signInWithGoogle } = useAuth();
+  const { sendEmailCode, verifyEmailCode, signInWithGoogle, signInAsGuest } = useAuth();
   const router = useRouter();
 
   const [mode, setMode] = useState<Mode>('choose');
@@ -51,15 +50,18 @@ export default function LoginScreen() {
 
   const googleAvailable = isGoogleAuthLive();
 
-  function continueAsGuest() {
+  async function continueAsGuest() {
     setBusy('guest');
-    // Choosing guest abandons whatever sign-in was for, e.g. a plan a guest
-    // tapped on Profile. Drop it so a later sign-in does not replay it.
-    setPostLoginRoute(null);
-    // No await and no network call — there is nothing to sign in to. Straight
-    // to the content surface, same destination app/_layout.tsx sends a
-    // session-less launch to.
-    router.replace('/(tabs)/explore');
+    try {
+      // Creates the guest id. Routing is the auth listener's job, as for the
+      // other sign-ins; a plan picked before signing in is kept
+      // (lib/postLogin.ts), so the guest lands back on it.
+      await signInAsGuest();
+    } catch (err: any) {
+      showAlert('Could not continue as guest', err?.message ?? 'Please try again.');
+    } finally {
+      setBusy(null);
+    }
   }
 
   async function handleGoogle() {
@@ -139,10 +141,14 @@ export default function LoginScreen() {
                 disabled={busy !== null}
                 activeOpacity={0.85}
               >
-                <Icon name="compass" size={18} color="#FFFFFF" />
-                <Text style={styles.primaryBtnText}>Continue as guest</Text>
+                {busy === 'guest'
+                  ? <ActivityIndicator color="#FFFFFF" />
+                  : <>
+                      <Icon name="compass" size={18} color="#FFFFFF" />
+                      <Text style={styles.primaryBtnText}>Continue as guest</Text>
+                    </>}
               </TouchableOpacity>
-              <Text style={styles.helper}>Browse channels and free content. No account needed.</Text>
+              <Text style={styles.helper}>We create a guest ID for you. Save it later with Google or email.</Text>
 
               {googleAvailable && (
                 <TouchableOpacity

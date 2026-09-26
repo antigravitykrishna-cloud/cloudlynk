@@ -39,7 +39,7 @@ const BENEFITS = [
 
 export default function PremiumScreen() {
   const router = useRouter();
-  const { user, isActive, planStatus, isApproved, approvalStatus, refreshProfile } = useAuth();
+  const { user, isActive, planStatus, isApproved, approvalStatus, refreshProfile, isGuest } = useAuth();
   const { data: plans, isLoading: plansLoading } = useSubscriptionPlans();
 
   const [selectedPlanIndex, setSelectedPlanIndex] = useState(2);
@@ -103,6 +103,12 @@ export default function PremiumScreen() {
     // the app; it should be felt as well as read.
     fireHaptic('success');
     await refreshProfile();
+    if (isGuest) {
+      // v89: a plan on a guest account is one uninstall away from being
+      // lost. Saving the account is the very next thing they see.
+      router.replace({ pathname: '/save-account', params: { reason: 'purchase' } } as never);
+      return;
+    }
     showAlert('Success', "You're now on Premium!", [{ text: 'OK', onPress: goBack }]);
   };
 

@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import { GuestPrompt } from '../../components/GuestPrompt';
 import { useAuth } from '../../hooks/useAuth';
+import { promptSaveAccount } from '../../lib/guest';
 import { useFiles } from '../../hooks/useFiles';
 import { Colors } from '../../constants/theme';
 import { formatBytes, formatTimeAgo, CATEGORY_ICONS, CATEGORY_DIM, CATEGORY_COLORS } from '../../lib/storage';
@@ -21,7 +22,7 @@ const CATEGORIES: { key: string; label: string; icon: IconName }[] = [
 ];
 
 export default function CloudScreen() {
-  const { user } = useAuth();
+  const { user, isGuest } = useAuth();
   const { files, activeTransfers, loadFiles, uploadImage, uploadDocument, deleteFile, createShareableLink } = useFiles(user?.id);
   const router = useRouter();
 
@@ -196,6 +197,7 @@ export default function CloudScreen() {
       <TouchableOpacity
         style={styles.fab}
         onPress={() => {
+          if (isGuest) { promptSaveAccount(router); return; }
           showAlert('Upload', 'What would you like to upload?', [
             { text: 'Photo / Video', onPress: () => uploadImage() },
             { text: 'Document', onPress: () => uploadDocument() },

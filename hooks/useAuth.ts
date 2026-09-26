@@ -179,7 +179,51 @@ export function useAuth() {
   // without the native package installed still runs: this is dead code until
   // GOOGLE_WEB_CLIENT_ID is set, and a top-level import would crash the whole
   // auth screen at load time in Expo Go or any build predating the config.
-  async function signInWithGoogle() {
+  // ── Guest (v89) ──────────────────────────────────────────────
+  //
+  // A real, anonymous Supabase account: its own id, so a guest can join
+  // channels and buy a plan. The database blocks uploads and publishing for
+  // it (v89 migration). Linking Google or an email later keeps the same id,
+  // so nothing -- plan, channels -- is lost.
+  async function signInAsGuest() {
+    const { error } = await supabase.auth.signInAnonymously();
+    if (error) throw error;
+  }
+
+  /**
+   * Step 1 of saving a guest account with an email: sends a 6-digit code.
+   * Returns true when no code is needed -- with "Confirm email" off in the
+   * Supabase dashboard, a guest's email is attached immediately.
+   */
+  async function linkEmailStart(email: string): Promise<boolean> {
+    const addr = email.trim().toLowerCase();
+    const { data, error } = await supabase.auth.updateUser({ email: addr });
+    if (error) throw error;
+    const linked = !data.user?.is_anonymous && data.user?.email?.toLowerCase() === addr;
+    if (linked && user) await fetchProfile(user.id, true);
+    return linked;
+  }
+
+  /** Step 2: the code from the email. The account stops being a guest. */
+  async function linkEmailVerify(email: string, code: string) {
+    const { error } = await supabase.auth.verifyOtp({
+      email: email.trim(),
+      token: code.trim(),
+      type: 'email_change',
+    });
+    if (error) throw error;
+    if (user) await fetchProfile(user.id, true);
+  }
+
+  /** Saves a guest account by linking the person's Google account to it. */
+  async function linkGoogle() {
+    const idToken = await googleIdToken();
+    const { error } = await supabase.auth.linkIdentity({ provider: 'google', token: idToken });
+    if (error) throw error;
+    if (user) await fetchProfile(user.id, true);
+  }
+
+  async function googleIdToken(): Promise<string> {
     if (!isGoogleAuthLive()) {
       throw new Error('Google sign-in is not configured in this build.');
     }
@@ -200,7 +244,11 @@ export function useAuth() {
     // that a routine dependency bump would break.
     const idToken: string | undefined = result?.data?.idToken ?? result?.idToken;
     if (!idToken) throw new Error('Google did not return an ID token.');
+    return idToken;
+  }
 
+  async function signInWithGoogle() {
+    const idToken = await googleIdToken();
     const { error } = await supabase.auth.signInWithIdToken({
       provider: 'google',
       token: idToken,
@@ -362,6 +410,11 @@ export function useAuth() {
     sendEmailCode,
     verifyEmailCode,
     signInWithGoogle,
+    signInAsGuest,
+    linkEmailStart,
+    linkEmailVerify,
+    linkGoogle,
+    isGuest: !!user?.is_anonymous,
     signUp,
     completeProfile,
     signOut,

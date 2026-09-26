@@ -1,4 +1,7 @@
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Pressable } from 'react-native';
+import { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Pressable, ActivityIndicator } from 'react-native';
+import { useAuth } from '../hooks/useAuth';
+import { showAlert } from './Feedback';
 import { useRouter, type Href } from 'expo-router';
 import Animated, { FadeIn, SlideInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -29,11 +32,28 @@ export function LoginSheet({
 }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { signInAsGuest } = useAuth();
+  const [guestBusy, setGuestBusy] = useState(false);
 
   const signIn = () => {
     onClose();
     setPostLoginRoute(returnTo);
     router.push('/(auth)/login');
+  };
+
+  // v89: a guest ID on the spot, then straight back to what they were doing.
+  const continueAsGuest = async () => {
+    setGuestBusy(true);
+    setPostLoginRoute(returnTo);
+    try {
+      await signInAsGuest();
+      onClose();
+    } catch (err: any) {
+      setPostLoginRoute(null);
+      showAlert('Could not continue as guest', err?.message ?? 'Please try again.');
+    } finally {
+      setGuestBusy(false);
+    }
   };
 
   return (
@@ -49,6 +69,16 @@ export function LoginSheet({
           <Text style={styles.text}>{message}</Text>
           <PressScale style={styles.btn} onPress={signIn} haptic="light" accessibilityRole="button">
             <Text style={styles.btnText}>Sign in</Text>
+          </PressScale>
+          <PressScale
+            style={styles.guestBtn}
+            onPress={continueAsGuest}
+            disabled={guestBusy}
+            accessibilityRole="button"
+          >
+            {guestBusy
+              ? <ActivityIndicator color={Colors.text} />
+              : <Text style={styles.guestBtnText}>Continue as guest</Text>}
           </PressScale>
           <TouchableOpacity onPress={onClose} activeOpacity={0.7} style={styles.notNow}>
             <Text style={styles.notNowText}>Not now</Text>
@@ -76,6 +106,12 @@ const styles = StyleSheet.create({
     paddingVertical: 16, alignItems: 'center', marginTop: Spacing.xl,
   },
   btnText: { color: '#FFFFFF', fontSize: FontSize.lg, fontWeight: FontWeight.bold, letterSpacing: 0.2 },
+  guestBtn: {
+    alignSelf: 'stretch', backgroundColor: Colors.surfaceElevated, borderRadius: Radius.lg,
+    borderWidth: 1, borderColor: Colors.border,
+    paddingVertical: 15, alignItems: 'center', marginTop: Spacing.sm,
+  },
+  guestBtnText: { color: Colors.text, fontSize: FontSize.lg, fontWeight: FontWeight.semibold },
   notNow: { paddingVertical: Spacing.md, marginTop: Spacing.xs },
   notNowText: { color: Colors.textSecondary, fontSize: FontSize.subhead, fontWeight: FontWeight.semibold },
 });

@@ -7,6 +7,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { ChannelService } from '../../lib/channels';
 import { GuestPlans, PlanList, useDefaultPlan } from '../../components/GuestPlans';
 import { useSubscriptionPlans } from '../../lib/subscriptionService';
+import { promptSaveAccount } from '../../lib/guest';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotifications } from '../../hooks/useNotifications';
 import { supabase } from '../../lib/supabase';
@@ -51,7 +52,7 @@ const SettingsRow = ({
 );
 
 export default function ProfileScreen() {
-  const { profile, user, signOut, refreshProfile, isAdmin, isPaidUser, planStatus, approvalStatus } = useAuth();
+  const { profile, user, signOut, refreshProfile, isAdmin, isPaidUser, planStatus, approvalStatus, isGuest } = useAuth();
   // Until they subscribe, the plans are the first thing on Profile.
   const showPlans = !!user?.id && !isPaidUser && approvalStatus !== 'rejected';
   const plansQuery = useSubscriptionPlans();
@@ -95,6 +96,19 @@ export default function ProfileScreen() {
   const planName = (planStatus ?? 'free').toUpperCase();
 
   const handleSignOut = () => {
+    if (isGuest) {
+      // A guest cannot sign back in. Signing out deletes nothing on the
+      // server, but the person can never reach this account again.
+      showAlert(
+        'You will lose this guest account',
+        'Guest accounts cannot be signed back into. Anything on it, including a plan, will be lost. Save your account first.',
+        [
+          { text: 'Save account', style: 'cancel', onPress: () => router.push('/save-account' as never) },
+          { text: 'Sign out anyway', style: 'destructive', onPress: signOut },
+        ],
+      );
+      return;
+    }
     showAlert('Sign out', 'Are you sure you want to sign out?', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Sign out', style: 'destructive', onPress: signOut },
@@ -139,7 +153,7 @@ export default function ProfileScreen() {
             </View>
           </View>
           <Text style={styles.userName}>{profile?.full_name ?? 'User'}</Text>
-          <Text style={styles.userEmail}>{user?.email ?? ''}</Text>
+          <Text style={styles.userEmail}>{isGuest ? 'Guest account · not saved' : (user?.email ?? '')}</Text>
           <View style={styles.headerActions}>
             <TouchableOpacity
               style={styles.headerActionBtn}
@@ -160,6 +174,25 @@ export default function ProfileScreen() {
 
         {/* White body */}
         <View style={styles.body}>
+          {isGuest && (
+            <TouchableOpacity
+              style={styles.saveBanner}
+              onPress={() => router.push('/save-account' as never)}
+              activeOpacity={0.85}
+            >
+              <Icon name="lock" size={20} color="#FFFFFF" />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.saveBannerTitle}>Save your account</Text>
+                <Text style={styles.saveBannerText}>
+                  {isPaidUser
+                    ? 'Your plan is on a guest account. Save it so you never lose it.'
+                    : 'Guest accounts are lost if you uninstall or change phones.'}
+                </Text>
+              </View>
+              <Text style={styles.saveBannerChevron}>›</Text>
+            </TouchableOpacity>
+          )}
+
           {showPlans && (
             <View style={styles.plansBlock}>
               <Text style={styles.plansTitle}>Choose your plan</Text>
@@ -214,7 +247,10 @@ export default function ProfileScreen() {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>My Channels</Text>
-              <TouchableOpacity onPress={() => router.push('/create-content')} activeOpacity={0.7}>
+              <TouchableOpacity
+                onPress={() => (isGuest ? promptSaveAccount(router, 'create channels') : router.push('/create-content'))}
+                activeOpacity={0.7}
+              >
                 <Text style={styles.addChannelText}>+ Add Channel</Text>
               </TouchableOpacity>
             </View>
@@ -437,6 +473,13 @@ const styles = StyleSheet.create({
   headerActionIcon: { fontSize: 18 },
   body: { backgroundColor: Colors.bg, paddingTop: 16 },
   plansBlock: { marginBottom: 20 },
+  saveBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: Colors.brandBlue,
+    borderRadius: 16, padding: 16, marginBottom: 20,
+  },
+  saveBannerTitle: { color: '#FFFFFF', fontSize: 16, fontWeight: '800' },
+  saveBannerText: { color: 'rgba(255,255,255,0.9)', fontSize: 13, marginTop: 2, lineHeight: 18 },
+  saveBannerChevron: { color: '#FFFFFF', fontSize: 28, fontWeight: '300' },
   plansTitle: { color: Colors.text, fontSize: 20, fontWeight: '800', marginBottom: 12 },
   plansBtn: { backgroundColor: Colors.brandBlue, borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 4 },
   plansBtnText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },

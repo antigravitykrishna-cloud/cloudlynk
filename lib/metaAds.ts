@@ -64,7 +64,7 @@ export async function setMetaMeasurement(on: boolean): Promise<void> {
 }
 
 /** A new account finished sign-up (after the age / policy step). */
-export async function logRegistration(method: 'email' | 'google'): Promise<void> {
+export async function logRegistration(method: 'email' | 'google' | 'guest'): Promise<void> {
   if (!(await allowed())) return;
   try {
     const { AppEventsLogger } = sdk();

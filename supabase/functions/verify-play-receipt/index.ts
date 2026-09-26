@@ -116,11 +116,34 @@ Deno.serve(async (req) => {
       .eq("purchase_token", purchaseToken)
       .maybeSingle();
     if (existing?.user_id && existing.user_id !== user.id) {
-      console.warn(`verify-play-receipt: token already belongs to another account (caller ${user.id})`);
-      return jsonResponse({
-        valid: false,
-        error: "This purchase is linked to a different Cloudlynk account. Sign in with the account you bought it on.",
-      }, 409);
+      // Exception: the purchase was made on a GUEST account (v89). A guest
+      // cannot sign back in after reinstalling or clearing the app, so
+      // without this their subscription would be stranded on an account
+      // nobody can reach. Only someone signed in to the buying Google Play
+      // account can hand us this token, and the purchase MOVES (the old
+      // guest loses it), so it is still one purchase, one account.
+      const { data: owner } = await supabaseAdmin
+        .from("profiles")
+        .select("is_guest")
+        .eq("id", existing.user_id)
+        .maybeSingle();
+      if (!owner?.is_guest) {
+        console.warn(`verify-play-receipt: token already belongs to another account (caller ${user.id})`);
+        return jsonResponse({
+          valid: false,
+          error: "This purchase is linked to a different Cloudlynk account. Sign in with the account you bought it on.",
+        }, 409);
+      }
+      console.log(`verify-play-receipt: moving purchase from guest ${existing.user_id} to ${user.id}`);
+      const { error: revokeErr } = await supabaseAdmin.rpc("apply_play_entitlement", {
+        p_user_id: existing.user_id,
+        p_plan_status: "free",
+        p_expires_at: null,
+      });
+      if (revokeErr) {
+        console.error("verify-play-receipt: could not revoke the old guest:", revokeErr.message);
+        return jsonResponse({ valid: false, error: "Could not move this purchase. Please try again." }, 500);
+      }
     }
 
     // Acknowledge BEFORE granting access is not required, but must happen
