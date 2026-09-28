@@ -45,11 +45,8 @@ export default function EditProfileScreen() {
     .split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
   const pickAvatar = async () => {
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) {
-      showAlert('Permission needed', 'Allow photo access to choose a profile picture.');
-      return;
-    }
+    // The system photo picker needs no media permission (Play's Photo and
+    // Video Permissions policy), so none is requested.
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,

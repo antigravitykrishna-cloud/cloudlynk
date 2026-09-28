@@ -22,7 +22,7 @@ SplashScreen.preventAutoHideAsync();
 const services = createServices();
 
 export default function RootLayout() {
-  const { session, profile, profileChecked, loading, isPaidUser, approvalStatus } = useAuth();
+  const { session, profile, profileChecked, loading, isPaidUser, approvalStatus, isGuest } = useAuth();
   const { isBlocked, country, loading: geoLoading } = useGeoCheck();
   const segments = useSegments();
   // Guards the one-shot cold-start redirect below. A ref, not state: flipping
@@ -118,12 +118,16 @@ export default function RootLayout() {
       // tier stays reachable -- and it is skipped when they are already on
       // it (a guest who picked a plan comes back to /premium). Rejected
       // accounts cannot buy, so showing them plans would only frustrate.
-      if (!didShowPlans.current && !isPaidUser && approvalStatus !== 'rejected') {
+      // Not while an admin still has to approve the account either: it could
+      // only show "Awaiting admin approval" on every launch. Guests are
+      // 'pending' too but still get it -- saving the account is their step.
+      const waitingForApproval = approvalStatus === 'pending' && !isGuest;
+      if (!didShowPlans.current && !isPaidUser && approvalStatus !== 'rejected' && !waitingForApproval) {
         didShowPlans.current = true;
         if ((segments[0] as string) !== 'premium') router.push('/premium');
       }
     }
-  }, [session, profile, profileChecked, loading, geoLoading, isBlocked, segments, router, isPaidUser, approvalStatus]);
+  }, [session, profile, profileChecked, loading, geoLoading, isBlocked, segments, router, isPaidUser, approvalStatus, isGuest]);
 
   if (isBlocked && !geoLoading) {
     return (

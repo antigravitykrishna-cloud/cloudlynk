@@ -2,7 +2,7 @@
   "expo": {
     "name": "Cloudlynk",
     "slug": "cloudlynk",
-    "version": "0.7.10",
+    "version": "0.7.11",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "scheme": "cloudlynk",
@@ -30,13 +30,10 @@
         "backgroundColor": "#0B1220"
       },
       "package": "com.cloudlynk.app",
-      "versionCode": 17,
+      "versionCode": 18,
       "permissions": [
-        "android.permission.READ_MEDIA_IMAGES",
-        "android.permission.READ_MEDIA_VIDEO",
         "android.permission.INTERNET",
         "android.permission.ACCESS_NETWORK_STATE",
-        "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
         "com.android.vending.BILLING"
       ],
       "intentFilters": [
@@ -60,7 +57,8 @@
             "DEFAULT"
           ]
         }
-      ]
+      ],
+      "allowBackup": false
     },
     "web": {
       "bundler": "metro",
@@ -79,32 +77,13 @@
         }
       ],
       [
-        "expo-media-library",
-        {
-          "photosPermission": "Allow Cloudlynk to access your photos.",
-          "savePhotosPermission": "Allow Cloudlynk to save photos.",
-          "isAccessMediaLocationEnabled": false,
-          "granularPermissions": [
-            "photo",
-            "video"
-          ]
-        }
-      ],
-      [
         "expo-font",
         {
           "fonts": []
         }
       ],
       "expo-video",
-      "./plugins/withRemoveAndroidPermissions.js",
-      [
-        "react-native-google-mobile-ads",
-        {
-          "androidAppId": "ca-app-pub-3940256099942544~3347511713",
-          "iosAppId": "ca-app-pub-3940256099942544~1458002511"
-        }
-      ]
+      "./plugins/withRemoveAndroidPermissions.js"
     ],
     "experiments": {
       "typedRoutes": true

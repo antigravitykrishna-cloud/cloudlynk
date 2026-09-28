@@ -286,8 +286,12 @@ export default function PremiumScreen() {
   // approval and wondering whether it is worth waiting for.
   //
   // Everyone sees the benefits and the four prices. Only the button changes.
-  const gate: 'guest' | 'pending' | 'rejected' | null =
+  // v92: a guest ACCOUNT saves it (Google/email) before paying -- a plan on
+  // a guest account could not be watched and would be lost on uninstall.
+  // The database refuses a guest's payment order too.
+  const gate: 'guest' | 'save' | 'pending' | 'rejected' | null =
     !user ? 'guest'
+    : isGuest ? 'save'
     : approvalStatus === 'rejected' ? 'rejected'
     : !isApproved ? 'pending'
     : null;
@@ -310,12 +314,15 @@ export default function PremiumScreen() {
           <View style={[styles.gateBanner, gate === 'rejected' && styles.gateBannerMuted]}>
             <Text style={styles.gateBannerTitle}>
               {gate === 'guest' ? 'Create a free account to subscribe'
+               : gate === 'save' ? 'Save your account to subscribe'
                : gate === 'rejected' ? 'Premium is not available for this account'
                : 'Your account is being reviewed'}
             </Text>
             <Text style={styles.gateBannerText}>
               {gate === 'guest'
                 ? "Here's everything Premium includes. Making an account is free and takes a moment."
+                : gate === 'save'
+                ? 'You are using a guest ID. Save it with Google or email first, so your plan is never lost if you change phones or reinstall.'
                 : gate === 'rejected'
                 ? 'You can keep using Cloudlynk’s free features as normal. Contact support if you think this is a mistake.'
                 : 'An admin approves new accounts before they can subscribe. You’ll be notified once that’s done — everything else in Cloudlynk keeps working in the meantime.'}
@@ -403,7 +410,12 @@ export default function PremiumScreen() {
           // The one-tap chooser, not the old password form — see the note in
           // app/(tabs)/explore.tsx. A guest here is mid-purchase, which is the
           // worst possible moment to ask for a password they have to invent.
-          onPress={gate === 'guest' ? signInForPlan : handleProceed}
+          onPress={
+            gate === 'guest' ? signInForPlan
+            : gate === 'save'
+              ? () => router.push({ pathname: '/save-account', params: { reason: 'subscribe' } } as never)
+              : handleProceed
+          }
           disabled={gate === 'pending' || gate === 'rejected' || plansLoading || (!gate && !selectedPlan) || purchasing}
           activeOpacity={0.8}
         >
@@ -415,6 +427,7 @@ export default function PremiumScreen() {
                 (gate === 'pending' || gate === 'rejected') && styles.proceedBtnTextDisabled,
               ]}>
                 {gate === 'guest' ? 'Create free account'
+                 : gate === 'save' ? 'Save account to continue'
                  : gate === 'pending' ? 'Awaiting admin approval'
                  : gate === 'rejected' ? 'Not available'
                  : 'Proceed to Payment'}

@@ -142,39 +142,12 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (goingFree && uid) {
-      // 1. Clear the cached flag FIRST. If anything below fails, the post is
-      //    still premium with signed_locked=false, so the next playback-token
-      //    request re-locks the video on Cloudflare and the system repairs
-      //    itself rather than leaking an unsigned premium video.
-      const { error: clearErr } = await supabaseUser.rpc("admin_clear_signed_lock", {
-        p_stream_uid: uid,
-      });
-      if (clearErr) {
-        console.error("stream-set-access: admin_clear_signed_lock failed:", clearErr.message);
-        return jsonResponse({ error: "Could not update video access. Nothing was changed." }, 500);
-      }
-
-      // 2. Unlock on Cloudflare. Idempotent.
-      let patchRes: Response;
-      try {
-        patchRes = await cloudflare(uid, {
-          method: "POST",
-          body: JSON.stringify({ uid, requireSignedURLs: false }),
-        });
-      } catch (e: any) {
-        console.error("stream-set-access: Cloudflare unreachable:", e?.message ?? e);
-        return jsonResponse({
-          error: "Could not unlock the video on Cloudflare, so the access level was left unchanged. Try again.",
-        }, 502);
-      }
-      if (!patchRes.ok) {
-        console.error("stream-set-access: requireSignedURLs=false failed:", patchRes.status, await patchRes.text().catch(() => ""));
-        return jsonResponse({
-          error: "Could not unlock the video on Cloudflare, so the access level was left unchanged. Try again.",
-        }, 502);
-      }
-    }
+    // v92: going free no longer unlocks the video. Every video stays
+    // requireSignedURLs=true on Cloudflare and free titles play through a
+    // token from stream-playback-token, like premium ones -- so a guest who
+    // reads a free post's UID can no longer play it from a plain URL.
+    // stream-playback-token mints tokens for free posts without requiring a
+    // plan, so nothing else changes for signed-in members.
 
     // 3. Only now change the access level. Writes the audit row too.
     const { error: rpcErr } = await supabaseUser.rpc("admin_set_post_access_level", {
@@ -189,7 +162,7 @@ Deno.serve(async (req) => {
     return jsonResponse({
       ok: true,
       accessLevel,
-      unlockedOnCloudflare: goingFree && !!uid,
+      unlockedOnCloudflare: false,
       lockedOnCloudflare: goingPremium && !!uid,
     });
   } catch (err: any) {

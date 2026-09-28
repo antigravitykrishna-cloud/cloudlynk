@@ -205,42 +205,12 @@ export const StreamService = {
    * A HEAD request is enough to tell the two apart: a locked video answers
    * 403 on the manifest, an unlocked one answers 200.
    */
-  async resolveFreePlaybackUrl(postId: string, uid: string): Promise<string> {
-    const plain = this.getHlsPlaybackUrl(uid);
-
-    // Only a 403 means "locked, you need a token". Every other outcome —
-    // 200, a 405 because Cloudflare declines HEAD on manifests, a CORS
-    // rejection, a flaky network — is NOT evidence of a lock, and must fall
-    // back to the plain URL, which is exactly what every build before v57 used
-    // and what still works for every unlocked video.
-    //
-    // Getting this wrong is a live regression, not a theoretical one: until
-    // the v57 edge function is deployed, the token endpoint answers free posts
-    // with 400 "This video does not require a playback token". An earlier
-    // version of this method routed every non-200 HEAD there and let that 400
-    // throw — turning a working free video into an error message on any
-    // transient hiccup. Degrade to the plain URL instead; a dead player is
-    // still better than a false error, and the player surfaces its own
-    // failure if the URL really is bad.
-    let locked = false;
-    try {
-      const head = await fetch(plain, { method: 'HEAD' });
-      if (head.ok) return plain;
-      locked = head.status === 403;
-    } catch {
-      // Network or method failure. Says nothing about lock state.
-    }
-
-    if (!locked) return plain;
-
-    try {
-      return await this.getSignedPlaybackUrl(postId);
-    } catch {
-      // The video is locked AND the token path failed — most likely because
-      // the v57 function is not deployed yet. Hand back the plain URL so the
-      // player reports the real problem rather than us guessing at it.
-      return plain;
-    }
+  async resolveFreePlaybackUrl(postId: string, _uid: string): Promise<string> {
+    // v92: every video is locked on Cloudflare, free ones included, so a free
+    // title plays through the same short-lived token as premium. The server
+    // mints it without asking for a plan, but refuses guests and suspended
+    // accounts -- which a plain URL could not.
+    return this.getSignedPlaybackUrl(postId);
   },
 
   /**
@@ -275,7 +245,11 @@ export const StreamService = {
     }
 
     const json = await res.json().catch(() => null);
-    if (res.status === 403) throw new Error('Subscribe to Premium to watch this video.');
+    if (res.status === 403) {
+      throw new Error(json?.error && json.error !== "This video isn't available."
+        ? json.error
+        : 'Subscribe to Premium to watch this video.');
+    }
     if (!res.ok || !json?.url) {
       throw new Error(json?.error ?? "This video isn't available right now.");
     }

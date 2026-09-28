@@ -31,10 +31,7 @@ export interface ChannelVideo {
 }
 
 export async function pickVideo(): Promise<VideoPickResult | null> {
-  const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (!permission.granted) {
-    throw new Error('Permission to access media library was denied. Please enable it in Settings.');
-  }
+  // System photo picker: no media permission needed.
 
   const result = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ['videos'],

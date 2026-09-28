@@ -50,6 +50,7 @@ export default function SaveAccountScreen() {
   const [busy, setBusy] = useState<null | 'google' | 'email' | 'code'>(null);
 
   const afterPurchase = reason === 'purchase';
+  const toSubscribe = reason === 'subscribe';
   const guestName = profile?.full_name ?? 'Guest';
 
   const done = () => {
@@ -146,12 +147,16 @@ export default function SaveAccountScreen() {
             <Icon name="lock" size={26} color="#FFFFFF" />
           </View>
           <Text style={styles.title}>
-            {afterPurchase ? 'Payment done! Now save your account' : 'Save your account'}
+            {afterPurchase ? 'Payment done! Now save your account'
+              : toSubscribe ? 'Save your account to subscribe'
+              : 'Save your account'}
           </Text>
           <Text style={styles.body}>
             You are using a guest ID, <Text style={styles.bold}>{guestName}</Text>.{' '}
             {afterPurchase || isPaidUser
               ? 'Your plan is on this guest account. If you uninstall the app, change phones or sign out, it cannot be recovered.'
+              : toSubscribe
+              ? 'Plans are bought on a saved account, so they are never lost if you uninstall the app or change phones.'
               : 'If you uninstall the app, change phones or sign out, a guest account cannot be recovered.'}
             {' '}Save it now. Your plan and channels stay exactly as they are.
           </Text>

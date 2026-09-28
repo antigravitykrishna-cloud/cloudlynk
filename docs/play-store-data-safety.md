@@ -29,7 +29,7 @@ types?"
 |---|---|---|---|---|---|---|
 | Personal info | **Email address** | Yes | No | Required | Account creation, sign-in | `auth.users.email`, `profiles.email` |
 | Personal info | **Name** | Yes | No | **Optional** | Display name on posts/profile | `profiles.full_name` |
-| Personal info | **Other info** (birth year) | Yes | No | Required | 18+ age gate for content rating | `profiles.birth_year`, set once via `set_birth_year` (v51) |
+| Personal info | **Other info** (18+ confirmation) | Yes | No | Required | 18+ age gate for content rating | `profiles.adult_confirmed_at` (v88); older accounts may also have `profiles.birth_year` |
 | Photos and videos | **Photos**, **Videos** | Yes | No | Optional | User's own cloud storage + channel content they publish | `files`, `channel_posts`, `channel_videos`, `stream_videos`, `profiles.avatar_url` |
 | Files and docs | **Files and docs** | Yes | No | Optional | The cloud-storage feature itself | `files` + `user-files` bucket |
 | App activity | **App interactions** | Yes | **Yes (Meta)** | Optional | Watch history, resume position, view counts; install / open / sign-up / checkout events sent to Meta for **Advertising or marketing** and **Analytics** (ad measurement), only when `META_APP_ID` is set and the user has not turned Ad measurement off | `watch_history`, `channel_posts.view_count`; Meta SDK ([lib/metaAds.ts](../lib/metaAds.ts)) |
@@ -132,7 +132,7 @@ content.
 - [ ] Deletion URL entered: `https://thecloudlynk.com/delete-account.html`
 - [ ] Privacy policy URL entered: `https://thecloudlynk.com/privacy-policy`
 - [ ] Content rating questionnaire completed (18+; UGC present)
-- [ ] Target audience: **18 and over** — must match the birth-year gate
+- [ ] Target audience: **18 and over** — must match the 18+ age gate
 - [ ] App access: reviewer credentials supplied (the app allows guest browsing,
       but premium content needs an account **and** a subscription — review
       cannot see it otherwise). See `docs/PLAY_APP_ACCESS.md`.

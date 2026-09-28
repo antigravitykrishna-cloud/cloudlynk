@@ -48,9 +48,7 @@ export function formatTimeAgo(dateStr: string): string {
 
 export const StorageService = {
   async pickImage(): Promise<ImagePicker.ImagePickerAsset | null> {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') throw new Error('Media library permission denied');
-
+    // System photo picker: no media permission needed.
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images', 'videos'],
       allowsMultipleSelection: true,

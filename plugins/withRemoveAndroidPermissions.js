@@ -83,6 +83,13 @@ const MERGE_REMOVE_MARKER = [
   'android.permission.ACCESS_ADSERVICES_AD_ID',
   'android.permission.ACCESS_ADSERVICES_ATTRIBUTION',
   'android.permission.ACCESS_ADSERVICES_TOPICS',
+  'android.permission.ACCESS_ADSERVICES_CUSTOM_AUDIENCE',
+  // Play Photo and Video Permissions policy: uploads are picked one at a time
+  // through the system photo picker, which needs no permission.
+  'android.permission.READ_MEDIA_IMAGES',
+  'android.permission.READ_MEDIA_VIDEO',
+  'android.permission.READ_MEDIA_VISUAL_USER_SELECTED',
+  'android.permission.READ_MEDIA_AUDIO',
 ];
 
 module.exports = function withRemoveAndroidPermissions(config) {

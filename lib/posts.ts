@@ -652,8 +652,7 @@ export const PostService = {
   },
 
   async pickImage(): Promise<{ uri: string; type: 'image' | 'video' } | null> {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') throw new Error('Media library permission denied');
+    // System photo picker: no media permission needed.
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       quality: 0.85,

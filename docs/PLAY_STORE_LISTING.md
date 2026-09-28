@@ -1,265 +1,115 @@
-# Play Store listing — Cloudlynk
+# Play Store listing — Cloudlynk (updated 2026-09-29)
 
-Copy blocks are ready to paste. Everything below describes what the app
-actually does, verified against the code — no claim here needs a feature built
-to become true.
-
-**Two things must be settled before submission.** Both are in §6.
+Every sentence below matches what the app does today (v0.7.11). Google's
+reviewers compare the listing with the app; anything claimed here that the app
+does not do is a "misleading claims" rejection. Re-check this file whenever a
+feature changes.
 
 ---
 
-## 1. App title — 30 characters max
+## 1. App name (30 max)
 
 ```
-Cloudlynk: Store & Stream
+Cloudlynk: Cloud & Videos
 ```
 `25/30`
 
-Both functions in the name. A title that says only "Cloud Storage" is the
-mismatch that costs you twice: review sees a storage app and then finds a
-subscription video service, and your Meta traffic sees an ad about content
-landing on a listing about file backup.
-
-Alternates, if the client prefers:
-
-| Option | Chars |
-|---|---:|
-| `Cloudlynk — Cloud & Channels` | 28 |
-| `Cloudlynk: 15GB + Streaming` | 27 |
-| `Cloudlynk: Cloud Video App` | 26 |
-
----
-
-## 2. Short description — 80 characters max
-
-This is the line under the icon in search results, and it is the single highest
--leverage string in the listing.
+## 2. Short description (80 max)
 
 ```
-15 GB free cloud storage, plus movies, series and shorts from creators.
+15 GB of private cloud storage, plus movies and series from Cloudlynk channels.
 ```
-`71/80`
+`79/80`
 
-Alternates:
-
-| Option | Chars |
-|---|---:|
-| `Your 15 GB cloud drive and a video library, in one app.` | 55 |
-| `Store your files free. Stream movies, series and shorts.` | 56 |
-| `15 GB storage free. Premium movies and series when you want them.` | 65 |
-
-Do **not** use the current draft — *"15 GB cloud storage, premium videos, and
-public & private channels"* — it leads with the storage and buries the reason
-people install.
-
----
-
-## 3. Full description — 4000 characters max
+## 3. Full description (4000 max)
 
 ```
-Cloudlynk is two things in one app: a private 15 GB cloud drive, and a place to
-watch movies, series and shorts.
+Cloudlynk is two things in one app: a private 15 GB cloud drive, and channels
+of movies, series and shorts published by Cloudlynk.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-15 GB OF STORAGE, FREE FOR EVERYONE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Every Cloudlynk account gets 15 GB. Not a trial, not a first-month offer — the
-same 15 GB whether you ever pay us a rupee or not.
-
-• Back up photos, videos, documents, music and any other file
-• Stream your own videos straight from the cloud, no download first
+15 GB OF PRIVATE STORAGE, FREE
+• Back up photos, videos and documents from your phone
+• Your files are private: only you can see them — nothing you upload is
+  published or shared
 • Organise by type and find things fast with search
-• Share a file with a link when you need to
-• Your storage never shrinks — a Premium plan does not change it
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-CHANNELS AND CREATORS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CHANNELS
+• Browse channels by category and join the ones you like
+• Your Feed shows the newest videos from the channels you joined
+• Channels and their videos are published by the Cloudlynk team
 
-Explore is where Cloudlynk opens. Browse channels by what you are in the mood
-for — entertainment, sports, fitness, travel, gaming, devotional, and more.
-
-• Join public channels and follow what they post
-• Create your own channel, public or private
-• Post shorts, full videos and images to your channel
-• Private channels stay invitation-only
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 PREMIUM
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Most of Cloudlynk is free. Shorts, posts and community channels cost nothing
-and always will.
-
-Premium unlocks the full-length library — movies and series marked Premium:
-
+Free members watch free titles. Premium unlocks titles marked Premium.
+• Trial — 3 days
 • Silver — 7 days
 • Gold — 1 month
 • Platinum — 6 months
 • Diamond — 1 year
+Prices are shown in the app before you pay. Premium does not change your
+storage; every account keeps 15 GB.
 
-Premium buys access to Premium-marked content. It does not add storage; every
-account keeps the same 15 GB.
+TRY IT FIRST
+Browse as a guest to see what is on Cloudlynk. Save your account with Google
+or email to join channels, watch and subscribe.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-SAFETY
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Cloudlynk is for adults. You must be 18 or older to create an account, and we
-check at signup.
-
-• Report any post or account, from the post itself
-• Block anyone — blocked accounts disappear from your feed
-• Every upload to a public channel is reviewed before it goes live
-• Sexual content, hate speech, harassment and content involving minors are
-  banned outright and removed on sight
-• Delete your account and everything in it, whenever you want, from Settings
-
-Read our Community Guidelines in the app before you post.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-PRIVACY
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Your files are yours. Private files are visible only to you, nothing you upload
-to your drive is published anywhere, and account deletion removes your files
-from our storage rather than hiding them.
-
-Privacy Policy, Terms, Refund Policy and Copyright Policy are all linked in the
-app under Settings.
-
-Cloudlynk — your files and your watchlist, in one place.
+SAFETY AND PRIVACY
+• Cloudlynk is for adults (18+)
+• Report any title from its detail page (the ⋯ menu)
+• Delete your account and all your files at any time, in the app or at
+  thecloudlynk.com/delete-account
 ```
-`2,497 / 4000`
-
-**Why it is not longer.** Play truncates after roughly three lines until
-someone taps "more", and keyword stuffing in the description has not helped
-ranking for years. Everything above is a claim the app can actually meet, which
-is the part that matters when a reviewer opens the app looking for the gap
-between the two.
-
----
 
 ## 4. Store settings
 
-| Field | Value | Why |
-|---|---|---|
-| **Category** | **Entertainment** | The honest answer. The content library is what people install for and what your ads promise. Filing under Productivity to look like a storage tool is the same mismatch as the old title, and Play weighs category fit. |
-| **Tags** | Video, Streaming, Cloud storage, Entertainment | |
-| **Target age** | 18+ | Enforced at signup, so it is a true statement |
-| **Contains ads** | **No** | `ADMOB_ENABLED: false`. Change this the moment ads switch on. |
-| **In-app purchases** | **See §6.1** | Depends on the payment decision |
-| **Contact email** | `support@cloudlynk.app` | Must be live and monitored before submission |
+| Field | Value |
+|---|---|
+| Category | Entertainment |
+| Contains ads | **No** (the ads SDK was removed in 0.7.11) |
+| In-app purchases | **Yes** — Google Play subscriptions (and UPI/cards only if Play's User Choice Billing is approved) |
+| Contact email | `help.cupibs@gmail.com` (must be monitored) |
+| Website | `https://thecloudlynk.com` |
+| Privacy policy | `https://thecloudlynk.com/privacy-policy` |
+| Account deletion URL | `https://thecloudlynk.com/delete-account` |
 
----
-
-## 5. Content rating questionnaire
-
-Answer honestly; a rating found to be wrong later gets the app pulled, and the
-questionnaire is the single most common place a listing quietly lies.
+## 5. Content rating questionnaire — answer for the ACTUAL library
 
 | Question | Answer |
 |---|---|
-| Does the app contain user-generated content? | **Yes** |
-| Can users interact or share content? | **Yes** |
-| Does the app have a content moderation system? | **Yes** — pre-publish review queue, plus in-app report and block |
-| Sexually explicit content? | **No** — banned by the Community Guidelines |
-| Violence / horror? | **Depends on the library** — answer for what is actually published |
-| Profanity? | **Depends on the library** |
-| Simulated gambling? | **No** |
-| Purchase of digital goods? | **See §6.1** |
-| Shares user location? | **No** |
-| Collects personal info? | **Yes** — email, name, birth year |
+| User-generated content shared with others? | **No.** Only admins publish; user uploads are private. |
+| Users can interact / chat? | No |
+| Sexually explicit content or nudity? | Must be **No**. If any published title has it, it cannot be on Play at all (see §7). |
+| Violence, drugs, profanity | Answer per the real titles in the library |
+| Gambling | No |
+| Digital purchases | Yes |
+| Shares location | No |
 
-That "user-generated content: yes" answer triggers Play's UGC policy, which
-requires exactly three things. You have all three: a report mechanism, a block
-mechanism, and published community standards. Say so in the review notes.
+## 6. App access (for the reviewer)
 
----
-
-## 6. The two things blocking submission
-
-### 6.1 — The payment decision contradicts the legal pages
-
-You chose to sell subscriptions on the web with UPI. But
-`supabase/functions/legal-pages/terms.ts:78` currently reads:
-
-> *"Paid plans are billed through Google Play Billing… Subscriptions renew
-> automatically unless canceled through Google Play… Refunds are handled by
-> Google."*
-
-That is now false, and it is published at the URL the listing links to as the
-app's Terms. A reviewer who opens Terms and sees Play Billing, then finds no
-Play Billing product, has found a discrepancy in the listing's own linked
-policy.
-
-Whichever way you go, three things move together:
-
-| | Web + UPI | Play Billing |
-|---|---|---|
-| Terms §10 | rewrite: UPI, your refund process, your cancellation | leave as-is |
-| Refund policy | you handle refunds — needs a real process and an SLA | Google handles them |
-| "In-app purchases" flag | **No** | **Yes** |
-| Data Safety | add payment info collected by your processor | Play handles it |
-
-### 6.2 — Web checkout breaks the funnel you are buying ads for
-
-Worth deciding with eyes open, because it affects the ad spend directly.
-
-Play's anti-steering rules restrict an app from pointing users at an external
-payment page for digital content. So the natural flow —
+Create a dedicated review account (a real email you control, e.g.
+`playreview@thecloudlynk.com`), save it, approve it and give it
+**Lifetime** in Admin → Users. Then in Play Console → App content → App access:
 
 ```
-Meta ad → install → browse → hit Premium → pay by UPI
+1. Open the app and confirm 18+.
+2. Tap "Continue with email", enter <review email>, and use the code
+   provided below / or sign in with the password below.
+3. Premium is already active on this account; every title plays.
 ```
 
-— is the flow the app is least able to support, because the app cannot
-comfortably tell the user where to pay.
+Note: sign-in is Google or an emailed code. A reviewer cannot receive your
+email codes — add a password sign-in for this account or give Google a
+permanent way in before submitting.
 
-The flow that does work:
+## 7. Before submitting — the reviewer's checklist
 
-```
-Meta ad → web landing page → UPI checkout → download app → sign in → Premium already active
-```
-
-Money is collected before the install, on a surface Play does not govern, and
-the app only ever reads an entitlement it did not sell. Your ad already has to
-carry a landing page; this just makes the landing page do the selling.
-
-It also changes what the listing should say: with web checkout, the listing
-must **not** advertise buying a subscription inside the app, and §3 above is
-already written that way — it describes what Premium unlocks and names the
-plans without ever saying "subscribe here".
-
-I am not a lawyer and Play's payment rules in India are actively changing.
-Confirm the current position with Play Console policy support before spending
-on ads — it is a free question with an expensive wrong answer.
-
----
-
-## 7. Assets
-
-| Asset | Spec | Status |
-|---|---|---|
-| App icon | 512×512 PNG, 32-bit | Have it |
-| Feature graphic | 1024×500 | Have it — **update the text**, see below |
-| Phone screenshots | ≥ 4, 16:9 or 9:16, min 320px | Have them — **restage in the new palette** |
-| Privacy Policy URL | public, live | Deployed as an edge function |
-
-**The feature graphic needs one change.** The current one reads *"All
-transactions are securely handled through Google Play Billing"* in the store
-copy and shows the old orange UI. Both are now wrong. Replace the payment line
-with something true — *"15 GB free for every account"* works and is a stronger
-hook anyway.
-
-**Screenshots should be restaged** against the v0.7.1 navy palette, since the
-current ones show the orange build. Order them by what sells:
-
-1. Explore — the content grid, because it is what the app opens to
-2. A premium title's detail page
-3. Channels — the public/private split
-4. My Files — the 15 GB meter, showing storage is real
-5. Settings — report, block, delete account, visibly present
-
-Caption each one. Uncaptioned screenshots are a wasted conversion surface.
+- **Content:** every published title must be allowed on Google Play (no sexual
+  content or nudity) and you must hold the rights to show it. Google can ask
+  for proof of licence for movies and series (Intellectual Property policy).
+- **Payments:** in-app, digital content must be sold through Google Play
+  Billing. UPI/Razorpay/Sabpaisa may be shown **only** after Play approves
+  User Choice Billing for this app, and always next to Google Play.
+- **Data safety:** see `docs/play-store-data-safety.md` (email, name,
+  purchase history, device IDs for Meta ads measurement, photos/videos the
+  user uploads, crash data if Sentry is turned on).
+- **Advertising ID:** declare "Yes" — the Meta SDK uses it for ad measurement.
+- **Target audience:** 18+ only.

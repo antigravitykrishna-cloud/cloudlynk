@@ -191,7 +191,9 @@ Deno.serve(async (req) => {
     // plain URL, which is the opposite of the fallback's purpose. A token
     // minted against an unlocked video is simply ignored by Cloudflare, so
     // the free path needs no lock of its own.
-    if (isPremium && !tracked?.signed_locked) {
+    // v92: every video is locked, free ones too (free titles play through a
+    // token as well), so lock whatever is still unlocked, not only premium.
+    if (!tracked?.signed_locked) {
       // The edit call is idempotent — safe whether or not it was already true. This
       // self-heals videos flagged premium before this system existed, or
       // switched from free to premium after upload.
