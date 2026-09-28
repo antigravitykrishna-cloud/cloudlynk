@@ -9,6 +9,7 @@ import { useAuth } from '../../../hooks/useAuth';
 import { useRecordProgress, getSavedPosition } from '../../../hooks/useWatchHistory';
 import { ChannelService, BlockService, ReportService, CHANNEL_LIST_COLUMNS } from '../../../lib/channels';
 import { LoginSheet } from '../../../components/LoginSheet';
+import { promptSaveAccount } from '../../../lib/guest';
 import { PostService, ChannelPost, ContentType, GENRES } from '../../../lib/posts';
 import { StreamService, VideoMeta, STREAM_MAX_MB } from '../../../lib/stream';
 import { Database, supabase } from '../../../lib/supabase';
@@ -640,7 +641,7 @@ CreateModal.displayName = 'CreateModal';
 // ── Main screen
 export default function ChannelDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { user, canUpload, isAdmin, isPaidUser } = useAuth();
+  const { user, isAdmin, isPaidUser, isGuest } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [signInSheet, setSignInSheet] = useState(false);
@@ -737,6 +738,8 @@ export default function ChannelDetailScreen() {
   const handleJoin = async () => {
     if (!id) return;
     if (!user?.id) { setSignInSheet(true); return; }
+    // v90: guests cannot join channels.
+    if (isGuest) { promptSaveAccount(router, 'join channels'); return; }
     if (channel && !channel.is_public && !isPaidUser && !isAdmin && channel.owner_id !== user.id) {
       router.push('/premium');
       return;
@@ -754,9 +757,10 @@ export default function ChannelDetailScreen() {
   // the client's reference flow. Free titles still play for a signed-in
   // user; a guest is asked to pick a plan (and sign in) for any title.
   const openPost = (item: ChannelPost) => {
-    const canWatch =
+    // v90: guests (signed out or guest account) see previews only.
+    const canWatch = !isGuest && (
       isPaidUser || isAdmin || channel?.owner_id === user?.id ||
-      (!!user?.id && item.access_level !== 'premium');
+      (!!user?.id && item.access_level !== 'premium'));
     if (!canWatch) {
       router.push('/premium');
       return;
@@ -832,7 +836,7 @@ export default function ChannelDetailScreen() {
           </View>
         </View>
 
-        {isMember && (canUpload || isAdmin || channel?.owner_id === user?.id) && (
+        {isAdmin && (
           <View style={styles.addBtnGroup}>
             <TouchableOpacity
               style={styles.addBtn}
@@ -848,17 +852,8 @@ export default function ChannelDetailScreen() {
             </TouchableOpacity>
           </View>
         )}
-        {isMember && !canUpload && !isAdmin && channel?.owner_id !== user?.id && (
-          <View style={styles.lockedBanner}>
-            <Icon name="lock" size={16} color={Colors.textMuted} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.lockedBannerTitle}>Creator Access Locked</Text>
-              <Text style={styles.lockedBannerDesc}>Contact the channel owner or upgrade your plan to submit content.</Text>
-            </View>
-          </View>
-        )}
 
-        {isMember && (canUpload || isAdmin || channel?.owner_id === user?.id) && hasPendingContent && (
+        {(isAdmin || channel?.owner_id === user?.id) && hasPendingContent && (
           <View style={styles.pendingSection}>
             <Text style={styles.pendingSectionTitle}>⏳ Pending Review</Text>
             {pendingPosts.map(post => (
@@ -876,8 +871,8 @@ export default function ChannelDetailScreen() {
           <View style={styles.emptyState}>
             <Icon name="film" size={52} color={Colors.textMuted} />
             <Text style={styles.emptyTitle}>No content yet</Text>
-            <Text style={styles.emptyDesc}>Be the first to add a movie or series to this channel.</Text>
-            {isMember && canUpload && (
+            <Text style={styles.emptyDesc}>New movies and series will appear here.</Text>
+            {isAdmin && (
               <TouchableOpacity
                 style={styles.emptyAddBtn}
                 onPress={() => router.push({ pathname: '/upload/add-content', params: { channelId: id } })}
@@ -895,6 +890,7 @@ export default function ChannelDetailScreen() {
 
       <DetailModal selected={selected} onClose={() => setSelected(null)} userId={user?.id} channelId={id} />
       <LoginSheet
+        allowGuest={false}
         visible={signInSheet}
         onClose={() => setSignInSheet(false)}
         message="Sign in to join this channel. It only takes a moment."

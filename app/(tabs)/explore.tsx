@@ -357,7 +357,7 @@ const DetailModal = memo(({ selected, onClose, userId }: {
 DetailModal.displayName = 'DetailModal';
 
 export default function ExploreScreen() {
-  const { user, isPaidUser, isAdmin } = useAuth();
+  const { user, isPaidUser, isAdmin, isGuest } = useAuth();
   const router = useRouter();
   const [posts, setPosts] = useState<ChannelPost[]>([]);
   const [filteredPosts, setFilteredPosts] = useState<ChannelPost[]>([]);
@@ -387,61 +387,11 @@ export default function ExploreScreen() {
   // the account here instead, where the intent is obvious and the prompt can
   // say what it unlocks.
   const handleSelect = useCallback(async (item: ChannelPost) => {
-    // v63: a guest watches FREE content without an account. Only Premium asks
-    // for one, and it asks for a subscription in the same breath — being told
-    // to sign in, and only then that you also have to pay, is the worse of the
-    // two orderings.
-    if (!user?.id) {
-      if (item.access_level === 'premium') {
-        showAlert(
-          'Premium title',
-          'This one is part of Cloudlynk Premium. Create an account and subscribe to watch it — everything marked Free plays without an account.',
-          [
-            { text: 'Continue as guest', style: 'cancel' },
-            // Someone who just tapped a locked title is the most curious
-            // they will ever be about the price. Sending them to the plans
-            // costs one tap; making them sign up first to find out costs
-            // most of them.
-            { text: 'See Premium plans', onPress: () => router.push('/premium') },
-            // /(auth)/login, not /(auth)/signup: login is now the one-tap
-            // chooser (guest / Google / emailed code) and creates the account
-            // as a side effect of signing in. signup.tsx is the old
-            // email+password form, kept only for accounts that already have a
-            // password — sending a new user there is three extra fields for
-            // no reason.
-            { text: 'Sign up free', onPress: () => router.push('/(auth)/login') },
-          ],
-        );
-        return;
-      }
-
-      // Free. The guest's own row has no video_url — anon is not granted that
-      // column, because a grant cannot be limited to free rows and would leak
-      // every premium UID too. free_post_media (v63) is the row-filtered way
-      // in, and it can only ever return free posts.
-      try {
-        const media = await PostService.getFreeMedia(item.id);
-        if (!media?.video_url && !media?.media_url) {
-          showAlert('Not available', "This one can't be played right now.");
-          return;
-        }
-        setSelected({ ...item, ...media } as ChannelPost);
-      } catch (err: any) {
-        // Distinguish "the view isn't deployed" from "the network is down".
-        // PostgREST answers 404/PGRST205 for an unknown relation, and telling
-        // someone to check their connection when the server is answering fine
-        // sends them to reboot their router instead of to the real cause.
-        const code = err?.code ?? '';
-        const missingView =
-          code === 'PGRST205' || code === '42P01' ||
-          /free_post_media|does not exist|not find the table/i.test(err?.message ?? '');
-        showAlert(
-          'Not available',
-          missingView
-            ? 'Free playback is not switched on for this app yet. Ask the Cloudlynk team to finish setup — nothing is wrong with your device.'
-            : 'Could not load this video. Check your connection and try again.',
-        );
-      }
+    // v90 (client rule): a guest -- signed out, or a guest account -- sees
+    // previews only. Nothing plays, free or premium; the plans are the next
+    // step (and, signed out, the sign-in sheet after them).
+    if (!user?.id || isGuest) {
+      router.push('/premium');
       return;
     }
 
@@ -473,7 +423,7 @@ export default function ExploreScreen() {
 
     setSelected(item);
     PostService.recordView(item.id);
-  }, [user?.id, isPaidUser, isAdmin, router]);
+  }, [user?.id, isGuest, isPaidUser, isAdmin, router]);
 
   const load = useCallback(async () => {
     try {

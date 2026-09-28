@@ -67,6 +67,9 @@ Deno.serve(async (req) => {
     );
     const { data: { user }, error: userErr } = await supabaseUser.auth.getUser();
     if (userErr || !user) return jsonResponse({ error: "Authentication required" }, 401);
+    // v90: a guest account sees previews only -- nothing plays until the
+    // account is saved (Google/email) and has the right to the title.
+    if (user.is_anonymous) return jsonResponse({ error: "Save your account to watch." }, 403);
 
     const body = await req.json().catch(() => ({}));
     const postId = typeof body?.postId === "string" ? body.postId : "";

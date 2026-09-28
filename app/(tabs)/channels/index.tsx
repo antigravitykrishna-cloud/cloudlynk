@@ -2,6 +2,7 @@ import { CloudlynkLogo } from '../../../components/CloudlynkLogo';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, RefreshControl, ActivityIndicator } from 'react-native';
 import { showAlert } from '../../../components/Feedback';
 import { LoginSheet } from '../../../components/LoginSheet';
+import { promptSaveAccount } from '../../../lib/guest';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -32,7 +33,7 @@ const FILTERS: { key: FilterKey; label: string }[] = [
 ];
 
 export default function ChannelsScreen() {
-  const { user, isAdmin, isPaidUser } = useAuth();
+  const { user, isAdmin, isPaidUser, isGuest } = useAuth();
   const router = useRouter();
 
   const [activeTab, setActiveTab] = useState<TabKey>('discover');
@@ -130,6 +131,11 @@ export default function ChannelsScreen() {
   const requireAccount = (channel: Channel): boolean => {
     if (!user?.id) {
       setSignInSheet(true);
+      return false;
+    }
+    // v90: guests cannot join channels.
+    if (isGuest) {
+      promptSaveAccount(router, 'join channels');
       return false;
     }
     if (!channel.is_public && !isPaidUser && !isAdmin) {
@@ -405,6 +411,7 @@ export default function ChannelsScreen() {
         </ScrollView>
       )}
       <LoginSheet
+        allowGuest={false}
         visible={signInSheet}
         onClose={() => setSignInSheet(false)}
         message="Sign in to join channels. It only takes a moment."

@@ -231,6 +231,7 @@ export default function ManageChannelScreen() {
           </View>
         </View>
 
+        {isAdmin && (
         <TouchableOpacity
           style={styles.addContentBtn}
           onPress={() => router.push({ pathname: '/upload/add-content', params: { channelId: id as string } })}
@@ -238,6 +239,7 @@ export default function ManageChannelScreen() {
         >
           <Text style={styles.addContentBtnText}>+ Add Content</Text>
         </TouchableOpacity>
+        )}
 
         {/* Edit Form */}
         <View style={styles.card}>

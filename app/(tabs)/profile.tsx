@@ -7,7 +7,6 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { ChannelService } from '../../lib/channels';
 import { GuestPlans, PlanList, useDefaultPlan } from '../../components/GuestPlans';
 import { useSubscriptionPlans } from '../../lib/subscriptionService';
-import { promptSaveAccount } from '../../lib/guest';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotifications } from '../../hooks/useNotifications';
 import { supabase } from '../../lib/supabase';
@@ -247,12 +246,12 @@ export default function ProfileScreen() {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>My Channels</Text>
-              <TouchableOpacity
-                onPress={() => (isGuest ? promptSaveAccount(router, 'create channels') : router.push('/create-content'))}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.addChannelText}>+ Add Channel</Text>
-              </TouchableOpacity>
+              {/* v90: only admins publish. */}
+              {isAdmin && (
+                <TouchableOpacity onPress={() => router.push('/create-content')} activeOpacity={0.7}>
+                  <Text style={styles.addChannelText}>+ Add Channel</Text>
+                </TouchableOpacity>
+              )}
             </View>
             {channelsLoading ? (
               <ActivityIndicator color={Colors.brand} style={{ paddingVertical: 20 }} />

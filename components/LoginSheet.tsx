@@ -24,11 +24,14 @@ export function LoginSheet({
   onClose,
   message = 'Sign in to unlock your full experience. It only takes a moment.',
   returnTo = null,
+  allowGuest = true,
 }: {
   visible: boolean;
   onClose: () => void;
   message?: string;
   returnTo?: Href | null;
+  /** v90: false where a guest account could not do the thing anyway (joining). */
+  allowGuest?: boolean;
 }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -70,6 +73,7 @@ export function LoginSheet({
           <PressScale style={styles.btn} onPress={signIn} haptic="light" accessibilityRole="button">
             <Text style={styles.btnText}>Sign in</Text>
           </PressScale>
+          {allowGuest && (
           <PressScale
             style={styles.guestBtn}
             onPress={continueAsGuest}
@@ -80,6 +84,7 @@ export function LoginSheet({
               ? <ActivityIndicator color={Colors.text} />
               : <Text style={styles.guestBtnText}>Continue as guest</Text>}
           </PressScale>
+          )}
           <TouchableOpacity onPress={onClose} activeOpacity={0.7} style={styles.notNow}>
             <Text style={styles.notNowText}>Not now</Text>
           </TouchableOpacity>

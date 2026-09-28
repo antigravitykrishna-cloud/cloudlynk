@@ -1,10 +1,9 @@
 import { CloudlynkLogo } from '../../components/CloudlynkLogo';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Share } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { showAlert } from '../../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'expo-router';
-import * as Clipboard from 'expo-clipboard';
 import { GuestPrompt } from '../../components/GuestPrompt';
 import { useAuth } from '../../hooks/useAuth';
 import { promptSaveAccount } from '../../lib/guest';
@@ -23,7 +22,7 @@ const CATEGORIES: { key: string; label: string; icon: IconName }[] = [
 
 export default function CloudScreen() {
   const { user, isGuest } = useAuth();
-  const { files, activeTransfers, loadFiles, uploadImage, uploadDocument, deleteFile, createShareableLink } = useFiles(user?.id);
+  const { files, activeTransfers, loadFiles, uploadImage, uploadDocument, deleteFile } = useFiles(user?.id);
   const router = useRouter();
 
   const [search, setSearch] = useState('');
@@ -45,33 +44,10 @@ export default function CloudScreen() {
     return matchesSearch && matchesCategory;
   });
 
-  const handleShare = useCallback(async (file: typeof files[0]) => {
-    try {
-      const url = await createShareableLink(file.storage_path);
-      if (!url) { showAlert('Error', 'Could not generate share link.'); return; }
-      await Share.share({ message: `${file.name}\n${url}`, url });
-    } catch (err) {
-      if ((err as Error).message !== 'User did not share') {
-        showAlert('Share Error', (err as Error).message);
-      }
-    }
-  }, [createShareableLink]);
-
-  const handleCopyLink = useCallback(async (file: typeof files[0]) => {
-    try {
-      const url = await createShareableLink(file.storage_path);
-      if (!url) { showAlert('Error', 'Could not generate link.'); return; }
-      await Clipboard.setStringAsync(url);
-      showAlert('Copied', 'Link copied to clipboard.');
-    } catch (err) {
-      showAlert('Error', (err as Error).message);
-    }
-  }, [createShareableLink]);
-
+  // v90 (client rule): what a user uploads is visible to that user only, so
+  // there is no Share / Copy Link. A share link is a public URL to the file.
   const handleFileOptions = useCallback((file: typeof files[0]) => {
     showAlert(file.name, `${formatBytes(file.size)} · ${formatTimeAgo(file.created_at)}`, [
-      { text: 'Share', onPress: () => handleShare(file) },
-      { text: 'Copy Link', onPress: () => handleCopyLink(file) },
       {
         text: 'Delete', style: 'destructive',
         onPress: () => {
@@ -83,7 +59,7 @@ export default function CloudScreen() {
       },
       { text: 'Cancel', style: 'cancel' },
     ]);
-  }, [handleShare, handleCopyLink, deleteFile]);
+  }, [deleteFile]);
 
   // v61: guests reach this tab but every query here early-returns on
   // !user?.id, so without this they get a blank screen and assume the app
