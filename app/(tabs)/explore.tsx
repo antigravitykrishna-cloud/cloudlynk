@@ -1,5 +1,6 @@
 import { CloudlynkLogo } from '../../components/CloudlynkLogo';
 import { VideoPlayerOverlay } from '../../components/VideoPlayerOverlay';
+import { guestTappedTitle } from '../../lib/guest';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, Modal, ActivityIndicator, RefreshControl, Dimensions, Share } from 'react-native';
 import { showAlert } from '../../components/Feedback';
 import { Image } from 'expo-image';
@@ -391,7 +392,7 @@ export default function ExploreScreen() {
     // previews only. Nothing plays, free or premium; the plans are the next
     // step (and, signed out, the sign-in sheet after them).
     if (!user?.id || isGuest) {
-      router.push('/premium');
+      guestTappedTitle(router, !!user?.id && isPaidUser);
       return;
     }
 

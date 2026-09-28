@@ -30,8 +30,8 @@ if (!file || !existsSync(file)) {
 
 const EXPECTED = {
   packageName: 'com.cloudlynk.app',
-  versionName: '0.7.9',
-  versionCode: '16',
+  versionName: '0.7.10',
+  versionCode: '17',
   minTargetSdk: 36,
   // The debug key this project would fall back to. Seeing it is a hard FAIL.
   debugCertCN: 'Android Debug',

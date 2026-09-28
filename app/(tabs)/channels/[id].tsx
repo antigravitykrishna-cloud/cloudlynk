@@ -9,7 +9,7 @@ import { useAuth } from '../../../hooks/useAuth';
 import { useRecordProgress, getSavedPosition } from '../../../hooks/useWatchHistory';
 import { ChannelService, BlockService, ReportService, CHANNEL_LIST_COLUMNS } from '../../../lib/channels';
 import { LoginSheet } from '../../../components/LoginSheet';
-import { promptSaveAccount } from '../../../lib/guest';
+import { promptSaveAccount, guestTappedTitle } from '../../../lib/guest';
 import { PostService, ChannelPost, ContentType, GENRES } from '../../../lib/posts';
 import { StreamService, VideoMeta, STREAM_MAX_MB } from '../../../lib/stream';
 import { Database, supabase } from '../../../lib/supabase';
@@ -762,7 +762,8 @@ export default function ChannelDetailScreen() {
       isPaidUser || isAdmin || channel?.owner_id === user?.id ||
       (!!user?.id && item.access_level !== 'premium'));
     if (!canWatch) {
-      router.push('/premium');
+      if (isGuest) guestTappedTitle(router, isPaidUser);
+      else router.push('/premium');
       return;
     }
     setSelected(item);

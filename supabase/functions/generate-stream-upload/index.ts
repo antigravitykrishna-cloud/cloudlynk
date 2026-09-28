@@ -81,7 +81,10 @@ serve(async (req) => {
         .select("can_upload_content, is_admin")
         .eq("id", user.id)
         .single();
-      if (profileError || (!profile?.can_upload_content && !profile?.is_admin)) {
+      // v90: only admins publish, so only admins get Stream upload URLs. The
+      // old can_upload_content flag no longer grants anything here -- a
+      // user holding it could otherwise upload videos to our Stream account.
+      if (profileError || !profile?.is_admin) {
         throw new Error("NO_PERMISSION");
       }
     }

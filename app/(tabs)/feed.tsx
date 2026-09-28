@@ -47,7 +47,7 @@ function subtitleFor(item: FeedItem): string {
 }
 
 export default function FeedScreen() {
-  const { user, isPaidUser } = useAuth();
+  const { user, isPaidUser, isGuest } = useAuth();
   const router = useRouter();
 
   const [items, setItems] = useState<FeedItem[]>([]);
@@ -95,13 +95,21 @@ export default function FeedScreen() {
   };
 
   // The empty state's next step: sign-in comes later, when they join.
-  const emptyAction = {
-    hint: user?.id
-      ? 'Join the channels you like. Their newest videos show up here.'
-      : 'Browse channels and join the ones you like. Their newest videos show up here.',
-    label: 'Browse channels',
-    go: () => router.push('/(tabs)/channels'),
-  };
+  // v90: a guest account cannot join, so "Browse channels" would be a dead
+  // end for it -- saving the account is the step that unlocks joining.
+  const emptyAction = isGuest
+    ? {
+        hint: 'Save your account with Google or email to join channels. Their newest videos show up here.',
+        label: 'Save your account',
+        go: () => router.push('/save-account' as never),
+      }
+    : {
+        hint: user?.id
+          ? 'Join the channels you like. Their newest videos show up here.'
+          : 'Browse channels and join the ones you like. Their newest videos show up here.',
+        label: 'Browse channels',
+        go: () => router.push('/(tabs)/channels'),
+      };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
