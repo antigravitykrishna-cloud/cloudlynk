@@ -87,4 +87,4 @@ android/.kotlin/
 deno.lock
 
 # local build output
-build.log
+*.log
