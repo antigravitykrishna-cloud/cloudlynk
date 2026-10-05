@@ -22,7 +22,7 @@ import { supabase } from '@/lib/supabase';
 // guest-reachable path.
 
 export default function ManageChannelScreen() {
-  const { id } = useLocalSearchParams();
+  const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { user, profile, isAdmin } = useAuth();
 

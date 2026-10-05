@@ -69,7 +69,7 @@ export const AdminControl = {
     return (
       unwrap(
         await supabase.rpc('admin_search_users', {
-          p_query: query.trim() || null,
+          p_query: query.trim() || undefined,
           p_limit: limit,
         }),
       ) ?? []
@@ -77,7 +77,10 @@ export const AdminControl = {
   },
 
   async getUser(id: string): Promise<AdminUserDetail> {
-    return unwrap(await supabase.rpc('admin_get_user', { p_user_id: id }));
+    // admin_get_user returns one jsonb object; its shape is AdminUserDetail.
+    return unwrap(
+      await supabase.rpc('admin_get_user', { p_user_id: id }),
+    ) as unknown as AdminUserDetail;
   },
 
   async setPlan(id: string, a: PlanAction) {
@@ -85,8 +88,6 @@ export const AdminControl = {
       await supabase.rpc('admin_set_user_plan', {
         p_user_id: id,
         p_action: a.action,
-        p_days: a.action === 'add_days' ? a.days : null,
-        p_expires_at: null,
       }),
     );
   },
@@ -103,10 +104,10 @@ export const AdminControl = {
     return unwrap(
       await supabase.rpc('admin_set_user_flags', {
         p_user_id: id,
-        p_is_admin: flags.isAdmin ?? null,
-        p_can_upload: flags.canUpload ?? null,
-        p_account_status: flags.accountStatus ?? null,
-        p_reason: flags.reason ?? null,
+        p_is_admin: flags.isAdmin,
+        p_can_upload: flags.canUpload,
+        p_account_status: flags.accountStatus,
+        p_reason: flags.reason,
       }),
     );
   },
@@ -116,7 +117,7 @@ export const AdminControl = {
       await supabase.rpc('admin_set_user_approval', {
         p_user_id: id,
         p_status: status,
-        p_note: note ?? null,
+        p_note: note,
       }),
     );
   },
@@ -126,7 +127,12 @@ export const AdminControl = {
     limit = 200,
   ): Promise<AdminPayment[]> {
     return (
-      unwrap(await supabase.rpc('admin_list_payments', { p_status: status, p_limit: limit })) ?? []
+      (unwrap(
+        await supabase.rpc('admin_list_payments', {
+          p_status: status ?? undefined,
+          p_limit: limit,
+        }),
+      ) as AdminPayment[]) ?? []
     );
   },
 
@@ -173,7 +179,7 @@ export const AdminControl = {
       await supabase.rpc('admin_set_channel_status', {
         p_channel_id: id,
         p_status: status,
-        p_reason: reason ?? null,
+        p_reason: reason,
       }),
     );
   },

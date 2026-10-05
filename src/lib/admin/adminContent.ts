@@ -138,7 +138,6 @@ export const AdminContentService = {
 
   async searchUsers(query?: string, limit = 50): Promise<AdminUser[]> {
     const { data, error } = await supabase.rpc('admin_search_users', {
-      p_query: query?.trim() ? query.trim() : null,
       p_limit: limit,
     });
     if (error) throw error;
@@ -181,8 +180,8 @@ export const AdminContentService = {
     const { error } = await supabase.rpc('admin_grant_content_access', {
       p_user_id: userId,
       p_post_id: postId,
-      p_expires_at: expiresAt,
-      p_reason: reason,
+      p_expires_at: expiresAt ?? undefined,
+      p_reason: reason ?? undefined,
     });
     if (error) throw error;
   },
@@ -259,16 +258,16 @@ export const AdminContentService = {
   ): Promise<void> {
     const { error } = await supabase.rpc('admin_update_post', {
       p_post_id: postId,
-      p_title: patch.title ?? null,
-      p_body: patch.body ?? null,
-      p_genre: patch.genre ?? null,
-      p_duration_min: patch.durationMin ?? null,
-      p_release_year: patch.releaseYear ?? null,
-      p_season_number: patch.seasonNumber ?? null,
-      p_episode_number: patch.episodeNumber ?? null,
-      p_episode_title: patch.episodeTitle ?? null,
-      p_thumbnail_url: patch.thumbnailUrl ?? null,
-      p_clear_fields: clearFields ?? null,
+      p_title: patch.title,
+      p_body: patch.body,
+      p_genre: patch.genre,
+      p_duration_min: patch.durationMin,
+      p_release_year: patch.releaseYear,
+      p_season_number: patch.seasonNumber,
+      p_episode_number: patch.episodeNumber,
+      p_episode_title: patch.episodeTitle,
+      p_thumbnail_url: patch.thumbnailUrl,
+      p_clear_fields: clearFields,
     });
     if (error) throw describeRpcError(error, 'Editing posts');
   },
@@ -317,7 +316,7 @@ export const AdminContentService = {
   async listAuditLog(limit = 100, targetType?: string): Promise<AuditEntry[]> {
     const { data, error } = await supabase.rpc('admin_list_audit_log', {
       p_limit: limit,
-      p_target_type: targetType ?? null,
+      p_target_type: targetType,
     });
     if (error) throw error;
     return (data ?? []) as AuditEntry[];

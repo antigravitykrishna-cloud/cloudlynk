@@ -188,7 +188,6 @@ export default function PendingChannelsScreen() {
     const rpc = await supabase.rpc('admin_set_channel_status', {
       p_channel_id: channelId,
       p_status: status,
-      p_reason: null,
     });
 
     const missing =

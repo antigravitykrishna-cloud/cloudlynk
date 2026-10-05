@@ -86,7 +86,6 @@ export default function AdminSubscribersScreen() {
       const [listRes, countRes] = await Promise.all([
         supabase.rpc('admin_list_subscribers', {
           p_cohort: which,
-          p_query: search.trim() ? search.trim() : null,
           p_limit: 200,
         }),
         supabase.rpc('admin_subscriber_counts'),

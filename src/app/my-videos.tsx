@@ -71,7 +71,7 @@ export default function MyVideosScreen() {
   const fetchPosts = useCallback(async () => {
     if (!user) return;
     try {
-      const statusParam = activeTab === 'all' ? null : activeTab;
+      const statusParam = activeTab === 'all' ? undefined : activeTab;
       const { data, error } = await supabase.rpc('get_my_channel_posts', {
         p_status: statusParam,
       });

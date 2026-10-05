@@ -227,7 +227,7 @@ export function useAuth() {
       !!profile?.adult_confirmed_at ||
       (!!profile?.birth_year && new Date().getFullYear() - profile.birth_year >= 18);
     if (!adultOnFile) {
-      const { error } = await supabase.rpc('confirm_adult' as never);
+      const { error } = await supabase.rpc('confirm_adult');
       if (error) throw error;
     }
     await ComplianceService.acceptTerms();

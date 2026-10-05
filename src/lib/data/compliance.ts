@@ -92,7 +92,7 @@ export const AdminModerationService = {
       p_report_id: reportId,
       p_action: action,
       p_resolution: resolution,
-      p_moderator_note: moderatorNote ?? null,
+      p_moderator_note: moderatorNote,
     });
     if (error) throw error;
   },

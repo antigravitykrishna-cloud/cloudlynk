@@ -100,7 +100,6 @@ export default function AdminUserApprovalsScreen() {
       const { error } = await supabase.rpc('admin_set_user_approval', {
         p_user_id: userId,
         p_status: status,
-        p_note: reviewNote?.trim() ? reviewNote.trim() : null,
       });
       if (error) throw error;
       // The row no longer belongs in the list currently on screen.

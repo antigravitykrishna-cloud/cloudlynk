@@ -8,3 +8,4 @@ docs
 package-lock.json
 deno.lock
 *.md
+src/lib/database.types.ts

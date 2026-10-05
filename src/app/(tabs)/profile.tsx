@@ -18,12 +18,15 @@ import { useSubscriptionPlans } from '@/lib/data/plans';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotifications } from '@/hooks/useNotifications';
 import { supabase } from '@/lib/supabase';
+import type { TablesUpdate } from '@/lib/database.types';
 import { Colors } from '@/constants/theme';
 import { formatBytes } from '@/lib/data/files';
 import { config } from '@/lib/config';
 import Constants from 'expo-constants';
 import { Icon } from '@/components/ui/Icon';
 import { SettingsRow } from '@/components/profile/SettingsRow';
+
+type ProfileUpdate = TablesUpdate<'profiles'>;
 
 export default function ProfileScreen() {
   const {
@@ -119,10 +122,9 @@ export default function ProfileScreen() {
   ) => {
     if (!user) return;
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ [field]: value })
-        .eq('id', user.id);
+      const patch: ProfileUpdate = {};
+      patch[field] = value;
+      const { error } = await supabase.from('profiles').update(patch).eq('id', user.id);
       if (error) throw error;
       await refreshProfile();
     } catch (err: unknown) {

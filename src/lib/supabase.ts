@@ -1,9 +1,12 @@
 import 'react-native-url-polyfill/auto';
 import { createClient } from '@supabase/supabase-js';
+import type { Database } from '@/lib/database.types';
 import Constants from 'expo-constants';
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppState, Platform } from 'react-native';
+
+export type { Database } from '@/lib/database.types';
 
 // ── Credentials from environment ─────────────────────────────
 const supabaseUrl =
@@ -67,7 +70,7 @@ const webSessionStorage = {
 const hasLocalStorage = typeof window !== 'undefined' && typeof localStorage !== 'undefined';
 const sessionStorage = hasLocalStorage ? webSessionStorage : nativeSessionStorage;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: sessionStorage,
     autoRefreshToken: true,
@@ -92,217 +95,3 @@ if (Platform.OS !== 'web') {
   // Kick off refresh for the initial foreground launch.
   supabase.auth.startAutoRefresh();
 }
-
-// ── Database types ───────────────────────────────────────────
-export type Database = {
-  public: {
-    Tables: {
-      profiles: {
-        Row: {
-          id: string;
-          email: string;
-          username: string | null;
-          full_name: string | null;
-          avatar_url: string | null;
-          storage_used: number;
-          storage_limit: number;
-          is_admin: boolean;
-          role: 'user' | 'creator' | 'staff' | 'admin';
-          can_upload_content: boolean;
-          creator_status: 'none' | 'pending' | 'approved' | 'rejected';
-          fcm_token: string | null;
-          auto_backup: boolean;
-          wifi_only: boolean;
-          notifications_enabled: boolean;
-          // Compliance columns (v46/v48 migrations).
-          account_status: 'active' | 'suspended' | 'banned';
-          terms_accepted_at: string | null;
-          terms_version: string | null;
-          community_guidelines_version: string | null;
-          privacy_version: string | null;
-          birth_year: number | null;
-          // Set by confirm_adult() -- the 18+ answer from the age gate.
-          adult_confirmed_at: string | null;
-          // Added by supabase/migrations/20260905120000_v55_user_approval_gate.sql.
-          // PRE-purchase vetting gate: 'pending' accounts keep a full free tier
-          // but don't reach the subscribe flow. Never consulted after payment —
-          // see the migration header and verify-play-receipt.
-          approval_status: 'pending' | 'approved' | 'rejected';
-          approval_reviewed_by: string | null;
-          approval_reviewed_at: string | null;
-          approval_note: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        // The omitted columns are all DB- or trigger-managed and rejected on a
-        // client write by protect_profile_privileged_fields() — including the
-        // v55 approval_* set, which only admin_set_user_approval() may move.
-        Insert: Omit<
-          Database['public']['Tables']['profiles']['Row'],
-          | 'created_at'
-          | 'updated_at'
-          | 'role'
-          | 'can_upload_content'
-          | 'creator_status'
-          | 'approval_status'
-          | 'approval_reviewed_by'
-          | 'approval_reviewed_at'
-          | 'approval_note'
-        >;
-        Update: Partial<Database['public']['Tables']['profiles']['Insert']>;
-      };
-
-      files: {
-        Row: {
-          id: string;
-          user_id: string;
-          name: string;
-          size: number;
-          mime_type: string;
-          storage_path: string;
-          category: 'photo' | 'video' | 'document' | 'audio' | 'other';
-          channel_id: string | null;
-          is_public: boolean;
-          created_at: string;
-        };
-        Insert: Omit<Database['public']['Tables']['files']['Row'], 'id' | 'created_at'>;
-        Update: Partial<Database['public']['Tables']['files']['Insert']>;
-      };
-
-      channels: {
-        Row: {
-          id: string;
-          owner_id: string;
-          name: string;
-          description: string | null;
-          is_public: boolean;
-          status: 'pending' | 'active' | 'suspended';
-          member_count: number;
-          post_count: number;
-          media_size: number;
-          approval_expires_at: string | null;
-          created_at: string;
-          // Present in the database and missing here, which is why
-          // getDiscoverChannels needs an `as unknown as` cast at its call
-          // site: a Pick<> of the columns it really selects did not typecheck
-          // against a Row that had never heard of them.
-          link: string | null;
-          category: string | null;
-          is_official: boolean;
-        };
-        Insert: Omit<
-          Database['public']['Tables']['channels']['Row'],
-          'id' | 'member_count' | 'post_count' | 'media_size' | 'created_at' | 'is_official'
-        >;
-        Update: Partial<Database['public']['Tables']['channels']['Insert']>;
-      };
-
-      channel_members: {
-        Row: {
-          channel_id: string;
-          user_id: string;
-          role: 'owner' | 'moderator' | 'member';
-          joined_at: string;
-        };
-        Insert: Omit<Database['public']['Tables']['channel_members']['Row'], 'joined_at'>;
-        Update: Partial<Database['public']['Tables']['channel_members']['Insert']>;
-      };
-
-      channel_posts: {
-        Row: {
-          id: string;
-          channel_id: string;
-          author_id: string;
-          title: string | null;
-          body: string | null;
-          media_url: string | null;
-          media_type: 'image' | 'video' | null;
-          thumbnail_url: string | null;
-          video_url: string | null;
-          content_type: 'movie' | 'series' | 'short' | 'post' | null;
-          genre: string | null;
-          duration_min: number | null;
-          season_number: number | null;
-          episode_number: number | null;
-          episode_title: string | null;
-          release_year: number | null;
-          tags: string[] | null;
-          status: 'draft' | 'pending' | 'approved' | 'rejected';
-          approved_by: string | null;
-          approved_at: string | null;
-          rejection_note: string | null;
-          submitted_at: string | null;
-          series_id: string | null;
-          created_at: string;
-        };
-        Insert: Omit<Database['public']['Tables']['channel_posts']['Row'], 'id' | 'created_at'>;
-        Update: Partial<Database['public']['Tables']['channel_posts']['Insert']>;
-      };
-
-      transfers: {
-        Row: {
-          id: string;
-          user_id: string;
-          file_name: string;
-          file_size: number;
-          progress: number;
-          status: 'uploading' | 'downloading' | 'completed' | 'failed' | 'paused';
-          type: 'upload' | 'download';
-          created_at: string;
-        };
-        Insert: Omit<Database['public']['Tables']['transfers']['Row'], 'id' | 'created_at'>;
-        Update: Partial<Database['public']['Tables']['transfers']['Insert']>;
-      };
-
-      notifications: {
-        Row: {
-          id: string;
-          user_id: string;
-          type: 'channel_approved' | 'channel_rejected' | 'post_approved' | 'post_rejected';
-          title: string;
-          body: string;
-          channel_id: string | null;
-          post_id: string | null;
-          read: boolean;
-          created_at: string;
-        };
-        Insert: Omit<Database['public']['Tables']['notifications']['Row'], 'id' | 'created_at'>;
-        Update: Partial<Database['public']['Tables']['notifications']['Insert']>;
-      };
-
-      content_reports: {
-        Row: {
-          id: string;
-          channel_id: string | null;
-          file_id: string | null;
-          reporter_id: string;
-          reason: string;
-          status: 'pending' | 'reviewed' | 'resolved' | 'dismissed';
-          created_at: string;
-        };
-        Insert: Omit<Database['public']['Tables']['content_reports']['Row'], 'id' | 'created_at'>;
-        Update: Partial<Database['public']['Tables']['content_reports']['Insert']>;
-      };
-
-      series: {
-        Row: {
-          id: string;
-          channel_id: string;
-          owner_id: string;
-          title: string;
-          description: string | null;
-          thumbnail_url: string | null;
-          genre: string | null;
-          release_year: number | null;
-          status: 'pending' | 'approved' | 'rejected';
-          approved_by: string | null;
-          approved_at: string | null;
-          rejection_note: string | null;
-          created_at: string;
-        };
-        Insert: Omit<Database['public']['Tables']['series']['Row'], 'id' | 'created_at'>;
-        Update: Partial<Database['public']['Tables']['series']['Insert']>;
-      };
-    };
-  };
-};
