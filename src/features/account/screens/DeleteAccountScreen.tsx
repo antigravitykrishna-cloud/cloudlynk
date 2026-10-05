@@ -1,55 +1,41 @@
 import { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  TextInput,
-  ActivityIndicator,
-} from 'react-native';
-import { showAlert } from '@/components/ui/Feedback';
+import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { useAuth } from '@/features/auth/hooks/useAuth';
-import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/theme';
+import { Button } from '@/components/ui/Button';
+import { showAlert } from '@/components/ui/Feedback';
 import { Icon } from '@/components/ui/Icon';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
+import { TextField } from '@/components/ui/TextField';
+import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/theme';
+import { errorMessage } from '@/utils/errors';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+
+const CONFIRMATION_WORD = 'DELETE';
 
 export default function DeleteAccountScreen() {
-  const router = useRouter();
   const { deleteAccount } = useAuth();
   const [confirmation, setConfirmation] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
-  const isConfirmed = confirmation.trim().toUpperCase() === 'DELETE';
+  const confirmed = confirmation.trim().toUpperCase() === CONFIRMATION_WORD;
 
-  async function handleDelete() {
-    if (!isConfirmed) return;
-    setLoading(true);
+  async function deleteForever() {
+    if (!confirmed) return;
+    setDeleting(true);
     try {
+      // On success the session ends and the root layout routes away from this screen.
       await deleteAccount();
-    } catch (err: any) {
-      showAlert('Error', err.message ?? 'Failed to delete account. Please try again.');
-      setLoading(false);
+    } catch (err) {
+      showAlert('Error', errorMessage(err, 'Failed to delete account. Please try again.'));
+      setDeleting(false);
     }
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backBtn}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <Text style={styles.backTxt}>‹ Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Delete Account</Text>
-        <View style={{ width: 60 }} />
-      </View>
-
+    <SafeAreaView style={styles.page}>
+      <ScreenHeader title="Delete Account" fallbackHref="/app-setting" />
       <View style={styles.content}>
-        <View style={styles.warningCard}>
+        <View style={styles.warning}>
           <Icon name="flag" size={16} color={Colors.warning} />
           <Text style={styles.warningTitle}>This action is permanent</Text>
           <Text style={styles.warningBody}>
@@ -60,52 +46,37 @@ export default function DeleteAccountScreen() {
           </Text>
         </View>
 
-        <Text style={styles.confirmLabel}>Type DELETE to confirm</Text>
-        <TextInput
-          style={styles.input}
+        <TextField
+          label={`Type ${CONFIRMATION_WORD} to confirm`}
           value={confirmation}
           onChangeText={setConfirmation}
-          placeholder="Type DELETE"
-          placeholderTextColor={Colors.textMuted}
+          placeholder={`Type ${CONFIRMATION_WORD}`}
           autoCapitalize="characters"
+          style={styles.confirmation}
         />
 
-        <TouchableOpacity
-          style={[styles.deleteBtn, !isConfirmed && { opacity: 0.4 }]}
-          onPress={handleDelete}
-          disabled={!isConfirmed || loading}
-        >
-          {loading ? (
-            <ActivityIndicator color={Colors.text} />
-          ) : (
-            <Text style={styles.deleteBtnText}>Delete My Account Forever</Text>
-          )}
-        </TouchableOpacity>
+        <Button
+          label="Delete My Account Forever"
+          size="lg"
+          variant="danger"
+          haptic="heavy"
+          onPress={deleteForever}
+          busy={deleting}
+          disabled={!confirmed}
+        />
       </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.bg },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderBottomWidth: 0.5,
-    borderBottomColor: Colors.border,
-  },
-  backBtn: { width: 60 },
-  backTxt: { color: Colors.brandBlue, fontSize: FontSize.md, fontWeight: FontWeight.semibold },
-  headerTitle: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.text },
+  page: { flex: 1, backgroundColor: Colors.bg },
   content: { flex: 1, padding: Spacing.xl },
-  warningCard: {
+  warning: {
     backgroundColor: Colors.dangerDim,
     borderRadius: Radius.xl,
     padding: Spacing.xl,
-    borderWidth: 0.5,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: Colors.dangerBorder,
     alignItems: 'center',
     marginBottom: Spacing.xl,
@@ -122,30 +93,5 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     textAlign: 'center',
   },
-  confirmLabel: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
-    color: Colors.textSecondary,
-    letterSpacing: 0.5,
-    marginBottom: Spacing.sm,
-  },
-  input: {
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: Radius.md,
-    borderWidth: 0.5,
-    borderColor: Colors.border,
-    padding: Spacing.md,
-    color: Colors.text,
-    fontSize: FontSize.lg,
-    textAlign: 'center',
-    letterSpacing: 2,
-    marginBottom: Spacing.xl,
-  },
-  deleteBtn: {
-    backgroundColor: Colors.danger,
-    borderRadius: Radius.md,
-    paddingVertical: Spacing.lg,
-    alignItems: 'center',
-  },
-  deleteBtnText: { color: Colors.text, fontSize: FontSize.base, fontWeight: FontWeight.extrabold },
+  confirmation: { textAlign: 'center', letterSpacing: 2, fontSize: FontSize.lg },
 });

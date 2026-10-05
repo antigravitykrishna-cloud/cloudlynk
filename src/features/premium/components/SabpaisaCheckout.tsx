@@ -1,21 +1,14 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Modal,
-  Linking,
-  ActivityIndicator,
-} from 'react-native';
+import { ActivityIndicator, Linking, Modal, StyleSheet, Text, View } from 'react-native';
 import { WebView, type WebViewNavigation } from 'react-native-webview';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { TextButton } from '@/components/ui/Button';
 import { Colors, FontSize, FontWeight, Spacing } from '@/theme';
-import { sabpaisaFormHtml, type SabpaisaOrder } from '@/features/premium/api/paymentGatewaysApi';
+import type { SabpaisaOrder } from '@/features/premium/api/paymentGatewaysApi';
+import { sabpaisaFormHtml } from '@/features/premium/billing/sabpaisaForm';
 
-// Sabpaisa's hosted checkout in a WebView, started from an auto-submitting form
-// (lib/payments/gateways.ts). UPI links (upi://, intent://) are handed to Android so GPay / PhonePe
-// / Paytm open. Reaching our callback URL means the checkout is over; the caller then asks the
-// server for the result.
+// Sabpaisa's hosted checkout in a WebView, started from a self-posting form (billing/sabpaisaForm).
+// UPI links (upi://, intent://) are handed to Android so GPay / PhonePe / Paytm open. Reaching our
+// callback URL means the checkout is over; the caller then asks the server for the result.
 
 const APP_SCHEMES = /^(upi|intent|tez|phonepe|paytmmp|gpay|credpay|bhim):/i;
 
@@ -65,13 +58,7 @@ export function SabpaisaCheckout({
       <View style={[styles.wrap, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <Text style={styles.title}>Sabpaisa</Text>
-          <TouchableOpacity
-            onPress={() => onDone('closed')}
-            activeOpacity={0.7}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Text style={styles.close}>Close</Text>
-          </TouchableOpacity>
+          <TextButton label="Close" onPress={() => onDone('closed')} />
         </View>
         <WebView
           originWhitelist={['*']}
@@ -87,7 +74,7 @@ export function SabpaisaCheckout({
               <ActivityIndicator color={Colors.brandBlue} />
             </View>
           )}
-          style={{ flex: 1, backgroundColor: Colors.bg }}
+          style={styles.webView}
         />
       </View>
     </Modal>
@@ -106,7 +93,7 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.border,
   },
   title: { color: Colors.text, fontSize: FontSize.lg, fontWeight: FontWeight.bold },
-  close: { color: Colors.brandBlue, fontSize: FontSize.lg, fontWeight: FontWeight.semibold },
+  webView: { flex: 1, backgroundColor: Colors.bg },
   loading: {
     position: 'absolute',
     top: 0,

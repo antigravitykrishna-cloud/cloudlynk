@@ -1,139 +1,40 @@
-import { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { showAlert } from '@/components/ui/Feedback';
+import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, useFocusEffect } from 'expo-router';
-import { File, Paths } from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
-import { supabase } from '@/lib/supabase';
-import { Colors, withAlpha } from '@/theme';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 import { Icon } from '@/components/ui/Icon';
-import { formatBytes } from '@/utils/format';
-
-type ExportStatus = 'idle' | 'loading' | 'success' | 'error';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
+import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/theme';
+import { useDataExport } from '@/features/account/hooks/useDataExport';
 
 export default function ExportDataScreen() {
-  const router = useRouter();
-  const [status, setStatus] = useState<ExportStatus>('idle');
-  const [fileSize, setFileSize] = useState<string>('');
-  const [recordCount, setRecordCount] = useState(0);
-
-  useFocusEffect(
-    useCallback(() => {
-      return () => {
-        setStatus('idle');
-        setFileSize('');
-        setRecordCount(0);
-      };
-    }, []),
-  );
-
-  const countRecords = (data: Record<string, unknown>): number => {
-    let count = 0;
-    if (data.profile) count += 1;
-    const arrayKeys = [
-      'channel_memberships',
-      'channels_owned',
-      'channel_posts_authored',
-      'subscription_requests',
-      'uploaded_videos',
-    ];
-    for (const key of arrayKeys) {
-      const arr = data[key];
-      if (Array.isArray(arr)) count += arr.length;
-    }
-    return count;
-  };
-
-  const handleExport = async () => {
-    setStatus('loading');
-    try {
-      const { data, error } = await supabase.rpc('export_my_data');
-      if (error) throw new Error(error.message);
-      if (!data) throw new Error('No data returned');
-
-      const jsonString = JSON.stringify(data, null, 2);
-      const fileName = `cloudlynk-data-export-${Date.now()}.json`;
-      const file = new File(Paths.cache, fileName);
-
-      file.write(jsonString);
-
-      const size = file.size ?? jsonString.length;
-      setFileSize(formatBytes(size));
-      setRecordCount(countRecords(data as Record<string, unknown>));
-
-      const sharingAvailable = await Sharing.isAvailableAsync();
-      if (sharingAvailable) {
-        await Sharing.shareAsync(file.uri, {
-          mimeType: 'application/json',
-          dialogTitle: 'Export My Data',
-          UTI: 'public.json',
-        });
-      } else {
-        showAlert('Saved', `Data exported to:\n${file.uri}`);
-      }
-
-      setStatus('success');
-    } catch (err: unknown) {
-      setStatus('error');
-      showAlert(
-        'Export Failed',
-        err instanceof Error ? err.message : 'An unexpected error occurred',
-      );
-    }
-  };
+  const { exporting, result, exportData } = useDataExport();
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backBtn}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <Text style={styles.backText}>{'‹'}</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Export My Data</Text>
-        <View style={styles.backBtn} />
-      </View>
-
-      {/* Body */}
-      <View style={styles.body}>
-        <View style={styles.card}>
+    <SafeAreaView style={styles.page} edges={['top']}>
+      <ScreenHeader title="Export My Data" fallbackHref="/(tabs)/profile" />
+      <View style={styles.content}>
+        <Card style={styles.intro}>
           <Icon name="package" size={30} color={Colors.brandBlue} />
-          <Text style={styles.cardTitle}>Download Your Data</Text>
-          <Text style={styles.cardDesc}>
+          <Text style={styles.title}>Download Your Data</Text>
+          <Text style={styles.description}>
             Download a copy of all your data in JSON format. Includes your profile, channel
             memberships, posts, subscription history, and uploaded videos.
           </Text>
-        </View>
+        </Card>
 
-        {status === 'success' && (
-          <View style={styles.successCard}>
-            <Text style={styles.successIcon}>{'✓'}</Text>
-            <Text style={styles.successText}>Download started</Text>
-            {fileSize ? <Text style={styles.successMeta}>File size: {fileSize}</Text> : null}
-            {recordCount > 0 ? (
-              <Text style={styles.successMeta}>{recordCount} records exported</Text>
+        {result ? (
+          <View style={styles.success}>
+            <Icon name="check-circle" size={24} color={Colors.success} />
+            <Text style={styles.successTitle}>Download started</Text>
+            <Text style={styles.successDetail}>File size: {result.fileSize}</Text>
+            {result.recordCount > 0 ? (
+              <Text style={styles.successDetail}>{result.recordCount} records exported</Text>
             ) : null}
           </View>
-        )}
+        ) : null}
 
-        <TouchableOpacity
-          style={[styles.exportBtn, status === 'loading' && styles.exportBtnDisabled]}
-          onPress={handleExport}
-          activeOpacity={0.7}
-          disabled={status === 'loading'}
-        >
-          {status === 'loading' ? (
-            <ActivityIndicator color={Colors.text} size="small" />
-          ) : (
-            <Text style={styles.exportBtnText}>Download My Data</Text>
-          )}
-        </TouchableOpacity>
+        <Button label="Download My Data" size="lg" onPress={exportData} busy={exporting} />
 
         <Text style={styles.note}>
           Your data is exported as a JSON file that you can open with any text editor. No data is
@@ -145,57 +46,38 @@ export default function ExportDataScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.bg },
-  header: {
-    backgroundColor: Colors.brandBlue,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+  page: { flex: 1, backgroundColor: Colors.bg },
+  content: { flex: 1, padding: Spacing.xl },
+  intro: { alignItems: 'center', padding: Spacing.xxl, marginBottom: Spacing.xl },
+  title: {
+    fontSize: FontSize.xl,
+    fontWeight: FontWeight.extrabold,
+    color: Colors.text,
+    marginVertical: Spacing.sm,
   },
-  backBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: withAlpha(Colors.white, 0.2),
-    alignItems: 'center',
-    justifyContent: 'center',
+  description: {
+    fontSize: FontSize.base,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 20,
   },
-  backText: { color: Colors.text, fontSize: 24, fontWeight: '700', marginTop: -2 },
-  headerTitle: { color: Colors.text, fontSize: 17, fontWeight: '800' },
-  body: { flex: 1, padding: 20 },
-  card: {
-    backgroundColor: Colors.white,
-    borderRadius: 16,
-    padding: 24,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
-    marginBottom: 20,
-  },
-  cardTitle: { fontSize: 18, fontWeight: '800', color: Colors.text, marginBottom: 8 },
-  cardDesc: { fontSize: 14, color: Colors.textMuted, textAlign: 'center', lineHeight: 20 },
-  successCard: {
+  success: {
     backgroundColor: Colors.successDim,
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: Radius.md,
+    padding: Spacing.lg,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: Colors.successBorder,
-    marginBottom: 20,
+    marginBottom: Spacing.xl,
+    gap: Spacing.xs,
   },
-  successIcon: { fontSize: 24, color: Colors.success, fontWeight: '800', marginBottom: 4 },
-  successText: { fontSize: 15, fontWeight: '700', color: Colors.success, marginBottom: 4 },
-  successMeta: { fontSize: 13, color: Colors.textMuted, marginTop: 2 },
-  exportBtn: {
-    backgroundColor: Colors.brandBlue,
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginBottom: 20,
+  successTitle: { fontSize: FontSize.subhead, fontWeight: FontWeight.bold, color: Colors.success },
+  successDetail: { fontSize: FontSize.md, color: Colors.textMuted },
+  note: {
+    fontSize: FontSize.sm,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 18,
+    marginTop: Spacing.xl,
   },
-  exportBtnDisabled: { opacity: 0.7 },
-  exportBtnText: { color: Colors.text, fontSize: 16, fontWeight: '800' },
-  note: { fontSize: 12, color: Colors.textMuted, textAlign: 'center', lineHeight: 18 },
 });

@@ -1,10 +1,10 @@
-import { supabase } from '@/lib/supabase';
-import { Colors } from '@/theme';
+import { callEdgeFunction } from '@/lib/edgeFunctions';
 import { metaDeviceSignals } from '@/lib/metaAds';
+import { sleep } from '@/utils/async';
 
-// Razorpay (including its UPI app list) and Sabpaisa, app side. The app never decides that a
-// payment worked: it creates an order on the server, sends the person to the gateway, then asks the
-// server, which confirms with the gateway and switches Premium on.
+// Our side of Razorpay (including its UPI app list) and Sabpaisa: the `payments` edge function.
+// The app never decides that a payment worked. It creates an order on the server, sends the person
+// to the gateway, then asks the server, which confirms with the gateway and switches Premium on.
 
 export type GatewayMethod = 'upi' | 'razorpay' | 'sabpaisa';
 
@@ -33,138 +33,80 @@ export type GatewayOrder = RazorpayOrder | SabpaisaOrder;
 
 export type OrderStatus = 'paid' | 'pending' | 'failed';
 
-async function call<T>(route: string, body: object = {}): Promise<T> {
-  const { data, error } = await supabase.functions.invoke(`payments/${route}`, { body });
-  if (error) {
-    // functions.invoke wraps non-2xx responses; the server's message is in the body.
-    let message = 'Could not reach the payment service. Check your connection and try again.';
-    try {
-      const ctx = (error as any)?.context;
-      const json = ctx && typeof ctx.json === 'function' ? await ctx.json() : null;
-      if (json?.error) message = json.error;
-    } catch {
-      /* keep the generic message */
-    }
-    throw new Error(message);
-  }
-  return data as T;
+/** What Razorpay's checkout hands back on success; the server checks the signature. */
+export interface RazorpayProof {
+  razorpayPaymentId: string;
+  razorpaySignature: string;
 }
+
+const KNOWN_METHODS: readonly GatewayMethod[] = ['upi', 'razorpay', 'sabpaisa'];
+const METHODS_CACHE_MS = 60_000;
+const POLL_INTERVAL_MS = 3_000;
 
 let cachedMethods: { at: number; methods: GatewayMethod[] } | null = null;
 
-/** Gateways the server has keys for. Buttons for the rest are not shown. */
-export async function getGatewayMethods(): Promise<GatewayMethod[]> {
-  if (cachedMethods && Date.now() - cachedMethods.at < 60_000) return cachedMethods.methods;
-  try {
-    const res = await call<{ methods: GatewayMethod[] }>('config');
-    const methods = (res?.methods ?? []).filter(
-      m => m === 'upi' || m === 'razorpay' || m === 'sabpaisa',
-    );
-    cachedMethods = { at: Date.now(), methods };
-    return methods;
-  } catch {
-    // No gateways is always a safe answer: Google Play still works.
-    return [];
-  }
+async function callPayments<T>(route: string, body: object = {}): Promise<T> {
+  const res = await callEdgeFunction<T>(`payments/${route}`, body, {
+    unreachableMessage: 'Could not reach the payment service. Check your connection and try again.',
+  });
+  if (!res.ok || !res.data)
+    throw new Error(res.data?.error ?? 'The payment service had a problem.');
+  return res.data;
 }
 
-export async function createGatewayOrder(
-  planCode: string,
-  method: GatewayMethod,
-  externalTransactionToken?: string,
-): Promise<GatewayOrder> {
-  // Lets the server report the confirmed purchase to Meta against this phone
-  // (lib/metaAds.ts). null when ad measurement is off or not configured.
-  const meta = await metaDeviceSignals();
-  return call<GatewayOrder>('create-order', { planCode, method, externalTransactionToken, meta });
-}
-
-export async function verifyGatewayOrder(
-  orderId: string,
-  razorpay?: { razorpayPaymentId: string; razorpaySignature: string },
-): Promise<{ status: OrderStatus; expiresAt?: string | null }> {
-  return call('verify', { orderId, ...(razorpay ?? {}) });
-}
-
-/**
- * Ask the server until the gateway has a final answer. UPI confirmations can lag a few seconds and
- * Sabpaisa's result goes to the server, so 'pending' right after returning is normal.
- */
-export async function waitForPayment(
-  orderId: string,
-  first?: { razorpayPaymentId: string; razorpaySignature: string },
-  timeoutMs = 45_000,
-): Promise<OrderStatus> {
-  const deadline = Date.now() + timeoutMs;
-  let res = await verifyGatewayOrder(orderId, first).catch(() => ({
-    status: 'pending' as OrderStatus,
-  }));
-  while (res.status === 'pending' && Date.now() < deadline) {
-    await new Promise(r => setTimeout(r, 3000));
-    res = await verifyGatewayOrder(orderId).catch(() => ({ status: 'pending' as OrderStatus }));
-  }
-  return res.status;
-}
-
-/**
- * Razorpay's native checkout. For 'upi' it lists the UPI apps on the phone and opens the one
- * chosen. Resolves with the result, or null if closed or failed -- the caller asks the server
- * either way, since a UPI payment can succeed without the app hearing back.
- */
-export async function openRazorpay(
-  order: RazorpayOrder,
-): Promise<{ razorpayPaymentId: string; razorpaySignature: string } | null> {
-  // Lazy: the native module only exists in a build that includes it, and a
-  // missing module must not take the Premium screen down with it.
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- optional native module, loaded on first use
-  const RazorpayCheckout = require('react-native-razorpay').default;
-
-  const options: Record<string, unknown> = {
-    key: order.keyId,
-    order_id: order.providerOrderId,
-    amount: order.amountPaise,
-    currency: 'INR',
-    name: 'Cloudlynk',
-    description: `${order.planName} plan`,
-    prefill: { email: order.email },
-    theme: { color: Colors.brandBlue },
-  };
-  if (order.method === 'upi') {
-    options.config = {
-      display: {
-        blocks: {
-          upi: { name: 'Pay with any UPI app', instruments: [{ method: 'upi' }] },
-        },
-        sequence: ['block.upi'],
-        preferences: { show_default_blocks: false },
-      },
-    };
-  }
-
-  try {
-    const data = await RazorpayCheckout.open(options);
-    if (data?.razorpay_payment_id && data?.razorpay_signature) {
-      return {
-        razorpayPaymentId: data.razorpay_payment_id,
-        razorpaySignature: data.razorpay_signature,
-      };
+export const paymentGatewaysApi = {
+  /** Gateways the server has keys for. The app shows no button for the rest. */
+  async listMethods(): Promise<GatewayMethod[]> {
+    if (cachedMethods && Date.now() - cachedMethods.at < METHODS_CACHE_MS) {
+      return cachedMethods.methods;
     }
-    return null;
-  } catch {
-    return null;
-  }
-}
+    try {
+      const res = await callPayments<{ methods?: string[] }>('config');
+      const methods = KNOWN_METHODS.filter(m => res.methods?.includes(m));
+      cachedMethods = { at: Date.now(), methods };
+      return methods;
+    } catch {
+      // No gateways is always a safe answer: Google Play still works.
+      return [];
+    }
+  },
 
-/** A Sabpaisa checkout page: an auto-submitting form, per Sabpaisa's docs. */
-export function sabpaisaFormHtml(order: SabpaisaOrder): string {
-  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
-  return `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="background:${Colors.bg};color:${Colors.textSecondary};font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
-<p>Opening Sabpaisa…</p>
-<form id="f" method="post" action="${esc(order.url)}">
-<input type="hidden" name="encData" value="${esc(order.encData)}">
-<input type="hidden" name="clientCode" value="${esc(order.clientCode)}">
-</form>
-<script>document.getElementById('f').submit();</script>
-</body></html>`;
-}
+  /** `alternativeBillingToken` is set when the person chose us on Google's choice screen. */
+  async createOrder(
+    planCode: string,
+    method: GatewayMethod,
+    alternativeBillingToken?: string,
+  ): Promise<GatewayOrder> {
+    // Lets the server report the confirmed purchase to Meta against this phone (lib/metaAds.ts).
+    // null when ad measurement is off or not configured.
+    const meta = await metaDeviceSignals();
+    return callPayments<GatewayOrder>('create-order', {
+      planCode,
+      method,
+      externalTransactionToken: alternativeBillingToken,
+      meta,
+    });
+  },
+
+  verifyOrder(orderId: string, proof?: RazorpayProof): Promise<{ status: OrderStatus }> {
+    return callPayments('verify', { orderId, ...proof });
+  },
+
+  /**
+   * Asks the server until the gateway has a final answer or `timeoutMs` passes. UPI confirmations
+   * can lag a few seconds and Sabpaisa reports to the server, so 'pending' at first is normal.
+   */
+  async waitForPayment(
+    orderId: string,
+    { proof, timeoutMs }: { proof?: RazorpayProof; timeoutMs: number },
+  ): Promise<OrderStatus> {
+    const stillPending = { status: 'pending' as OrderStatus };
+    const deadline = Date.now() + timeoutMs;
+    let res = await paymentGatewaysApi.verifyOrder(orderId, proof).catch(() => stillPending);
+    while (res.status === 'pending' && Date.now() < deadline) {
+      await sleep(POLL_INTERVAL_MS);
+      res = await paymentGatewaysApi.verifyOrder(orderId).catch(() => stillPending);
+    }
+    return res.status;
+  },
+};

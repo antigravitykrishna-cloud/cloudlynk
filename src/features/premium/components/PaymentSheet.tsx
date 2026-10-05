@@ -1,18 +1,15 @@
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Pressable } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, SlideInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors, FontSize, FontWeight, PartnerColors, Radius, Spacing, withAlpha } from '@/theme';
-import { PressScale } from '@/components/ui/Press';
+import { TextButton } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
-import type { GatewayMethod } from '@/features/premium/api/paymentGatewaysApi';
+import { PressScale } from '@/components/ui/Press';
+import { Colors, FontSize, FontWeight, PartnerColors, Radius, Spacing, withAlpha } from '@/theme';
+import type { PaymentChoice } from '@/features/premium/paymentChoices';
 
-// "Choose payment method" sheet. The caller decides the rows: Google Play appears only in 'test'
-// builds (on Play, Google's own choice screen comes first), and a gateway appears only if the
-// server has its keys.
+// The "Choose payment method" sheet. The caller decides the rows (see paymentChoices.ts).
 
-export type PaymentChoice = GatewayMethod | 'play';
-
-const META: Record<
+const CHOICES: Record<
   PaymentChoice,
   { title: string; subtitle: string; badge: string; tint: string }
 > = {
@@ -89,26 +86,26 @@ export function PaymentSheet({
           </Text>
 
           {choices.map(choice => {
-            const m = META[choice];
+            const { title, subtitle, badge, tint } = CHOICES[choice];
             return (
               <PressScale
                 key={choice}
-                style={[styles.row, busy && { opacity: 0.5 }]}
+                style={[styles.row, busy && styles.inactive]}
                 onPress={() => onSelect(choice)}
                 disabled={busy}
                 haptic="light"
                 accessibilityRole="button"
-                accessibilityLabel={`Pay ${priceInr} rupees with ${m.title}`}
+                accessibilityLabel={`Pay ${priceInr} rupees with ${title}`}
               >
-                <View style={[styles.badge, { backgroundColor: m.tint }]}>
+                <View style={[styles.badge, { backgroundColor: tint }]}>
                   <Text style={styles.badgeText} numberOfLines={1}>
-                    {m.badge}
+                    {badge}
                   </Text>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.rowTitle}>{m.title}</Text>
+                <View style={styles.rowText}>
+                  <Text style={styles.rowTitle}>{title}</Text>
                   <Text style={styles.rowSub} numberOfLines={1}>
-                    {m.subtitle}
+                    {subtitle}
                   </Text>
                 </View>
                 <Text style={styles.price}>₹{priceInr}</Text>
@@ -117,14 +114,7 @@ export function PaymentSheet({
             );
           })}
 
-          <TouchableOpacity
-            onPress={onClose}
-            disabled={busy}
-            activeOpacity={0.7}
-            style={styles.cancel}
-          >
-            <Text style={styles.cancelText}>Cancel</Text>
-          </TouchableOpacity>
+          <TextButton label="Cancel" tone="muted" onPress={onClose} disabled={busy} />
         </Animated.View>
       </Animated.View>
     </Modal>
@@ -174,6 +164,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     marginBottom: 10,
   },
+  inactive: { opacity: 0.5 },
   badge: {
     width: 40,
     height: 40,
@@ -182,13 +173,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   badgeText: { color: Colors.text, fontSize: FontSize.md, fontWeight: FontWeight.extrabold },
+  rowText: { flex: 1 },
   rowTitle: { color: Colors.text, fontSize: FontSize.lg, fontWeight: FontWeight.bold },
   rowSub: { color: Colors.textMuted, fontSize: FontSize.sm, marginTop: 2 },
   price: { color: Colors.text, fontSize: FontSize.lg, fontWeight: FontWeight.bold },
-  cancel: { alignSelf: 'center', paddingVertical: Spacing.md, marginTop: Spacing.xs },
-  cancelText: {
-    color: Colors.textSecondary,
-    fontSize: FontSize.subhead,
-    fontWeight: FontWeight.semibold,
-  },
 });

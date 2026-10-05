@@ -1,279 +1,166 @@
-import { useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-} from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, useFocusEffect } from 'expo-router';
-import { Colors } from '@/theme';
-import { useAuth } from '@/features/auth/hooks/useAuth';
-import { supabase } from '@/lib/supabase';
-import { isPlanActive, isPlanAwaitingExpiry } from '@/features/premium/planStatus';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { Chip, type ChipTone } from '@/components/ui/Chip';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
+import { Colors, FontSize, FontWeight, Spacing } from '@/theme';
 import { formatDate } from '@/utils/format';
+import type { SubscriptionStatus } from '@/features/premium/api/subscriptionApi';
+import { useMySubscription } from '@/features/premium/hooks/useMySubscription';
+import { isPlanActive, isPlanAwaitingExpiry } from '@/features/premium/planStatus';
 
-interface SubscriptionStatus {
-  plan_status: string | null;
-  plan_expires_at: string | null;
-  plan_started_at: string | null;
-  latest_request_id: string | null;
-  latest_request_plan_code: string | null;
-  latest_request_amount_inr: number | null;
-  latest_request_status: string | null;
-  latest_request_rejection_reason: string | null;
-  latest_request_created_at: string | null;
-  latest_request_reviewed_at: string | null;
-}
+// The signed-in person's plan, and their latest manual payment request if they ever made one.
 
-function getStatusColor(status: string | null): string {
-  switch (status) {
-    case 'active':
-      return Colors.success;
-    case 'pending':
-      return Colors.warning;
-    case 'expired':
-      return Colors.brandBlue;
-    case 'cancelled':
-      return Colors.brandBlue;
-    default:
-      return Colors.textMuted;
-  }
-}
+const PLAN_TONES: Record<string, ChipTone> = {
+  active: 'good',
+  lifetime: 'good',
+  pending: 'warn',
+  expired: 'bad',
+  cancelled: 'bad',
+};
 
-function getRequestStatusColor(status: string | null): string {
-  switch (status) {
-    case 'approved':
-      return Colors.success;
-    case 'pending':
-      return Colors.warning;
-    case 'rejected':
-      return Colors.brandBlue;
-    default:
-      return Colors.textMuted;
-  }
-}
+const REQUEST_TONES: Record<string, ChipTone> = {
+  approved: 'good',
+  pending: 'warn',
+  rejected: 'bad',
+};
 
-/** User-facing subscription status page showing current plan and latest request. */
 export default function MySubscriptionScreen() {
   const router = useRouter();
-  const { user } = useAuth();
-  const [status, setStatus] = useState<SubscriptionStatus | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const fetchStatus = useCallback(async () => {
-    if (!user) return;
-    try {
-      const { data, error } = await supabase.rpc('get_my_subscription_status');
-      if (error) throw error;
-      if (data && data.length > 0) {
-        setStatus(data[0] as SubscriptionStatus);
-      } else {
-        setStatus(null);
-      }
-    } catch (err) {
-      if (__DEV__) console.error('fetchStatus error:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
-
-  useFocusEffect(
-    useCallback(() => {
-      setLoading(true);
-      fetchStatus();
-    }, [fetchStatus]),
-  );
-
-  const planStatus = status?.plan_status ?? 'free';
-
-  const expiresAt = status?.plan_expires_at ?? null;
-  const isActive = isPlanActive(status);
-  const lapsedAwaitingSweep = isPlanAwaitingExpiry(status);
-  // One derived status drives the label AND the colour. Deriving them
-  // separately is how you get a green badge that reads EXPIRED.
-  const effectiveStatus = lapsedAwaitingSweep ? 'expired' : planStatus;
-  const planLabel = effectiveStatus.toUpperCase();
+  const { status, loading } = useMySubscription();
+  const active = isPlanActive(status);
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backBtn}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <Text style={styles.backTxt}>{'< Back'}</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>My Subscription</Text>
-        <View style={{ width: 80 }} />
-      </View>
-
+    <SafeAreaView style={styles.page} edges={['top']}>
+      <ScreenHeader title="My Subscription" fallbackHref="/(tabs)/profile" />
       {loading ? (
-        <ActivityIndicator color={Colors.brandBlue} size="large" style={{ marginTop: 60 }} />
+        <ActivityIndicator color={Colors.brandBlue} size="large" style={styles.loading} />
       ) : (
-        <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={styles.content}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Current Plan Card */}
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Current Plan</Text>
-            <View
-              style={[styles.badge, { backgroundColor: getStatusColor(effectiveStatus) + '18' }]}
-            >
-              <Text style={[styles.badgeText, { color: getStatusColor(effectiveStatus) }]}>
-                {planLabel}
-              </Text>
-            </View>
-            {isActive && status?.plan_expires_at && (
-              <Text style={styles.cardMeta}>Active until {formatDate(status.plan_expires_at)}</Text>
-            )}
-            {isActive && status?.plan_started_at && (
-              <Text style={styles.cardSub}>Started {formatDate(status.plan_started_at)}</Text>
-            )}
-            {planStatus === 'lifetime' && (
-              <Text style={styles.cardMeta}>Lifetime access. Nothing to renew.</Text>
-            )}
-            {!isActive && planStatus === 'free' && (
-              <Text style={styles.cardMeta}>You are on the free plan.</Text>
-            )}
-            {(planStatus === 'expired' || lapsedAwaitingSweep) && (
-              <Text style={styles.cardMeta}>Your plan expired on {formatDate(expiresAt)}.</Text>
-            )}
-          </View>
-
-          {/* Latest Request Card */}
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Latest Request</Text>
-            {status?.latest_request_id ? (
-              <View>
-                <View style={styles.requestRow}>
-                  <Text style={styles.requestPlan}>
-                    {(status.latest_request_plan_code ?? '').toUpperCase()}
-                    {status.latest_request_amount_inr
-                      ? ` · ₹${status.latest_request_amount_inr}`
-                      : ''}
-                  </Text>
-                  <View
-                    style={[
-                      styles.badge,
-                      {
-                        backgroundColor: getRequestStatusColor(status.latest_request_status) + '18',
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.badgeText,
-                        { color: getRequestStatusColor(status.latest_request_status) },
-                      ]}
-                    >
-                      {(status.latest_request_status ?? '').toUpperCase()}
-                    </Text>
-                  </View>
-                </View>
-
-                <Text style={styles.cardSub}>
-                  Submitted {formatDate(status.latest_request_created_at)}
-                </Text>
-
-                {status.latest_request_status === 'approved' &&
-                  status.latest_request_reviewed_at && (
-                    <Text style={[styles.cardSub, { color: Colors.success }]}>
-                      Approved on {formatDate(status.latest_request_reviewed_at)}
-                    </Text>
-                  )}
-
-                {status.latest_request_status === 'rejected' && (
-                  <Text style={[styles.cardSub, { color: Colors.brandBlue }]}>
-                    Rejected: {status.latest_request_rejection_reason ?? 'Payment not verified'}
-                  </Text>
-                )}
-              </View>
-            ) : (
-              <View style={styles.emptyRequest}>
-                <Text style={styles.emptyText}>No subscription requests yet.</Text>
-                <Text style={styles.emptySubText}>Tap Upgrade to get started.</Text>
-              </View>
-            )}
-          </View>
-
-          {/* Upgrade Button */}
-          <TouchableOpacity
-            style={[styles.upgradeBtn, isActive && { opacity: 0.5 }]}
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <CurrentPlanCard status={status} />
+          <LatestRequestCard status={status} />
+          <Button
+            label={active ? 'Plan Active' : 'Upgrade'}
+            size="lg"
             onPress={() => router.push('/premium')}
-            disabled={isActive}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.upgradeBtnText}>{isActive ? 'Plan Active' : 'Upgrade'}</Text>
-          </TouchableOpacity>
-
-          <View style={{ height: 40 }} />
+            disabled={active}
+            style={styles.upgrade}
+          />
         </ScrollView>
       )}
     </SafeAreaView>
   );
 }
 
+function CurrentPlanCard({ status }: { status: SubscriptionStatus | null }) {
+  const planStatus = status?.plan_status ?? 'free';
+  const active = isPlanActive(status);
+  // A plan past its end date can still read 'active' until the hourly expiry job runs. One
+  // derived status drives both the label and the colour, so a green chip never reads EXPIRED.
+  const lapsed = isPlanAwaitingExpiry(status);
+  const shownStatus = lapsed ? 'expired' : planStatus;
+
+  return (
+    <Card>
+      <Text style={styles.cardTitle}>Current Plan</Text>
+      <Chip label={shownStatus.toUpperCase()} tone={PLAN_TONES[shownStatus] ?? 'neutral'} />
+      {active && status?.plan_expires_at ? (
+        <Text style={styles.line}>Active until {formatDate(status.plan_expires_at)}</Text>
+      ) : null}
+      {active && status?.plan_started_at ? (
+        <Text style={styles.subLine}>Started {formatDate(status.plan_started_at)}</Text>
+      ) : null}
+      {planStatus === 'lifetime' ? (
+        <Text style={styles.line}>Lifetime access. Nothing to renew.</Text>
+      ) : null}
+      {!active && planStatus === 'free' ? (
+        <Text style={styles.line}>You are on the free plan.</Text>
+      ) : null}
+      {shownStatus === 'expired' ? (
+        <Text style={styles.line}>Your plan expired on {formatDate(status?.plan_expires_at)}.</Text>
+      ) : null}
+    </Card>
+  );
+}
+
+function LatestRequestCard({ status }: { status: SubscriptionStatus | null }) {
+  if (!status?.latest_request_id) {
+    return (
+      <Card>
+        <Text style={styles.cardTitle}>Latest Request</Text>
+        <View style={styles.empty}>
+          <Text style={styles.emptyTitle}>No subscription requests yet.</Text>
+          <Text style={styles.subLine}>Tap Upgrade to get started.</Text>
+        </View>
+      </Card>
+    );
+  }
+
+  const requestStatus = status.latest_request_status ?? '';
+  const amount = status.latest_request_amount_inr ? ` · ₹${status.latest_request_amount_inr}` : '';
+
+  return (
+    <Card>
+      <Text style={styles.cardTitle}>Latest Request</Text>
+      <View style={styles.requestRow}>
+        <Text style={styles.requestPlan}>
+          {(status.latest_request_plan_code ?? '').toUpperCase()}
+          {amount}
+        </Text>
+        <Chip
+          label={requestStatus.toUpperCase()}
+          tone={REQUEST_TONES[requestStatus] ?? 'neutral'}
+        />
+      </View>
+      <Text style={styles.subLine}>Submitted {formatDate(status.latest_request_created_at)}</Text>
+      {requestStatus === 'approved' && status.latest_request_reviewed_at ? (
+        <Text style={[styles.subLine, styles.approved]}>
+          Approved on {formatDate(status.latest_request_reviewed_at)}
+        </Text>
+      ) : null}
+      {requestStatus === 'rejected' ? (
+        <Text style={[styles.subLine, styles.rejected]}>
+          Rejected: {status.latest_request_rejection_reason ?? 'Payment not verified'}
+        </Text>
+      ) : null}
+    </Card>
+  );
+}
+
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.bg },
-  header: {
-    backgroundColor: Colors.surface,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.border,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  backBtn: { width: 80 },
-  backTxt: { color: Colors.text, fontSize: 14, fontWeight: '600' },
-  headerTitle: {
+  page: { flex: 1, backgroundColor: Colors.bg },
+  loading: { marginTop: 60 },
+  content: { padding: Spacing.lg, paddingBottom: 40 },
+  cardTitle: {
+    fontSize: FontSize.base,
+    fontWeight: FontWeight.extrabold,
     color: Colors.text,
-    fontSize: 18,
-    fontWeight: '800',
-    flex: 1,
-    textAlign: 'center',
+    marginBottom: Spacing.md,
   },
-  content: { paddingVertical: 16 },
-  card: {
-    marginHorizontal: 16,
-    marginBottom: 16,
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: Colors.border,
+  line: {
+    fontSize: FontSize.md,
+    color: Colors.text,
+    fontWeight: FontWeight.medium,
+    marginTop: Spacing.sm,
   },
-  cardTitle: { fontSize: 14, fontWeight: '800', color: Colors.text, marginBottom: 12 },
-  cardMeta: { fontSize: 13, color: Colors.text, fontWeight: '500', marginTop: 8 },
-  cardSub: { fontSize: 12, color: Colors.textMuted, fontWeight: '500', marginTop: 4 },
-  badge: { alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8 },
-  badgeText: { fontSize: 12, fontWeight: '900', letterSpacing: 0.5 },
+  subLine: {
+    fontSize: FontSize.sm,
+    color: Colors.textMuted,
+    fontWeight: FontWeight.medium,
+    marginTop: Spacing.xs,
+  },
+  approved: { color: Colors.success },
+  rejected: { color: Colors.danger },
   requestRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: Spacing.md,
   },
-  requestPlan: { fontSize: 15, fontWeight: '700', color: Colors.text },
-  emptyRequest: { alignItems: 'center', paddingVertical: 20 },
-  emptyText: { fontSize: 14, fontWeight: '600', color: Colors.text },
-  emptySubText: { fontSize: 12, color: Colors.textMuted, marginTop: 4 },
-  upgradeBtn: {
-    marginHorizontal: 16,
-    marginTop: 8,
-    backgroundColor: Colors.brandBlue,
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  upgradeBtnText: { color: Colors.text, fontSize: 16, fontWeight: '800' },
+  requestPlan: { fontSize: FontSize.subhead, fontWeight: FontWeight.bold, color: Colors.text },
+  empty: { alignItems: 'center', paddingVertical: Spacing.xl },
+  emptyTitle: { fontSize: FontSize.base, fontWeight: FontWeight.semibold, color: Colors.text },
+  upgrade: { marginTop: Spacing.sm },
 });
