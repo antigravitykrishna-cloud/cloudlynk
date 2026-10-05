@@ -17,7 +17,7 @@
     "format": "prettier --write \"src/**/*.{ts,tsx}\" \"supabase/functions/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx}\" \"supabase/functions/**/*.ts\"",
     "db:types": "npx supabase gen types typescript --project-id wdtwjiixuueqejfraaod > src/lib/database.types.ts",
-    "functions:check": "deno check supabase/functions/*/index.ts",
+    "functions:check": "deno check --node-modules-dir=none supabase/functions/*/index.ts",
     "test": "jest"
   },
   "dependencies": {

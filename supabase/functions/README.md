@@ -60,7 +60,7 @@ Set with `npx supabase secrets set NAME=value`. `SUPABASE_URL`, `SUPABASE_ANON_K
 ## Working on a function
 
 ```sh
-deno check supabase/functions/*/index.ts      # typecheck every function (CI runs this)
+npm run functions:check                       # deno check every function (CI runs this)
 npx supabase functions serve <name>           # run locally against `supabase start`
 npx supabase functions deploy <name>          # deploy one; JWT settings come from config.toml
 ```

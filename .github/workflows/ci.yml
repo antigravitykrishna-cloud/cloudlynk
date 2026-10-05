@@ -71,8 +71,11 @@ jobs:
         with:
           deno-version: v2.x
 
+      # --node-modules-dir=none: the root package.json would otherwise make Deno resolve npm:
+      # imports from the app's node_modules, which this job does not install. Edge functions get
+      # their npm packages the way the Supabase runtime does, from the registry.
       - name: Typecheck
-        run: deno check supabase/functions/*/index.ts
+        run: deno check --node-modules-dir=none supabase/functions/*/index.ts
 
 # Release builds are deliberately not here: they need the upload keystore, which does not belong
 # in CI, and the bundle step already catches JS and babel breakage. See docs/guides/BUILD_LOCAL.md.
