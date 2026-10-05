@@ -84,6 +84,38 @@ module.exports = [
     },
   },
 
+  // ── Layering: only the data layer talks to Supabase ──
+  // Screens, components and hooks go through a feature's api/ module, so every query has one home
+  // and can be found, reused and tested there. See ARCHITECTURE.md.
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: [
+      'src/features/*/api/**',
+      'src/features/premium/billing/**',
+      'src/lib/**',
+      // Admin screens still awaiting their api/ pass.
+      'src/features/admin/screens/PendingChannelContentScreen.tsx',
+      'src/features/admin/screens/PendingChannelsScreen.tsx',
+      'src/features/admin/screens/AdminChannelsScreen.tsx',
+      'src/features/admin/screens/UserApprovalsScreen.tsx',
+      'src/features/admin/screens/SubscribersScreen.tsx',
+      'src/features/admin/screens/ChannelActivityScreen.tsx',
+    ],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@/lib/supabase',
+              message: "Query through the feature's api/ module instead (see ARCHITECTURE.md).",
+            },
+          ],
+        },
+      ],
+    },
+  },
+
   // ── Ignore plain Node.js utility scripts ──
   // These legitimately use __dirname, Buffer, and Node built-ins.
   {
