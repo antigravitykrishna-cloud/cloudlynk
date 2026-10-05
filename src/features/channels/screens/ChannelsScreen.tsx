@@ -16,12 +16,13 @@ import { LoginSheet } from '@/features/auth/components/LoginSheet';
 import { promptSaveAccount } from '@/features/auth/guestPrompts';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { channelsApi, type Channel, type DiscoverSort } from '@/features/channels/api/channelsApi';
-import { ChannelRow, type ChannelRowAction } from '@/features/channels/components/ChannelRow';
+import { joinGate, rowAction, searchChannels } from '@/features/channels/channelAccess';
+import { ChannelRow } from '@/features/channels/components/ChannelRow';
 import { useChannelList, type ChannelListTab } from '@/features/channels/hooks/useChannelList';
 import { errorMessage } from '@/utils/errors';
 
-// The Channels tab. Anyone can browse and open a channel. Joining needs a saved account; a public
-// channel needs no plan to join (the plan is asked for on watching), a hidden one does.
+// The Channels tab: browse, join, leave, and (for owners and admins) manage. Who may join is
+// decided in channelAccess.ts.
 
 const TABS: { key: ChannelListTab; label: string }[] = [
   { key: 'discover', label: 'Discover' },
@@ -35,15 +36,6 @@ const SORTS: { key: DiscoverSort; label: string }[] = [
   { key: 'latest', label: 'Latest' },
 ];
 
-function matches(channel: Channel, query: string): boolean {
-  const q = query.trim().toLowerCase();
-  return (
-    !q ||
-    channel.name.toLowerCase().includes(q) ||
-    (channel.description ?? '').toLowerCase().includes(q)
-  );
-}
-
 export default function ChannelsScreen() {
   const router = useRouter();
   const { user, isAdmin, isPaidUser, isGuest } = useAuth();
@@ -54,24 +46,22 @@ export default function ChannelsScreen() {
 
   const { channels, joinedIds, loading, loadFailed, reload, refresh } = useChannelList(tab, sort);
   const refreshControl = usePullToRefresh(refresh);
-  const visible = channels.filter(channel => matches(channel, query));
+  const visible = searchChannels(channels, query);
 
   const open = (channel: Channel) =>
     router.push({ pathname: '/(tabs)/channels/[id]', params: { id: channel.id } });
 
   const join = async (channel: Channel) => {
-    if (!user) {
-      setSignInSheetOpen(true);
-      return;
-    }
-    if (isGuest) {
-      promptSaveAccount(router, 'join channels');
-      return;
-    }
-    if (!channel.is_public && !isPaidUser && !isAdmin) {
-      router.push('/premium');
-      return;
-    }
+    const gate = joinGate({
+      signedIn: !!user,
+      isGuest,
+      isPaidUser,
+      isAdmin,
+      channelIsPublic: channel.is_public,
+    });
+    if (gate === 'sign_in') return setSignInSheetOpen(true);
+    if (gate === 'save_account') return promptSaveAccount(router, 'join channels');
+    if (gate === 'premium') return router.push('/premium');
     try {
       await channelsApi.join(channel.id);
       fireHaptic('success');
@@ -79,7 +69,7 @@ export default function ChannelsScreen() {
       open(channel);
     } catch (err) {
       fireHaptic('error');
-      showAlert('Cannot join channel', (err as Error)?.message || 'Could not join channel.');
+      showAlert('Cannot join channel', errorMessage(err, 'Could not join channel.'));
     }
   };
 
@@ -93,7 +83,7 @@ export default function ChannelsScreen() {
           channelsApi
             .leave(channel.id)
             .then(reload)
-            .catch(err => showAlert('Error', err?.message || 'Could not leave channel.')),
+            .catch(err => showAlert('Error', errorMessage(err, 'Could not leave channel.'))),
       },
     ]);
 
@@ -123,12 +113,8 @@ export default function ChannelsScreen() {
       ],
     );
 
-  const actionFor = (channel: Channel): ChannelRowAction =>
-    isAdmin || channel.owner_id === user?.id
-      ? 'manage'
-      : joinedIds.has(channel.id)
-        ? 'leave'
-        : 'join';
+  const actionFor = (channel: Channel) =>
+    rowAction(channel, { userId: user?.id, isAdmin, isMember: joinedIds.has(channel.id) });
 
   const runAction = (channel: Channel) => {
     const action = actionFor(channel);

@@ -1,4 +1,5 @@
 import { callEdgeFunction } from '@/lib/edgeFunctions';
+import { nativeFile } from '@/lib/nativeFile';
 
 // Uploading a video straight from the phone to Cloudflare Stream. The generate-stream-upload
 // function (admins only) hands out a one-time upload URL and the video's uid; the file then goes
@@ -118,7 +119,7 @@ function sendFile(
     // Cloudflare expects the file in a field called `file`. React Native's FormData accepts this
     // { uri, type, name } object and streams the file from disk.
     const form = new FormData();
-    form.append('file', { uri: video.uri, type: 'video/mp4', name: video.name } as never);
+    form.append('file', nativeFile({ uri: video.uri, type: 'video/mp4', name: video.name }));
 
     restartStallTimer();
     xhr.open('POST', uploadUrl);

@@ -5,9 +5,9 @@ import { Chip } from '@/components/ui/Chip';
 import { Icon } from '@/components/ui/Icon';
 import { Colors, FontSize, FontWeight, Spacing } from '@/theme';
 import type { Channel } from '@/features/channels/api/channelsApi';
+import type { ChannelRowAction } from '@/features/channels/channelAccess';
 
 /** What the button on the right of a channel row does. */
-export type ChannelRowAction = 'manage' | 'leave' | 'join';
 
 /**
  * One channel in a list. The avatar and the text open the channel; the button on the right is a

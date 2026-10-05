@@ -22,7 +22,7 @@ import { publicMedia } from '@/lib/publicMedia';
 import { Colors, FontSize, FontWeight, Spacing } from '@/theme';
 import { profileApi } from '@/features/auth/api/profileApi';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { errorMessage } from '@/utils/errors';
+import { errorCode, errorMessage } from '@/utils/errors';
 
 // Edit your own name, username and picture. Only these columns are writable: privileged fields
 // (plan, admin, approval) are reverted server-side by protect_profile_privileged_fields.
@@ -83,7 +83,7 @@ export default function EditProfileScreen() {
       toast('Profile saved', 'success');
       router.back();
     } catch (err) {
-      if ((err as { code?: string })?.code === ALREADY_TAKEN) {
+      if (errorCode(err) === ALREADY_TAKEN) {
         showAlert('Username taken', `"${handle}" is already in use. Try another.`);
       } else {
         showAlert('Could not save', errorMessage(err, 'Please try again.'));

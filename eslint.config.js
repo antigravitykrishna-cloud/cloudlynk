@@ -81,6 +81,10 @@ module.exports = [
       // resolver cannot follow it; `tsc --noEmit` already fails on any import
       // that does not resolve, so this rule would only duplicate it.
       'import/no-unresolved': 'off',
+
+      // Every value has a real type. Untyped native modules get a typeof import(...) or a small
+      // interface describing the part that is used.
+      '@typescript-eslint/no-explicit-any': 'error',
     },
   },
 

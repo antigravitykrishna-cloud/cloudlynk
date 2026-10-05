@@ -1,6 +1,6 @@
 import { callEdgeFunction } from '@/lib/edgeFunctions';
 import { supabase } from '@/lib/supabase';
-import { errorMessage } from '@/utils/errors';
+import { errorCode, errorMessage } from '@/utils/errors';
 import type { AccessLevel, ContentType } from '@/features/content/model';
 
 // Client wrappers for the admin content and access panel. Every write is a SECURITY DEFINER RPC
@@ -57,7 +57,7 @@ export type AuditEntry = {
  * on, instead of a raw schema-cache error.
  */
 function describeRpcError(err: unknown, feature: string): Error {
-  const code = (err as { code?: string } | null)?.code ?? '';
+  const code = errorCode(err) ?? '';
   if (code === 'PGRST202' || code === '42883') {
     return new Error(
       `${feature} is not available yet — the backend migration for it has not been deployed. ` +

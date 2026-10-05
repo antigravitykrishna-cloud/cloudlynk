@@ -8,27 +8,20 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import {
   paymentGatewaysApi,
   type GatewayMethod,
-  type OrderStatus,
   type RazorpayProof,
   type SabpaisaOrder,
 } from '@/features/premium/api/paymentGatewaysApi';
 import type { SubscriptionPlan } from '@/features/premium/api/plansApi';
 import { getIapService } from '@/features/premium/billing/googlePlayBilling';
 import { openRazorpay } from '@/features/premium/billing/razorpayCheckout';
+import {
+  confirmWindowMs,
+  gatewayOutcome,
+  type GatewayOutcome,
+} from '@/features/premium/gatewayOutcome';
 import { paymentChoices, type PaymentChoice } from '@/features/premium/paymentChoices';
 
-// How long to keep asking the server for a gateway's verdict. Long after a completed checkout;
-// short when the person most likely backed out -- but still ask, because a UPI payment can go
-// through even when the UPI app never reports back.
-const CONFIRM_AFTER_CHECKOUT_MS = 45_000;
-const CONFIRM_AFTER_CLOSE_MS = 8_000;
-
-// 'abandoned' = the person closed the checkout and the gateway has not confirmed anything. It is
-// NOT 'failed': a UPI payment can still complete after the checkout closes, and the server grants
-// Premium when it does, so telling them "no money was taken" could be false.
-type UnpaidOutcome = Exclude<OrderStatus, 'paid'> | 'abandoned';
-
-const UNPAID_ALERTS: Record<UnpaidOutcome, [title: string, message: string]> = {
+const UNPAID_ALERTS: Record<Exclude<GatewayOutcome, 'paid'>, [title: string, message: string]> = {
   failed: [
     'Payment failed',
     'The payment did not go through. You can try again or pick another way to pay.',
@@ -81,7 +74,7 @@ export function usePremiumCheckout(plan: SubscriptionPlan | undefined, onActivat
     showAlert(title, message, [{ text: 'OK', onPress: onActivated }]);
   }
 
-  async function reportGatewayOutcome(outcome: OrderStatus | 'abandoned') {
+  async function reportGatewayOutcome(outcome: GatewayOutcome) {
     if (outcome === 'paid') {
       await premiumActivated('Success', "You're now on Premium!");
       return;
@@ -100,9 +93,9 @@ export function usePremiumCheckout(plan: SubscriptionPlan | undefined, onActivat
     try {
       const status = await paymentGatewaysApi.waitForPayment(orderId, {
         proof,
-        timeoutMs: checkoutCompleted ? CONFIRM_AFTER_CHECKOUT_MS : CONFIRM_AFTER_CLOSE_MS,
+        timeoutMs: confirmWindowMs(checkoutCompleted),
       });
-      await reportGatewayOutcome(status === 'pending' && !checkoutCompleted ? 'abandoned' : status);
+      await reportGatewayOutcome(gatewayOutcome(status, checkoutCompleted));
     } finally {
       setConfirming(false);
     }

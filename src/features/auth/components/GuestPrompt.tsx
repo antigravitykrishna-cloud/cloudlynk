@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/theme';
 import { Icon, type IconName } from '@/components/ui/Icon';
 
@@ -21,7 +21,7 @@ export function GuestPrompt({
   title: string;
   message: string;
   linkLabel?: string;
-  linkHref?: string;
+  linkHref?: Href;
 }) {
   const router = useRouter();
 
@@ -55,7 +55,7 @@ export function GuestPrompt({
       </TouchableOpacity>
 
       {linkLabel && linkHref ? (
-        <TouchableOpacity onPress={() => router.push(linkHref as never)} activeOpacity={0.7}>
+        <TouchableOpacity onPress={() => router.push(linkHref)} activeOpacity={0.7}>
           <Text style={styles.link}>{linkLabel}</Text>
         </TouchableOpacity>
       ) : null}

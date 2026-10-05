@@ -6,6 +6,7 @@ import { TextField } from '@/components/ui/TextField';
 import { Colors, FontSize, FontWeight, Spacing } from '@/theme';
 import { Card } from '@/components/ui/Card';
 import type { Channel } from '@/features/channels/api/channelsApi';
+import { errorMessage } from '@/utils/errors';
 
 /** A channel's name and description, read-only until "Edit" is tapped. */
 export function ChannelDetailsCard({
@@ -37,7 +38,7 @@ export function ChannelDetailsCard({
       setEditing(false);
       showAlert('Success', 'Channel updated successfully');
     } catch (err) {
-      showAlert('Error', (err as Error)?.message || 'Failed to update channel');
+      showAlert('Error', errorMessage(err, 'Failed to update channel'));
     } finally {
       setSaving(false);
     }

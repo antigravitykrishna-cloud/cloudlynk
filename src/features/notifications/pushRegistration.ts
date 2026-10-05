@@ -4,6 +4,7 @@ import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { Colors } from '@/theme';
 import { profileApi } from '@/features/auth/api/profileApi';
+import { errorMessage } from '@/utils/errors';
 
 /**
  * Asks for permission to send push notifications and returns this phone's Expo push token, or null
@@ -31,7 +32,7 @@ async function getPushToken(): Promise<string | null> {
   try {
     return (await Notifications.getExpoPushTokenAsync({ projectId })).data;
   } catch (err) {
-    if (__DEV__) console.warn('Failed to get push token:', (err as Error)?.message);
+    if (__DEV__) console.warn('Failed to get push token:', errorMessage(err, 'unknown error'));
     return null;
   }
 }

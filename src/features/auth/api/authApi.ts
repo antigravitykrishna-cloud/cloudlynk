@@ -1,6 +1,7 @@
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { callEdgeFunction } from '@/lib/edgeFunctions';
+import { errorCode, errorMessage } from '@/utils/errors';
 import { config, isGoogleAuthLive } from '@/lib/config';
 
 // Sign-in, account linking and password calls against Supabase Auth. No React and no app state:
@@ -140,9 +141,19 @@ export const authApi = {
 
 /** Whether a Google sign-in error is the person backing out of the account picker. */
 export function isSignInCancelled(err: unknown): boolean {
-  const { message, code } = (err ?? {}) as { message?: unknown; code?: unknown };
-  return /cancel/i.test(String(message ?? '')) || code === '-5' || code === '12501';
+  const code = errorCode(err);
+  return /cancel/i.test(errorMessage(err, '')) || code === '-5' || code === '12501';
 }
+
+/**
+ * The part of @react-native-google-signin/google-signin used here. The package is optional (only in
+ * builds with Google configured), so its types are not available to import.
+ */
+type GoogleSigninModule = {
+  configure(options: { webClientId: string }): void;
+  hasPlayServices(): Promise<boolean>;
+  signIn(): Promise<{ data?: { idToken?: string | null } | null; idToken?: string | null } | null>;
+};
 
 /**
  * Native Google Sign-In; the ID token then goes to Supabase (no browser redirect). The library is
@@ -151,7 +162,7 @@ export function isSignInCancelled(err: unknown): boolean {
 async function getGoogleIdToken(): Promise<string> {
   if (!isGoogleAuthLive()) throw new Error('Google sign-in is not configured in this build.');
 
-  let GoogleSignin: any;
+  let GoogleSignin: GoogleSigninModule;
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports -- optional native module, loaded on first use
     ({ GoogleSignin } = require('@react-native-google-signin/google-signin'));
@@ -164,7 +175,7 @@ async function getGoogleIdToken(): Promise<string> {
   const result = await GoogleSignin.signIn();
 
   // v13+ of the library returns the token under `data`, older versions at the top level.
-  const idToken: string | undefined = result?.data?.idToken ?? result?.idToken;
+  const idToken = result?.data?.idToken ?? result?.idToken;
   if (!idToken) throw new Error('Google did not return an ID token.');
   return idToken;
 }

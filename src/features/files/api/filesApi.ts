@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase';
 import type { Tables } from '@/lib/database.types';
 import type { PickedFile } from '@/lib/mediaPicker';
 import { categoryOf, type FileCategory } from '@/features/files/fileCategories';
+import { nativeFile } from '@/lib/nativeFile';
 
 // The person's private cloud drive: files in the `user-files` bucket, one row each in `files`, and
 // the storage counter on their profile. Only the owner can read a file.
@@ -98,6 +99,6 @@ function putFile(
     xhr.onerror = () => reject(new Error('Network error during upload'));
     xhr.open('PUT', url);
     xhr.setRequestHeader('Content-Type', file.mimeType);
-    xhr.send({ uri: file.uri, type: file.mimeType, name: file.name } as never);
+    xhr.send(nativeFile({ uri: file.uri, type: file.mimeType, name: file.name }));
   });
 }

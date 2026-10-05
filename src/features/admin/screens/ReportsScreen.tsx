@@ -12,6 +12,7 @@ import {
 import { AdminScreen } from '@/features/admin/components/AdminScreen';
 import { adminStyles } from '@/features/admin/components/adminStyles';
 import { ReportCard } from '@/features/admin/components/ReportCard';
+import { errorMessage } from '@/utils/errors';
 
 // The moderation queue for reports filed from the app. Every action re-checks is_admin on the
 // server (admin_resolve_report); this screen is a convenience, not the security boundary.
@@ -29,7 +30,7 @@ export default function ReportsScreen() {
       // admin concludes there is nothing to review while the queue fills up.
       showAlert(
         'Could not load reports',
-        (err as Error)?.message ?? 'Check your connection and try again.',
+        errorMessage(err, 'Check your connection and try again.'),
       );
     } finally {
       setLoading(false);
@@ -49,7 +50,7 @@ export default function ReportsScreen() {
       await adminReportsApi.resolve(report.id, action, note);
       setReports(current => current.filter(r => r.id !== report.id));
     } catch (err) {
-      showAlert('Error', (err as Error)?.message ?? 'Could not resolve report.');
+      showAlert('Error', errorMessage(err, 'Could not resolve report.'));
     } finally {
       setResolvingId(null);
     }

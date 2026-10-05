@@ -10,6 +10,7 @@ import { isSignInCancelled } from '@/features/auth/api/authApi';
 import { AuthCard, AuthLayout } from '@/features/auth/components/AuthLayout';
 import { CodeStep, EmailStep, isValidEmail } from '@/features/auth/components/EmailCodeForm';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { errorMessage } from '@/utils/errors';
 
 // Sign-in choices: guest, Google, or an emailed code. There is no separate sign-up: each choice
 // creates the account if it does not exist. Guests can browse; joining, watching and buying need a
@@ -43,10 +44,7 @@ export default function LoginScreen() {
       await work();
     } catch (err) {
       if (!failure.ignore?.(err)) {
-        showAlert(
-          failure.title,
-          (err as Error)?.message || failure.fallback || 'Please try again.',
-        );
+        showAlert(failure.title, errorMessage(err, failure.fallback || 'Please try again.'));
       }
     } finally {
       setBusy(null);

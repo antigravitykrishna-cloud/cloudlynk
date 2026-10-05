@@ -20,6 +20,7 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { ChannelDetailsCard } from '@/features/channels/components/ChannelDetailsCard';
 import { useManagedChannel } from '@/features/channels/hooks/useManagedChannel';
 import type { ChannelPost } from '@/features/content/model';
+import { errorMessage } from '@/utils/errors';
 
 // An owner's (or admin's) view of one channel: its details, every post with a delete button, and
 // deleting the channel itself.
@@ -42,7 +43,7 @@ export default function ManageChannelScreen() {
           onPress: () =>
             deleteChannel()
               .then(() => showAlert('Deleted', 'Channel has been deleted.'))
-              .catch(err => showAlert('Error', err?.message || 'Failed to delete channel')),
+              .catch(err => showAlert('Error', errorMessage(err, 'Failed to delete channel'))),
         },
       ],
     );
@@ -55,7 +56,7 @@ export default function ManageChannelScreen() {
         style: 'destructive',
         onPress: () =>
           deletePost(post.id).catch(err =>
-            showAlert('Error', err?.message || 'Failed to delete post'),
+            showAlert('Error', errorMessage(err, 'Failed to delete post')),
           ),
       },
     ]);

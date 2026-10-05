@@ -14,7 +14,7 @@ export function guestTappedTitle(router: Router, hasPlan: boolean) {
       'Your plan is active. Save your account with Google or email and everything unlocks right away.',
       [
         { text: 'Not now', style: 'cancel' },
-        { text: 'Save account', onPress: () => router.push('/save-account' as never) },
+        { text: 'Save account', onPress: () => router.push('/save-account') },
       ],
     );
     return;
@@ -29,7 +29,7 @@ export function promptSaveAccount(router: Router, what = 'upload') {
     `Guest accounts can't ${what}. Save your account with Google or email -- it takes a moment and keeps everything you have.`,
     [
       { text: 'Not now', style: 'cancel' },
-      { text: 'Save account', onPress: () => router.push('/save-account' as never) },
+      { text: 'Save account', onPress: () => router.push('/save-account') },
     ],
   );
 }
