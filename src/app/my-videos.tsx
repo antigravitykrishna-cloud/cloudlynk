@@ -14,6 +14,7 @@ import { Colors } from '@/constants/theme';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import { Icon } from '@/components/ui/Icon';
+import { formatDate } from '@/utils/format';
 
 interface MyPost {
   id: string;
@@ -37,15 +38,6 @@ const TABS: { key: FilterTab; label: string }[] = [
   { key: 'approved', label: 'Approved' },
   { key: 'rejected', label: 'Rejected' },
 ];
-
-function formatDate(iso: string | null): string {
-  if (!iso) return '';
-  return new Date(iso).toLocaleDateString('en-IN', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
-}
 
 function getStatusColor(status: string): string {
   switch (status) {

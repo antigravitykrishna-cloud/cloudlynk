@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
+import { formatDate } from '@/utils/format';
 
 // Subscribers split into cohorts, filtered server-side so lists stay complete past the row limit.
 // Tap a subscriber to adjust their plan by hand (support cases; Google Play renewals still update
@@ -55,15 +56,6 @@ const BLURB: Record<Cohort, string> = {
     'Cancelled but still inside the paid term. Access ends on the date shown, then they move to Expired.',
   free: 'No subscription on record.',
 };
-
-function formatDate(iso: string | null): string {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString(undefined, {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
-}
 
 // Days until (positive) or since (negative) the date, for the relative label.
 function dayDelta(iso: string | null): number | null {

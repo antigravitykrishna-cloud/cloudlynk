@@ -1,7 +1,3 @@
-// New API for Paths (file/URI lookups), legacy API for createDownloadResumable
-// (legacy path avoids the deprecation popup in SDK 56)
-import * as FileSystem from 'expo-file-system';
-import * as LegacyFileSystem from 'expo-file-system/legacy';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { supabase } from '@/lib/supabase';
@@ -26,25 +22,6 @@ export function getMimeCategory(mimeType: string): FileCategory {
   )
     return 'document';
   return 'other';
-}
-
-export function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
-}
-
-export function formatTimeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  if (days < 7) return `${days}d ago`;
-  return new Date(dateStr).toLocaleDateString();
 }
 
 export const StorageService = {
@@ -162,15 +139,6 @@ export const StorageService = {
     return data.signedUrl;
   },
 
-  async downloadFile(storagePath: string, fileName: string) {
-    const signedUrl = await this.getSignedUrl(storagePath);
-    // Use document directory from the new Paths API
-    const downloadDest = `${FileSystem.Paths.document.uri}/${fileName}`;
-    const downloadResumable = LegacyFileSystem.createDownloadResumable(signedUrl, downloadDest, {});
-    const result = await downloadResumable.downloadAsync();
-    return result?.uri;
-  },
-
   async deleteFile(fileId: string, storagePath: string, userId: string, fileSize: number) {
     const { error: storageError } = await supabase.storage.from('user-files').remove([storagePath]);
     if (storageError) throw storageError;
@@ -201,32 +169,7 @@ export const StorageService = {
     if (error) throw error;
     return data ?? [];
   },
-
-  async getStorageBreakdown(userId: string) {
-    const { data, error } = await supabase
-      .from('files')
-      .select('category, size')
-      .eq('user_id', userId);
-
-    if (error) throw error;
-
-    const breakdown: Record<string, number> = {
-      photo: 0,
-      video: 0,
-      document: 0,
-      audio: 0,
-      other: 0,
-    };
-
-    (data ?? []).forEach(f => {
-      breakdown[f.category] = (breakdown[f.category] ?? 0) + f.size;
-    });
-
-    return breakdown;
-  },
 };
-
-// decode() removed — no longer needed after switching to XHR FormData upload
 
 // Re-export category helpers for convenience
 export { CATEGORY_ICONS, CATEGORY_COLORS, CATEGORY_DIM } from '@/constants/theme';

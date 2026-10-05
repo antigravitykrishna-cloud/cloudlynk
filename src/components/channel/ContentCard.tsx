@@ -3,7 +3,8 @@ import { memo } from 'react';
 import { PostService, ChannelPost } from '@/lib/data/posts';
 import { Colors } from '@/constants/theme';
 import { Icon } from '@/components/ui/Icon';
-import { formatDuration, getTypeColor } from '@/components/channel/shared';
+import { getTypeColor } from '@/components/channel/shared';
+import { formatMinutes } from '@/utils/format';
 
 const CARD_W = 120;
 
@@ -58,7 +59,7 @@ export const ContentCard = memo(({ item, onPress }: { item: ChannelPost; onPress
         )}
         {!!item.duration_min && (
           <View style={styles.durationBadge}>
-            <Text style={styles.durationTxt}>{formatDuration(item.duration_min)}</Text>
+            <Text style={styles.durationTxt}>{formatMinutes(item.duration_min)}</Text>
           </View>
         )}
       </View>

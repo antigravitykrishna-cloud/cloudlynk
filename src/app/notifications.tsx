@@ -14,7 +14,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useNotifications } from '@/hooks/useNotifications';
 import { Notification, NOTIF_META } from '@/lib/data/notifications';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme';
-import { formatTimeAgo } from '@/lib/data/files';
+import { formatTimeAgo } from '@/utils/format';
 import { Icon } from '@/components/ui/Icon';
 
 export default function NotificationsScreen() {

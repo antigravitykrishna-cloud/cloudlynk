@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme';
 import { PressScale } from '@/components/ui/Press';
 import { Icon, type IconName } from '@/components/ui/Icon';
+import { formatDate } from '@/utils/format';
 
 // Shared pieces for the admin screens added in v82 (users, payments, plans,
 // channels, announcements), so they look like one panel rather than six.
@@ -156,25 +157,6 @@ export function planChip(u: { plan_status: string | null; plan_expires_at: strin
   if (u.plan_status === 'active' || u.plan_status === 'expired')
     return <Chip label="EXPIRED" tone="warn" />;
   return <Chip label="FREE" />;
-}
-
-export function formatDate(iso: string | null | undefined): string {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString(undefined, {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
-}
-
-export function formatDateTime(iso: string | null | undefined): string {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleString(undefined, {
-    day: '2-digit',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
 }
 
 export const adminStyles = StyleSheet.create({

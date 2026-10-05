@@ -23,7 +23,8 @@ import { PostService, ChannelPost } from '@/lib/data/posts';
 import { Database, supabase } from '@/lib/supabase';
 import { Colors } from '@/constants/theme';
 import { Icon } from '@/components/ui/Icon';
-import { H, formatDuration } from '@/components/channel/shared';
+import { H } from '@/components/channel/shared';
+import { formatMinutes } from '@/utils/format';
 import { DetailModal } from '@/components/channel/DetailModal';
 import { GenreRow } from '@/components/channel/GenreRow';
 
@@ -242,7 +243,7 @@ export default function ChannelDetailScreen() {
                   <Text style={styles.heroGenre}>
                     {hero.genre}
                     {hero.release_year ? ` · ${hero.release_year}` : ''}
-                    {hero.duration_min ? ` · ${formatDuration(hero.duration_min)}` : ''}
+                    {hero.duration_min ? ` · ${formatMinutes(hero.duration_min)}` : ''}
                   </Text>
                 )}
                 <View style={styles.heroActions}>

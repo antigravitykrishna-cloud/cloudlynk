@@ -74,16 +74,3 @@ export function useResumePosition(
 
   return { positionSeconds, durationSeconds, showOverlay, dismiss };
 }
-
-/** Format seconds to MM:SS or H:MM:SS. Clamps negatives defensively. */
-export function formatPosition(totalSeconds: number): string {
-  const t = Math.max(0, totalSeconds);
-  const h = Math.floor(t / 3600);
-  const m = Math.floor((t % 3600) / 60);
-  const s = Math.floor(t % 60);
-
-  if (h > 0) {
-    return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  }
-  return `${m}:${s.toString().padStart(2, '0')}`;
-}

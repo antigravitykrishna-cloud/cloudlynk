@@ -16,7 +16,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import { Colors } from '@/constants/theme';
-import { formatFileSize, formatDuration } from '@/lib/data/channelVideos';
+import { formatBytes, formatClock } from '@/utils/format';
 
 interface PendingChannel {
   id: string;
@@ -487,9 +487,9 @@ export default function PendingChannelsScreen() {
                     {video.channel_name ?? 'Unknown channel'} · {video.owner_email ?? 'Unknown'}
                   </Text>
                   <Text style={styles.rowMeta}>
-                    {formatFileSize(video.file_size_bytes ?? 0)} ·{' '}
-                    {formatDuration(video.duration_seconds)} ·{' '}
-                    {new Date(video.created_at).toLocaleDateString()}
+                    {formatBytes(video.file_size_bytes ?? 0)} ·{' '}
+                    {video.duration_seconds == null ? '--:--' : formatClock(video.duration_seconds)}{' '}
+                    · {new Date(video.created_at).toLocaleDateString()}
                   </Text>
                 </View>
                 <View style={styles.rowActions}>

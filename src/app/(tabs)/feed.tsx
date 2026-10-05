@@ -10,6 +10,7 @@ import { PostService, GuestChannelPost } from '@/lib/data/posts';
 import { Colors } from '@/constants/theme';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { Icon } from '@/components/ui/Icon';
+import { formatTimeAgo } from '@/utils/format';
 
 // Feed: newest posts from the channels you joined. Guests and people who joined nothing see an
 // empty state with a way to the channels. Premium titles show a lock and open the plans; others
@@ -17,24 +18,12 @@ import { Icon } from '@/components/ui/Icon';
 
 type FeedItem = GuestChannelPost;
 
-function timeAgo(iso: string): string {
-  const secs = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
-  if (secs < 60) return 'just now';
-  const mins = Math.floor(secs / 60);
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-  return new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
-}
-
 function subtitleFor(item: FeedItem): string {
   const bits: string[] = [];
   if (item.genre) bits.push(item.genre);
   if (item.content_type && item.content_type !== 'post') bits.push(item.content_type);
   if (item.duration_min) bits.push(`${item.duration_min} min`);
-  bits.push(timeAgo(item.created_at));
+  bits.push(formatTimeAgo(item.created_at));
   return bits.join(' · ');
 }
 

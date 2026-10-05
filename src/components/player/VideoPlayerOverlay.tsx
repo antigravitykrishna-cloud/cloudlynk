@@ -18,7 +18,8 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { Colors, Radius, FontSize } from '@/constants/theme';
-import { useResumePosition, formatPosition } from '@/hooks/useResumePosition';
+import { useResumePosition } from '@/hooks/useResumePosition';
+import { formatClock } from '@/utils/format';
 import { useAuth } from '@/hooks/useAuth';
 import { PlayerPrefsService } from '@/lib/services/playerPrefs';
 
@@ -261,7 +262,7 @@ export function VideoPlayerOverlay({
                 {postTitle}
               </Text>
             )}
-            <Text style={styles.resumePosition}>Resume from {formatPosition(positionSeconds)}</Text>
+            <Text style={styles.resumePosition}>Resume from {formatClock(positionSeconds)}</Text>
             <View style={styles.resumeActions}>
               <TouchableOpacity style={styles.resumeBtn} onPress={handleResume} activeOpacity={0.8}>
                 <Text style={styles.resumeBtnTxt}>▶ Resume</Text>
@@ -376,7 +377,7 @@ export function VideoPlayerOverlay({
             <Text style={styles.playIcon}>{isPlaying ? '⏸' : '▶'}</Text>
           </TouchableOpacity>
 
-          <Text style={styles.timeText}>{formatPosition(Math.min(currentTime, duration))}</Text>
+          <Text style={styles.timeText}>{formatClock(Math.min(currentTime, duration))}</Text>
 
           <View
             style={styles.progressTrack}
@@ -397,7 +398,7 @@ export function VideoPlayerOverlay({
             </View>
           </View>
 
-          <Text style={styles.timeText}>{formatPosition(duration)}</Text>
+          <Text style={styles.timeText}>{formatClock(duration)}</Text>
         </View>
       )}
 

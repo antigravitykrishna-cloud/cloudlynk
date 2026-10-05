@@ -154,12 +154,6 @@ export const ChannelService = {
     });
     if (error) throw error;
   },
-
-  getDaysRemaining(approvalExpiresAt: string | null): number {
-    if (!approvalExpiresAt) return 0;
-    const diff = new Date(approvalExpiresAt).getTime() - Date.now();
-    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
-  },
 };
 
 // Reporting a user (their behaviour in general), separate from reporting one post. Shown to admins
@@ -188,15 +182,6 @@ export const BlockService = {
     if (error && error.code !== '23505') throw error; // ignore "already blocked"
   },
 
-  async unblockUser(blockerId: string, blockedId: string) {
-    const { error } = await supabase
-      .from('user_blocks')
-      .delete()
-      .eq('blocker_id', blockerId)
-      .eq('blocked_id', blockedId);
-    if (error) throw error;
-  },
-
   async getBlockedUserIds(blockerId: string): Promise<string[]> {
     const { data, error } = await supabase
       .from('user_blocks')
@@ -204,16 +189,5 @@ export const BlockService = {
       .eq('blocker_id', blockerId);
     if (error) throw error;
     return (data ?? []).map(row => row.blocked_id as string);
-  },
-
-  async isBlocked(blockerId: string, blockedId: string): Promise<boolean> {
-    const { data, error } = await supabase
-      .from('user_blocks')
-      .select('blocker_id')
-      .eq('blocker_id', blockerId)
-      .eq('blocked_id', blockedId)
-      .maybeSingle();
-    if (error) throw error;
-    return !!data;
   },
 };

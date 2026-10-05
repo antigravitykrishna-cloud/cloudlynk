@@ -8,6 +8,7 @@ import * as Sharing from 'expo-sharing';
 import { supabase } from '@/lib/supabase';
 import { Colors } from '@/constants/theme';
 import { Icon } from '@/components/ui/Icon';
+import { formatBytes } from '@/utils/format';
 
 type ExportStatus = 'idle' | 'loading' | 'success' | 'error';
 
@@ -44,12 +45,6 @@ export default function ExportDataScreen() {
     return count;
   };
 
-  const formatFileSize = (bytes: number): string => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
-
   const handleExport = async () => {
     setStatus('loading');
     try {
@@ -64,7 +59,7 @@ export default function ExportDataScreen() {
       file.write(jsonString);
 
       const size = file.size ?? jsonString.length;
-      setFileSize(formatFileSize(size));
+      setFileSize(formatBytes(size));
       setRecordCount(countRecords(data as Record<string, unknown>));
 
       const sharingAvailable = await Sharing.isAvailableAsync();

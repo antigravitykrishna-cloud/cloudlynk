@@ -405,47 +405,6 @@ export const PostService = {
 
   // ── Create ──────────────────────────────────────────────────
 
-  async createChannelPost(input: {
-    channelId: string;
-    authorId: string;
-    title: string;
-    body?: string;
-    contentType: ContentType;
-    videoUrl?: string;
-    thumbnailUrl?: string;
-    durationMin?: number;
-    genre?: string;
-    releaseYear?: number;
-    seasonNumber?: number;
-    episodeNumber?: number;
-    episodeTitle?: string;
-    accessLevel?: AccessLevel;
-  }): Promise<ChannelPost> {
-    const { data, error } = await supabase
-      .from('channel_posts')
-      .insert({
-        channel_id: input.channelId,
-        author_id: input.authorId,
-        title: input.title,
-        body: input.body ?? null,
-        content_type: input.contentType,
-        video_url: input.videoUrl ?? null,
-        thumbnail_url: input.thumbnailUrl ?? null,
-        duration_min: input.durationMin ?? null,
-        genre: input.genre ?? null,
-        release_year: input.releaseYear ?? null,
-        season_number: input.seasonNumber ?? null,
-        episode_number: input.episodeNumber ?? null,
-        episode_title: input.episodeTitle ?? null,
-        access_level: input.accessLevel ?? defaultAccessLevel(input.contentType),
-        status: 'pending',
-      })
-      .select('*, author:profiles!channel_posts_author_id_fkey(id, full_name, avatar_url)')
-      .single();
-    if (error) throw error;
-    return data as ChannelPost;
-  },
-
   async createPost(
     channelId: string,
     authorId: string,

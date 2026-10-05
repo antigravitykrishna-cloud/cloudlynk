@@ -9,13 +9,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { promptSaveAccount } from '@/lib/auth/guest';
 import { useFiles } from '@/hooks/useFiles';
 import { Colors } from '@/constants/theme';
-import {
-  formatBytes,
-  formatTimeAgo,
-  CATEGORY_ICONS,
-  CATEGORY_DIM,
-  CATEGORY_COLORS,
-} from '@/lib/data/files';
+import { CATEGORY_ICONS, CATEGORY_DIM, CATEGORY_COLORS } from '@/lib/data/files';
+import { formatBytes, formatTimeAgo } from '@/utils/format';
 import { Icon, type IconName } from '@/components/ui/Icon';
 
 const CATEGORIES: { key: string; label: string; icon: IconName }[] = [

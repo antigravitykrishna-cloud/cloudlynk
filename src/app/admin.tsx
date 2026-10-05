@@ -16,7 +16,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { PostService, ChannelPost } from '@/lib/data/posts';
 import { NotificationService } from '@/lib/data/notifications';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme';
-import { formatTimeAgo } from '@/lib/data/files';
+import { formatTimeAgo } from '@/utils/format';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { ToolTile } from '@/components/admin/AdminUI';
 

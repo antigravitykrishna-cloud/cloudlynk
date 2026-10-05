@@ -9,9 +9,9 @@ import {
   Chip,
   SectionLabel,
   adminStyles,
-  formatDate,
   planChip,
 } from '@/components/admin/AdminUI';
+import { formatDate } from '@/utils/format';
 import { showAlert } from '@/components/ui/Feedback';
 import { fireHaptic } from '@/components/ui/Press';
 import { Colors } from '@/constants/theme';

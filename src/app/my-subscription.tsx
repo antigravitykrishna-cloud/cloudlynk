@@ -13,6 +13,7 @@ import { Colors } from '@/constants/theme';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import { isPlanActive, isPlanAwaitingExpiry } from '@/lib/plan';
+import { formatDate } from '@/utils/format';
 
 interface SubscriptionStatus {
   plan_status: string | null;
@@ -25,15 +26,6 @@ interface SubscriptionStatus {
   latest_request_rejection_reason: string | null;
   latest_request_created_at: string | null;
   latest_request_reviewed_at: string | null;
-}
-
-function formatDate(iso: string | null): string {
-  if (!iso) return '';
-  return new Date(iso).toLocaleDateString('en-IN', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
 }
 
 function getStatusColor(status: string | null): string {

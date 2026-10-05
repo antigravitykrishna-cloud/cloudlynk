@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
+import { formatDate } from '@/utils/format';
 
 interface ChannelActivity {
   id: string;
@@ -82,12 +83,6 @@ export default function ChannelActivityScreen() {
       </SafeAreaView>
     );
   }
-
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return 'Never';
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {

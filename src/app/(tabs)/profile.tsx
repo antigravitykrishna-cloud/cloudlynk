@@ -20,7 +20,7 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { supabase } from '@/lib/supabase';
 import type { TablesUpdate } from '@/lib/database.types';
 import { Colors } from '@/constants/theme';
-import { formatBytes } from '@/lib/data/files';
+import { formatBytes } from '@/utils/format';
 import { config } from '@/lib/config';
 import Constants from 'expo-constants';
 import { Icon } from '@/components/ui/Icon';

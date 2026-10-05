@@ -17,12 +17,12 @@ import { useRecordProgress, getSavedPosition } from '@/hooks/useWatchHistory';
 import { ChannelService, BlockService, ReportService } from '@/lib/data/channels';
 import { PostService, ChannelPost } from '@/lib/data/posts';
 import { StreamService } from '@/lib/video/stream';
-import { formatTimeAgo } from '@/lib/data/files';
 import { useVideoPlayer } from 'expo-video';
 import { useEvent } from 'expo';
 import { Colors } from '@/constants/theme';
 import { Icon } from '@/components/ui/Icon';
-import { H, formatDuration, getTypeColor } from '@/components/channel/shared';
+import { H, getTypeColor } from '@/components/channel/shared';
+import { formatMinutes, formatTimeAgo } from '@/utils/format';
 
 // ── Detail modal as standalone
 export const DetailModal = memo(
@@ -279,7 +279,7 @@ export const DetailModal = memo(
               )}
               {!!selected.duration_min && (
                 <View style={styles.detailBadge}>
-                  <Text style={styles.detailBadgeTxt}>{formatDuration(selected.duration_min)}</Text>
+                  <Text style={styles.detailBadgeTxt}>{formatMinutes(selected.duration_min)}</Text>
                 </View>
               )}
             </View>
