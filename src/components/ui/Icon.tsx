@@ -1,5 +1,5 @@
 import Svg, { Path, Circle, Rect, Line, Polyline } from 'react-native-svg';
-import { Colors } from '@/constants/theme';
+import { Colors } from '@/theme';
 
 // Stroke icons drawn on a 24x24 grid (1.8 stroke, round caps and joins) with react-native-svg, so
 // they look the same on every phone and take the theme colour via `color`.

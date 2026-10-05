@@ -1,0 +1,164 @@
+import { useState, useEffect } from 'react';
+import { Linking, Modal, StyleSheet, Text, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Colors, FontSize, FontWeight, Radius, Spacing, withAlpha } from '@/theme';
+import { config } from '@/lib/config';
+import { Button } from '@/components/ui/Button';
+
+// 18+ confirmation for visitors without an account (accounts confirm it when they sign up). Self-
+// attested, as is standard; Play's mature-content and UGC policies expect an age check on the way
+// in.
+
+const STORAGE_KEY = 'cloudlynk.ageConfirmed.v1';
+
+/** Whether this device already answered "I am 18 or older" on the gate. */
+export async function hasConfirmedAgeOnDevice(): Promise<boolean> {
+  try {
+    return (await AsyncStorage.getItem(STORAGE_KEY)) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+export function AgeGate({ enabled }: { enabled: boolean }) {
+  // `null` means "not yet read from storage" — distinct from false, so the
+  // modal does not flash open for a returning visitor while the async read is
+  // still in flight.
+  const [confirmed, setConfirmed] = useState<boolean | null>(null);
+  const [declined, setDeclined] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    AsyncStorage.getItem(STORAGE_KEY)
+      .then(v => {
+        if (!cancelled) setConfirmed(v === 'true');
+      })
+      // A storage failure must not lock anyone out of the app. Treat it as
+      // "not yet confirmed" and ask again; the cost is one extra tap.
+      .catch(() => {
+        if (!cancelled) setConfirmed(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const accept = async () => {
+    setConfirmed(true);
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY, 'true');
+    } catch {
+      // Non-fatal: they get asked again next launch rather than being blocked.
+    }
+  };
+
+  if (!enabled || confirmed === null || confirmed) return null;
+
+  return (
+    <Modal visible transparent animationType="fade" statusBarTranslucent>
+      <View style={styles.backdrop}>
+        <View style={styles.sheet}>
+          {declined ? (
+            <>
+              <Text style={styles.title}>You need to be 18 or older</Text>
+              <Text style={styles.body}>
+                Cloudlynk hosts content intended for adults, so we can&apos;t let you browse. Thanks
+                for being honest.
+              </Text>
+              <Button
+                label="Go back"
+                variant="secondary"
+                size="lg"
+                pill
+                onPress={() => setDeclined(false)}
+              />
+            </>
+          ) : (
+            <>
+              <Text style={styles.title}>Please confirm your age</Text>
+              <Text style={styles.body}>
+                Cloudlynk is an 18+ platform and may contain content intended for adults. Confirm
+                your age to continue.
+              </Text>
+
+              <Button label="I am 18 or older" size="lg" pill onPress={accept} />
+              <Button
+                label="I am under 18"
+                variant="secondary"
+                size="lg"
+                pill
+                onPress={() => setDeclined(true)}
+                style={styles.secondChoice}
+              />
+
+              <Text style={styles.legal}>
+                Continuing means you accept our{' '}
+                <Text
+                  style={styles.link}
+                  onPress={() => Linking.openURL(config.termsUrl).catch(() => {})}
+                >
+                  Terms
+                </Text>
+                ,{' '}
+                <Text
+                  style={styles.link}
+                  onPress={() => Linking.openURL(config.communityGuidelinesUrl).catch(() => {})}
+                >
+                  Community Guidelines
+                </Text>{' '}
+                and{' '}
+                <Text
+                  style={styles.link}
+                  onPress={() => Linking.openURL(config.privacyPolicyUrl).catch(() => {})}
+                >
+                  Privacy Policy
+                </Text>
+                .
+              </Text>
+            </>
+          )}
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const styles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: withAlpha(Colors.bg, 0.88),
+    justifyContent: 'flex-end',
+  },
+  sheet: {
+    backgroundColor: Colors.surface,
+    borderTopLeftRadius: Radius.xxl,
+    borderTopRightRadius: Radius.xxl,
+    padding: Spacing.xxl,
+    paddingBottom: Spacing.xxxl,
+    borderTopWidth: 1,
+    borderColor: Colors.border,
+  },
+  title: {
+    color: Colors.text,
+    fontSize: FontSize.xxl,
+    fontWeight: FontWeight.bold,
+    textAlign: 'center',
+    marginBottom: Spacing.md,
+  },
+  body: {
+    color: Colors.textSecondary,
+    fontSize: FontSize.lg,
+    lineHeight: 22,
+    textAlign: 'center',
+    marginBottom: Spacing.xxl,
+  },
+  secondChoice: { marginTop: Spacing.md },
+  legal: {
+    color: Colors.textMuted,
+    fontSize: FontSize.sm,
+    lineHeight: 18,
+    textAlign: 'center',
+    marginTop: Spacing.xl,
+  },
+  link: { color: Colors.brandBlue, fontWeight: FontWeight.semibold },
+});

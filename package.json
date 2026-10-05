@@ -1,6 +1,6 @@
 {
   "name": "cloudlynk",
-  "version": "0.6.0",
+  "version": "0.7.11",
   "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
@@ -16,7 +16,8 @@
     "lint:fix": "eslint src --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx}\" \"supabase/functions/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx}\" \"supabase/functions/**/*.ts\"",
-    "db:types": "echo \"Regenerate with: npx supabase gen types typescript --project-id wdtwjiixuueqejfraaod > src/lib/database.types.ts\"",
+    "db:types": "npx supabase gen types typescript --project-id wdtwjiixuueqejfraaod > src/lib/database.types.ts",
+    "functions:check": "deno check --node-modules-dir=none supabase/functions/*/index.ts",
     "test": "jest"
   },
   "dependencies": {

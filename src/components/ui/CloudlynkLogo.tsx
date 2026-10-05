@@ -1,5 +1,5 @@
 import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
-import { Colors } from '@/constants/theme';
+import { Colors } from '@/theme';
 
 type Props = {
   size?: number;

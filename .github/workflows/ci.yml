@@ -1,7 +1,7 @@
 name: CI
 
-# Every push and PR: types, lint, formatting, unit tests, project guards and a
-# JS bundle. A couple of minutes; the same as `npm run check` locally.
+# Every push and PR. The app job is the same as `npm run check` locally, plus a JS bundle; the
+# functions job typechecks the Supabase edge functions with Deno.
 on:
   push:
     branches: ['**']
@@ -14,8 +14,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check:
-    name: Typecheck, lint, test, guards
+  app:
+    name: App — typecheck, lint, test, guards, bundle
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -27,16 +27,10 @@ jobs:
           node-version: 22
           cache: npm
 
-      # `npm ci` rather than `npm install`: the lockfile is the point of a CI
-      # run. install would happily resolve a different tree than a developer
-      # has and validate something nobody is shipping.
+      # `npm ci`, not `npm install`: validate exactly the dependency tree in the lockfile.
       - name: Install
         run: npm ci --no-audit --no-fund
 
-      # The single highest-value check in this repo. A structural edit across
-      # 26 files spliced attributes into the middle of an arrow function on
-      # three of them during development; every file still "looked fine" in a
-      # diff and tsc caught all three in seconds.
       - name: Typecheck
         run: npx tsc --noEmit
 
@@ -49,38 +43,39 @@ jobs:
       - name: Unit tests
         run: npm test -- --ci
 
-      # Bugs tsc cannot see, each one taken from a defect that actually
-      # shipped. See the comments in scripts/guards.mjs.
+      # Project rules tsc and eslint cannot express; each comes from a defect that shipped. See
+      # scripts/guards.mjs.
       - name: Project guards
         run: node scripts/guards.mjs
 
-      # Proves the JS bundle builds and the babel pipeline (including the
-      # reanimated plugin) is intact, without needing the Android toolchain,
-      # a keystore, or 30 minutes. A broken worklet transform is silent at
-      # runtime, so a bundle that fails here would otherwise reach a device.
+      # Proves the JS bundle and the babel pipeline (including the reanimated plugin) build,
+      # without the Android toolchain or a keystore. A broken worklet transform fails silently at
+      # runtime, so this is the only place it would be caught before a device.
       - name: Bundle
         run: npx expo export --platform android --output-dir /tmp/expo-export
         env:
           EXPO_NO_TELEMETRY: '1'
-          # Placeholders. The bundler only needs these to be present; the real
-          # values are injected at build time and are not secrets that belong
-          # in CI.
+          # Placeholders: the bundler only needs them present. Real values are injected at build time.
           EXPO_PUBLIC_SUPABASE_URL: https://example.supabase.co
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-not-a-real-key
 
-# Deliberately NOT here yet, so nobody wonders why:
-#
-#   * eslint — the config in this repo crashes on any file with a bare package
-#     import ("typescript with invalid interface loaded as resolver"). It fails
-#     identically on files nobody has touched, so wiring it up would produce a
-#     permanently red build that teaches people to ignore CI. Fix the resolver
-#     first, then add it.
-#
-#   * A release build — needs the upload keystore. Signing secrets do not go
-#     into a repo, and a 30-minute Gradle job on every push is the wrong trade
-#     when the bundle step above already catches JS and babel breakage.
-#     Release builds stay local (docs/BUILD_LOCAL.md) or move to EAS once the
-#     Expo account question is settled.
-#
-#   * Tests — there are none. That is a real gap, tracked in
-#     docs/OPEN_ITEMS.md, not something to paper over with an empty runner.
+  functions:
+    name: Edge functions — deno check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      # --node-modules-dir=none: the root package.json would otherwise make Deno resolve npm:
+      # imports from the app's node_modules, which this job does not install. Edge functions get
+      # their npm packages the way the Supabase runtime does, from the registry.
+      - name: Typecheck
+        run: deno check --node-modules-dir=none supabase/functions/*/index.ts
+
+# Release builds are deliberately not here: they need the upload keystore, which does not belong
+# in CI, and the bundle step already catches JS and babel breakage. See docs/guides/BUILD_LOCAL.md.

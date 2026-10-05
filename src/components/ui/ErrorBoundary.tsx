@@ -1,6 +1,6 @@
 import { Component, ReactNode } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Colors } from '@/constants/theme';
+import { Colors, FontWeight } from '@/theme';
 
 interface Props {
   children: ReactNode;
@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.bg,
   },
   icon: { fontSize: 48, marginBottom: 16 },
-  title: { fontSize: 20, fontWeight: '800', color: Colors.text, marginBottom: 8 },
+  title: { fontSize: 20, fontWeight: FontWeight.extrabold, color: Colors.text, marginBottom: 8 },
   message: {
     fontSize: 14,
     color: Colors.textMuted,
@@ -68,5 +68,5 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 12,
   },
-  buttonText: { color: '#ffffff', fontSize: 15, fontWeight: '700' },
+  buttonText: { color: Colors.text, fontSize: 15, fontWeight: FontWeight.bold },
 });

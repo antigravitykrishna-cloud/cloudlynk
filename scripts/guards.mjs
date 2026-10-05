@@ -31,7 +31,7 @@ function walk(dir, out = []) {
 
 const sources = walk(ROOT).filter(f => {
   const r = relative(ROOT, f).replace(/\\/g, '/');
-  return r.startsWith('src/app/') || r.startsWith('src/lib/') || r.startsWith('src/hooks/') || r.startsWith('src/components/');
+  return r.startsWith('src/');
 });
 
 /**
@@ -98,7 +98,20 @@ if (existsSync(join(ROOT, 'babel.config.js'))) {
   }
 }
 
-// ─── 4. Release readiness (informational, never fatal) ──────────────────────
+// ─── 4. Colours come from the theme ─────────────────────────────────────────
+// Every colour is a token in src/theme (or withAlpha() of one). Literal hex
+// and rgba() values elsewhere drift: before this check there were 637 of
+// them, many copies of a token and some left over from an older palette.
+for (const f of sources) {
+  if (rel(f).startsWith('src/theme/')) continue;
+  const match = code(readFileSync(f, 'utf8')).match(/['"`](#[0-9a-fA-F]{3,8}|rgba?\()/);
+  if (match) {
+    fail('Colour literal outside the theme',
+      `${rel(f)} — "${match[1]}…": use a token from @/theme (Colors.x, or withAlpha(Colors.x, a)).`);
+  }
+}
+
+// ─── 5. Release readiness (informational, never fatal) ──────────────────────
 // `noop` is correct until the Play Console products exist. But shipping it
 // means every purchase returns "not available yet", so it must not be a
 // surprise at submission time.
@@ -106,9 +119,6 @@ if (existsSync(join(ROOT, 'app.json'))) {
   const extra = JSON.parse(readFileSync(join(ROOT, 'app.json'), 'utf8'))?.expo?.extra ?? {};
   if (extra.IAP_PROVIDER === 'noop') {
     notes.push('IAP_PROVIDER is "noop" — purchases fail with "not available yet". Set "google_play" once the Play products are Activated.');
-  }
-  if (String(extra.ADMOB_APP_ID ?? '').includes('3940256099942544')) {
-    notes.push('ADMOB_APP_ID is still a Google TEST unit id. Replace it or drop the ads dependency before release.');
   }
 }
 

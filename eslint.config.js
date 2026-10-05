@@ -81,6 +81,35 @@ module.exports = [
       // resolver cannot follow it; `tsc --noEmit` already fails on any import
       // that does not resolve, so this rule would only duplicate it.
       'import/no-unresolved': 'off',
+
+      // Every value has a real type. Untyped native modules get a typeof import(...) or a small
+      // interface describing the part that is used.
+      '@typescript-eslint/no-explicit-any': 'error',
+    },
+  },
+
+  // ── Layering: only the data layer talks to Supabase ──
+  // Screens, components and hooks go through a feature's api/ module, so every query has one home
+  // and can be found, reused and tested there. See ARCHITECTURE.md.
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: [
+      'src/features/*/api/**',
+      'src/features/premium/billing/**',
+      'src/lib/**',
+    ],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@/lib/supabase',
+              message: "Query through the feature's api/ module instead (see ARCHITECTURE.md).",
+            },
+          ],
+        },
+      ],
     },
   },
 

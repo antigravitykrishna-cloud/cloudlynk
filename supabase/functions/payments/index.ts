@@ -20,8 +20,8 @@
 // A gateway is offered only when its secrets are set (see _shared/gateways.ts),
 // so the buttons in the app appear by themselves once the client adds keys.
 
-import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders, jsonResponse } from '../_shared/http.ts';
+import { adminClient, getCaller, type SupabaseClient } from '../_shared/supabase.ts';
 import {
   parseSabpaisa,
   razorpayCapture,
@@ -65,26 +65,8 @@ interface Order {
   meta_sent_at: string | null;
 }
 
-function admin(): SupabaseClient {
-  return createClient(
-    Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-    { auth: { autoRefreshToken: false, persistSession: false } },
-  );
-}
-
-async function requireUser(req: Request) {
-  const authHeader = req.headers.get('Authorization');
-  if (!authHeader) return null;
-  const client = createClient(
-    Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-    { global: { headers: { Authorization: authHeader } } },
-  );
-  const {
-    data: { user },
-  } = await client.auth.getUser();
-  return user ?? null;
+async function signedInUser(req: Request) {
+  return (await getCaller(req))?.user ?? null;
 }
 
 /** Sabpaisa's clientTxnId: the order id without dashes (alphanumeric, 32). */
@@ -211,12 +193,12 @@ async function confirmRazorpayPayment(
 
 // ── Routes ─────────────────────────────────────────────────────────────────
 
-async function handleConfig() {
+function handleConfig() {
   return jsonResponse({ methods: methodsAvailable() });
 }
 
 async function handleCreateOrder(req: Request) {
-  const user = await requireUser(req);
+  const user = await signedInUser(req);
   if (!user) return jsonResponse({ error: 'Please sign in.' }, 401);
 
   const body = await req.json().catch(() => ({}));
@@ -231,7 +213,7 @@ async function handleCreateOrder(req: Request) {
     return jsonResponse({ error: 'This payment method is not available right now.' }, 400);
   }
 
-  const db = admin();
+  const db = adminClient();
 
   // Same gate as the Premium screen: an account must be active and approved
   // before it can buy. The server re-checks because the app can be modified.
@@ -320,12 +302,12 @@ async function handleCreateOrder(req: Request) {
 }
 
 async function handleVerify(req: Request) {
-  const user = await requireUser(req);
+  const user = await signedInUser(req);
   if (!user) return jsonResponse({ error: 'Please sign in.' }, 401);
 
   const body = await req.json().catch(() => ({}));
   const orderId = String(body?.orderId ?? '');
-  const db = admin();
+  const db = adminClient();
   const order = await loadOrder(db, orderId);
   if (!order || order.user_id !== user.id)
     return jsonResponse({ error: 'Payment not found.' }, 404);
@@ -418,7 +400,7 @@ async function handleRazorpayWebhook(req: Request) {
     return jsonResponse({ ok: true });
   }
 
-  const db = admin();
+  const db = adminClient();
   const { data } = await db
     .from('payment_orders')
     .select('*')
@@ -455,7 +437,7 @@ async function handleSabpaisaCallback(req: Request) {
     const res = parseSabpaisa(await sabpaisaDecrypt(encResponse));
     const orderId = orderIdFromTxnId(res.clientTxnId ?? '');
     if (!orderId) return done('Returning to Cloudlynk…');
-    const db = admin();
+    const db = adminClient();
     const order = await loadOrder(db, orderId);
     if (!order || order.status !== 'created') return done('Returning to Cloudlynk…');
 
@@ -485,7 +467,7 @@ Deno.serve(async (req: Request) => {
   try {
     switch (route) {
       case 'config':
-        return await handleConfig();
+        return handleConfig();
       case 'create-order':
         return await handleCreateOrder(req);
       case 'verify':

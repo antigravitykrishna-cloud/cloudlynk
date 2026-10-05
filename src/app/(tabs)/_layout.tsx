@@ -1,132 +1,94 @@
+import { Platform, StyleSheet, Text, View } from 'react-native';
 import { Tabs } from 'expo-router';
-import { View, Text, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, type IconName } from '@/components/ui/Icon';
-import { useEffect } from 'react';
-import { Colors } from '@/constants/theme';
-import { useAuth } from '@/hooks/useAuth';
-import { NotificationService } from '@/lib/data/notifications';
+import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/theme';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { usePushRegistration } from '@/features/notifications/hooks/usePushRegistration';
 
-type TabIconProps = {
-  icon: IconName;
-  label: string;
-  focused: boolean;
-};
+// The bottom tabs. Explore is the landing tab: it is named as the initial route so a cold start or
+// a deep link to the group never lands on whichever tab happens to be declared first.
 
-function TabIcon({ icon, label, focused }: TabIconProps) {
-  return (
-    <View style={styles.tabItem}>
-      <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
-        {/* The icon takes the tint from the same source as the label, so the
-            active state is one decision rather than two that can drift. */}
-        <Icon name={icon} size={22} color={focused ? Colors.brandBlue : Colors.textMuted} />
-      </View>
-      <Text style={[styles.label, focused && styles.labelActive]}>{label}</Text>
-    </View>
-  );
-}
+const TABS: { name: string; label: string; icon: IconName }[] = [
+  { name: 'index', label: 'Cloud', icon: 'cloud' },
+  { name: 'feed', label: 'Feed', icon: 'globe' },
+  { name: 'explore', label: 'Explore', icon: 'compass' },
+  { name: 'channels', label: 'Channels', icon: 'broadcast' },
+  { name: 'profile', label: 'Profile', icon: 'user' },
+];
 
 export default function TabsLayout() {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const insets = useSafeAreaInsets();
+  usePushRegistration();
 
-  useEffect(() => {
-    if (user && profile?.notifications_enabled !== false) {
-      NotificationService.syncPushToken(user.id);
-    }
-  }, [user, profile?.notifications_enabled]);
+  // The bar has to clear the system navigation: 0 with 3-button navigation, up to ~48px with
+  // gesture navigation, and different per device -- so it comes from the safe area, not a constant.
+  const tabBarSize = {
+    height: (Platform.OS === 'ios' ? 84 : 72) + insets.bottom,
+    paddingBottom: (Platform.OS === 'ios' ? 24 : 12) + insets.bottom,
+  };
 
   return (
     <Tabs
+      // A new account starts on fresh tabs rather than the previous account's screens.
       key={user?.id ?? 'guest'}
-      // Explore is the app's landing surface, so it is also the tab the
-      // navigator falls back to — otherwise a cold start or a deep link that
-      // resolves to the group lands on whichever screen happens to be declared
-      // first.
       initialRouteName="explore"
       screenOptions={{
         headerShown: false,
-        // The bar's bottom padding has to clear the gesture pill, which is not
-        // a fixed number: it is 0 with 3-button navigation and ~24-48px with
-        // gesture navigation, and it differs per device. It was hardcoded to
-        // 16, so on a gesture-nav phone the pill was drawn straight through
-        // the "Explore" and "Channels" labels.
-        tabBarStyle: [
-          styles.tabBar,
-          {
-            height: (Platform.OS === 'ios' ? 84 : 72) + insets.bottom,
-            paddingBottom: (Platform.OS === 'ios' ? 24 : 12) + insets.bottom,
-          },
-        ],
         tabBarShowLabel: false,
+        tabBarStyle: [styles.tabBar, tabBarSize],
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          tabBarIcon: ({ focused }) => <TabIcon icon="cloud" label="Cloud" focused={focused} />,
-        }}
-      />
-
-      <Tabs.Screen
-        name="feed"
-        options={{
-          tabBarIcon: ({ focused }) => <TabIcon icon="globe" label="Feed" focused={focused} />,
-        }}
-      />
-
-      <Tabs.Screen
-        name="explore"
-        options={{
-          tabBarIcon: ({ focused }) => <TabIcon icon="compass" label="Explore" focused={focused} />,
-        }}
-      />
-
-      <Tabs.Screen
-        name="channels"
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <TabIcon icon="broadcast" label="Channels" focused={focused} />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
-        name="profile"
-        options={{
-          tabBarIcon: ({ focused }) => <TabIcon icon="user" label="Profile" focused={focused} />,
-        }}
-      />
+      {TABS.map(tab => (
+        <Tabs.Screen
+          key={tab.name}
+          name={tab.name}
+          options={{
+            tabBarIcon: ({ focused }) => (
+              <TabIcon icon={tab.icon} label={tab.label} focused={focused} />
+            ),
+          }}
+        />
+      ))}
     </Tabs>
+  );
+}
+
+function TabIcon({ icon, label, focused }: { icon: IconName; label: string; focused: boolean }) {
+  const color = focused ? Colors.brandBlue : Colors.textMuted;
+  return (
+    <View style={styles.tab}>
+      <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
+        <Icon name={icon} size={22} color={color} />
+      </View>
+      <Text style={[styles.label, { color }]}>{label}</Text>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   tabBar: {
     backgroundColor: Colors.bg,
-    borderTopWidth: 0.5,
+    borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: Colors.border,
-    paddingTop: 8,
+    paddingTop: Spacing.sm,
   },
-  tabItem: { alignItems: 'center', gap: 3, width: 80 },
+  tab: { alignItems: 'center', gap: 3, width: 80 },
   iconWrap: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
   iconWrapActive: { backgroundColor: Colors.brandBlueDim },
-  icon: { fontSize: 22, color: Colors.textMuted },
-  iconActive: { color: Colors.brandBlue },
   label: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: Colors.textMuted,
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.bold,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     textAlign: 'center',
     marginTop: 3,
   },
-  labelActive: { color: Colors.brandBlue },
 });

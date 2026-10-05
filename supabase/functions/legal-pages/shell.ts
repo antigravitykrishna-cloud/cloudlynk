@@ -1,6 +1,6 @@
-// Shared page chrome for all legal pages. Kept separate from content so the
-// three documents (privacy.ts, terms.ts, guidelines.ts) stay pure text/HTML
-// that a non-engineer can edit without touching layout code.
+// Shared page chrome for all legal pages. Kept separate from content so each document
+// (privacy.ts, terms.ts, guidelines.ts, refund.ts, copyright.ts) stays plain HTML that a
+// non-engineer can edit without touching layout code.
 
 export const APP_NAME = 'Cloudlynk';
 export const PACKAGE_NAME = 'com.cloudlynk.app';

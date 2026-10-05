@@ -33,10 +33,10 @@
 //        npx supabase secrets set GOOGLE_PLAY_PACKAGE_NAME=com.cloudlynk.app
 //      (GOOGLE_SERVICE_ACCOUNT_JSON is shared with verify-play-receipt and
 //      should already be set.)
-//   Full checklist: BACKEND_REFERENCE.md "Payments — Google Play Billing".
+//   Full checklist: docs/guides/BACKEND_REFERENCE.md "Payments — Google Play Billing".
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { getSubscriptionStatus, planStatusFor } from '../_shared/play-billing.ts';
+import { adminClient } from '../_shared/supabase.ts';
 
 interface PubSubPushBody {
   message?: { data?: string; messageId?: string; attributes?: Record<string, string> };
@@ -109,11 +109,7 @@ Deno.serve(async req => {
     const packageName = notification.packageName || Deno.env.get('GOOGLE_PLAY_PACKAGE_NAME') || '';
     if (!packageName) throw new Error('MISSING_PACKAGE_NAME');
 
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      { auth: { autoRefreshToken: false, persistSession: false } },
-    );
+    const supabaseAdmin = adminClient();
 
     // A voided purchase notification means Google (or the user, via
     // "Report a problem") refunded/revoked the purchase outright — pull
@@ -198,8 +194,8 @@ Deno.serve(async req => {
       `play-rtdn-webhook: updated user ${existing.user_id} -> ${planStatus} (${notificationTypeLabel})`,
     );
     return new Response('OK', { status: 200 });
-  } catch (err: any) {
-    console.error('play-rtdn-webhook error:', err?.message ?? err);
+  } catch (err) {
+    console.error('play-rtdn-webhook error:', err instanceof Error ? err.message : err);
     // Return 500 so Pub/Sub retries — this is a transient/config error, not
     // a "notification we understand but choose to ignore" case.
     return new Response('Internal error', { status: 500 });
