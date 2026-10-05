@@ -18,6 +18,7 @@ import { logRegistration } from '@/lib/analytics/metaAds';
 import { useAuth } from '@/hooks/useAuth';
 import { hasConfirmedAgeOnDevice } from '@/components/auth/AgeGate';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme';
+import { errorMessage } from '@/lib/errors';
 
 export default function CompleteProfileScreen() {
   const { user, profile, completeProfile, signOut } = useAuth();
@@ -66,8 +67,8 @@ export default function CompleteProfileScreen() {
     setLoading(true);
     try {
       await finish();
-    } catch (err: any) {
-      showAlert('Could not continue', err?.message ?? 'Something went wrong.');
+    } catch (err) {
+      showAlert('Could not continue', errorMessage(err, 'Something went wrong.'));
     } finally {
       setLoading(false);
     }

@@ -17,6 +17,7 @@ import { fireHaptic } from '@/components/ui/Press';
 import { Colors } from '@/constants/theme';
 import { AdminControl, type AdminUserDetail, type PlanAction } from '@/lib/admin/adminControl';
 import { useAuth } from '@/hooks/useAuth';
+import { errorMessage } from '@/lib/errors';
 
 // One account, every control. Each action asks first, runs one audited RPC
 // (v82), then reloads -- the screen always shows what the database now says,
@@ -34,8 +35,8 @@ export default function AdminUserScreen() {
     if (!id) return;
     try {
       setU(await AdminControl.getUser(id));
-    } catch (e: any) {
-      showAlert('Could not load this user', e?.message ?? 'Please try again.');
+    } catch (e) {
+      showAlert('Could not load this user', errorMessage(e, 'Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -52,9 +53,9 @@ export default function AdminUserScreen() {
       fireHaptic('success');
       await load();
       showAlert('Done', done);
-    } catch (e: any) {
+    } catch (e) {
       fireHaptic('error');
-      showAlert('Could not do that', e?.message ?? 'Please try again.');
+      showAlert('Could not do that', errorMessage(e, 'Please try again.'));
     } finally {
       setBusy(null);
     }

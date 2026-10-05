@@ -15,6 +15,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import { AdminModerationService, ContentReport, ModerationAction } from '@/lib/data/compliance';
 import { AdminContentService } from '@/lib/admin/adminContent';
+import { errorMessage } from '@/lib/errors';
 
 interface EnrichedReport extends ContentReport {
   reporterName: string;
@@ -71,13 +72,13 @@ export default function AdminReportsScreen() {
         AdminContentService.getProfilesByIds(profileIds),
         postIds.length
           ? supabase.from('channel_posts').select('id, title').in('id', postIds)
-          : Promise.resolve({ data: [] as any[] }),
+          : Promise.resolve({ data: [] as { id: string; title: string | null }[] }),
       ]);
 
       const profileMap = new Map(
         (profiles ?? []).map(p => [p.id, p.full_name || p.username || p.email || 'Unknown']),
       );
-      const postMap = new Map((posts ?? []).map((p: any) => [p.id, p.title]));
+      const postMap = new Map((posts ?? []).map(p => [p.id, p.title]));
 
       setReports(
         rows.map(r => ({
@@ -96,7 +97,7 @@ export default function AdminReportsScreen() {
       // nothing to review and stops checking, while the queue fills up.
       showAlert(
         'Could not load reports',
-        err instanceof Error ? err.message : 'Check your connection and try again.',
+        err instanceof Error ? errorMessage(err) : 'Check your connection and try again.',
       );
     } finally {
       setLoading(false);
@@ -127,8 +128,8 @@ export default function AdminReportsScreen() {
       setReports(prev => prev.filter(r => r.id !== reportId));
       setPendingAction(null);
       setNote('');
-    } catch (err: any) {
-      showAlert('Error', err?.message ?? 'Could not resolve report.');
+    } catch (err) {
+      showAlert('Error', errorMessage(err, 'Could not resolve report.'));
     } finally {
       setActingId(null);
     }

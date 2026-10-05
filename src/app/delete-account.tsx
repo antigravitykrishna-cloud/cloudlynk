@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme';
 import { Icon } from '@/components/ui/Icon';
+import { errorMessage } from '@/lib/errors';
 
 export default function DeleteAccountScreen() {
   const router = useRouter();
@@ -27,8 +28,8 @@ export default function DeleteAccountScreen() {
     setLoading(true);
     try {
       await deleteAccount();
-    } catch (err: any) {
-      showAlert('Error', err.message ?? 'Failed to delete account. Please try again.');
+    } catch (err) {
+      showAlert('Error', errorMessage(err, 'Failed to delete account. Please try again.'));
       setLoading(false);
     }
   }

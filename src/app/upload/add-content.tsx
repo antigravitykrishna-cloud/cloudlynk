@@ -31,6 +31,7 @@ import {
   defaultAccessLevel,
 } from '@/lib/data/posts';
 import { Icon, type IconName } from '@/components/ui/Icon';
+import { errorMessage } from '@/lib/errors';
 
 const CONTENT_TYPES: { id: ContentType; label: string; icon: IconName }[] = [
   { id: 'movie', label: 'Movie', icon: 'film' },
@@ -96,7 +97,7 @@ function ProgressBar({ progress, status }: { progress: number; status: string })
   const color = status === 'done' ? '#00d4aa' : status === 'failed' ? Colors.brandBlue : '#2E7DFF';
   return (
     <View style={pb.wrap}>
-      <View style={[pb.bar, { width: `${pct}%` as any, backgroundColor: color }]} />
+      <View style={[pb.bar, { width: `${pct}%`, backgroundColor: color }]} />
       <Text style={pb.label}>
         {status === 'done'
           ? '✓ Done'
@@ -220,8 +221,8 @@ export default function AddContentScreen() {
           `${videos.length - slotsLeft} file(s) skipped — free plan limit of ${maxItems}.`,
         );
       }
-    } catch (err: any) {
-      showAlert('Error', err.message ?? 'Could not pick videos');
+    } catch (err) {
+      showAlert('Error', errorMessage(err, 'Could not pick videos'));
     } finally {
       setPicking(false);
     }
@@ -233,8 +234,8 @@ export default function AddContentScreen() {
     try {
       const result = await PostService.pickImage();
       if (result) updateEntry(idx, { thumbnailUri: result.uri });
-    } catch (err: any) {
-      showAlert('Permission required', err.message);
+    } catch (err) {
+      showAlert('Permission required', errorMessage(err));
     } finally {
       setThumbPickingFor(null);
     }
@@ -286,8 +287,8 @@ export default function AddContentScreen() {
       // Capture IDs of newly added items (they are appended to the queue)
       // We read them in the useEffect below once items state updates
       await startUpload();
-    } catch (err: any) {
-      showAlert('Error', err.message ?? 'Failed to queue uploads');
+    } catch (err) {
+      showAlert('Error', errorMessage(err, 'Failed to queue uploads'));
     }
   };
 

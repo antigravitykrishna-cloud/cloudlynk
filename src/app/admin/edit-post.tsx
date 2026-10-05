@@ -16,6 +16,7 @@ import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { AdminContentService, AdminPost, PostClearableField } from '@/lib/admin/adminContent';
 import { Colors, Spacing, Radius, FontSize, FontWeight } from '@/constants/theme';
+import { errorMessage } from '@/lib/errors';
 
 // Edit a published post in place. Editing keeps the post id, so per-user access grants (keyed on
 // post_id) keep working; re-uploading would orphan them. Access level and status are changed from
@@ -153,8 +154,8 @@ export default function EditPostScreen() {
       const f = found ? toForm(found) : EMPTY;
       setInitial(f);
       setForm(f);
-    } catch (err: any) {
-      showAlert('Could not load', err?.message ?? 'Something went wrong.');
+    } catch (err) {
+      showAlert('Could not load', errorMessage(err, 'Something went wrong.'));
     } finally {
       setLoading(false);
     }
@@ -195,9 +196,9 @@ export default function EditPostScreen() {
       if (numeric.has(k)) {
         const n = parseInt(now, 10);
         if (Number.isNaN(n)) return; // silently skip garbage rather than sending NaN
-        (patch as any)[k] = n;
+        (patch as Record<string, string | number>)[k] = n;
       } else {
-        (patch as any)[k] = now;
+        (patch as Record<string, string | number>)[k] = now;
       }
     });
 
@@ -211,8 +212,8 @@ export default function EditPostScreen() {
       await AdminContentService.updatePost(post.id, patch, clear.length ? clear : undefined);
       showAlert('Saved', 'The post has been updated.');
       setInitial(form);
-    } catch (err: any) {
-      showAlert('Could not save', err?.message ?? 'Something went wrong.');
+    } catch (err) {
+      showAlert('Could not save', errorMessage(err, 'Something went wrong.'));
     } finally {
       setSaving(false);
     }
@@ -244,8 +245,8 @@ export default function EditPostScreen() {
                   ? `The post now plays the new video. The old one (${previousUid}) is still on Cloudflare — delete it there once you are sure.`
                   : 'The post now plays the new video.',
               );
-            } catch (err: any) {
-              showAlert('Could not replace', err?.message ?? 'Something went wrong.');
+            } catch (err) {
+              showAlert('Could not replace', errorMessage(err, 'Something went wrong.'));
             } finally {
               setReplacing(false);
             }

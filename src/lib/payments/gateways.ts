@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { Colors } from '@/constants/theme';
 import { metaDeviceSignals } from '@/lib/analytics/metaAds';
+import { FunctionsHttpError } from '@supabase/supabase-js';
 
 // Razorpay (including its UPI app list) and Sabpaisa, app side. The app never decides that a
 // payment worked: it creates an order on the server, sends the person to the gateway, then asks the
@@ -39,8 +40,7 @@ async function call<T>(route: string, body: object = {}): Promise<T> {
     // functions.invoke wraps non-2xx responses; the server's message is in the body.
     let message = 'Could not reach the payment service. Check your connection and try again.';
     try {
-      const ctx = (error as any)?.context;
-      const json = ctx && typeof ctx.json === 'function' ? await ctx.json() : null;
+      const json = error instanceof FunctionsHttpError ? await error.context.json() : null;
       if (json?.error) message = json.error;
     } catch {
       /* keep the generic message */

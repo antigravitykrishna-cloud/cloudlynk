@@ -9,6 +9,7 @@ import { Colors } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
 import { ChannelService } from '@/lib/data/channels';
 import { AdminControl } from '@/lib/admin/adminControl';
+import { errorMessage } from '@/lib/errors';
 
 // Every channel, including hidden, pending and suspended ones (admins read
 // all channels -- "Admins see all channels" RLS policy). Tap one to edit its
@@ -46,7 +47,7 @@ export default function AdminChannelsScreen() {
       .from('channels')
       .select(COLUMNS)
       .order('created_at', { ascending: false });
-    if (error) showAlert('Could not load channels', error.message);
+    if (error) showAlert('Could not load channels', errorMessage(error));
     else setRows((data ?? []) as Row[]);
     setLoading(false);
   }, []);
@@ -76,9 +77,9 @@ export default function AdminChannelsScreen() {
       setOpen(null);
       setDraft(null);
       showAlert('Done', done);
-    } catch (e: any) {
+    } catch (e) {
       fireHaptic('error');
-      showAlert('Could not do that', e?.message ?? 'Please try again.');
+      showAlert('Could not do that', errorMessage(e, 'Please try again.'));
     } finally {
       setBusy(null);
     }

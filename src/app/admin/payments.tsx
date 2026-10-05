@@ -13,6 +13,7 @@ import { useFocusEffect } from 'expo-router';
 import { AdminHeader, Card, Chip, adminStyles, formatDateTime } from '@/components/admin/AdminUI';
 import { Colors, FontSize, FontWeight, Radius } from '@/constants/theme';
 import { AdminControl, type AdminPayment } from '@/lib/admin/adminControl';
+import { errorMessage } from '@/lib/errors';
 
 // UPI / Razorpay / Sabpaisa payments (Google Play purchases are in Play Console). Under User Choice
 // Billing each sale must be reported to Google within 24 hours; the server retries automatically,
@@ -38,8 +39,8 @@ export default function AdminPaymentsScreen() {
     try {
       setRows(await AdminControl.listPayments(filter === 'all' ? null : filter));
       setError(null);
-    } catch (e: any) {
-      setError(e?.message ?? 'Could not load payments.');
+    } catch (e) {
+      setError(errorMessage(e, 'Could not load payments.'));
     } finally {
       setLoading(false);
     }

@@ -15,12 +15,12 @@ import { Icon } from '@/components/ui/Icon';
 import { ExploreSkeleton } from '@/components/ui/Skeleton';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
-import { PostService, ChannelPost } from '@/lib/data/posts';
+import { PostService, ChannelPost, ExploreFilter } from '@/lib/data/posts';
 import { Colors, Radius, FontWeight } from '@/constants/theme';
 import { DetailModal } from '@/components/explore/DetailModal';
 import { SectionBlock } from '@/components/explore/SectionBlock';
 
-const FILTERS = [
+const FILTERS: { key: ExploreFilter; label: string }[] = [
   { key: 'all', label: 'All' },
   { key: 'popular', label: 'Popular' },
   { key: 'most_watched', label: 'Most watched' },
@@ -34,7 +34,7 @@ export default function ExploreScreen() {
   const { user, isPaidUser, isAdmin, isGuest } = useAuth();
   const router = useRouter();
   const [posts, setPosts] = useState<ChannelPost[]>([]);
-  const [activeFilter, setActiveFilter] = useState('all');
+  const [activeFilter, setActiveFilter] = useState<ExploreFilter>('all');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selected, setSelected] = useState<ChannelPost | null>(null);
@@ -88,8 +88,8 @@ export default function ExploreScreen() {
       // for it with select('*') would fail the whole query rather than return
       // a null, and the guest would see an empty Explore with no clue why.
       const all = user?.id
-        ? await PostService.getExplorePosts(user.id, activeFilter as any)
-        : await PostService.getGuestExplorePosts(activeFilter as any);
+        ? await PostService.getExplorePosts(user.id, activeFilter)
+        : await PostService.getGuestExplorePosts(activeFilter);
       setPosts(all as ChannelPost[]);
       setLoadFailed(false);
     } catch (err) {
@@ -136,9 +136,7 @@ export default function ExploreScreen() {
         activeFilter === 'most_watched' ||
         activeFilter === 'most_searched'
       ) {
-        return [...items].sort(
-          (a, b) => ((b as any).view_count ?? 0) - ((a as any).view_count ?? 0),
-        );
+        return [...items].sort((a, b) => (b.view_count ?? 0) - (a.view_count ?? 0));
       }
       return items;
     },

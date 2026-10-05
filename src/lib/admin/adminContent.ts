@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { AccessLevel, ContentType } from '@/lib/data/posts';
+import { errorCode, errorMessage } from '@/lib/errors';
 
 // Client wrappers for the admin content and access panel. Every write is a SECURITY DEFINER RPC
 // that re-checks is_admin; neither the screens nor this module are the security boundary. Two kinds
@@ -77,15 +78,15 @@ export type AuditEntry = {
  * Turns "this RPC does not exist on the server" (PGRST202 / 42883) into a message an admin can act
  * on, instead of a raw schema-cache error.
  */
-function describeRpcError(err: any, feature: string): Error {
-  const code = err?.code ?? '';
+function describeRpcError(err: unknown, feature: string): Error {
+  const code = errorCode(err) ?? '';
   if (code === 'PGRST202' || code === '42883') {
     return new Error(
       `${feature} is not available yet — the backend migration for it has not been deployed. ` +
         `Everything else in the admin panel works normally.`,
     );
   }
-  return new Error(err?.message ?? 'Something went wrong.');
+  return new Error(errorMessage(err));
 }
 
 /** Fields admin_update_post may set back to NULL (mirrors its whitelist). */

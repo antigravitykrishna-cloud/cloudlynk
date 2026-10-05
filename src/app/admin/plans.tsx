@@ -8,6 +8,7 @@ import { showAlert } from '@/components/ui/Feedback';
 import { fireHaptic } from '@/components/ui/Press';
 import { Colors } from '@/constants/theme';
 import { AdminControl, type AdminPlan } from '@/lib/admin/adminControl';
+import { errorMessage } from '@/lib/errors';
 
 // Plan names, prices, lengths, "Most popular" and availability (admin_update_plan, audited).
 // Changes reach the app's plan screens and the UPI/card price from the next order. Google Play
@@ -26,8 +27,8 @@ export default function AdminPlansScreen() {
       const rows = await AdminControl.listPlans();
       setPlans(rows);
       setDrafts(Object.fromEntries(rows.map(p => [p.code, { ...p }])));
-    } catch (e: any) {
-      showAlert('Could not load plans', e?.message ?? 'Please try again.');
+    } catch (e) {
+      showAlert('Could not load plans', errorMessage(e, 'Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -56,9 +57,9 @@ export default function AdminPlansScreen() {
         'Saved',
         `${p.name} is updated. Remember to set the same price in Play Console for Google Play.`,
       );
-    } catch (e: any) {
+    } catch (e) {
       fireHaptic('error');
-      showAlert('Could not save', e?.message ?? 'Please try again.');
+      showAlert('Could not save', errorMessage(e, 'Please try again.'));
     } finally {
       setSaving(null);
     }

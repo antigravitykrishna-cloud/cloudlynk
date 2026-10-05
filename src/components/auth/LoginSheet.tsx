@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme';
 import { setPostLoginRoute } from '@/lib/auth/postLogin';
 import { PressScale } from '@/components/ui/Press';
+import { errorMessage } from '@/lib/errors';
 
 // "Please sign in" sheet shown when a guest tries something that needs an account. It opens over
 // the current screen, so "Not now" leaves them where they were. `returnTo` is where to go after
@@ -53,9 +54,9 @@ export function LoginSheet({
     try {
       await signInAsGuest();
       onClose();
-    } catch (err: any) {
+    } catch (err) {
       setPostLoginRoute(null);
-      showAlert('Could not continue as guest', err?.message ?? 'Please try again.');
+      showAlert('Could not continue as guest', errorMessage(err, 'Please try again.'));
     } finally {
       setGuestBusy(false);
     }

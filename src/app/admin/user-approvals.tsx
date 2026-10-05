@@ -14,6 +14,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import { AdminContentService, UserGrant } from '@/lib/admin/adminContent';
+import { errorMessage } from '@/lib/errors';
 
 // Account approval queue: who may buy Premium. It decides nothing about free features or existing
 // purchases. Guests are not listed (they must save their account first). The isAdmin check is UX
@@ -67,7 +68,7 @@ export default function AdminUserApprovalsScreen() {
       // nothing to review and stops checking, while the queue fills up.
       showAlert(
         'Could not load accounts',
-        err instanceof Error ? err.message : 'Check your connection and try again.',
+        err instanceof Error ? errorMessage(err) : 'Check your connection and try again.',
       );
     } finally {
       setLoading(false);
@@ -106,8 +107,8 @@ export default function AdminUserApprovalsScreen() {
       setRows(prev => prev.filter(r => r.id !== userId));
       setPendingReject(null);
       setNote('');
-    } catch (err: any) {
-      showAlert('Error', err?.message ?? 'Could not update this account.');
+    } catch (err) {
+      showAlert('Error', errorMessage(err, 'Could not update this account.'));
     } finally {
       setActingId(null);
     }
@@ -124,8 +125,8 @@ export default function AdminUserApprovalsScreen() {
     setGrantsLoading(true);
     try {
       setGrants(await AdminContentService.getUserGrants(userId));
-    } catch (err: any) {
-      showAlert('Error', err?.message ?? 'Could not load grants.');
+    } catch (err) {
+      showAlert('Error', errorMessage(err, 'Could not load grants.'));
       setGrantsFor(null);
     } finally {
       setGrantsLoading(false);
@@ -145,8 +146,8 @@ export default function AdminUserApprovalsScreen() {
             try {
               await AdminContentService.revokeAccess(userId, postId);
               setGrants(await AdminContentService.getUserGrants(userId));
-            } catch (err: any) {
-              showAlert('Error', err?.message ?? 'Could not revoke access.');
+            } catch (err) {
+              showAlert('Error', errorMessage(err, 'Could not revoke access.'));
             }
           },
         },

@@ -24,6 +24,7 @@ import {
   defaultAccessLevel,
 } from '@/lib/data/posts';
 import { AdminContentService } from '@/lib/admin/adminContent';
+import { errorMessage } from '@/lib/errors';
 
 // Admin video upload into the official channel. Uses the same pipeline as everything else:
 // StreamService.uploadVideo -> generate-stream-upload -> PostService.createPost.
@@ -73,8 +74,8 @@ export default function AdminUploadScreen() {
     try {
       const picked = await StreamService.pickVideo();
       if (picked) setVideo(picked);
-    } catch (err: any) {
-      showAlert('Could not pick video', err?.message ?? 'Please try again.');
+    } catch (err) {
+      showAlert('Could not pick video', errorMessage(err, 'Please try again.'));
     }
   };
 
@@ -82,8 +83,8 @@ export default function AdminUploadScreen() {
     try {
       const picked = await PostService.pickImage();
       if (picked) setThumbnailUri(picked.uri);
-    } catch (err: any) {
-      showAlert('Could not pick image', err?.message ?? 'Please try again.');
+    } catch (err) {
+      showAlert('Could not pick image', errorMessage(err, 'Please try again.'));
     }
   };
 
@@ -131,8 +132,8 @@ export default function AdminUploadScreen() {
           : 'It is live now.',
         [{ text: 'OK', onPress: () => router.replace('/admin/content') }],
       );
-    } catch (err: any) {
-      showAlert('Upload failed', err?.message ?? 'Something went wrong.');
+    } catch (err) {
+      showAlert('Upload failed', errorMessage(err, 'Something went wrong.'));
     } finally {
       setSubmitting(false);
     }

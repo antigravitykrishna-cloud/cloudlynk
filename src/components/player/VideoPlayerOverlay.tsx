@@ -21,9 +21,10 @@ import { Colors, Radius, FontSize } from '@/constants/theme';
 import { useResumePosition, formatPosition } from '@/hooks/useResumePosition';
 import { useAuth } from '@/hooks/useAuth';
 import { PlayerPrefsService } from '@/lib/services/playerPrefs';
+import type { VideoPlayer } from 'expo-video';
 
 type Props = {
-  player: any;
+  player: VideoPlayer;
   onClose: () => void;
   postId?: string;
   postTitle?: string;

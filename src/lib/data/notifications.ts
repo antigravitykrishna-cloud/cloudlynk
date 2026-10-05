@@ -6,6 +6,7 @@ import { Platform } from 'react-native';
 
 // Icon + color per notification type
 import type { IconName } from '@/components/ui/Icon';
+import { errorMessage } from '@/lib/errors';
 
 export type NotificationType =
   | 'channel_approved'
@@ -147,8 +148,8 @@ export const NotificationService = {
           })
         ).data;
         return pushTokenString;
-      } catch (e: any) {
-        if (__DEV__) console.warn('Failed to get push token:', e.message);
+      } catch (e) {
+        if (__DEV__) console.warn('Failed to get push token:', errorMessage(e));
         return null;
       }
     } else {

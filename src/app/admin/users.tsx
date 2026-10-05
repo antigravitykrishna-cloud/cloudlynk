@@ -14,6 +14,7 @@ import { PressScale } from '@/components/ui/Press';
 import { Colors } from '@/constants/theme';
 import { AdminControl, type AdminUserSummary } from '@/lib/admin/adminControl';
 import { useAuth } from '@/hooks/useAuth';
+import { errorMessage } from '@/lib/errors';
 
 // Every account, searchable by email or name. Tap one for the controls:
 // premium, admin rights, uploads, suspend/ban, approval (app/admin/user/[id]).
@@ -31,8 +32,8 @@ export default function AdminUsersScreen() {
     try {
       setRows(await AdminControl.searchUsers(q, 100));
       setError(null);
-    } catch (e: any) {
-      setError(e?.message ?? 'Could not load users.');
+    } catch (e) {
+      setError(errorMessage(e, 'Could not load users.'));
     } finally {
       setLoading(false);
     }

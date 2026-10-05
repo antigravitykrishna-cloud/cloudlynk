@@ -26,6 +26,7 @@ import { Icon } from '@/components/ui/Icon';
 import { H, formatDuration } from '@/components/channel/shared';
 import { DetailModal } from '@/components/channel/DetailModal';
 import { GenreRow } from '@/components/channel/GenreRow';
+import { errorMessage } from '@/lib/errors';
 
 // guards-allow-select-star
 //
@@ -121,8 +122,8 @@ export default function ChannelDetailScreen() {
         : merged;
       setPosts(visiblePosts);
       setGrouped(PostService.groupByGenre(visiblePosts));
-    } catch (err: any) {
-      showAlert('Error', err.message);
+    } catch (err) {
+      showAlert('Error', errorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -162,8 +163,8 @@ export default function ChannelDetailScreen() {
       await ChannelService.joinChannel(id, user.id);
       setIsMember(true);
       await load();
-    } catch (err: any) {
-      showAlert('Error', err.message);
+    } catch (err) {
+      showAlert('Error', errorMessage(err));
     } finally {
       setJoining(false);
     }

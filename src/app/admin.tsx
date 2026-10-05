@@ -19,6 +19,7 @@ import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme
 import { formatTimeAgo } from '@/lib/data/files';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { ToolTile } from '@/components/admin/AdminUI';
+import { errorMessage } from '@/lib/errors';
 
 // Every admin tool, in one grid at the top of the panel. The client runs the
 // app from here, so nothing an admin can do should need hunting for.
@@ -144,7 +145,7 @@ export default function AdminScreen() {
   const [reviewing, setReviewing] = useState<string | null>(null);
 
   useEffect(() => {
-    if (profile && !(profile as any).is_admin) {
+    if (profile && !profile.is_admin) {
       showAlert('Access denied');
       router.replace('/(tabs)/profile');
     }
@@ -158,8 +159,8 @@ export default function AdminScreen() {
       ]);
       setPendingChannels(channels as PendingChannel[]);
       setPendingPosts(posts);
-    } catch (err: any) {
-      showAlert('Error', err.message);
+    } catch (err) {
+      showAlert('Error', errorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -181,8 +182,8 @@ export default function AdminScreen() {
       await NotificationService.channelApproved(ch.owner?.id ?? ch.owner_id, ch.name, ch.id);
       setPendingChannels(prev => prev.filter(c => c.id !== ch.id));
       showAlert('✓ Approved', `"${ch.name}" is live. Owner notified.`);
-    } catch (err: any) {
-      showAlert('Error', err.message);
+    } catch (err) {
+      showAlert('Error', errorMessage(err));
     } finally {
       setReviewing(null);
     }
@@ -200,8 +201,8 @@ export default function AdminScreen() {
             await PostService.rejectChannel(ch.id);
             await NotificationService.channelRejected(ch.owner?.id ?? ch.owner_id, ch.name, ch.id);
             setPendingChannels(prev => prev.filter(c => c.id !== ch.id));
-          } catch (err: any) {
-            showAlert('Error', err.message);
+          } catch (err) {
+            showAlert('Error', errorMessage(err));
           } finally {
             setReviewing(null);
           }
@@ -217,14 +218,14 @@ export default function AdminScreen() {
       await PostService.approvePost(post.id, profile.id);
       await NotificationService.postApproved(
         post.author_id,
-        (post.channel as any)?.name ?? 'your channel',
+        post.channel?.name ?? 'your channel',
         post.channel_id,
         post.id,
       );
       setPendingPosts(prev => prev.filter(p => p.id !== post.id));
       showAlert('✓ Post approved', 'Author notified.');
-    } catch (err: any) {
-      showAlert('Error', err.message);
+    } catch (err) {
+      showAlert('Error', errorMessage(err));
     } finally {
       setReviewing(null);
     }
@@ -243,13 +244,13 @@ export default function AdminScreen() {
             await PostService.rejectPost(post.id, profile.id, 'Does not meet content guidelines.');
             await NotificationService.postRejected(
               post.author_id,
-              (post.channel as any)?.name ?? 'your channel',
+              post.channel?.name ?? 'your channel',
               post.channel_id,
               post.id,
             );
             setPendingPosts(prev => prev.filter(p => p.id !== post.id));
-          } catch (err: any) {
-            showAlert('Error', err.message);
+          } catch (err) {
+            showAlert('Error', errorMessage(err));
           } finally {
             setReviewing(null);
           }
@@ -310,7 +311,7 @@ export default function AdminScreen() {
               {post.title ?? post.body?.slice(0, 40) ?? 'Untitled'}
             </Text>
             <Text style={styles.cardMeta}>
-              {post.author?.full_name ?? 'Unknown'} → #{(post.channel as any)?.name ?? '?'} ·{' '}
+              {post.author?.full_name ?? 'Unknown'} → #{post.channel?.name ?? '?'} ·{' '}
               {formatTimeAgo(post.created_at)}
             </Text>
           </View>

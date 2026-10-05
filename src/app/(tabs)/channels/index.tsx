@@ -84,7 +84,7 @@ export default function ChannelsScreen() {
       .from('channel_members')
       .select('channel_id')
       .eq('user_id', user.id);
-    setJoinedChannelIds(new Set((data ?? []).map((r: any) => r.channel_id)));
+    setJoinedChannelIds(new Set((data ?? []).map(r => r.channel_id)));
   }, [user?.id]);
 
   const loadChannels = useCallback(async () => {

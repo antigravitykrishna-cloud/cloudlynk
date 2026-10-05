@@ -25,6 +25,7 @@ import { useUploadQueue } from '@/hooks/useUploadQueue';
 import { QueueItem } from '@/lib/video/uploadQueue';
 import { PostService, ContentType, GENRES } from '@/lib/data/posts';
 import { Icon, type IconName } from '@/components/ui/Icon';
+import { errorMessage } from '@/lib/errors';
 
 const CONTENT_TYPES: { id: ContentType; label: string; icon: IconName }[] = [
   { id: 'movie', label: 'Movie', icon: 'film' },
@@ -85,8 +86,8 @@ export default function FormScreen() {
         releaseYear,
         thumbnailUri,
       });
-    } catch (err: any) {
-      showAlert('Error', err.message ?? 'Failed to save');
+    } catch (err) {
+      showAlert('Error', errorMessage(err, 'Failed to save'));
     } finally {
       setSaving(false);
     }
@@ -133,8 +134,8 @@ export default function FormScreen() {
     try {
       const result = await PostService.pickImage();
       if (result) setThumbnailUri(result.uri);
-    } catch (err: any) {
-      showAlert('Permission required', err.message);
+    } catch (err) {
+      showAlert('Permission required', errorMessage(err));
     } finally {
       setPicking(false);
     }

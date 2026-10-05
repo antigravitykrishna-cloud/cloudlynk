@@ -28,7 +28,7 @@ async function allowed(): Promise<boolean> {
   return !optedOut;
 }
 
-function sdk(): any {
+function sdk(): typeof import('react-native-fbsdk-next') {
   // eslint-disable-next-line @typescript-eslint/no-require-imports -- optional native module, loaded on first use
   return require('react-native-fbsdk-next');
 }

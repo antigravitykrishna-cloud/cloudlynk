@@ -23,6 +23,7 @@ import { useEvent } from 'expo';
 import { Colors } from '@/constants/theme';
 import { Icon } from '@/components/ui/Icon';
 import { H, formatDuration, getTypeColor } from '@/components/channel/shared';
+import { errorMessage } from '@/lib/errors';
 
 // ── Detail modal as standalone
 export const DetailModal = memo(
@@ -53,7 +54,9 @@ export const DetailModal = memo(
           reportedUserId: selected.author_id,
         })
           .then(() => showAlert('Reported', 'Thanks — our team will review this.'))
-          .catch((err: any) => showAlert('Error', err.message ?? 'Could not submit report.'));
+          .catch((err: unknown) =>
+            showAlert('Error', errorMessage(err, 'Could not submit report.')),
+          );
       };
       showAlert('Report this content', 'Why are you reporting it?', [
         { text: 'Inappropriate content', onPress: () => submit('inappropriate_content') },
@@ -79,7 +82,9 @@ export const DetailModal = memo(
                   showAlert('Blocked');
                   onClose();
                 })
-                .catch((err: any) => showAlert('Error', err.message ?? 'Could not block user.'));
+                .catch((err: unknown) =>
+                  showAlert('Error', errorMessage(err, 'Could not block user.')),
+                );
             },
           },
         ],
@@ -95,7 +100,9 @@ export const DetailModal = memo(
       const submit = (reason: string) => {
         ReportService.reportUser(userId, selected.author_id, reason)
           .then(() => showAlert('Reported', 'Thanks — our team will review this account.'))
-          .catch((err: any) => showAlert('Error', err.message ?? 'Could not submit report.'));
+          .catch((err: unknown) =>
+            showAlert('Error', errorMessage(err, 'Could not submit report.')),
+          );
       };
       showAlert(
         `Report ${selected.author?.full_name ?? 'this user'}`,
@@ -134,8 +141,8 @@ export const DetailModal = memo(
           .then(url => {
             if (!cancelled) setVideoUrl(url);
           })
-          .catch((err: any) => {
-            if (!cancelled) setVideoError(err?.message ?? "This video isn't available.");
+          .catch((err: unknown) => {
+            if (!cancelled) setVideoError(errorMessage(err, "This video isn't available."));
           })
           .finally(() => {
             if (!cancelled) setVideoLoading(false);
@@ -150,8 +157,8 @@ export const DetailModal = memo(
           .then(url => {
             if (!cancelled) setVideoUrl(url);
           })
-          .catch((err: any) => {
-            if (!cancelled) setVideoError(err?.message ?? "This video isn't available.");
+          .catch((err: unknown) => {
+            if (!cancelled) setVideoError(errorMessage(err, "This video isn't available."));
           })
           .finally(() => {
             if (!cancelled) setVideoLoading(false);

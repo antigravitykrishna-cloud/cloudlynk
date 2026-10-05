@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { AdminContentService, AdminUser, PostGrantee } from '@/lib/admin/adminContent';
+import { errorMessage } from '@/lib/errors';
 
 // Per-post access: let one person watch one video regardless of subscription. A grant never touches
 // plan_status, and revoking it never affects anything paid for (enforced in the database).
@@ -79,8 +80,8 @@ export default function AdminPostAccessScreen() {
     setSearching(true);
     try {
       setResults(await AdminContentService.searchUsers(search));
-    } catch (err: any) {
-      showAlert('Error', err?.message ?? 'Could not search users.');
+    } catch (err) {
+      showAlert('Error', errorMessage(err, 'Could not search users.'));
     } finally {
       setSearching(false);
     }
@@ -91,8 +92,8 @@ export default function AdminPostAccessScreen() {
     let expiresAt: string | null;
     try {
       expiresAt = expiryFor(duration, customDate);
-    } catch (err: any) {
-      showAlert('Check the date', err.message);
+    } catch (err) {
+      showAlert('Check the date', errorMessage(err));
       return;
     }
     setActingId(selected.id);
@@ -105,8 +106,8 @@ export default function AdminPostAccessScreen() {
       setDuration('forever');
       setCustomDate('');
       await load();
-    } catch (err: any) {
-      showAlert('Error', err?.message ?? 'Could not grant access.');
+    } catch (err) {
+      showAlert('Error', errorMessage(err, 'Could not grant access.'));
     } finally {
       setActingId(null);
     }
@@ -127,8 +128,8 @@ export default function AdminPostAccessScreen() {
             try {
               await AdminContentService.revokeAccess(g.user_id, postId);
               await load();
-            } catch (err: any) {
-              showAlert('Error', err?.message ?? 'Could not revoke access.');
+            } catch (err) {
+              showAlert('Error', errorMessage(err, 'Could not revoke access.'));
             } finally {
               setActingId(null);
             }

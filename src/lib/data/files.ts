@@ -5,6 +5,7 @@ import * as LegacyFileSystem from 'expo-file-system/legacy';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { supabase } from '@/lib/supabase';
+import { nativeFile } from '@/lib/nativeFile';
 
 export type UploadProgress = {
   loaded: number;
@@ -123,7 +124,7 @@ export const StorageService = {
       xhr.setRequestHeader('Content-Type', mimeType);
       // React Native XHR accepts { uri, type, name } — streams file as raw binary,
       // preserving the Content-Type set above.
-      xhr.send({ uri, type: mimeType, name: fileName } as any);
+      xhr.send(nativeFile({ uri, type: mimeType, name: fileName }));
     });
 
     const { error: dbError } = await supabase.from('files').insert({

@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import type { Tables } from '@/lib/database.types';
 
 // guards-allow-select-star
 // getMyChannels / getMyOwnedChannels are membership and ownership queries keyed to a user id.
@@ -67,7 +68,7 @@ export const ChannelService = {
       .order('created_at', { ascending: false, referencedTable: 'channels' });
 
     if (error) throw error;
-    return (data ?? []).map((row: any) => ({ ...row.channels, myRole: row.role })).filter(Boolean);
+    return (data ?? []).map(row => ({ ...row.channels, myRole: row.role })).filter(Boolean);
   },
 
   async getMyOwnedChannels(userId: string) {
@@ -115,14 +116,19 @@ export const ChannelService = {
     if (error) throw error;
   },
 
-  async updateChannel(channelId: string, name: string, description: string) {
+  /** Returns the updated channel row (update_channel returns it as JSON). */
+  async updateChannel(
+    channelId: string,
+    name: string,
+    description: string,
+  ): Promise<Tables<'channels'>> {
     const { data, error } = await supabase.rpc('update_channel', {
       p_channel_id: channelId,
       p_name: name,
       p_description: description,
     });
     if (error) throw error;
-    return data;
+    return data as unknown as Tables<'channels'>;
   },
 
   async deleteChannel(channelId: string) {

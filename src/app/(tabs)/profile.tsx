@@ -18,7 +18,7 @@ import { useSubscriptionPlans } from '@/lib/data/plans';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotifications } from '@/hooks/useNotifications';
 import { supabase } from '@/lib/supabase';
-import type { TablesUpdate } from '@/lib/database.types';
+import type { Tables, TablesUpdate } from '@/lib/database.types';
 import { Colors } from '@/constants/theme';
 import { formatBytes } from '@/lib/data/files';
 import { config } from '@/lib/config';
@@ -46,7 +46,7 @@ export default function ProfileScreen() {
   const [pickedPlan, setPickedPlan] = useDefaultPlan(showPlans ? plansQuery.data : undefined);
   const { unreadCount } = useNotifications(user?.id);
   const router = useRouter();
-  const [myChannels, setMyChannels] = useState<any[]>([]);
+  const [myChannels, setMyChannels] = useState<Tables<'channels'>[]>([]);
   const [channelsLoading, setChannelsLoading] = useState(true);
 
   const prevUserIdRef = useRef<string | undefined>(undefined);
@@ -334,7 +334,9 @@ export default function ProfileScreen() {
                     {(ch.owner_id === user?.id || isAdmin) && (
                       <TouchableOpacity
                         style={styles.manageBtn}
-                        onPress={() => router.push(`/channel/manage/${ch.id}` as any)}
+                        onPress={() =>
+                          router.push({ pathname: '/channel/manage/[id]', params: { id: ch.id } })
+                        }
                         activeOpacity={0.7}
                       >
                         <Text style={styles.manageBtnText}>Manage</Text>

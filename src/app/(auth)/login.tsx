@@ -17,6 +17,7 @@ import { isGoogleAuthLive } from '@/lib/config';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme';
 import Constants from 'expo-constants';
 import { Icon } from '@/components/ui/Icon';
+import { errorCode, errorMessage } from '@/lib/errors';
 
 // Sign-in choices: guest, Google, or an emailed code. 'Continue as guest' creates an anonymous
 // account (it can browse; joining, watching and buying need a saved account -- enforced in the
@@ -44,8 +45,8 @@ export default function LoginScreen() {
       // other sign-ins; a plan picked before signing in is kept
       // (lib/postLogin.ts), so the guest lands back on it.
       await signInAsGuest();
-    } catch (err: any) {
-      showAlert('Could not continue as guest', err?.message ?? 'Please try again.');
+    } catch (err) {
+      showAlert('Could not continue as guest', errorMessage(err, 'Please try again.'));
     } finally {
       setBusy(null);
     }
@@ -58,11 +59,12 @@ export default function LoginScreen() {
       // No navigation here: the auth state listener in useAuth fires and
       // app/_layout.tsx routes to complete-profile or the tabs. Pushing a
       // route as well would race it.
-    } catch (err: any) {
+    } catch (err) {
       // The user backing out of the account picker is a cancellation, not a
       // failure — an error dialog for it reads as a bug.
-      const msg = String(err?.message ?? '');
-      const cancelled = /cancel/i.test(msg) || err?.code === '-5' || err?.code === '12501';
+      const msg = errorMessage(err, '');
+      const cancelled =
+        /cancel/i.test(msg) || errorCode(err) === '-5' || errorCode(err) === '12501';
       if (!cancelled) showAlert('Google sign-in failed', msg || 'Please try again.');
     } finally {
       setBusy(null);
@@ -79,8 +81,8 @@ export default function LoginScreen() {
     try {
       await sendEmailCode(addr);
       setMode('code');
-    } catch (err: any) {
-      showAlert('Could not send code', err?.message ?? 'Please try again.');
+    } catch (err) {
+      showAlert('Could not send code', errorMessage(err, 'Please try again.'));
     } finally {
       setBusy(null);
     }
@@ -95,8 +97,11 @@ export default function LoginScreen() {
     try {
       await verifyEmailCode(email, code);
       // Routing is handled by the auth listener, as above.
-    } catch (err: any) {
-      showAlert('That code did not work', err?.message ?? 'It may have expired. Send a new one.');
+    } catch (err) {
+      showAlert(
+        'That code did not work',
+        errorMessage(err, 'It may have expired. Send a new one.'),
+      );
     } finally {
       setBusy(null);
     }

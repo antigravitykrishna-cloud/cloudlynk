@@ -29,6 +29,8 @@ export function defaultAccessLevel(contentType: ContentType): AccessLevel {
   return contentType === 'movie' || contentType === 'series' ? 'premium' : 'free';
 }
 
+export type ExploreFilter = 'all' | 'popular' | 'most_watched' | 'latest' | 'most_searched';
+
 export type ChannelPost = {
   id: string;
   channel_id: string;
@@ -54,6 +56,7 @@ export type ChannelPost = {
   approved_by: string | null;
   approved_at: string | null;
   rejection_note: string | null;
+  view_count: number;
   created_at: string;
   author?: { id: string; full_name: string | null; avatar_url: string | null };
   channel?: { name: string };
@@ -182,9 +185,7 @@ export const PostService = {
     return [...(mine ?? []), ...(approved ?? [])] as ChannelPost[];
   },
 
-  async getGuestExplorePosts(
-    filter?: 'all' | 'popular' | 'most_watched' | 'latest' | 'most_searched',
-  ): Promise<GuestChannelPost[]> {
+  async getGuestExplorePosts(filter?: ExploreFilter): Promise<GuestChannelPost[]> {
     const orderCol =
       filter === 'popular' || filter === 'most_watched' ? 'view_count' : 'created_at';
 
@@ -202,14 +203,11 @@ export const PostService = {
     if (error) throw error;
 
     return (data ?? []).filter(
-      (p: any) => p.content_type !== 'post' || p.thumbnail_url,
+      p => p.content_type !== 'post' || p.thumbnail_url,
     ) as unknown as GuestChannelPost[];
   },
 
-  async getExplorePosts(
-    userId: string,
-    filter?: 'all' | 'popular' | 'most_watched' | 'latest' | 'most_searched',
-  ): Promise<ChannelPost[]> {
+  async getExplorePosts(userId: string, filter?: ExploreFilter): Promise<ChannelPost[]> {
     // RLS decides what comes back (each post's access level against the caller's plan), so this
     // asks for everything reachable.
 
@@ -219,7 +217,7 @@ export const PostService = {
       .select('channel_id')
       .eq('user_id', userId);
     if (mErr) throw mErr;
-    const myChannelIds = (memberships ?? []).map((m: any) => m.channel_id as string);
+    const myChannelIds = (memberships ?? []).map(m => m.channel_id);
 
     // All active public channels
     const { data: publicChannels, error: cErr } = await supabase
@@ -228,7 +226,7 @@ export const PostService = {
       .eq('is_public', true)
       .eq('status', 'active');
     if (cErr) throw cErr;
-    const publicChannelIds = (publicChannels ?? []).map((c: any) => c.id as string);
+    const publicChannelIds = (publicChannels ?? []).map(c => c.id);
 
     // Public channels the user has NOT joined
     const myChannelSet = new Set(myChannelIds);
@@ -237,7 +235,7 @@ export const PostService = {
     const orderCol =
       filter === 'popular' || filter === 'most_watched' ? 'view_count' : 'created_at';
 
-    const results: any[] = [];
+    const results: ChannelPost[] = [];
 
     // 1. Content from subscribed channels
     if (myChannelIds.length > 0) {
@@ -249,7 +247,7 @@ export const PostService = {
         .order(orderCol, { ascending: false })
         .limit(150);
       if (error) throw error;
-      results.push(...(data ?? []));
+      results.push(...((data ?? []) as ChannelPost[]));
     }
 
     // 2. Content from public channels the user hasn't joined — RLS silently
@@ -265,7 +263,7 @@ export const PostService = {
         .order(orderCol, { ascending: false })
         .limit(100);
       if (error) throw error;
-      results.push(...(data ?? []));
+      results.push(...((data ?? []) as ChannelPost[]));
     }
 
     // 3. Locked premium titles for browsing (premium_preview has no video columns). Added last so a
@@ -277,7 +275,8 @@ export const PostService = {
         .select('*')
         .order(orderCol, { ascending: false })
         .limit(100);
-      results.push(...(previews ?? []));
+      // Preview rows have no video columns; the UI sends a tap on them to the plans.
+      results.push(...((previews ?? []) as unknown as ChannelPost[]));
     } catch (err) {
       if (__DEV__) console.warn('premium_preview unavailable:', err);
     }

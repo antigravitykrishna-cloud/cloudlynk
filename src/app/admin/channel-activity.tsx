@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
+import { errorMessage } from '@/lib/errors';
 
 interface ChannelActivity {
   id: string;
@@ -37,8 +38,8 @@ export default function ChannelActivityScreen() {
       const { data, error } = await supabase.rpc('admin_list_channel_activity');
       if (error) throw error;
       setChannels(data ?? []);
-    } catch (err: any) {
-      showAlert('Error', err.message ?? 'Failed to load channel activity');
+    } catch (err) {
+      showAlert('Error', errorMessage(err, 'Failed to load channel activity'));
     } finally {
       setLoading(false);
     }
@@ -65,8 +66,8 @@ export default function ChannelActivityScreen() {
             if (error) throw error;
             showAlert('Done', `"${channelName}" has been suspended.`);
             fetchActivity();
-          } catch (err: any) {
-            showAlert('Error', err.message ?? 'Failed to suspend channel');
+          } catch (err) {
+            showAlert('Error', errorMessage(err, 'Failed to suspend channel'));
           }
         },
       },

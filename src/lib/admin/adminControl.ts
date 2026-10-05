@@ -59,8 +59,8 @@ export interface AdminPlan {
 export type PlanAction =
   { action: 'add_days'; days: number } | { action: 'lifetime' } | { action: 'revoke' };
 
-function unwrap<T>(res: { data: T | null; error: any }): T {
-  if (res.error) throw new Error(res.error.message ?? 'Request failed');
+function unwrap<T>(res: { data: T | null; error: { message?: string } | null }): T {
+  if (res.error) throw new Error(res.error.message || 'Request failed');
   return res.data as T;
 }
 

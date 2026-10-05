@@ -15,6 +15,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme';
 import { Icon } from '@/components/ui/Icon';
+import { errorMessage } from '@/lib/errors';
 
 // Password recovery, step 2, opened from the cloudlynk://reset-password link in the email. The link
 // creates a short-lived recovery session; without it the link has expired. Requires
@@ -59,8 +60,8 @@ export default function ResetPasswordScreen() {
       }
       await updatePassword(password);
       setDone(true);
-    } catch (err: any) {
-      setError(err?.message ?? 'Could not set your password. Try again.');
+    } catch (err) {
+      setError(errorMessage(err, 'Could not set your password. Try again.'));
     } finally {
       setBusy(false);
     }

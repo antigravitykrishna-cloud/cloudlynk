@@ -21,12 +21,13 @@ import { isGoogleAuthLive } from '@/lib/config';
 import { showAlert } from '@/components/ui/Feedback';
 import { Icon } from '@/components/ui/Icon';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme';
+import { errorCode, errorMessage } from '@/lib/errors';
 
 type Mode = 'choose' | 'email' | 'code';
 
-function friendly(err: any): string {
-  const msg = String(err?.message ?? '');
-  const code = String(err?.code ?? '');
+function friendly(err: unknown): string {
+  const msg = errorMessage(err, '');
+  const code = errorCode(err) ?? '';
   if (code === 'email_exists' || /already (been )?registered|already exists/i.test(msg)) {
     return 'This email already has a Cloudlynk account. Use a different email, or contact support to move this guest plan to that account.';
   }
@@ -87,9 +88,11 @@ export default function SaveAccountScreen() {
     try {
       await linkGoogle();
       done();
-    } catch (err: any) {
+    } catch (err) {
       const cancelled =
-        /cancel/i.test(String(err?.message ?? '')) || err?.code === '-5' || err?.code === '12501';
+        /cancel/i.test(errorMessage(err, '')) ||
+        errorCode(err) === '-5' ||
+        errorCode(err) === '12501';
       if (!cancelled) showAlert('Could not save with Google', friendly(err));
     } finally {
       setBusy(null);
@@ -106,7 +109,7 @@ export default function SaveAccountScreen() {
     try {
       if (await linkEmailStart(addr)) done();
       else setMode('code');
-    } catch (err: any) {
+    } catch (err) {
       showAlert('Could not send code', friendly(err));
     } finally {
       setBusy(null);
@@ -122,7 +125,7 @@ export default function SaveAccountScreen() {
     try {
       await linkEmailVerify(email, code);
       done();
-    } catch (err: any) {
+    } catch (err) {
       showAlert('That code did not work', friendly(err));
     } finally {
       setBusy(null);

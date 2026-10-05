@@ -21,6 +21,7 @@ import { StreamService } from '@/lib/video/stream';
 import { useVideoPlayer } from 'expo-video';
 import { useEvent } from 'expo';
 import { Colors } from '@/constants/theme';
+import { errorMessage } from '@/lib/errors';
 
 const H = Dimensions.get('window').height;
 
@@ -57,8 +58,8 @@ export const DetailModal = memo(
             .then(url => {
               if (!cancelled) setVideoUrl(url);
             })
-            .catch((err: any) => {
-              if (!cancelled) setVideoError(err?.message ?? "This video isn't available.");
+            .catch((err: unknown) => {
+              if (!cancelled) setVideoError(errorMessage(err, "This video isn't available."));
             })
             .finally(() => {
               if (!cancelled) setVideoLoading(false);
@@ -70,8 +71,8 @@ export const DetailModal = memo(
             .then(url => {
               if (!cancelled) setVideoUrl(url);
             })
-            .catch((err: any) => {
-              if (!cancelled) setVideoError(err?.message ?? "This video isn't available.");
+            .catch((err: unknown) => {
+              if (!cancelled) setVideoError(errorMessage(err, "This video isn't available."));
             })
             .finally(() => {
               if (!cancelled) setVideoLoading(false);

@@ -1,5 +1,6 @@
 import * as DocumentPicker from 'expo-document-picker';
 import { supabase } from '@/lib/supabase';
+import { nativeFile } from '@/lib/nativeFile';
 
 export type VideoMeta = { uri: string; name: string; size: number };
 
@@ -93,11 +94,7 @@ export const StreamService = {
       const formData = new FormData();
 
       // Append file payload inside the 'file' field required by Cloudflare Stream
-      formData.append('file', {
-        uri: meta.uri,
-        type: 'video/mp4',
-        name: meta.name,
-      } as any);
+      formData.append('file', nativeFile({ uri: meta.uri, type: 'video/mp4', name: meta.name }));
 
       // Stall watchdog: large uploads on slow links are fine as long as bytes
       // keep moving. We only abort if NO progress happens for STALL_MS — that

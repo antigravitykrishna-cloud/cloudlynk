@@ -13,6 +13,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme';
+import { errorMessage } from '@/lib/errors';
 
 // Password recovery, step 1: ask where to send the reset link. The confirmation is the same whether
 // or not the address has an account, so the screen cannot be used to find out who is registered.
@@ -36,8 +37,8 @@ export default function ForgotPasswordScreen() {
     try {
       await requestPasswordReset(addr);
       setSent(true);
-    } catch (err: any) {
-      setError(err?.message ?? 'Could not send the email. Try again in a moment.');
+    } catch (err) {
+      setError(errorMessage(err, 'Could not send the email. Try again in a moment.'));
     } finally {
       setBusy(false);
     }

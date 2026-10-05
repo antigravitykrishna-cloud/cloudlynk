@@ -5,8 +5,9 @@
  */
 
 import { StreamService, VideoMeta, STREAM_MAX_MB } from './stream';
-import { PostService, defaultAccessLevel, AccessLevel } from '@/lib/data/posts';
+import { PostService, defaultAccessLevel, AccessLevel, ContentType } from '@/lib/data/posts';
 import { loadQueue, saveQueue, clearQueue as clearPersistedQueue } from './uploadQueue.persistence';
+import { errorMessage } from '@/lib/errors';
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -161,7 +162,8 @@ export const UploadQueue = {
         title: entry.title ?? '',
         body: entry.body ?? '',
         contentType: entry.contentType ?? 'movie',
-        accessLevel: entry.accessLevel ?? defaultAccessLevel((entry.contentType as any) ?? 'movie'),
+        accessLevel:
+          entry.accessLevel ?? defaultAccessLevel((entry.contentType as ContentType) ?? 'movie'),
         genre: entry.genre ?? '',
         durationMin: entry.durationMin ?? '',
         seasonNo: entry.seasonNo ?? '',
@@ -361,7 +363,7 @@ export const UploadQueue = {
       // Upload succeeded — create the channel_posts row using item.userId
       await PostService.createPost(item.channelId, item.userId, item.body || '', {
         title: item.title || item.video.name,
-        contentType: (item.contentType as any) || 'movie',
+        contentType: (item.contentType as ContentType) || 'movie',
         accessLevel: item.accessLevel,
         genre: item.genre || undefined,
         durationMin: item.durationMin ? parseInt(item.durationMin) : undefined,
@@ -381,11 +383,11 @@ export const UploadQueue = {
         streamUid,
         updatedAt: new Date().toISOString(),
       };
-    } catch (err: any) {
+    } catch (err) {
       state.items[nextIdx] = {
         ...state.items[nextIdx],
         status: 'failed',
-        error: err.message ?? 'Upload failed',
+        error: errorMessage(err, 'Upload failed'),
         updatedAt: new Date().toISOString(),
       };
     }

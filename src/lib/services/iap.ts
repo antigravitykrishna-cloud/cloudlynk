@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase';
 import { Platform } from 'react-native';
 import { config, isIapLive } from '@/lib/config';
 import { IIapService, IapProduct, PurchaseResult } from './types';
+import { errorMessage } from '@/lib/errors';
 
 // The Premium plans. They share one Play Console subscription product (`cloudlynk_premium`) and
 // differ by base plan. `code` equals the base plan id and must match subscription_plans.code in the
@@ -153,11 +154,11 @@ export class GooglePlayIapService implements IIapService {
               resolve({ __alternativeBillingToken: details.externalTransactionToken });
             })
           : null;
-      const errorSub = RNIap.purchaseErrorListener((error: any) => {
+      const errorSub = RNIap.purchaseErrorListener((error: unknown) => {
         if (settled) return;
         settled = true;
         cleanup();
-        reject(new Error(error?.message ?? 'Purchase failed or was cancelled.'));
+        reject(new Error(errorMessage(error, 'Purchase failed or was cancelled.')));
       });
 
       dispatch().catch(err => {
@@ -283,13 +284,13 @@ export class GooglePlayIapService implements IIapService {
       } finally {
         await RNIap.endConnection();
       }
-    } catch (err: any) {
+    } catch (err) {
       return {
         success: false,
         planCode,
         purchaseToken: null,
         expiresAt: null,
-        errorMessage: err?.message ?? 'Google Play purchase failed.',
+        errorMessage: errorMessage(err, 'Google Play purchase failed.'),
       };
     }
   }
@@ -393,13 +394,13 @@ export class GooglePlayIapService implements IIapService {
         purchaseToken,
         expiresAt: json.expiresAt ?? null,
       };
-    } catch (err: any) {
+    } catch (err) {
       return {
         success: false,
         planCode: claimed,
         purchaseToken,
         expiresAt: null,
-        errorMessage: err?.message ?? 'Could not reach the receipt verifier.',
+        errorMessage: errorMessage(err, 'Could not reach the receipt verifier.'),
       };
     }
   }

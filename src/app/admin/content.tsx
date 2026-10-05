@@ -13,6 +13,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { AdminContentService, AdminPost, AdminPostStatus } from '@/lib/admin/adminContent';
 import { AccessLevel } from '@/lib/data/posts';
+import { errorMessage } from '@/lib/errors';
 
 // Admin content list: everything published, filterable by status and access level. Access level can
 // be changed here after upload. The isAdmin checks are UX only -- every write is an RPC that re-
@@ -63,7 +64,7 @@ export default function AdminContentScreen() {
       // nothing to review and stops checking, while the queue fills up.
       showAlert(
         'Could not load content',
-        err instanceof Error ? err.message : 'Check your connection and try again.',
+        err instanceof Error ? errorMessage(err) : 'Check your connection and try again.',
       );
     } finally {
       setLoading(false);
@@ -103,8 +104,8 @@ export default function AdminContentScreen() {
               setPosts(prev =>
                 prev.map(p => (p.id === post.id ? { ...p, access_level: next } : p)),
               );
-            } catch (err: any) {
-              showAlert('Not changed', err?.message ?? 'Could not change the access level.');
+            } catch (err) {
+              showAlert('Not changed', errorMessage(err, 'Could not change the access level.'));
             } finally {
               setActingId(null);
             }
@@ -120,8 +121,8 @@ export default function AdminContentScreen() {
     try {
       await AdminContentService.setPostStatus(post.id, next);
       setPosts(prev => prev.map(p => (p.id === post.id ? { ...p, status: next } : p)));
-    } catch (err: any) {
-      showAlert('Error', err?.message ?? 'Could not change the status.');
+    } catch (err) {
+      showAlert('Error', errorMessage(err, 'Could not change the status.'));
     } finally {
       setActingId(null);
     }
@@ -272,7 +273,9 @@ export default function AdminContentScreen() {
 
                   <TouchableOpacity
                     style={styles.actionBtnGhost}
-                    onPress={() => router.push(`/admin/post-access?postId=${post.id}` as any)}
+                    onPress={() =>
+                      router.push({ pathname: '/admin/post-access', params: { postId: post.id } })
+                    }
                     activeOpacity={0.7}
                   >
                     <Text style={styles.actionBtnGhostText}>Manage access</Text>
@@ -284,7 +287,9 @@ export default function AdminContentScreen() {
                       orphaned them. */}
                   <TouchableOpacity
                     style={styles.actionBtnGhost}
-                    onPress={() => router.push(`/admin/edit-post?postId=${post.id}` as any)}
+                    onPress={() =>
+                      router.push({ pathname: '/admin/edit-post', params: { postId: post.id } })
+                    }
                     activeOpacity={0.7}
                   >
                     <Text style={styles.actionBtnGhostText}>Edit</Text>

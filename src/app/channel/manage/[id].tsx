@@ -15,6 +15,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { ChannelService } from '@/lib/data/channels';
 import { PostService, ChannelPost } from '@/lib/data/posts';
 import { supabase } from '@/lib/supabase';
+import { errorMessage } from '@/lib/errors';
+import type { Tables } from '@/lib/database.types';
 
 // guards-allow-select-star
 // Channel management is owner-only; anon never reaches this query.
@@ -26,7 +28,7 @@ export default function ManageChannelScreen() {
   const router = useRouter();
   const { user, profile, isAdmin } = useAuth();
 
-  const [channel, setChannel] = useState<any>(null);
+  const [channel, setChannel] = useState<Tables<'channels'> | null>(null);
   const [posts, setPosts] = useState<ChannelPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -105,8 +107,8 @@ export default function ManageChannelScreen() {
       setChannel(updated);
       setEditing(false);
       showAlert('Success', 'Channel updated successfully');
-    } catch (err: any) {
-      showAlert('Error', err.message || 'Failed to update channel');
+    } catch (err) {
+      showAlert('Error', errorMessage(err, 'Failed to update channel'));
     } finally {
       setSaving(false);
     }
@@ -126,8 +128,8 @@ export default function ManageChannelScreen() {
               await ChannelService.deleteChannel(id as string);
               showAlert('Deleted', 'Channel has been deleted.');
               router.replace('/(tabs)/channels');
-            } catch (err: any) {
-              showAlert('Error', err.message || 'Failed to delete channel');
+            } catch (err) {
+              showAlert('Error', errorMessage(err, 'Failed to delete channel'));
             }
           },
         },
@@ -147,8 +149,8 @@ export default function ManageChannelScreen() {
 
             if (error) throw error;
             setPosts(prev => prev.filter(p => p.id !== postId));
-          } catch (err: any) {
-            showAlert('Error', err.message || 'Failed to delete post');
+          } catch (err) {
+            showAlert('Error', errorMessage(err, 'Failed to delete post'));
           }
         },
       },

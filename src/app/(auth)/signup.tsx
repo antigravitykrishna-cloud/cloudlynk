@@ -13,6 +13,7 @@ import { Link } from 'expo-router';
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme';
+import { errorMessage } from '@/lib/errors';
 
 export default function SignupScreen() {
   const { signUp } = useAuth();
@@ -74,8 +75,8 @@ export default function SignupScreen() {
       // See hooks/useAuth.ts.
       await signUp(email.trim(), password, fullName.trim(), parsedBirthYear);
       showAlert('Account created!', 'Please check your email to verify your account.');
-    } catch (err: any) {
-      showAlert('Signup failed', err.message ?? 'Something went wrong.');
+    } catch (err) {
+      showAlert('Signup failed', errorMessage(err, 'Something went wrong.'));
     } finally {
       setLoading(false);
     }
@@ -104,21 +105,21 @@ export default function SignupScreen() {
               value: fullName,
               setter: setFullName,
               placeholder: 'John Doe',
-              type: 'default',
+              type: 'default' as const,
             },
             {
               label: 'Email',
               value: email,
               setter: setEmail,
               placeholder: 'you@example.com',
-              type: 'email-address',
+              type: 'email-address' as const,
             },
             {
               label: 'Birth Year',
               value: birthYear,
               setter: setBirthYear,
               placeholder: 'e.g. 1998',
-              type: 'number-pad',
+              type: 'number-pad' as const,
             },
           ].map(({ label, value, setter, placeholder, type }) => (
             <View style={styles.field} key={label}>
@@ -130,7 +131,7 @@ export default function SignupScreen() {
                 placeholder={placeholder}
                 placeholderTextColor={Colors.textMuted}
                 autoCapitalize={type === 'default' ? 'words' : 'none'}
-                keyboardType={type as any}
+                keyboardType={type}
               />
             </View>
           ))}

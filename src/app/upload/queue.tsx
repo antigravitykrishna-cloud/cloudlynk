@@ -20,6 +20,7 @@ import { Colors, Radius, FontSize } from '@/constants/theme';
 import { useUploadQueue, QueueItem } from '@/hooks/useUploadQueue';
 import { StreamService, STREAM_MAX_MB } from '@/lib/video/stream';
 import { Icon } from '@/components/ui/Icon';
+import { errorMessage } from '@/lib/errors';
 
 export default function QueueScreen() {
   const router = useRouter();
@@ -66,8 +67,8 @@ export default function QueueScreen() {
           `You can queue ${maxItems} files at a time. Remove some, or go Premium to queue as many as you like — storage stays 15 GB on every plan.`,
         );
       }
-    } catch (err: any) {
-      showAlert('Error', err.message ?? 'Could not add videos');
+    } catch (err) {
+      showAlert('Error', errorMessage(err, 'Could not add videos'));
     } finally {
       setAdding(false);
     }

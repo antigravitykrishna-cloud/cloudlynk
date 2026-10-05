@@ -6,6 +6,7 @@ import { showAlert } from '@/components/ui/Feedback';
 import { fireHaptic } from '@/components/ui/Press';
 import { Colors, FontSize, FontWeight, Radius } from '@/constants/theme';
 import { AdminControl } from '@/lib/admin/adminControl';
+import { errorMessage } from '@/lib/errors';
 
 // Send a message to users. It lands in their Notifications inbox (the bell).
 // Push notifications are not wired up yet, so it is seen the next time the
@@ -38,9 +39,9 @@ export default function AdminBroadcastScreen() {
             setTitle('');
             setBody('');
             showAlert('Sent', `Delivered to ${n} ${n === 1 ? 'person' : 'people'}.`);
-          } catch (e: any) {
+          } catch (e) {
             fireHaptic('error');
-            showAlert('Could not send', e?.message ?? 'Please try again.');
+            showAlert('Could not send', errorMessage(e, 'Please try again.'));
           } finally {
             setSending(false);
           }
