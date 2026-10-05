@@ -1,214 +1,127 @@
-// Shown after sign-in when the account has not accepted the current policy versions or has no 18+
-// confirmation. A new account on a device that already passed the age gate is completed
-// automatically (just a spinner). The card is shown when the device has no gate answer, or when the
-// policies changed since the account accepted them -- a change must be shown, not accepted on the
-// person's behalf.
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  ScrollView,
-} from 'react-native';
-import { showAlert } from '@/components/ui/Feedback';
-import { Link } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { Button, TextButton } from '@/components/ui/Button';
+import { showAlert } from '@/components/ui/Feedback';
 import { logRegistration } from '@/lib/metaAds';
-import { useAuth } from '@/features/auth/hooks/useAuth';
+import { Colors, FontSize, Spacing } from '@/theme';
 import { hasConfirmedAgeOnDevice } from '@/features/auth/components/AgeGate';
-import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/theme';
+import { AuthCard, AuthLayout } from '@/features/auth/components/AuthLayout';
+import { PolicyCheckbox } from '@/features/auth/components/PolicyCheckbox';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+
+// Shown after sign-in when the account has no 18+ confirmation or has not accepted the current
+// policy versions. A new account on a device that already passed the age gate is completed
+// automatically (just a spinner). The card appears when the device has no gate answer, or when the
+// policies changed since the account accepted them: a change must be shown, not accepted on the
+// person's behalf.
+//
+// There is no navigation here: the root layout's redirect re-runs once the profile updates.
 
 export default function CompleteProfileScreen() {
   const { user, profile, completeProfile, signOut } = useAuth();
-  // Never accepted any version: a new account. Accepted an older one: a
-  // returning member who must see the updated policies.
+  // Never accepted any version: a new account. Accepted an older one: a returning member who must
+  // see the updated policies.
   const isNewAccount = !profile?.terms_accepted_at;
   const [agreed, setAgreed] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [auto, setAuto] = useState(isNewAccount);
-  const tried = useRef(false);
+  const [saving, setSaving] = useState(false);
+  const [completingAutomatically, setCompletingAutomatically] = useState(isNewAccount);
+  const triedAutomatically = useRef(false);
 
   async function finish() {
     await completeProfile();
     if (isNewAccount) {
-      logRegistration(
-        user?.is_anonymous
-          ? 'guest'
-          : user?.app_metadata?.provider === 'google'
-            ? 'google'
-            : 'email',
-      );
+      const method = user?.is_anonymous
+        ? 'guest'
+        : user?.app_metadata?.provider === 'google'
+          ? 'google'
+          : 'email';
+      logRegistration(method);
     }
-    // No navigation: RootLayout's redirect re-runs once `profile` updates.
   }
 
   useEffect(() => {
-    if (!isNewAccount || tried.current) return;
-    tried.current = true;
+    if (!isNewAccount || triedAutomatically.current) return;
+    triedAutomatically.current = true;
     (async () => {
-      if (!(await hasConfirmedAgeOnDevice())) {
-        setAuto(false);
-        return;
-      }
       try {
+        if (!(await hasConfirmedAgeOnDevice())) throw new Error('No age answer on this device');
         await finish();
       } catch {
-        // Fall back to the manual card rather than a dead end.
-        setAuto(false);
+        // Fall back to the card rather than a dead end.
+        setCompletingAutomatically(false);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once per new account
   }, [isNewAccount]);
 
-  async function handleContinue() {
+  async function continueWithAgreement() {
     if (!agreed) return;
-    setLoading(true);
+    setSaving(true);
     try {
       await finish();
-    } catch (err: any) {
-      showAlert('Could not continue', err?.message ?? 'Something went wrong.');
+    } catch (err) {
+      showAlert('Could not continue', (err as Error)?.message ?? 'Something went wrong.');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   }
 
-  if (auto) {
+  if (completingAutomatically) {
     return (
-      <View
-        style={[styles.container, { flex: 1, backgroundColor: Colors.bg, alignItems: 'center' }]}
-      >
+      <View style={styles.spinnerPage}>
         <ActivityIndicator color={Colors.brandBlue} size="large" />
-        <Text style={[styles.subheading, { marginTop: Spacing.lg, textAlign: 'center' }]}>
-          Setting up your account...
-        </Text>
+        <Text style={styles.spinnerText}>Setting up your account...</Text>
       </View>
     );
   }
 
+  const welcome = user?.email ? `Welcome, ${user.email}. ` : '';
+
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: Colors.bg }}
-      contentContainerStyle={styles.container}
-    >
-      <View style={styles.logoRow}>
-        <Text style={styles.logo}>☁</Text>
-        <Text style={styles.logoText}>
-          Cloud<Text style={{ color: Colors.brandBlue }}>lynk</Text>
-        </Text>
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.heading}>
-          {isNewAccount ? 'One more step' : 'Our policies changed'}
-        </Text>
-        <Text style={styles.subheading}>
-          {isNewAccount
-            ? `${user?.email ? `Welcome, ${user.email}. ` : ''}Please confirm to start using Cloudlynk.`
-            : 'Please review and accept the updated policies to continue.'}
-        </Text>
-
-        <TouchableOpacity
-          style={styles.agreeRow}
-          onPress={() => setAgreed(!agreed)}
-          activeOpacity={0.7}
-        >
-          <View style={[styles.checkbox, agreed && styles.checkboxChecked]}>
-            {agreed && <Text style={styles.checkmark}>{'✓'}</Text>}
-          </View>
-          <Text style={styles.terms}>
-            I am 18 or older and agree to the{' '}
-            <Link href="/terms" style={{ color: Colors.brandBlue }}>
-              Terms of Service
-            </Link>
-            ,{' '}
-            <Link href="/community-guidelines" style={{ color: Colors.brandBlue }}>
-              Community Guidelines
-            </Link>
-            , and{' '}
-            <Link href="/privacy" style={{ color: Colors.brandBlue }}>
-              Privacy Policy
-            </Link>
-            .
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.btn, (loading || !agreed) && { opacity: 0.6 }]}
-          onPress={handleContinue}
-          disabled={loading || !agreed}
-        >
-          {loading ? (
-            <ActivityIndicator color={Colors.black} />
-          ) : (
-            <Text style={styles.btnText}>Continue</Text>
-          )}
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.cancelBtn} onPress={() => signOut()} disabled={loading}>
-          <Text style={styles.cancelText}>Cancel and sign out</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+    <AuthLayout>
+      <AuthCard
+        title={isNewAccount ? 'One more step' : 'Our policies changed'}
+        subtitle={
+          isNewAccount
+            ? `${welcome}Please confirm to start using Cloudlynk.`
+            : 'Please review and accept the updated policies to continue.'
+        }
+      >
+        <PolicyCheckbox
+          checked={agreed}
+          onToggle={() => setAgreed(value => !value)}
+          prefix="I am 18 or older and agree to the"
+        />
+        <Button
+          label="Continue"
+          size="lg"
+          onPress={continueWithAgreement}
+          busy={saving}
+          disabled={!agreed}
+        />
+        <TextButton
+          label="Cancel and sign out"
+          tone="muted"
+          onPress={() => signOut()}
+          disabled={saving}
+        />
+      </AuthCard>
+    </AuthLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, justifyContent: 'center', padding: Spacing.xl },
-  logoRow: {
-    flexDirection: 'row',
+  spinnerPage: {
+    flex: 1,
+    backgroundColor: Colors.bg,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: Spacing.sm,
-    marginBottom: Spacing.xl,
-  },
-  logo: { fontSize: 32 },
-  logoText: {
-    fontSize: 28,
-    fontWeight: FontWeight.extrabold,
-    color: Colors.text,
-    letterSpacing: -1,
-  },
-  card: {
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: Radius.xl,
     padding: Spacing.xl,
-    borderWidth: 0.5,
-    borderColor: Colors.border,
   },
-  heading: {
-    fontSize: FontSize.xxl,
-    fontWeight: FontWeight.extrabold,
-    color: Colors.text,
-    marginBottom: Spacing.xs,
-  },
-  subheading: {
-    fontSize: FontSize.md,
+  spinnerText: {
     color: Colors.textSecondary,
-    fontWeight: FontWeight.semibold,
-    marginBottom: Spacing.xl,
+    fontSize: FontSize.md,
+    marginTop: Spacing.lg,
+    textAlign: 'center',
   },
-  agreeRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: Spacing.lg },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 4,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 1,
-  },
-  checkboxChecked: { backgroundColor: Colors.brandBlue, borderColor: Colors.brandBlue },
-  checkmark: { color: Colors.black, fontSize: 13, fontWeight: '900' },
-  terms: { flex: 1, fontSize: FontSize.sm, color: Colors.textMuted, lineHeight: 18 },
-  btn: {
-    backgroundColor: Colors.brandBlue,
-    borderRadius: Radius.md,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  btnText: { color: Colors.black, fontSize: FontSize.base, fontWeight: FontWeight.extrabold },
-  cancelBtn: { alignItems: 'center', marginTop: Spacing.lg },
-  cancelText: { color: Colors.textMuted, fontSize: FontSize.sm, fontWeight: FontWeight.bold },
 });

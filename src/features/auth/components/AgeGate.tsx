@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, Linking } from 'react-native';
+import { Linking, Modal, StyleSheet, Text, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors, FontSize, FontWeight, Radius, Spacing, withAlpha } from '@/theme';
 import { config } from '@/lib/config';
+import { Button } from '@/components/ui/Button';
 
 // 18+ confirmation for visitors without an account (accounts confirm it when they sign up). Self-
 // attested, as is standard; Play's mature-content and UGC policies expect an age check on the way
@@ -64,13 +65,13 @@ export function AgeGate({ enabled }: { enabled: boolean }) {
                 Cloudlynk hosts content intended for adults, so we can&apos;t let you browse. Thanks
                 for being honest.
               </Text>
-              <TouchableOpacity
-                style={styles.ghostBtn}
+              <Button
+                label="Go back"
+                variant="secondary"
+                size="lg"
+                pill
                 onPress={() => setDeclined(false)}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.ghostTxt}>Go back</Text>
-              </TouchableOpacity>
+              />
             </>
           ) : (
             <>
@@ -80,17 +81,15 @@ export function AgeGate({ enabled }: { enabled: boolean }) {
                 your age to continue.
               </Text>
 
-              <TouchableOpacity style={styles.primaryBtn} onPress={accept} activeOpacity={0.85}>
-                <Text style={styles.primaryTxt}>I am 18 or older</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.ghostBtn}
+              <Button label="I am 18 or older" size="lg" pill onPress={accept} />
+              <Button
+                label="I am under 18"
+                variant="secondary"
+                size="lg"
+                pill
                 onPress={() => setDeclined(true)}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.ghostTxt}>I am under 18</Text>
-              </TouchableOpacity>
+                style={styles.secondChoice}
+              />
 
               <Text style={styles.legal}>
                 Continuing means you accept our{' '}
@@ -153,23 +152,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: Spacing.xxl,
   },
-  primaryBtn: {
-    backgroundColor: Colors.brandBlue,
-    borderRadius: Radius.full,
-    paddingVertical: Spacing.lg,
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-  },
-  primaryTxt: { color: Colors.textInverse, fontSize: FontSize.lg, fontWeight: FontWeight.bold },
-  ghostBtn: {
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: Radius.full,
-    paddingVertical: Spacing.lg,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  ghostTxt: { color: Colors.textSecondary, fontSize: FontSize.lg, fontWeight: FontWeight.semibold },
+  secondChoice: { marginTop: Spacing.md },
   legal: {
     color: Colors.textMuted,
     fontSize: FontSize.sm,

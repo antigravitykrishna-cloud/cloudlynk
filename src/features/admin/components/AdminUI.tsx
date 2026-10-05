@@ -4,10 +4,40 @@ import { useRouter } from 'expo-router';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/theme';
 import { PressScale } from '@/components/ui/Press';
 import { Icon, type IconName } from '@/components/ui/Icon';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { formatDate } from '@/utils/format';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 
-// Shared pieces for the admin screens added in v82 (users, payments, plans,
-// channels, announcements), so they look like one panel rather than six.
+// Shared pieces for the admin screens, so they look like one panel rather than twenty.
+
+/**
+ * The frame of every admin screen: header with back button, then the content, or "Access denied"
+ * for an account that is not an admin. The server re-checks is_admin on every admin call; this
+ * only keeps the screens tidy.
+ */
+export function AdminScreen({
+  title,
+  right,
+  children,
+}: {
+  title: string;
+  right?: ReactNode;
+  children: ReactNode;
+}) {
+  const { isAdmin } = useAuth();
+  return (
+    <SafeAreaView style={adminStyles.safe} edges={['top']}>
+      <ScreenHeader title={title} right={right} fallbackHref="/admin" />
+      {isAdmin ? (
+        children
+      ) : (
+        <EmptyState icon="lock" title="Access denied" message="This area is for admins only." />
+      )}
+    </SafeAreaView>
+  );
+}
 
 export function AdminHeader({ title, right }: { title: string; right?: ReactNode }) {
   const router = useRouter();

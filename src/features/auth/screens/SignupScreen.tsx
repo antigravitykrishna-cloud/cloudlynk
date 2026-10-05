@@ -1,289 +1,126 @@
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
-  ScrollView,
-} from 'react-native';
-import { Link } from 'expo-router';
 import { useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { Link } from 'expo-router';
+import { Button } from '@/components/ui/Button';
+import { showAlert } from '@/components/ui/Feedback';
+import { TextField } from '@/components/ui/TextField';
+import { Colors, FontSize, FontWeight, Spacing } from '@/theme';
+import { AuthCard, AuthLayout } from '@/features/auth/components/AuthLayout';
+import { PolicyCheckbox } from '@/features/auth/components/PolicyCheckbox';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/theme';
+import {
+  MIN_PASSWORD_LENGTH,
+  validateSignup,
+  type SignupForm,
+} from '@/features/auth/signupValidation';
+
+// Email + password signup. The sign-in screen's emailed code also creates accounts; this form stays
+// for people who want a password.
+
+const EMPTY_FORM: SignupForm = {
+  fullName: '',
+  email: '',
+  password: '',
+  confirmPassword: '',
+  birthYear: '',
+  agreedToPolicies: false,
+};
 
 export default function SignupScreen() {
   const { signUp } = useAuth();
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [birthYear, setBirthYear] = useState('');
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [submitting, setSubmitting] = useState(false);
 
-  async function handleSignUp() {
-    const showAlert = (title: string, msg: string) => {
-      if (Platform.OS === 'web') window.alert(`${title}: ${msg}`);
-      else showAlert(title, msg);
-    };
+  const set =
+    <K extends keyof SignupForm>(key: K) =>
+    (value: SignupForm[K]) =>
+      setForm(current => ({ ...current, [key]: value }));
 
-    if (!fullName.trim() || !email.trim() || !password || !birthYear.trim()) {
-      showAlert('Missing fields', 'Please fill in all fields.');
+  async function submit() {
+    const problem = validateSignup(form);
+    if (problem) {
+      showAlert(problem.title, problem.message);
       return;
     }
-    if (password !== confirmPassword) {
-      showAlert('Password mismatch', 'Passwords do not match.');
-      return;
-    }
-    if (password.length < 8) {
-      showAlert('Weak password', 'Password must be at least 8 characters.');
-      return;
-    }
-    const currentYear = new Date().getFullYear();
-    const parsedBirthYear = parseInt(birthYear.trim(), 10);
-    if (
-      !Number.isInteger(parsedBirthYear) ||
-      parsedBirthYear < currentYear - 120 ||
-      parsedBirthYear > currentYear
-    ) {
-      showAlert('Invalid birth year', 'Please enter a valid 4-digit birth year (e.g. 1998).');
-      return;
-    }
-    if (currentYear - parsedBirthYear < 18) {
-      showAlert(
-        'Age restriction',
-        'You must be at least 18 years old to create a Cloudlynk account.',
-      );
-      return;
-    }
-    if (!agreedToTerms) {
-      showAlert(
-        'Agreement required',
-        'Please agree to the Terms of Service, Community Guidelines, and Privacy Policy to continue.',
-      );
-      return;
-    }
-    setLoading(true);
+
+    setSubmitting(true);
     try {
-      // signUp() persists the policy acceptance itself (the checkbox above
-      // IS the acceptance) and does it before caching the profile, so the
-      // session doesn't get bounced to complete-profile on a stale read.
-      // See hooks/useAuth.ts.
-      await signUp(email.trim(), password, fullName.trim(), parsedBirthYear);
+      // signUp() records the policy acceptance (the checkbox is the acceptance).
+      await signUp(form.email.trim(), form.password, form.fullName.trim(), Number(form.birthYear));
       showAlert('Account created!', 'Please check your email to verify your account.');
-    } catch (err: any) {
-      showAlert('Signup failed', err.message ?? 'Something went wrong.');
+    } catch (err) {
+      showAlert('Signup failed', (err as Error)?.message ?? 'Something went wrong.');
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   }
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: Colors.bg }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <View style={styles.logoRow}>
-          <Text style={styles.logo}>☁</Text>
-          <Text style={styles.logoText}>
-            Cloud<Text style={{ color: Colors.brandBlue }}>lynk</Text>
-          </Text>
-        </View>
+    <AuthLayout>
+      <AuthCard title="Create account" subtitle="Get 15 GB free cloud storage">
+        <TextField
+          label="Full name"
+          value={form.fullName}
+          onChangeText={set('fullName')}
+          placeholder="John Doe"
+          autoCapitalize="words"
+        />
+        <TextField
+          label="Email"
+          value={form.email}
+          onChangeText={set('email')}
+          placeholder="you@example.com"
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+        <TextField
+          label="Birth year"
+          value={form.birthYear}
+          onChangeText={set('birthYear')}
+          placeholder="e.g. 1998"
+          keyboardType="number-pad"
+        />
+        <TextField
+          label="Password"
+          value={form.password}
+          onChangeText={set('password')}
+          placeholder={`Min ${MIN_PASSWORD_LENGTH} characters`}
+          secureTextEntry
+        />
+        <TextField
+          label="Confirm password"
+          value={form.confirmPassword}
+          onChangeText={set('confirmPassword')}
+          placeholder="Repeat password"
+          secureTextEntry
+          onSubmitEditing={submit}
+        />
 
-        <View style={styles.card}>
-          <Text style={styles.heading}>Create account</Text>
-          <Text style={styles.subheading}>Get 15 GB free cloud storage</Text>
+        <PolicyCheckbox
+          checked={form.agreedToPolicies}
+          onToggle={() => set('agreedToPolicies')(!form.agreedToPolicies)}
+        />
 
-          {[
-            {
-              label: 'Full Name',
-              value: fullName,
-              setter: setFullName,
-              placeholder: 'John Doe',
-              type: 'default',
-            },
-            {
-              label: 'Email',
-              value: email,
-              setter: setEmail,
-              placeholder: 'you@example.com',
-              type: 'email-address',
-            },
-            {
-              label: 'Birth Year',
-              value: birthYear,
-              setter: setBirthYear,
-              placeholder: 'e.g. 1998',
-              type: 'number-pad',
-            },
-          ].map(({ label, value, setter, placeholder, type }) => (
-            <View style={styles.field} key={label}>
-              <Text style={styles.label}>{label}</Text>
-              <TextInput
-                style={styles.input}
-                value={value}
-                onChangeText={setter}
-                placeholder={placeholder}
-                placeholderTextColor={Colors.textMuted}
-                autoCapitalize={type === 'default' ? 'words' : 'none'}
-                keyboardType={type as any}
-              />
-            </View>
-          ))}
+        <Button
+          label="Create account"
+          size="lg"
+          onPress={submit}
+          busy={submitting}
+          disabled={!form.agreedToPolicies}
+        />
+      </AuthCard>
 
-          <View style={styles.field}>
-            <Text style={styles.label}>Password</Text>
-            <TextInput
-              style={styles.input}
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Min 8 characters"
-              placeholderTextColor={Colors.textMuted}
-              secureTextEntry
-            />
-          </View>
-
-          <View style={styles.field}>
-            <Text style={styles.label}>Confirm Password</Text>
-            <TextInput
-              style={styles.input}
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              placeholder="Repeat password"
-              placeholderTextColor={Colors.textMuted}
-              secureTextEntry
-              onSubmitEditing={handleSignUp}
-            />
-          </View>
-
-          <TouchableOpacity
-            style={styles.agreeRow}
-            onPress={() => setAgreedToTerms(!agreedToTerms)}
-            activeOpacity={0.7}
-          >
-            <View style={[styles.checkbox, agreedToTerms && styles.checkboxChecked]}>
-              {agreedToTerms && <Text style={styles.checkmark}>{'✓'}</Text>}
-            </View>
-            <Text style={styles.terms}>
-              I agree to the{' '}
-              <Link href="/terms" style={{ color: Colors.brandBlue }}>
-                Terms of Service
-              </Link>
-              ,{' '}
-              <Link href="/community-guidelines" style={{ color: Colors.brandBlue }}>
-                Community Guidelines
-              </Link>
-              , and{' '}
-              <Link href="/privacy" style={{ color: Colors.brandBlue }}>
-                Privacy Policy
-              </Link>
-              .
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.btn, (loading || !agreedToTerms) && { opacity: 0.6 }]}
-            onPress={handleSignUp}
-            disabled={loading || !agreedToTerms}
-          >
-            {loading ? (
-              <ActivityIndicator color={Colors.black} />
-            ) : (
-              <Text style={styles.btnText}>Create Account</Text>
-            )}
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Already have an account? </Text>
-          <Link href="/(auth)/login" style={styles.footerLink}>
-            Sign in
-          </Link>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>Already have an account? </Text>
+        <Link href="/(auth)/login" style={styles.footerLink}>
+          Sign in
+        </Link>
+      </View>
+    </AuthLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, justifyContent: 'center', padding: Spacing.xl },
-  logoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.sm,
-    marginBottom: Spacing.xl,
-  },
-  logo: { fontSize: 32 },
-  logoText: {
-    fontSize: 28,
-    fontWeight: FontWeight.extrabold,
-    color: Colors.text,
-    letterSpacing: -1,
-  },
-  card: {
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: Radius.xl,
-    padding: Spacing.xl,
-    borderWidth: 0.5,
-    borderColor: Colors.border,
-  },
-  heading: {
-    fontSize: FontSize.xxl,
-    fontWeight: FontWeight.extrabold,
-    color: Colors.text,
-    marginBottom: Spacing.xs,
-  },
-  subheading: {
-    fontSize: FontSize.md,
-    color: Colors.textSecondary,
-    fontWeight: FontWeight.semibold,
-    marginBottom: Spacing.xl,
-  },
-  field: { marginBottom: Spacing.md },
-  label: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
-    color: Colors.textSecondary,
-    marginBottom: Spacing.xs,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-  },
-  input: {
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.md,
-    borderWidth: 0.5,
-    borderColor: Colors.border,
-    color: Colors.text,
-    fontSize: FontSize.base,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-  },
-  agreeRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: Spacing.lg },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 4,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 1,
-  },
-  checkboxChecked: { backgroundColor: Colors.brandBlue, borderColor: Colors.brandBlue },
-  checkmark: { color: Colors.black, fontSize: 13, fontWeight: '900' },
-  terms: { flex: 1, fontSize: FontSize.sm, color: Colors.textMuted, lineHeight: 18 },
-  btn: {
-    backgroundColor: Colors.brandBlue,
-    borderRadius: Radius.md,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  btnText: { color: Colors.black, fontSize: FontSize.base, fontWeight: FontWeight.extrabold },
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: Spacing.xxl },
   footerText: { color: Colors.textSecondary, fontSize: FontSize.md },
   footerLink: { color: Colors.brandBlue, fontSize: FontSize.md, fontWeight: FontWeight.bold },

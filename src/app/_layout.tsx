@@ -11,7 +11,7 @@ import { AgeGate } from '@/features/auth/components/AgeGate';
 import { FeedbackHost } from '@/components/ui/Feedback';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useGeoCheck } from '@/hooks/useGeoCheck';
-import { ComplianceService } from '@/features/auth/api/complianceApi';
+import { hasAcceptedCurrentPolicies } from '@/features/auth/policies';
 import { Colors } from '@/theme';
 import { Icon } from '@/components/ui/Icon';
 import { peekPostLoginRoute, setPostLoginRoute } from '@/features/auth/postLoginRoute';
@@ -71,7 +71,7 @@ export default function RootLayout() {
     // acceptance are on file. In practice that's existing accounts after a
     // POLICY_VERSIONS bump — see app/(auth)/complete-profile.tsx and
     // lib/compliance.ts.
-    if (!ComplianceService.hasAcceptedCurrentPolicies(profile)) {
+    if (!hasAcceptedCurrentPolicies(profile)) {
       if (!onCompleteProfile) router.replace('/(auth)/complete-profile');
       return;
     }

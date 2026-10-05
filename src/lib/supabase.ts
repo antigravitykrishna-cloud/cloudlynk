@@ -9,7 +9,7 @@ import { AppState, Platform } from 'react-native';
 export type { Database } from '@/lib/database.types';
 
 // ── Credentials from environment ─────────────────────────────
-const supabaseUrl =
+export const supabaseUrl =
   Constants.expoConfig?.extra?.supabaseUrl ?? process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
 
 const supabaseAnonKey =

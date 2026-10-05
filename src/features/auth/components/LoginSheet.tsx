@@ -1,21 +1,13 @@
 import { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Modal,
-  Pressable,
-  ActivityIndicator,
-} from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { showAlert } from '@/components/ui/Feedback';
 import { useRouter, type Href } from 'expo-router';
 import Animated, { FadeIn, SlideInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors, FontSize, FontWeight, Radius, Spacing, withAlpha } from '@/theme';
+import { Colors, FontSize, FontWeight, Spacing, withAlpha } from '@/theme';
 import { setPostLoginRoute } from '@/features/auth/postLoginRoute';
-import { PressScale } from '@/components/ui/Press';
+import { Button, TextButton } from '@/components/ui/Button';
 
 // "Please sign in" sheet shown when a guest tries something that needs an account. It opens over
 // the current screen, so "Not now" leaves them where they were. `returnTo` is where to go after
@@ -81,26 +73,24 @@ export function LoginSheet({
           <View style={styles.grabber} />
           <Text style={styles.title}>Please sign in</Text>
           <Text style={styles.text}>{message}</Text>
-          <PressScale style={styles.btn} onPress={signIn} haptic="light" accessibilityRole="button">
-            <Text style={styles.btnText}>Sign in</Text>
-          </PressScale>
+          <Button
+            label="Sign in"
+            size="lg"
+            haptic="light"
+            onPress={signIn}
+            style={styles.firstChoice}
+          />
           {allowGuest && (
-            <PressScale
-              style={styles.guestBtn}
+            <Button
+              label="Continue as guest"
+              variant="secondary"
+              size="lg"
               onPress={continueAsGuest}
-              disabled={guestBusy}
-              accessibilityRole="button"
-            >
-              {guestBusy ? (
-                <ActivityIndicator color={Colors.text} />
-              ) : (
-                <Text style={styles.guestBtnText}>Continue as guest</Text>
-              )}
-            </PressScale>
+              busy={guestBusy}
+              style={styles.choice}
+            />
           )}
-          <TouchableOpacity onPress={onClose} activeOpacity={0.7} style={styles.notNow}>
-            <Text style={styles.notNowText}>Not now</Text>
-          </TouchableOpacity>
+          <TextButton label="Not now" tone="muted" onPress={onClose} />
         </Animated.View>
       </Animated.View>
     </Modal>
@@ -138,35 +128,6 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
     maxWidth: 320,
   },
-  btn: {
-    alignSelf: 'stretch',
-    backgroundColor: Colors.brandBlue,
-    borderRadius: Radius.lg,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: Spacing.xl,
-  },
-  btnText: {
-    color: Colors.text,
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.bold,
-    letterSpacing: 0.2,
-  },
-  guestBtn: {
-    alignSelf: 'stretch',
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    paddingVertical: 15,
-    alignItems: 'center',
-    marginTop: Spacing.sm,
-  },
-  guestBtnText: { color: Colors.text, fontSize: FontSize.lg, fontWeight: FontWeight.semibold },
-  notNow: { paddingVertical: Spacing.md, marginTop: Spacing.xs },
-  notNowText: {
-    color: Colors.textSecondary,
-    fontSize: FontSize.subhead,
-    fontWeight: FontWeight.semibold,
-  },
+  firstChoice: { alignSelf: 'stretch', marginTop: Spacing.xl },
+  choice: { alignSelf: 'stretch', marginTop: Spacing.sm },
 });

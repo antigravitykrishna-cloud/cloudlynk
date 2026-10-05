@@ -1,197 +1,104 @@
 import { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  ActivityIndicator,
-} from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Button, TextButton } from '@/components/ui/Button';
+import { TextField } from '@/components/ui/TextField';
+import { Colors, FontSize, FontWeight, Spacing } from '@/theme';
+import { AuthCard, AuthLayout } from '@/features/auth/components/AuthLayout';
+import { isValidEmail } from '@/features/auth/components/EmailCodeForm';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/theme';
 
-// Password recovery, step 1: ask where to send the reset link. The confirmation is the same whether
-// or not the address has an account, so the screen cannot be used to find out who is registered.
+// Password recovery, step 1: where to send the reset link. The confirmation reads the same whether
+// or not the address has an account, so this screen cannot reveal who is registered.
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
   const { requestPasswordReset } = useAuth();
   const [email, setEmail] = useState('');
-  const [busy, setBusy] = useState(false);
+  const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const submit = async () => {
-    const addr = email.trim();
-    if (!addr || !addr.includes('@')) {
+  async function submit() {
+    if (!isValidEmail(email)) {
       setError('Enter the email address you signed up with.');
       return;
     }
-    setBusy(true);
+    setSending(true);
     setError(null);
     try {
-      await requestPasswordReset(addr);
+      await requestPasswordReset(email);
       setSent(true);
-    } catch (err: any) {
-      setError(err?.message ?? 'Could not send the email. Try again in a moment.');
+    } catch (err) {
+      setError((err as Error)?.message ?? 'Could not send the email. Try again in a moment.');
     } finally {
-      setBusy(false);
+      setSending(false);
     }
-  };
+  }
 
   if (sent) {
     return (
-      <View style={styles.safe}>
-        <View style={styles.card}>
-          <Text style={styles.tick}>✓</Text>
-          <Text style={styles.title}>Check your email</Text>
-          <Text style={styles.body}>
-            If <Text style={styles.strong}>{email.trim()}</Text> has a Cloudlynk account, a password
-            reset link is on its way. It expires in one hour.
-          </Text>
+      <AuthLayout showBrand={false}>
+        <AuthCard
+          icon="check-circle"
+          title="Check your email"
+          subtitle={
+            <>
+              If <Text style={styles.strong}>{email.trim()}</Text> has a Cloudlynk account, a
+              password reset link is on its way. It expires in one hour.
+            </>
+          }
+        >
           <Text style={styles.hint}>
             Nothing after a few minutes? Check spam, and make sure you typed the address you signed
             up with.
           </Text>
-          <TouchableOpacity
-            style={styles.primaryBtn}
+          <Button
+            label="Back to sign in"
+            size="lg"
+            pill
             onPress={() => router.replace('/(auth)/login')}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.primaryTxt}>Back to sign in</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+          />
+        </AuthCard>
+      </AuthLayout>
     );
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.safe}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <View style={styles.card}>
-          <Text style={styles.title}>Reset your password</Text>
-          <Text style={styles.body}>
-            Enter your email and we&apos;ll send you a link to set a new password.
-          </Text>
-
-          <Text style={styles.label}>EMAIL</Text>
-          <TextInput
-            style={styles.input}
-            value={email}
-            onChangeText={v => {
-              setEmail(v);
-              setError(null);
-            }}
-            placeholder="you@example.com"
-            placeholderTextColor={Colors.textMuted}
-            autoCapitalize="none"
-            autoCorrect={false}
-            keyboardType="email-address"
-            editable={!busy}
-            onSubmitEditing={submit}
-            returnKeyType="send"
-          />
-
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-
-          <TouchableOpacity
-            style={[styles.primaryBtn, busy && styles.btnDisabled]}
-            onPress={submit}
-            disabled={busy}
-            activeOpacity={0.85}
-          >
-            {busy ? (
-              <ActivityIndicator color={Colors.textInverse} size="small" />
-            ) : (
-              <Text style={styles.primaryTxt}>Send reset link</Text>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7}>
-            <Text style={styles.backLink}>Back to sign in</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+    <AuthLayout showBrand={false}>
+      <AuthCard
+        title="Reset your password"
+        subtitle="Enter your email and we'll send you a link to set a new password."
+      >
+        <TextField
+          label="Email"
+          value={email}
+          onChangeText={value => {
+            setEmail(value);
+            setError(null);
+          }}
+          error={error}
+          placeholder="you@example.com"
+          autoCapitalize="none"
+          autoCorrect={false}
+          keyboardType="email-address"
+          editable={!sending}
+          onSubmitEditing={submit}
+          returnKeyType="send"
+        />
+        <Button label="Send reset link" size="lg" pill onPress={submit} busy={sending} />
+        <TextButton label="Back to sign in" tone="muted" onPress={() => router.back()} />
+      </AuthCard>
+    </AuthLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.bg, justifyContent: 'center' },
-  scroll: { flexGrow: 1, justifyContent: 'center', padding: Spacing.xl },
-  card: {
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.xl,
-    padding: Spacing.xxl,
-    margin: Spacing.xl,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  tick: {
-    color: Colors.success,
-    fontSize: 44,
-    textAlign: 'center',
-    marginBottom: Spacing.md,
-    fontWeight: FontWeight.bold,
-  },
-  title: {
-    color: Colors.text,
-    fontSize: FontSize.xxl,
-    fontWeight: FontWeight.bold,
-    marginBottom: Spacing.sm,
-  },
-  body: {
-    color: Colors.textSecondary,
-    fontSize: FontSize.lg,
-    lineHeight: 22,
-    marginBottom: Spacing.xl,
-  },
   strong: { color: Colors.text, fontWeight: FontWeight.semibold },
   hint: {
     color: Colors.textMuted,
     fontSize: FontSize.md,
     lineHeight: 19,
     marginBottom: Spacing.xl,
-  },
-  label: {
-    color: Colors.textSecondary,
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.semibold,
-    letterSpacing: 1,
-    marginBottom: Spacing.xs,
-  },
-  input: {
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    color: Colors.text,
-    fontSize: FontSize.lg,
-    marginBottom: Spacing.lg,
-  },
-  error: { color: Colors.danger, fontSize: FontSize.md, marginBottom: Spacing.md },
-  primaryBtn: {
-    backgroundColor: Colors.brandBlue,
-    borderRadius: Radius.full,
-    paddingVertical: Spacing.lg,
-    alignItems: 'center',
-    marginTop: Spacing.sm,
-  },
-  primaryTxt: { color: Colors.textInverse, fontSize: FontSize.lg, fontWeight: FontWeight.bold },
-  btnDisabled: { opacity: 0.6 },
-  backLink: {
-    color: Colors.textSecondary,
-    fontSize: FontSize.md,
-    textAlign: 'center',
-    marginTop: Spacing.xl,
   },
 });
