@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Pressable } from 'react-native';
 import Animated, { FadeIn, SlideInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/theme';
+import { Colors, FontSize, FontWeight, PartnerColors, Radius, Spacing, withAlpha } from '@/theme';
 import { PressScale } from '@/components/ui/Press';
 import { Icon } from '@/components/ui/Icon';
 import type { GatewayMethod } from '@/features/premium/api/paymentGatewaysApi';
@@ -20,21 +20,26 @@ const META: Record<
     title: 'UPI',
     subtitle: 'GPay, PhonePe, Paytm and any UPI app',
     badge: 'UPI',
-    tint: '#FF7A00',
+    tint: PartnerColors.upi,
   },
   play: {
     title: 'Google Play',
     subtitle: 'Pay with your Google account',
     badge: '▶',
-    tint: '#34A853',
+    tint: PartnerColors.googlePlay,
   },
   razorpay: {
     title: 'Razorpay',
     subtitle: 'Cards, net banking, wallets, UPI',
     badge: 'R',
-    tint: '#3395FF',
+    tint: PartnerColors.razorpay,
   },
-  sabpaisa: { title: 'Sabpaisa', subtitle: 'Cards, net banking, UPI', badge: 'S', tint: '#1E63D6' },
+  sabpaisa: {
+    title: 'Sabpaisa',
+    subtitle: 'Cards, net banking, UPI',
+    badge: 'S',
+    tint: PartnerColors.sabpaisa,
+  },
 };
 
 export function PaymentSheet({
@@ -127,7 +132,7 @@ export function PaymentSheet({
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'flex-end' },
+  backdrop: { flex: 1, backgroundColor: withAlpha(Colors.black, 0.55), justifyContent: 'flex-end' },
   sheet: {
     backgroundColor: Colors.surface,
     borderTopLeftRadius: 28,
@@ -176,7 +181,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  badgeText: { color: '#FFFFFF', fontSize: FontSize.md, fontWeight: FontWeight.extrabold },
+  badgeText: { color: Colors.text, fontSize: FontSize.md, fontWeight: FontWeight.extrabold },
   rowTitle: { color: Colors.text, fontSize: FontSize.lg, fontWeight: FontWeight.bold },
   rowSub: { color: Colors.textMuted, fontSize: FontSize.sm, marginTop: 2 },
   price: { color: Colors.text, fontSize: FontSize.lg, fontWeight: FontWeight.bold },

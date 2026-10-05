@@ -129,10 +129,10 @@ export default function LoginScreen() {
                 activeOpacity={0.85}
               >
                 {busy === 'guest' ? (
-                  <ActivityIndicator color="#FFFFFF" />
+                  <ActivityIndicator color={Colors.text} />
                 ) : (
                   <>
-                    <Icon name="compass" size={18} color="#FFFFFF" />
+                    <Icon name="compass" size={18} color={Colors.text} />
                     <Text style={styles.primaryBtnText}>Continue as guest</Text>
                   </>
                 )}
@@ -201,7 +201,7 @@ export default function LoginScreen() {
                 activeOpacity={0.85}
               >
                 {busy === 'email' ? (
-                  <ActivityIndicator color="#FFFFFF" />
+                  <ActivityIndicator color={Colors.text} />
                 ) : (
                   <Text style={styles.primaryBtnText}>Send code</Text>
                 )}
@@ -244,7 +244,7 @@ export default function LoginScreen() {
                 activeOpacity={0.85}
               >
                 {busy === 'code' ? (
-                  <ActivityIndicator color="#FFFFFF" />
+                  <ActivityIndicator color={Colors.text} />
                 ) : (
                   <Text style={styles.primaryBtnText}>Sign in</Text>
                 )}
@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     marginTop: Spacing.sm,
   },
-  primaryBtnText: { color: '#FFFFFF', fontSize: FontSize.md, fontWeight: FontWeight.extrabold },
+  primaryBtnText: { color: Colors.text, fontSize: FontSize.md, fontWeight: FontWeight.extrabold },
   secondaryBtn: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -162,7 +162,7 @@ export default function SaveAccountScreen() {
           </TouchableOpacity>
 
           <View style={styles.badge}>
-            <Icon name="lock" size={26} color="#FFFFFF" />
+            <Icon name="lock" size={26} color={Colors.text} />
           </View>
           <Text style={styles.title}>
             {afterPurchase
@@ -191,7 +191,7 @@ export default function SaveAccountScreen() {
                   activeOpacity={0.85}
                 >
                   {busy === 'google' ? (
-                    <ActivityIndicator color="#FFFFFF" />
+                    <ActivityIndicator color={Colors.text} />
                   ) : (
                     <Text style={styles.primaryText}>Save with Google</Text>
                   )}
@@ -230,7 +230,7 @@ export default function SaveAccountScreen() {
                 activeOpacity={0.85}
               >
                 {busy === 'email' ? (
-                  <ActivityIndicator color="#FFFFFF" />
+                  <ActivityIndicator color={Colors.text} />
                 ) : (
                   <Text style={styles.primaryText}>Send code</Text>
                 )}
@@ -260,7 +260,7 @@ export default function SaveAccountScreen() {
                 activeOpacity={0.85}
               >
                 {busy === 'code' ? (
-                  <ActivityIndicator color="#FFFFFF" />
+                  <ActivityIndicator color={Colors.text} />
                 ) : (
                   <Text style={styles.primaryText}>Save account</Text>
                 )}
@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
     alignSelf: 'stretch',
   },
-  primaryText: { color: '#FFFFFF', fontSize: FontSize.lg, fontWeight: FontWeight.bold },
+  primaryText: { color: Colors.text, fontSize: FontSize.lg, fontWeight: FontWeight.bold },
   secondaryBtn: {
     backgroundColor: Colors.surfaceElevated,
     borderRadius: Radius.lg,

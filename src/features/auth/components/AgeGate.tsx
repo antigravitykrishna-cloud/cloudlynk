@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, Linking } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/theme';
+import { Colors, FontSize, FontWeight, Radius, Spacing, withAlpha } from '@/theme';
 import { config } from '@/lib/config';
 
 // 18+ confirmation for visitors without an account (accounts confirm it when they sign up). Self-
@@ -127,7 +127,7 @@ export function AgeGate({ enabled }: { enabled: boolean }) {
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(4, 8, 16, 0.88)',
+    backgroundColor: withAlpha(Colors.bg, 0.88),
     justifyContent: 'flex-end',
   },
   sheet: {

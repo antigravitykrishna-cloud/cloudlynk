@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { AdminContentService, AdminUser, PostGrantee } from '@/features/admin/api/adminContentApi';
+import { Colors } from '@/theme';
 
 // Per-post access: let one person watch one video regardless of subscription. A grant never touches
 // plan_status, and revoking it never affects anything paid for (enforced in the database).
@@ -217,7 +218,7 @@ export default function AdminPostAccessScreen() {
             <TextInput
               style={styles.searchInput}
               placeholder="Search by email or name…"
-              placeholderTextColor="#6B7C97"
+              placeholderTextColor={Colors.textMuted}
               value={search}
               onChangeText={setSearch}
               autoCapitalize="none"
@@ -231,7 +232,7 @@ export default function AdminPostAccessScreen() {
               disabled={searching}
             >
               {searching ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
+                <ActivityIndicator color={Colors.text} size="small" />
               ) : (
                 <Text style={styles.searchBtnText}>Find</Text>
               )}
@@ -278,7 +279,7 @@ export default function AdminPostAccessScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="YYYY-MM-DD"
-                  placeholderTextColor="#6B7C97"
+                  placeholderTextColor={Colors.textMuted}
                   value={customDate}
                   onChangeText={setCustomDate}
                   autoCapitalize="none"
@@ -289,7 +290,7 @@ export default function AdminPostAccessScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="Why does this person get access?"
-                placeholderTextColor="#6B7C97"
+                placeholderTextColor={Colors.textMuted}
                 value={reason}
                 onChangeText={setReason}
               />
@@ -309,7 +310,7 @@ export default function AdminPostAccessScreen() {
                   disabled={actingId === selected.id}
                 >
                   {actingId === selected.id ? (
-                    <ActivityIndicator color="#FFFFFF" size="small" />
+                    <ActivityIndicator color={Colors.text} size="small" />
                   ) : (
                     <Text style={styles.confirmBtnText}>Grant access</Text>
                   )}
@@ -322,7 +323,7 @@ export default function AdminPostAccessScreen() {
         {/* ── Current grantees ── */}
         <Text style={styles.sectionHeading}>Who has access</Text>
         {loading ? (
-          <ActivityIndicator color="#2E7DFF" size="large" style={{ marginTop: 30 }} />
+          <ActivityIndicator color={Colors.brandBlue} size="large" style={{ marginTop: 30 }} />
         ) : grantees.length === 0 ? (
           <View style={styles.card}>
             <Text style={styles.emptyText}>Nobody has been granted access to this post.</Text>
@@ -337,7 +338,7 @@ export default function AdminPostAccessScreen() {
                 <View
                   style={[
                     styles.badge,
-                    { backgroundColor: g.status === 'active' ? '#2ED47A' : '#6B7C97' },
+                    { backgroundColor: g.status === 'active' ? Colors.success : Colors.textMuted },
                   ]}
                 >
                   <Text style={styles.badgeText}>{g.status.toUpperCase()}</Text>
@@ -362,7 +363,7 @@ export default function AdminPostAccessScreen() {
                     disabled={actingId === g.user_id}
                   >
                     {actingId === g.user_id ? (
-                      <ActivityIndicator color="#FF4D6D" size="small" />
+                      <ActivityIndicator color={Colors.danger} size="small" />
                     ) : (
                       <Text style={styles.revokeBtnText}>Revoke</Text>
                     )}
@@ -379,27 +380,33 @@ export default function AdminPostAccessScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0B1220' },
+  safe: { flex: 1, backgroundColor: Colors.bg },
   header: {
-    backgroundColor: '#0B1220',
+    backgroundColor: Colors.bg,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#22304A',
+    borderBottomColor: Colors.border,
   },
   headerBack: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  headerBackTxt: { color: '#2E7DFF', fontSize: 28, fontWeight: '700', lineHeight: 28 },
-  headerTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: '800' },
+  headerBackTxt: { color: Colors.brandBlue, fontSize: 28, fontWeight: '700', lineHeight: 28 },
+  headerTitle: { color: Colors.text, fontSize: 18, fontWeight: '800' },
   list: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12 },
-  blurb: { color: '#9FB0C9', fontSize: 12, fontWeight: '500', lineHeight: 18, marginBottom: 12 },
+  blurb: {
+    color: Colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 18,
+    marginBottom: 12,
+  },
   card: {
-    backgroundColor: '#182437',
+    backgroundColor: Colors.surfaceElevated,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#22304A',
+    borderColor: Colors.border,
     padding: 16,
     marginBottom: 12,
   },
@@ -410,9 +417,9 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     gap: 10,
   },
-  sectionTitle: { color: '#FFFFFF', fontSize: 15, fontWeight: '800', marginBottom: 10 },
+  sectionTitle: { color: Colors.text, fontSize: 15, fontWeight: '800', marginBottom: 10 },
   sectionHeading: {
-    color: '#9FB0C9',
+    color: Colors.textSecondary,
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 0.8,
@@ -423,40 +430,40 @@ const styles = StyleSheet.create({
   searchRow: { flexDirection: 'row', gap: 8 },
   searchInput: {
     flex: 1,
-    backgroundColor: '#22304A',
+    backgroundColor: Colors.border,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#22304A',
-    color: '#FFFFFF',
+    borderColor: Colors.border,
+    color: Colors.text,
     fontSize: 14,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
   searchBtn: {
-    backgroundColor: '#2E7DFF',
+    backgroundColor: Colors.brandBlue,
     paddingHorizontal: 18,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
     minWidth: 70,
   },
-  searchBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
+  searchBtnText: { color: Colors.text, fontSize: 13, fontWeight: '800' },
   userRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#22304A',
+    borderBottomColor: Colors.border,
   },
-  userRowSelected: { backgroundColor: '#241a12' },
-  userName: { fontSize: 14, fontWeight: '700', color: '#FFFFFF', flex: 1 },
-  tick: { color: '#2E7DFF', fontSize: 18, fontWeight: '900' },
-  metaText: { fontSize: 12, color: '#9FB0C9', fontWeight: '500', marginTop: 2 },
-  reasonText: { fontSize: 12, color: '#FFC65C', fontWeight: '600', marginTop: 6 },
+  userRowSelected: { backgroundColor: Colors.warningDim },
+  userName: { fontSize: 14, fontWeight: '700', color: Colors.text, flex: 1 },
+  tick: { color: Colors.brandBlue, fontSize: 18, fontWeight: '900' },
+  metaText: { fontSize: 12, color: Colors.textSecondary, fontWeight: '500', marginTop: 2 },
+  reasonText: { fontSize: 12, color: Colors.gold, fontWeight: '600', marginTop: 6 },
   grantForm: { marginTop: 12 },
   label: {
-    color: '#9FB0C9',
+    color: Colors.textSecondary,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 0.6,
@@ -466,22 +473,22 @@ const styles = StyleSheet.create({
   },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
-    backgroundColor: '#22304A',
+    backgroundColor: Colors.border,
     borderWidth: 1,
-    borderColor: '#22304A',
+    borderColor: Colors.border,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
   },
-  chipActive: { backgroundColor: '#2E7DFF', borderColor: '#2E7DFF' },
-  chipText: { color: '#9FB0C9', fontSize: 12, fontWeight: '700' },
-  chipTextActive: { color: '#FFFFFF' },
+  chipActive: { backgroundColor: Colors.brandBlue, borderColor: Colors.brandBlue },
+  chipText: { color: Colors.textSecondary, fontSize: 12, fontWeight: '700' },
+  chipTextActive: { color: Colors.text },
   input: {
-    backgroundColor: '#22304A',
+    backgroundColor: Colors.border,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#22304A',
-    color: '#FFFFFF',
+    borderColor: Colors.border,
+    color: Colors.text,
     fontSize: 14,
     paddingHorizontal: 12,
     paddingVertical: 10,
@@ -489,33 +496,33 @@ const styles = StyleSheet.create({
   },
   formActions: { flexDirection: 'row', gap: 10, marginTop: 14 },
   cancelBtn: {
-    backgroundColor: '#22304A',
+    backgroundColor: Colors.border,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
   },
-  cancelBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
+  cancelBtnText: { color: Colors.text, fontSize: 13, fontWeight: '700' },
   confirmBtn: {
-    backgroundColor: '#2E7DFF',
+    backgroundColor: Colors.brandBlue,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
     minWidth: 120,
     alignItems: 'center',
   },
-  confirmBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
+  confirmBtnText: { color: Colors.text, fontSize: 13, fontWeight: '800' },
   badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
-  badgeText: { fontSize: 11, fontWeight: '900', color: '#0B1220', letterSpacing: 0.5 },
+  badgeText: { fontSize: 11, fontWeight: '900', color: Colors.bg, letterSpacing: 0.5 },
   actionsWrap: { flexDirection: 'row', gap: 8, marginTop: 12 },
   revokeBtn: {
-    backgroundColor: '#22304A',
+    backgroundColor: Colors.border,
     paddingHorizontal: 18,
     paddingVertical: 9,
     borderRadius: 8,
     minWidth: 90,
     alignItems: 'center',
   },
-  revokeBtnText: { color: '#FF4D6D', fontSize: 12, fontWeight: '800' },
+  revokeBtnText: { color: Colors.danger, fontSize: 12, fontWeight: '800' },
   emptyState: {
     flex: 1,
     alignItems: 'center',
@@ -523,5 +530,5 @@ const styles = StyleSheet.create({
     paddingVertical: 80,
     paddingHorizontal: 20,
   },
-  emptyText: { fontSize: 14, color: '#9FB0C9', fontWeight: '600', textAlign: 'center' },
+  emptyText: { fontSize: 14, color: Colors.textSecondary, fontWeight: '600', textAlign: 'center' },
 });

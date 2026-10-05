@@ -16,6 +16,7 @@ import {
   AuditEntry,
   AUDIT_ACTION_LABELS,
 } from '@/features/admin/api/adminContentApi';
+import { Colors } from '@/theme';
 
 // The admin audit log, newest first. admin_audit_log has RLS enabled with no
 // policies at all, so this is only readable through admin_list_audit_log,
@@ -28,10 +29,10 @@ const FILTERS: { key: string | undefined; label: string }[] = [
 ];
 
 const ACTION_COLORS: Record<string, string> = {
-  access_granted: '#2ED47A',
-  access_revoked: '#FF4D6D',
-  access_level_changed: '#FFC65C',
-  post_status_changed: '#38bdf8',
+  access_granted: Colors.success,
+  access_revoked: Colors.danger,
+  access_level_changed: Colors.gold,
+  post_status_changed: Colors.pastelSky,
 };
 
 function describeMetadata(entry: AuditEntry): string | null {
@@ -140,7 +141,7 @@ export default function AdminAuditScreen() {
       </View>
 
       {loading ? (
-        <ActivityIndicator color="#2E7DFF" size="large" style={{ marginTop: 60 }} />
+        <ActivityIndicator color={Colors.brandBlue} size="large" style={{ marginTop: 60 }} />
       ) : entries.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>Nothing logged yet</Text>
@@ -155,7 +156,7 @@ export default function AdminAuditScreen() {
                   <View
                     style={[
                       styles.badge,
-                      { backgroundColor: ACTION_COLORS[e.action] ?? '#6B7C97' },
+                      { backgroundColor: ACTION_COLORS[e.action] ?? Colors.textMuted },
                     ]}
                   >
                     <Text style={styles.badgeText}>
@@ -183,38 +184,38 @@ export default function AdminAuditScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0B1220' },
+  safe: { flex: 1, backgroundColor: Colors.bg },
   header: {
-    backgroundColor: '#0B1220',
+    backgroundColor: Colors.bg,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#22304A',
+    borderBottomColor: Colors.border,
   },
   headerBack: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  headerBackTxt: { color: '#2E7DFF', fontSize: 28, fontWeight: '700', lineHeight: 28 },
-  headerTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: '800' },
+  headerBackTxt: { color: Colors.brandBlue, fontSize: 28, fontWeight: '700', lineHeight: 28 },
+  headerTitle: { color: Colors.text, fontSize: 18, fontWeight: '800' },
   filterRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 12 },
   filterTab: {
-    backgroundColor: '#182437',
+    backgroundColor: Colors.surfaceElevated,
     borderWidth: 1,
-    borderColor: '#22304A',
+    borderColor: Colors.border,
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 8,
   },
-  filterTabActive: { backgroundColor: '#2E7DFF', borderColor: '#2E7DFF' },
-  filterTabText: { color: '#9FB0C9', fontSize: 12, fontWeight: '700' },
-  filterTabTextActive: { color: '#FFFFFF' },
+  filterTabActive: { backgroundColor: Colors.brandBlue, borderColor: Colors.brandBlue },
+  filterTabText: { color: Colors.textSecondary, fontSize: 12, fontWeight: '700' },
+  filterTabTextActive: { color: Colors.text },
   list: { paddingBottom: 12, paddingHorizontal: 16 },
   card: {
-    backgroundColor: '#182437',
+    backgroundColor: Colors.surfaceElevated,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#22304A',
+    borderColor: Colors.border,
     padding: 16,
     marginBottom: 12,
   },
@@ -226,10 +227,10 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
-  badgeText: { fontSize: 11, fontWeight: '900', color: '#0B1220', letterSpacing: 0.5 },
-  cardDate: { fontSize: 11, color: '#6B7C97', fontWeight: '500' },
-  metaText: { fontSize: 13, color: '#9FB0C9', fontWeight: '500', marginBottom: 2 },
-  detailText: { fontSize: 12, color: '#FFC65C', fontWeight: '600', marginTop: 6 },
+  badgeText: { fontSize: 11, fontWeight: '900', color: Colors.bg, letterSpacing: 0.5 },
+  cardDate: { fontSize: 11, color: Colors.textMuted, fontWeight: '500' },
+  metaText: { fontSize: 13, color: Colors.textSecondary, fontWeight: '500', marginBottom: 2 },
+  detailText: { fontSize: 12, color: Colors.gold, fontWeight: '600', marginTop: 6 },
   emptyState: {
     flex: 1,
     alignItems: 'center',
@@ -237,5 +238,5 @@ const styles = StyleSheet.create({
     paddingVertical: 80,
     paddingHorizontal: 20,
   },
-  emptyText: { fontSize: 16, color: '#9FB0C9', fontWeight: '600', textAlign: 'center' },
+  emptyText: { fontSize: 16, color: Colors.textSecondary, fontWeight: '600', textAlign: 'center' },
 });

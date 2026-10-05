@@ -12,7 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { setPostLoginRoute } from '@/features/auth/postLoginRoute';
 import { GuestPlans } from '@/features/premium/components/GuestPlans';
-import { Colors, Radius, FontSize, FontWeight } from '@/theme';
+import { Colors, FontSize, FontWeight, Radius, withAlpha } from '@/theme';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useSubscriptionPlans } from '@/features/premium/hooks/useSubscriptionPlans';
 import { getIapService } from '@/features/premium/billing/googlePlayBilling';
@@ -442,7 +442,7 @@ export default function PremiumScreen() {
           activeOpacity={0.8}
         >
           {purchasing ? (
-            <ActivityIndicator color="#ffffff" />
+            <ActivityIndicator color={Colors.text} />
           ) : (
             <Text
               style={[
@@ -507,7 +507,7 @@ export default function PremiumScreen() {
       <SabpaisaCheckout order={sabpaisaOrder} onDone={onSabpaisaDone} />
       {confirming && (
         <View style={styles.confirmOverlay}>
-          <ActivityIndicator color="#FFFFFF" size="large" />
+          <ActivityIndicator color={Colors.text} size="large" />
           <Text style={styles.confirmText}>Confirming your payment…</Text>
         </View>
       )}
@@ -527,7 +527,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
   },
   gateBannerMuted: {
-    backgroundColor: 'rgba(159,176,201,0.10)',
+    backgroundColor: Colors.neutralDim,
     borderColor: Colors.border,
   },
   gateBannerTitle: {
@@ -570,8 +570,14 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   backBtn: { width: 80 },
-  backTxt: { color: '#ffffff', fontSize: 14, fontWeight: '600' },
-  headerTitle: { color: '#ffffff', fontSize: 18, fontWeight: '800', flex: 1, textAlign: 'center' },
+  backTxt: { color: Colors.text, fontSize: 14, fontWeight: '600' },
+  headerTitle: {
+    color: Colors.text,
+    fontSize: 18,
+    fontWeight: '800',
+    flex: 1,
+    textAlign: 'center',
+  },
   badgeCard: { margin: 16, backgroundColor: Colors.brandBlueDim, borderRadius: 16, padding: 18 },
   badgeHeader: { marginBottom: 14 },
   badgePill: {
@@ -581,7 +587,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 12,
   },
-  badgePillText: { color: '#ffffff', fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
+  badgePillText: { color: Colors.text, fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
   benefitRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, gap: 10 },
   benefitCheck: {
     width: 20,
@@ -591,8 +597,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  benefitCheckText: { color: '#ffffff', fontSize: 12, fontWeight: '900' },
-  benefitText: { fontSize: 14, color: '#9FB0C9', fontWeight: '500', flex: 1 },
+  benefitCheckText: { color: Colors.text, fontSize: 12, fontWeight: '900' },
+  benefitText: { fontSize: 14, color: Colors.textSecondary, fontWeight: '500', flex: 1 },
   planSectionTitle: {
     fontSize: 15,
     fontWeight: '800',
@@ -601,7 +607,6 @@ const styles = StyleSheet.create({
     marginTop: 24,
     marginBottom: 12,
   },
-  plansContainer: { paddingHorizontal: 16, gap: 10 },
   // Four-up plan ladder. Equal flex so no plan looks favoured by width —
   // emphasis is carried by the POPULAR tag and the selected border, both of
   // which are deliberate, where a wider column would be accidental.
@@ -618,81 +623,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   planRowItemSelected: { borderColor: Colors.brandBlue, backgroundColor: Colors.brandBlueDim },
-  planRow: { flexDirection: 'row', paddingHorizontal: 16, gap: 8 },
-  planTile: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 4,
-    borderRadius: Radius.md,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    backgroundColor: Colors.bg,
-    minHeight: 104,
-    justifyContent: 'center',
-  },
-  planTileSelected: {
-    borderColor: Colors.brandBlue,
-    backgroundColor: Colors.brandBlueDim,
-    borderWidth: 2,
-  },
-  // Sits on the border rather than inside the tile, so it does not steal
-  // vertical space from the price it is advertising.
-  popularTag: {
-    position: 'absolute',
-    top: -9,
-    alignSelf: 'center',
-    backgroundColor: Colors.brandBlue,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: Radius.xs,
-  },
-  popularTagText: { fontSize: 9, fontWeight: '800', color: '#ffffff', letterSpacing: 0.4 },
-  tileTerm: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: Colors.textSecondary },
-  tilePrice: {
-    fontSize: FontSize.title,
-    fontWeight: FontWeight.extrabold,
-    color: Colors.text,
-    marginTop: 4,
-  },
-  tileCurrency: { fontSize: FontSize.md, fontWeight: FontWeight.bold },
-  tileDuration: { fontSize: FontSize.xs, color: Colors.textMuted, marginTop: 3 },
-  tileTextSelected: { color: Colors.text },
-
-  planCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.bg,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    borderRadius: 12,
-    padding: 14,
-    gap: 12,
-  },
-  planCardSelected: { borderColor: Colors.brandBlue, backgroundColor: Colors.brandBlueDim },
   radio: {
     width: 22,
     height: 22,
     borderRadius: 11,
     borderWidth: 2,
-    borderColor: '#9FB0C9',
+    borderColor: Colors.textSecondary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   radioSelected: { borderColor: Colors.brandBlue },
   radioInner: { width: 12, height: 12, borderRadius: 6, backgroundColor: Colors.brandBlue },
-  planInfo: { flex: 1 },
   planName: { fontSize: 16, fontWeight: '700', color: Colors.text },
   planDuration: { fontSize: 14, color: Colors.textSecondary, marginTop: 3 },
-  planDescription: { fontSize: 11, color: Colors.textSecondary, marginTop: 2, fontWeight: '500' },
   popularBadge: {
     backgroundColor: Colors.brandBlue,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: Radius.xs,
   },
-  popularBadgeText: { color: '#ffffff', fontSize: 9, fontWeight: '800', letterSpacing: 0.4 },
-  planPriceWrap: { alignItems: 'flex-end' },
+  popularBadgeText: { color: Colors.text, fontSize: 9, fontWeight: '800', letterSpacing: 0.4 },
   planPrice: { fontSize: 20, fontWeight: '800', color: Colors.text },
   planPriceCurrency: { fontSize: 12, fontWeight: '700', color: Colors.text },
   proceedBtn: {
@@ -703,7 +653,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
   },
-  proceedBtnText: { color: '#ffffff', fontSize: 16, fontWeight: '800', letterSpacing: 0.3 },
+  proceedBtnText: { color: Colors.text, fontSize: 16, fontWeight: '800', letterSpacing: 0.3 },
   legal: {
     textAlign: 'center',
     fontSize: 11,
@@ -717,14 +667,13 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(11,18,32,0.88)',
+    backgroundColor: withAlpha(Colors.bg, 0.88),
     alignItems: 'center',
     justifyContent: 'center',
     gap: 14,
   },
   confirmText: { color: Colors.text, fontSize: FontSize.lg, fontWeight: FontWeight.semibold },
   pendingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 },
-  pendingIcon: { fontSize: 48, marginBottom: 16 },
   pendingTitle: {
     fontSize: 20,
     fontWeight: '800',

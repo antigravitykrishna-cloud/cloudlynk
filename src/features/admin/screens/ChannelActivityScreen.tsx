@@ -13,6 +13,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import { formatDate } from '@/utils/format';
+import { Colors } from '@/theme';
 
 interface ChannelActivity {
   id: string;
@@ -87,13 +88,13 @@ export default function ChannelActivityScreen() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
-        return '#4CAF50';
+        return Colors.success;
       case 'pending':
-        return '#2E7DFF';
+        return Colors.brandBlue;
       case 'suspended':
-        return '#FF4D6D';
+        return Colors.danger;
       default:
-        return '#6B7C97';
+        return Colors.textMuted;
     }
   };
 
@@ -110,7 +111,7 @@ export default function ChannelActivityScreen() {
 
       {loading ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#2E7DFF" />
+          <ActivityIndicator size="large" color={Colors.brandBlue} />
           <Text style={styles.loadingText}>Loading channels...</Text>
         </View>
       ) : channels.length === 0 ? (
@@ -184,7 +185,7 @@ export default function ChannelActivityScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0B1220',
+    backgroundColor: Colors.bg,
   },
   centered: {
     flex: 1,
@@ -192,7 +193,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   accessDenied: {
-    color: '#FF4D6D',
+    color: Colors.danger,
     fontSize: 18,
     fontWeight: '600',
   },
@@ -203,19 +204,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#22304A',
+    borderBottomColor: Colors.border,
   },
   backButton: {
     paddingVertical: 4,
     paddingRight: 12,
   },
   backText: {
-    color: '#2E7DFF',
+    color: Colors.brandBlue,
     fontSize: 15,
     fontWeight: '600',
   },
   headerTitle: {
-    color: '#FFFFFF',
+    color: Colors.text,
     fontSize: 18,
     fontWeight: '700',
   },
@@ -223,12 +224,12 @@ const styles = StyleSheet.create({
     width: 60,
   },
   loadingText: {
-    color: '#9FB0C9',
+    color: Colors.textSecondary,
     fontSize: 14,
     marginTop: 12,
   },
   emptyText: {
-    color: '#6B7C97',
+    color: Colors.textMuted,
     fontSize: 16,
     fontWeight: '500',
   },
@@ -240,12 +241,12 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   card: {
-    backgroundColor: '#182437',
+    backgroundColor: Colors.surfaceElevated,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#22304A',
+    borderColor: Colors.border,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -254,7 +255,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   channelName: {
-    color: '#FFFFFF',
+    color: Colors.text,
     fontSize: 16,
     fontWeight: '700',
     flex: 1,
@@ -271,14 +272,14 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   ownerText: {
-    color: '#9FB0C9',
+    color: Colors.textSecondary,
     fontSize: 13,
     marginBottom: 12,
   },
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    backgroundColor: '#0B1220',
+    backgroundColor: Colors.bg,
     borderRadius: 8,
     paddingVertical: 12,
     marginBottom: 12,
@@ -287,33 +288,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statValue: {
-    color: '#FFFFFF',
+    color: Colors.text,
     fontSize: 18,
     fontWeight: '700',
   },
   statLabel: {
-    color: '#6B7C97',
+    color: Colors.textMuted,
     fontSize: 11,
     marginTop: 2,
   },
   pendingHighlight: {
-    color: '#2E7DFF',
+    color: Colors.brandBlue,
   },
   lastUpload: {
-    color: '#6B7C97',
+    color: Colors.textMuted,
     fontSize: 12,
     marginBottom: 12,
   },
   suspendButton: {
-    backgroundColor: '#FF4D6D20',
+    backgroundColor: Colors.dangerDim,
     borderWidth: 1,
-    borderColor: '#FF4D6D',
+    borderColor: Colors.danger,
     borderRadius: 8,
     paddingVertical: 10,
     alignItems: 'center',
   },
   suspendButtonText: {
-    color: '#FF4D6D',
+    color: Colors.danger,
     fontSize: 14,
     fontWeight: '600',
   },

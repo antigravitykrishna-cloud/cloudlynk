@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     marginBottom: 2,
   },
-  pillText: { color: '#FFFFFF', fontSize: FontSize.md, fontWeight: FontWeight.extrabold },
+  pillText: { color: Colors.text, fontSize: FontSize.md, fontWeight: FontWeight.extrabold },
   benefitRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   benefitText: {
     color: Colors.text,
@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   popularTagText: {
-    color: '#FFFFFF',
+    color: Colors.text,
     fontSize: 9,
     fontWeight: FontWeight.extrabold,
     letterSpacing: 0.4,
@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   nextText: {
-    color: '#FFFFFF',
+    color: Colors.text,
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
     letterSpacing: 0.2,

@@ -16,7 +16,7 @@ import { ExploreSkeleton } from '@/components/ui/Skeleton';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { PostService, ChannelPost } from '@/features/content/api/postsApi';
-import { Colors, Radius, FontWeight } from '@/theme';
+import { Colors, FontWeight, Radius } from '@/theme';
 import { DetailModal } from '@/features/content/components/ExplorePostModal';
 import { SectionBlock } from '@/features/content/components/SectionBlock';
 
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  redHeaderTitle: { color: '#ffffff', fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
+  redHeaderTitle: { color: Colors.text, fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
   filterBar: {
     backgroundColor: Colors.bg,
     borderBottomWidth: 0.5,

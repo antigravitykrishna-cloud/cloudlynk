@@ -1,14 +1,15 @@
 import { Dimensions } from 'react-native';
 import { ContentType } from '@/features/content/api/postsApi';
+import { Colors } from '@/theme';
 
 export const H = Dimensions.get('window').height;
 
 export function getTypeColor(type: ContentType): string {
   const map: Record<ContentType, string> = {
-    movie: '#2E7DFF',
-    series: '#0090ff',
-    short: '#00d4aa',
-    post: '#a371f7',
+    movie: Colors.brandBlue,
+    series: Colors.brandCyan,
+    short: Colors.pastelMint,
+    post: Colors.pastelLavender,
   };
-  return map[type] ?? '#2E7DFF';
+  return map[type] ?? Colors.brandBlue;
 }

@@ -6,6 +6,7 @@ import { Platform } from 'react-native';
 
 // Icon + color per notification type
 import type { IconName } from '@/components/ui/Icon';
+import { Colors } from '@/theme';
 
 export type NotificationType =
   | 'channel_approved'
@@ -39,15 +40,15 @@ export const NOTIF_META: Record<
   NotificationType,
   { icon: IconName; color: string; dimColor: string }
 > = {
-  channel_approved: { icon: 'check-circle', color: '#3fb950', dimColor: 'rgba(63,185,80,0.12)' },
-  channel_rejected: { icon: 'flag', color: '#f85149', dimColor: 'rgba(248,81,73,0.12)' },
-  post_approved: { icon: 'check-circle', color: '#00d4aa', dimColor: 'rgba(0,212,170,0.12)' },
-  post_rejected: { icon: 'flag', color: '#f85149', dimColor: 'rgba(248,81,73,0.12)' },
+  channel_approved: { icon: 'check-circle', color: Colors.success, dimColor: Colors.successDim },
+  channel_rejected: { icon: 'flag', color: Colors.danger, dimColor: Colors.dangerDim },
+  post_approved: { icon: 'check-circle', color: Colors.success, dimColor: Colors.successDim },
+  post_rejected: { icon: 'flag', color: Colors.danger, dimColor: Colors.dangerDim },
   // Amber, not red: the subscription still works when this one arrives.
-  subscription_expiring: { icon: 'diamond', color: '#e3b341', dimColor: 'rgba(227,179,65,0.12)' },
-  subscription_expired: { icon: 'lock', color: '#f85149', dimColor: 'rgba(248,81,73,0.12)' },
+  subscription_expiring: { icon: 'diamond', color: Colors.warning, dimColor: Colors.warningDim },
+  subscription_expired: { icon: 'lock', color: Colors.danger, dimColor: Colors.dangerDim },
   // Sent by an admin from Admin -> Announcement (v82).
-  announcement: { icon: 'bell', color: '#2E7DFF', dimColor: 'rgba(46,125,255,0.12)' },
+  announcement: { icon: 'bell', color: Colors.brandBlue, dimColor: Colors.brandBlueDim },
 };
 
 export const NotificationService = {
@@ -123,7 +124,7 @@ export const NotificationService = {
         name: 'default',
         importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#E50914',
+        lightColor: Colors.brandBlue,
       });
     }
 

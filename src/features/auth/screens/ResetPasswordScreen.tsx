@@ -231,7 +231,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
   },
-  eyeTxt: { fontSize: FontSize.lg },
   error: { color: Colors.danger, fontSize: FontSize.md, marginBottom: Spacing.md, lineHeight: 19 },
   primaryBtn: {
     backgroundColor: Colors.brandBlue,

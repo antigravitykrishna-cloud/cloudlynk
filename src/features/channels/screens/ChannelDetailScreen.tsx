@@ -25,7 +25,7 @@ import { LoginSheet } from '@/features/auth/components/LoginSheet';
 import { promptSaveAccount, guestTappedTitle } from '@/features/auth/guestPrompts';
 import { PostService, ChannelPost } from '@/features/content/api/postsApi';
 import { Database, supabase } from '@/lib/supabase';
-import { Colors } from '@/theme';
+import { Colors, withAlpha } from '@/theme';
 import { Icon } from '@/components/ui/Icon';
 import { H } from '@/features/channels/components/contentTypeColors';
 import { formatMinutes } from '@/utils/format';
@@ -205,7 +205,7 @@ export default function ChannelDetailScreen() {
   if (loading) {
     return (
       <View style={[styles.safe, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator color="#2E7DFF" size="large" />
+        <ActivityIndicator color={Colors.brandBlue} size="large" />
       </View>
     );
   }
@@ -217,7 +217,11 @@ export default function ChannelDetailScreen() {
         style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2E7DFF" />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={Colors.brandBlue}
+          />
         }
       >
         <View style={[styles.hero, { height: HERO_H }]}>
@@ -227,7 +231,7 @@ export default function ChannelDetailScreen() {
             <View style={[StyleSheet.absoluteFill, styles.heroPlaceholder]} />
           )}
           <LinearGradient
-            colors={['rgba(0,0,0,0.15)', 'rgba(0,0,0,0.5)', '#000']}
+            colors={[withAlpha(Colors.black, 0.15), withAlpha(Colors.black, 0.5), Colors.black]}
             style={StyleSheet.absoluteFill}
           />
 
@@ -270,7 +274,7 @@ export default function ChannelDetailScreen() {
             {!isMember && channel?.status === 'active' && (
               <TouchableOpacity style={styles.joinBtn} onPress={handleJoin} disabled={joining}>
                 {joining ? (
-                  <ActivityIndicator color="#fff" size="small" />
+                  <ActivityIndicator color={Colors.text} size="small" />
                 ) : (
                   <Text style={styles.joinTxt}>+ Join Channel</Text>
                 )}
@@ -369,10 +373,10 @@ const styles = StyleSheet.create({
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: withAlpha(Colors.black, 0.5),
     borderRadius: 22,
   },
-  heroBackTxt: { fontSize: 26, color: '#fff', fontWeight: '700' },
+  heroBackTxt: { fontSize: 26, color: Colors.text, fontWeight: '700' },
   heroBottom: {
     position: 'absolute',
     bottom: 0,
@@ -392,29 +396,34 @@ const styles = StyleSheet.create({
   heroTitle: {
     fontSize: 28,
     fontWeight: '900',
-    color: '#fff',
+    color: Colors.text,
     marginBottom: 6,
     letterSpacing: -0.5,
     lineHeight: 32,
   },
-  heroGenre: { fontSize: 13, color: 'rgba(255,255,255,0.7)', fontWeight: '600', marginBottom: 16 },
+  heroGenre: {
+    fontSize: 13,
+    color: withAlpha(Colors.white, 0.7),
+    fontWeight: '600',
+    marginBottom: 16,
+  },
   heroActions: { flexDirection: 'row', gap: 10, marginBottom: 12 },
   heroPlayBtn: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: Colors.white,
     borderRadius: 8,
     paddingVertical: 10,
     alignItems: 'center',
   },
-  heroPlayTxt: { color: '#000', fontSize: 15, fontWeight: '800' },
+  heroPlayTxt: { color: Colors.black, fontSize: 15, fontWeight: '800' },
   heroInfoBtn: {
     flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: withAlpha(Colors.white, 0.2),
     borderRadius: 8,
     paddingVertical: 10,
     alignItems: 'center',
   },
-  heroInfoTxt: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  heroInfoTxt: { color: Colors.text, fontSize: 15, fontWeight: '700' },
   joinBtn: {
     backgroundColor: Colors.brandBlue,
     borderRadius: 8,
@@ -422,9 +431,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 4,
   },
-  joinTxt: { color: '#fff', fontSize: 14, fontWeight: '800' },
+  joinTxt: { color: Colors.text, fontSize: 14, fontWeight: '800' },
   memberBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
-  memberTxt: { fontSize: 13, color: 'rgba(255,255,255,0.6)', fontWeight: '700' },
+  memberTxt: { fontSize: 13, color: withAlpha(Colors.white, 0.6), fontWeight: '700' },
   addBtnGroup: { marginHorizontal: 16, marginTop: 20, gap: 8 },
   addBtn: {
     borderWidth: 1.5,
@@ -459,17 +468,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     paddingVertical: 14,
   },
-  emptyAddTxt: { color: '#fff', fontSize: 15, fontWeight: '900' },
+  emptyAddTxt: { color: Colors.text, fontSize: 15, fontWeight: '900' },
   pendingSection: { marginHorizontal: 16, marginTop: 20 },
-  pendingSectionTitle: { fontSize: 14, fontWeight: '700', color: '#FFC65C', marginBottom: 10 },
+  pendingSectionTitle: { fontSize: 14, fontWeight: '700', color: Colors.gold, marginBottom: 10 },
   pendingCard: {
-    backgroundColor: '#1a1400',
+    backgroundColor: Colors.warningDim,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#443300',
+    borderColor: Colors.warningBorder,
     padding: 12,
     marginBottom: 8,
   },
-  pendingCardTitle: { fontSize: 14, fontWeight: '700', color: '#fff', marginBottom: 4 },
-  pendingCardMeta: { fontSize: 12, color: '#FFC65C', fontWeight: '600' },
+  pendingCardTitle: { fontSize: 14, fontWeight: '700', color: Colors.text, marginBottom: 4 },
+  pendingCardMeta: { fontSize: 12, color: Colors.gold, fontWeight: '600' },
 });

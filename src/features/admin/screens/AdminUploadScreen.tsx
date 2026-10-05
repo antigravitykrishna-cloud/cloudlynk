@@ -24,6 +24,7 @@ import {
   defaultAccessLevel,
 } from '@/features/content/api/postsApi';
 import { AdminContentService } from '@/features/admin/api/adminContentApi';
+import { Colors } from '@/theme';
 
 // Admin video upload into the official channel. Uses the same pipeline as everything else:
 // StreamService.uploadVideo -> generate-stream-upload -> PostService.createPost.
@@ -183,7 +184,7 @@ export default function AdminUploadScreen() {
       >
         <ScrollView contentContainerStyle={styles.list} keyboardShouldPersistTaps="handled">
           {channelLoading ? (
-            <ActivityIndicator color="#2E7DFF" style={{ marginTop: 30 }} />
+            <ActivityIndicator color={Colors.brandBlue} style={{ marginTop: 30 }} />
           ) : !channel ? (
             <View style={styles.card}>
               <Text style={styles.emptyText}>
@@ -231,7 +232,7 @@ export default function AdminUploadScreen() {
                   value={title}
                   onChangeText={setTitle}
                   placeholder="Title"
-                  placeholderTextColor="#6B7C97"
+                  placeholderTextColor={Colors.textMuted}
                   editable={!submitting}
                 />
 
@@ -241,7 +242,7 @@ export default function AdminUploadScreen() {
                   value={description}
                   onChangeText={setDescription}
                   placeholder="Description"
-                  placeholderTextColor="#6B7C97"
+                  placeholderTextColor={Colors.textMuted}
                   multiline
                   editable={!submitting}
                 />
@@ -275,7 +276,7 @@ export default function AdminUploadScreen() {
                   activeOpacity={0.7}
                   disabled={submitting}
                 >
-                  <Text style={{ color: genre ? '#FFFFFF' : '#6B7C97', fontSize: 14 }}>
+                  <Text style={{ color: genre ? Colors.white : Colors.textMuted, fontSize: 14 }}>
                     {genre || 'Select a genre'}
                   </Text>
                 </TouchableOpacity>
@@ -305,7 +306,7 @@ export default function AdminUploadScreen() {
                   value={durationMin}
                   onChangeText={setDurationMin}
                   placeholder="e.g. 118"
-                  placeholderTextColor="#6B7C97"
+                  placeholderTextColor={Colors.textMuted}
                   keyboardType="number-pad"
                   editable={!submitting}
                 />
@@ -356,7 +357,7 @@ export default function AdminUploadScreen() {
                   disabled={submitting}
                 >
                   {submitting ? (
-                    <ActivityIndicator color="#FFFFFF" size="small" />
+                    <ActivityIndicator color={Colors.text} size="small" />
                   ) : (
                     <Text style={styles.confirmBtnText}>Publish</Text>
                   )}
@@ -372,41 +373,41 @@ export default function AdminUploadScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0B1220' },
+  safe: { flex: 1, backgroundColor: Colors.bg },
   header: {
-    backgroundColor: '#0B1220',
+    backgroundColor: Colors.bg,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#22304A',
+    borderBottomColor: Colors.border,
   },
   headerBack: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  headerBackTxt: { color: '#2E7DFF', fontSize: 28, fontWeight: '700', lineHeight: 28 },
-  headerTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: '800' },
+  headerBackTxt: { color: Colors.brandBlue, fontSize: 28, fontWeight: '700', lineHeight: 28 },
+  headerTitle: { color: Colors.text, fontSize: 18, fontWeight: '800' },
   list: { paddingHorizontal: 16, paddingTop: 12 },
-  blurb: { color: '#9FB0C9', fontSize: 12, fontWeight: '500', marginBottom: 12 },
+  blurb: { color: Colors.textSecondary, fontSize: 12, fontWeight: '500', marginBottom: 12 },
   card: {
-    backgroundColor: '#182437',
+    backgroundColor: Colors.surfaceElevated,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#22304A',
+    borderColor: Colors.border,
     padding: 16,
     marginBottom: 12,
   },
   pickBtn: {
-    backgroundColor: '#22304A',
+    backgroundColor: Colors.border,
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
     marginBottom: 10,
   },
-  pickBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
+  pickBtnText: { color: Colors.text, fontSize: 13, fontWeight: '700' },
   thumb: { width: '100%', height: 160, borderRadius: 8 },
   label: {
-    color: '#9FB0C9',
+    color: Colors.textSecondary,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 0.6,
@@ -415,55 +416,55 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   input: {
-    backgroundColor: '#22304A',
+    backgroundColor: Colors.border,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#22304A',
-    color: '#FFFFFF',
+    borderColor: Colors.border,
+    color: Colors.text,
     fontSize: 14,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
   multiline: { minHeight: 70, textAlignVertical: 'top' },
-  hint: { color: '#6B7C97', fontSize: 11, fontWeight: '500', marginTop: 8 },
+  hint: { color: Colors.textMuted, fontSize: 11, fontWeight: '500', marginTop: 8 },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
   chip: {
-    backgroundColor: '#22304A',
+    backgroundColor: Colors.border,
     borderWidth: 1,
-    borderColor: '#22304A',
+    borderColor: Colors.border,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
   },
-  chipActive: { backgroundColor: '#2E7DFF', borderColor: '#2E7DFF' },
-  chipText: { color: '#9FB0C9', fontSize: 12, fontWeight: '700' },
-  chipTextActive: { color: '#FFFFFF' },
-  metaText: { fontSize: 13, color: '#9FB0C9', fontWeight: '600' },
+  chipActive: { backgroundColor: Colors.brandBlue, borderColor: Colors.brandBlue },
+  chipText: { color: Colors.textSecondary, fontSize: 12, fontWeight: '700' },
+  chipTextActive: { color: Colors.text },
+  metaText: { fontSize: 13, color: Colors.textSecondary, fontWeight: '600' },
   progressTrack: {
     height: 6,
-    backgroundColor: '#22304A',
+    backgroundColor: Colors.border,
     borderRadius: 4,
     marginTop: 8,
     overflow: 'hidden',
   },
-  progressFill: { height: 6, backgroundColor: '#2E7DFF' },
+  progressFill: { height: 6, backgroundColor: Colors.brandBlue },
   formActions: { flexDirection: 'row', gap: 10, marginBottom: 12 },
   cancelBtn: {
     flex: 1,
-    backgroundColor: '#22304A',
+    backgroundColor: Colors.border,
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
   },
-  cancelBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
+  cancelBtnText: { color: Colors.text, fontSize: 13, fontWeight: '700' },
   confirmBtn: {
     flex: 1,
-    backgroundColor: '#2E7DFF',
+    backgroundColor: Colors.brandBlue,
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
   },
-  confirmBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
+  confirmBtnText: { color: Colors.text, fontSize: 13, fontWeight: '800' },
   emptyState: {
     flex: 1,
     alignItems: 'center',
@@ -471,5 +472,5 @@ const styles = StyleSheet.create({
     paddingVertical: 80,
     paddingHorizontal: 20,
   },
-  emptyText: { fontSize: 14, color: '#9FB0C9', fontWeight: '600', textAlign: 'center' },
+  emptyText: { fontSize: 14, color: Colors.textSecondary, fontWeight: '600', textAlign: 'center' },
 });

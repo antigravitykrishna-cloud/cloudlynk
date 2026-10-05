@@ -81,14 +81,14 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     gap: 8,
   },
-  shortsTitle: { fontSize: 19, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.3 },
+  shortsTitle: { fontSize: 19, fontWeight: '800', color: Colors.text, letterSpacing: -0.3 },
   shortsBadge: {
-    backgroundColor: 'rgba(46,212,122,0.16)',
+    backgroundColor: Colors.successDim,
     borderWidth: 1,
     borderColor: Colors.success,
     borderRadius: Radius.sm,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
-  shortsBadgeText: { fontSize: 11, fontWeight: '800', color: '#FFFFFF', letterSpacing: 0.8 },
+  shortsBadgeText: { fontSize: 11, fontWeight: '800', color: Colors.text, letterSpacing: 0.8 },
 });

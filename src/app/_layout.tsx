@@ -180,14 +180,13 @@ export default function RootLayout() {
 
 const geoStyles = StyleSheet.create({
   container: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 },
-  icon: { fontSize: 60, marginBottom: 20 },
   title: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#e6edf3',
+    color: Colors.text,
     textAlign: 'center',
     marginBottom: 12,
   },
-  subtitle: { fontSize: 14, color: '#8b949e', textAlign: 'center', lineHeight: 22 },
-  footer: { marginTop: 40, fontSize: 11, color: '#484f58' },
+  subtitle: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', lineHeight: 22 },
+  footer: { marginTop: 40, fontSize: 11, color: Colors.textMuted },
 });

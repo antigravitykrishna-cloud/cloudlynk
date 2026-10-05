@@ -19,7 +19,7 @@ import { PostService, ChannelPost } from '@/features/content/api/postsApi';
 import { StreamService } from '@/features/player/api/streamApi';
 import { useVideoPlayer } from 'expo-video';
 import { useEvent } from 'expo';
-import { Colors } from '@/theme';
+import { Colors, withAlpha } from '@/theme';
 import { Icon } from '@/components/ui/Icon';
 import { H, getTypeColor } from '@/features/channels/components/contentTypeColors';
 import { formatMinutes, formatTimeAgo } from '@/utils/format';
@@ -234,7 +234,7 @@ export const DetailModal = memo(
               </View>
             )}
             <LinearGradient
-              colors={['transparent', 'rgba(0,0,0,0.95)']}
+              colors={['transparent', withAlpha(Colors.black, 0.95)]}
               style={StyleSheet.absoluteFill}
             />
             <TouchableOpacity
@@ -316,10 +316,14 @@ export const DetailModal = memo(
                 <View
                   style={[
                     styles.playBtn,
-                    { backgroundColor: '#182437', borderColor: '#22304A', borderWidth: 0.5 },
+                    {
+                      backgroundColor: Colors.surfaceElevated,
+                      borderColor: Colors.border,
+                      borderWidth: 0.5,
+                    },
                   ]}
                 >
-                  <Text style={[styles.playBtnTxt, { color: '#9FB0C9', fontSize: 13 }]}>
+                  <Text style={[styles.playBtnTxt, { color: Colors.textSecondary, fontSize: 13 }]}>
                     {videoError}
                   </Text>
                 </View>
@@ -330,7 +334,7 @@ export const DetailModal = memo(
                   disabled={videoLoading}
                 >
                   {videoLoading ? (
-                    <ActivityIndicator color="#fff" />
+                    <ActivityIndicator color={Colors.text} />
                   ) : (
                     <Text style={styles.playBtnTxt}>{'▶  Play Video'}</Text>
                   )}
@@ -340,10 +344,14 @@ export const DetailModal = memo(
               <View
                 style={[
                   styles.playBtn,
-                  { backgroundColor: '#182437', borderColor: '#22304A', borderWidth: 0.5 },
+                  {
+                    backgroundColor: Colors.surfaceElevated,
+                    borderColor: Colors.border,
+                    borderWidth: 0.5,
+                  },
                 ]}
               >
-                <Text style={[styles.playBtnTxt, { color: '#6B7C97' }]}>
+                <Text style={[styles.playBtnTxt, { color: Colors.textMuted }]}>
                   {'No Video Available'}
                 </Text>
               </View>
@@ -381,11 +389,11 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: withAlpha(Colors.black, 0.6),
     alignItems: 'center',
     justifyContent: 'center',
   },
-  detailCloseTxt: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  detailCloseTxt: { color: Colors.text, fontSize: 16, fontWeight: '700' },
   detailBody: { flex: 1, padding: 20 },
   detailBadgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
   detailBadge: {
@@ -422,7 +430,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  detailAvatarTxt: { color: '#fff', fontSize: 13, fontWeight: '900' },
+  detailAvatarTxt: { color: Colors.text, fontSize: 13, fontWeight: '900' },
   detailAuthorName: { fontSize: 14, fontWeight: '700', color: Colors.text },
   detailAuthorMeta: { fontSize: 12, color: Colors.textMuted, fontWeight: '600', marginTop: 2 },
   playBtn: {
@@ -431,5 +439,5 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
   },
-  playBtnTxt: { color: '#fff', fontSize: 16, fontWeight: '900', letterSpacing: 0.5 },
+  playBtnTxt: { color: Colors.text, fontSize: 16, fontWeight: '900', letterSpacing: 0.5 },
 });

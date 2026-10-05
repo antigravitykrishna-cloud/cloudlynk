@@ -20,7 +20,7 @@ import { PostService, ChannelPost } from '@/features/content/api/postsApi';
 import { StreamService } from '@/features/player/api/streamApi';
 import { useVideoPlayer } from 'expo-video';
 import { useEvent } from 'expo';
-import { Colors } from '@/theme';
+import { Colors, withAlpha } from '@/theme';
 
 const H = Dimensions.get('window').height;
 
@@ -159,7 +159,7 @@ export const DetailModal = memo(
               </View>
             )}
             <LinearGradient
-              colors={['transparent', 'rgba(0,0,0,0.92)']}
+              colors={['transparent', withAlpha(Colors.black, 0.92)]}
               style={StyleSheet.absoluteFill}
             />
             <TouchableOpacity
@@ -190,8 +190,8 @@ export const DetailModal = memo(
 
             {hasVideoSource ? (
               videoError ? (
-                <View style={[styles.playBtn, { backgroundColor: '#9FB0C9' }]}>
-                  <Text style={[styles.playBtnTxt, { color: '#6B7C97', fontSize: 13 }]}>
+                <View style={[styles.playBtn, { backgroundColor: Colors.textSecondary }]}>
+                  <Text style={[styles.playBtnTxt, { color: Colors.textMuted, fontSize: 13 }]}>
                     {videoError}
                   </Text>
                 </View>
@@ -204,15 +204,15 @@ export const DetailModal = memo(
                   disabled={videoLoading || !videoUrl}
                 >
                   {videoLoading ? (
-                    <ActivityIndicator color="#fff" />
+                    <ActivityIndicator color={Colors.text} />
                   ) : (
                     <Text style={styles.playBtnTxt}>{'▶  Play Video'}</Text>
                   )}
                 </TouchableOpacity>
               )
             ) : (
-              <View style={[styles.playBtn, { backgroundColor: '#9FB0C9' }]}>
-                <Text style={[styles.playBtnTxt, { color: '#6B7C97' }]}>
+              <View style={[styles.playBtn, { backgroundColor: Colors.textSecondary }]}>
+                <Text style={[styles.playBtnTxt, { color: Colors.textMuted }]}>
                   {'No Video Available'}
                 </Text>
               </View>
@@ -251,11 +251,11 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: withAlpha(Colors.black, 0.6),
     alignItems: 'center',
     justifyContent: 'center',
   },
-  detailCloseTxt: { color: '#ffffff', fontSize: 16, fontWeight: '700' },
+  detailCloseTxt: { color: Colors.text, fontSize: 16, fontWeight: '700' },
   detailBody: { flex: 1, padding: 20 },
   detailBadgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
   detailBadge: {
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
-  playBtnTxt: { color: '#ffffff', fontSize: 16, fontWeight: '800', letterSpacing: 0.5 },
+  playBtnTxt: { color: Colors.text, fontSize: 16, fontWeight: '800', letterSpacing: 0.5 },
   shareBtn: {
     backgroundColor: Colors.bg,
     borderRadius: 12,

@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { memo } from 'react';
 import { PostService, ChannelPost } from '@/features/content/api/postsApi';
-import { Colors } from '@/theme';
+import { Colors, withAlpha } from '@/theme';
 import { Icon } from '@/components/ui/Icon';
 import { getTypeColor } from '@/features/channels/components/contentTypeColors';
 import { formatMinutes } from '@/utils/format';
@@ -51,7 +51,11 @@ export const ContentCard = memo(({ item, onPress }: { item: ChannelPost; onPress
           <View
             style={[
               styles.statusOverlay,
-              { backgroundColor: isPending ? 'rgba(227,179,65,0.85)' : 'rgba(248,81,73,0.85)' },
+              {
+                backgroundColor: isPending
+                  ? withAlpha(Colors.warning, 0.85)
+                  : withAlpha(Colors.danger, 0.85),
+              },
             ]}
           >
             <Text style={styles.statusOverlayTxt}>{isPending ? '⏳ Review' : '✕ Rejected'}</Text>
@@ -104,7 +108,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 4,
   },
-  cardTypeTxt: { fontSize: 8, fontWeight: '900', color: '#fff', letterSpacing: 0.8 },
+  cardTypeTxt: { fontSize: 8, fontWeight: '900', color: Colors.text, letterSpacing: 0.8 },
   statusOverlay: {
     position: 'absolute',
     bottom: 0,
@@ -113,17 +117,17 @@ const styles = StyleSheet.create({
     padding: 4,
     alignItems: 'center',
   },
-  statusOverlayTxt: { fontSize: 11, fontWeight: '800', color: '#fff' },
+  statusOverlayTxt: { fontSize: 11, fontWeight: '800', color: Colors.text },
   durationBadge: {
     position: 'absolute',
     bottom: 6,
     right: 6,
-    backgroundColor: 'rgba(0,0,0,0.75)',
+    backgroundColor: withAlpha(Colors.black, 0.75),
     paddingHorizontal: 5,
     paddingVertical: 2,
     borderRadius: 4,
   },
-  durationTxt: { fontSize: 11, color: '#fff', fontWeight: '700' },
+  durationTxt: { fontSize: 11, color: Colors.text, fontWeight: '700' },
   cardTitle: { fontSize: 12, color: Colors.text, fontWeight: '700', lineHeight: 16 },
   cardEpTxt: { fontSize: 11, color: Colors.textMuted, fontWeight: '600', marginTop: 2 },
 });

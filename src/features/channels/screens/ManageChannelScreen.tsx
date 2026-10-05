@@ -15,6 +15,7 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { ChannelService } from '@/features/channels/api/channelsApi';
 import { PostService, ChannelPost } from '@/features/content/api/postsApi';
 import { supabase } from '@/lib/supabase';
+import { Colors, withAlpha } from '@/theme';
 
 // guards-allow-select-star
 // Channel management is owner-only; anon never reaches this query.
@@ -158,7 +159,7 @@ export default function ManageChannelScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <ActivityIndicator size="large" color="#2E7DFF" style={{ marginTop: 40 }} />
+        <ActivityIndicator size="large" color={Colors.brandBlue} style={{ marginTop: 40 }} />
       </SafeAreaView>
     );
   }
@@ -196,9 +197,7 @@ export default function ManageChannelScreen() {
                 styles.badge,
                 {
                   backgroundColor:
-                    channel.status === 'active'
-                      ? 'rgba(34, 197, 94, 0.15)'
-                      : 'rgba(234, 179, 8, 0.15)',
+                    channel.status === 'active' ? Colors.successDim : Colors.warningDim,
                 },
               ]}
             >
@@ -206,7 +205,7 @@ export default function ManageChannelScreen() {
                 style={[
                   styles.badgeText,
                   {
-                    color: channel.status === 'active' ? '#2ED47A' : '#EAB308',
+                    color: channel.status === 'active' ? Colors.success : Colors.warning,
                   },
                 ]}
               >
@@ -257,7 +256,7 @@ export default function ManageChannelScreen() {
                 value={editName}
                 onChangeText={setEditName}
                 placeholder="Channel name"
-                placeholderTextColor="#6B7C97"
+                placeholderTextColor={Colors.textMuted}
               />
 
               <Text style={styles.label}>Description</Text>
@@ -266,7 +265,7 @@ export default function ManageChannelScreen() {
                 value={editDesc}
                 onChangeText={setEditDesc}
                 placeholder="Channel description"
-                placeholderTextColor="#6B7C97"
+                placeholderTextColor={Colors.textMuted}
                 multiline
                 numberOfLines={4}
               />
@@ -289,7 +288,7 @@ export default function ManageChannelScreen() {
                   disabled={saving}
                 >
                   {saving ? (
-                    <ActivityIndicator size="small" color="#FFFFFF" />
+                    <ActivityIndicator size="small" color={Colors.text} />
                   ) : (
                     <Text style={styles.saveButtonText}>Save</Text>
                   )}
@@ -352,7 +351,7 @@ export default function ManageChannelScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0B1220',
+    backgroundColor: Colors.bg,
   },
   header: {
     flexDirection: 'row',
@@ -361,7 +360,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#22304A',
+    borderBottomColor: Colors.border,
   },
   backButton: {
     width: 40,
@@ -370,11 +369,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backButtonText: {
-    color: '#FFFFFF',
+    color: Colors.text,
     fontSize: 24,
   },
   headerTitle: {
-    color: '#FFFFFF',
+    color: Colors.text,
     fontSize: 18,
     fontWeight: '700',
   },
@@ -387,7 +386,7 @@ const styles = StyleSheet.create({
   },
   addContentBtn: {
     borderWidth: 1.5,
-    borderColor: '#2E7DFF',
+    borderColor: Colors.brandBlue,
     borderStyle: 'dashed',
     borderRadius: 12,
     paddingVertical: 14,
@@ -395,20 +394,20 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   addContentBtnText: {
-    color: '#2E7DFF',
+    color: Colors.brandBlue,
     fontSize: 15,
     fontWeight: '700',
   },
   card: {
-    backgroundColor: '#182437',
+    backgroundColor: Colors.surfaceElevated,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#22304A',
+    borderColor: Colors.border,
   },
   channelName: {
-    color: '#FFFFFF',
+    color: Colors.text,
     fontSize: 20,
     fontWeight: '700',
     marginBottom: 12,
@@ -422,10 +421,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: withAlpha(Colors.white, 0.08),
   },
   badgeText: {
-    color: '#9FB0C9',
+    color: Colors.textSecondary,
     fontSize: 12,
     fontWeight: '600',
     textTransform: 'capitalize',
@@ -437,31 +436,31 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   cardTitle: {
-    color: '#FFFFFF',
+    color: Colors.text,
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 12,
   },
   editButton: {
-    color: '#2E7DFF',
+    color: Colors.brandBlue,
     fontSize: 14,
     fontWeight: '600',
   },
   label: {
-    color: '#9FB0C9',
+    color: Colors.textSecondary,
     fontSize: 13,
     fontWeight: '500',
     marginBottom: 6,
     marginTop: 12,
   },
   input: {
-    backgroundColor: '#0B1220',
+    backgroundColor: Colors.bg,
     borderWidth: 1,
-    borderColor: '#22304A',
+    borderColor: Colors.border,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    color: '#FFFFFF',
+    color: Colors.text,
     fontSize: 15,
   },
   textArea: {
@@ -479,10 +478,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#22304A',
+    borderColor: Colors.border,
   },
   cancelButtonText: {
-    color: '#9FB0C9',
+    color: Colors.textSecondary,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -490,10 +489,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 8,
-    backgroundColor: '#2E7DFF',
+    backgroundColor: Colors.brandBlue,
   },
   saveButtonText: {
-    color: '#FFFFFF',
+    color: Colors.text,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -501,18 +500,18 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   detailLabel: {
-    color: '#6B7C97',
+    color: Colors.textMuted,
     fontSize: 12,
     fontWeight: '500',
     marginTop: 10,
     marginBottom: 2,
   },
   detailValue: {
-    color: '#FFFFFF',
+    color: Colors.text,
     fontSize: 15,
   },
   emptyText: {
-    color: '#6B7C97',
+    color: Colors.textMuted,
     fontSize: 14,
     textAlign: 'center',
     paddingVertical: 20,
@@ -523,14 +522,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#22304A',
+    borderBottomColor: Colors.border,
   },
   postInfo: {
     flex: 1,
     marginRight: 12,
   },
   postTitle: {
-    color: '#FFFFFF',
+    color: Colors.text,
     fontSize: 14,
     fontWeight: '600',
     marginBottom: 4,
@@ -540,47 +539,47 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   postType: {
-    color: '#2E7DFF',
+    color: Colors.brandBlue,
     fontSize: 12,
     fontWeight: '500',
     textTransform: 'capitalize',
   },
   postStatus: {
-    color: '#9FB0C9',
+    color: Colors.textSecondary,
     fontSize: 12,
     textTransform: 'capitalize',
   },
   postDate: {
-    color: '#6B7C97',
+    color: Colors.textMuted,
     fontSize: 12,
   },
   deletePostButton: {
     width: 30,
     height: 30,
     borderRadius: 8,
-    backgroundColor: 'rgba(255, 77, 109, 0.12)',
+    backgroundColor: Colors.dangerDim,
     justifyContent: 'center',
     alignItems: 'center',
   },
   deletePostButtonText: {
-    color: '#FF4D6D',
+    color: Colors.danger,
     fontSize: 14,
     fontWeight: '700',
   },
   deleteChannelButton: {
-    backgroundColor: '#FF4D6D',
+    backgroundColor: Colors.danger,
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: 8,
   },
   deleteChannelButtonText: {
-    color: '#FFFFFF',
+    color: Colors.text,
     fontSize: 16,
     fontWeight: '700',
   },
   errorText: {
-    color: '#FF4D6D',
+    color: Colors.danger,
     fontSize: 16,
     textAlign: 'center',
     marginTop: 40,

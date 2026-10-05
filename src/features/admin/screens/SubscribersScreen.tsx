@@ -14,6 +14,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import { formatDate } from '@/utils/format';
+import { Colors } from '@/theme';
 
 // Subscribers split into cohorts, filtered server-side so lists stay complete past the row limit.
 // Tap a subscriber to adjust their plan by hand (support cases; Google Play renewals still update
@@ -181,7 +182,7 @@ export default function AdminSubscribersScreen() {
           onSubmitEditing={runSearch}
           returnKeyType="search"
           placeholder="Search name or email"
-          placeholderTextColor="#6B7C97"
+          placeholderTextColor={Colors.textMuted}
           autoCapitalize="none"
           autoCorrect={false}
         />
@@ -191,7 +192,7 @@ export default function AdminSubscribersScreen() {
       </View>
 
       {loading ? (
-        <ActivityIndicator color="#2E7DFF" style={{ marginTop: 60 }} />
+        <ActivityIndicator color={Colors.brandBlue} style={{ marginTop: 60 }} />
       ) : rows.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>
@@ -267,22 +268,22 @@ export default function AdminSubscribersScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0B1220' },
+  safe: { flex: 1, backgroundColor: Colors.bg },
   header: {
-    backgroundColor: '#0B1220',
+    backgroundColor: Colors.bg,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#22304A',
+    borderBottomColor: Colors.border,
   },
   headerBack: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  headerBackTxt: { color: '#2E7DFF', fontSize: 28, fontWeight: '700', lineHeight: 28 },
-  headerTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: '800' },
+  headerBackTxt: { color: Colors.brandBlue, fontSize: 28, fontWeight: '700', lineHeight: 28 },
+  headerTitle: { color: Colors.text, fontSize: 18, fontWeight: '800' },
   blurb: {
-    color: '#9FB0C9',
+    color: Colors.textSecondary,
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 18,
@@ -292,41 +293,41 @@ const styles = StyleSheet.create({
   filterScroll: { flexGrow: 0 },
   filterRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 12 },
   filterTab: {
-    backgroundColor: '#182437',
+    backgroundColor: Colors.surfaceElevated,
     borderWidth: 1,
-    borderColor: '#22304A',
+    borderColor: Colors.border,
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 8,
   },
-  filterTabActive: { backgroundColor: '#2E7DFF', borderColor: '#2E7DFF' },
-  filterTabText: { color: '#9FB0C9', fontSize: 12, fontWeight: '700' },
-  filterTabTextActive: { color: '#FFFFFF' },
+  filterTabActive: { backgroundColor: Colors.brandBlue, borderColor: Colors.brandBlue },
+  filterTabText: { color: Colors.textSecondary, fontSize: 12, fontWeight: '700' },
+  filterTabTextActive: { color: Colors.text },
   searchWrap: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 12 },
   searchInput: {
     flex: 1,
-    backgroundColor: '#182437',
+    backgroundColor: Colors.surfaceElevated,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#22304A',
-    color: '#FFFFFF',
+    borderColor: Colors.border,
+    color: Colors.text,
     fontSize: 14,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
   searchBtn: {
-    backgroundColor: '#22304A',
+    backgroundColor: Colors.border,
     paddingHorizontal: 16,
     justifyContent: 'center',
     borderRadius: 8,
   },
-  searchBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
+  searchBtnText: { color: Colors.text, fontSize: 13, fontWeight: '700' },
   list: { paddingBottom: 12, paddingHorizontal: 16 },
   card: {
-    backgroundColor: '#182437',
+    backgroundColor: Colors.surfaceElevated,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#22304A',
+    borderColor: Colors.border,
     padding: 16,
     marginBottom: 12,
   },
@@ -337,10 +338,15 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     gap: 10,
   },
-  nameText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF', flex: 1 },
-  cardDate: { fontSize: 11, color: '#6B7C97', fontWeight: '700', textTransform: 'uppercase' },
-  metaText: { fontSize: 13, color: '#9FB0C9', fontWeight: '500', marginBottom: 2 },
-  warnText: { fontSize: 12, color: '#FFC65C', fontWeight: '600', marginTop: 6, lineHeight: 17 },
+  nameText: { fontSize: 15, fontWeight: '700', color: Colors.text, flex: 1 },
+  cardDate: {
+    fontSize: 11,
+    color: Colors.textMuted,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  metaText: { fontSize: 13, color: Colors.textSecondary, fontWeight: '500', marginBottom: 2 },
+  warnText: { fontSize: 12, color: Colors.gold, fontWeight: '600', marginTop: 6, lineHeight: 17 },
   emptyState: {
     flex: 1,
     alignItems: 'center',
@@ -348,5 +354,5 @@ const styles = StyleSheet.create({
     paddingVertical: 80,
     paddingHorizontal: 20,
   },
-  emptyText: { fontSize: 16, color: '#9FB0C9', fontWeight: '600', textAlign: 'center' },
+  emptyText: { fontSize: 16, color: Colors.textSecondary, fontWeight: '600', textAlign: 'center' },
 });

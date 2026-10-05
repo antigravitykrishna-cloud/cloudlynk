@@ -254,18 +254,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  redHeaderTitle: { color: '#ffffff', fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
-  crownBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.gold,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#ffffff',
-  },
-  crownText: { fontSize: 18, color: Colors.brandBlue, fontWeight: '900' },
+  redHeaderTitle: { color: Colors.text, fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
   body: { flex: 1, backgroundColor: Colors.bg },
   emptyState: {
     flex: 1,
@@ -370,5 +359,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowRadius: 8,
   },
-  fabText: { fontSize: 28, fontWeight: '800', color: '#ffffff', marginTop: -2 },
+  fabText: { fontSize: 28, fontWeight: '800', color: Colors.text, marginTop: -2 },
 });

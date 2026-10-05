@@ -116,5 +116,5 @@ const st = StyleSheet.create({
   },
   pillOn: { backgroundColor: Colors.brandBlue, borderColor: Colors.brandBlue },
   pillTxt: { color: Colors.textSecondary, fontSize: FontSize.md, fontWeight: FontWeight.bold },
-  pillTxtOn: { color: '#FFFFFF' },
+  pillTxtOn: { color: Colors.text },
 });

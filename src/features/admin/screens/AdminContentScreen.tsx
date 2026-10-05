@@ -17,6 +17,7 @@ import {
   AdminPostStatus,
 } from '@/features/admin/api/adminContentApi';
 import { AccessLevel } from '@/features/content/api/postsApi';
+import { Colors } from '@/theme';
 
 // Admin content list: everything published, filterable by status and access level. Access level can
 // be changed here after upload. The isAdmin checks are UX only -- every write is an RPC that re-
@@ -40,11 +41,11 @@ const ACCESS_FILTERS: { key: AccessFilter; label: string }[] = [
 ];
 
 const STATUS_COLORS: Record<string, string> = {
-  draft: '#9FB0C9',
-  pending: '#FFC65C',
-  approved: '#2ED47A',
-  rejected: '#FF4D6D',
-  removed: '#6B7C97',
+  draft: Colors.textSecondary,
+  pending: Colors.gold,
+  approved: Colors.success,
+  rejected: Colors.danger,
+  removed: Colors.textMuted,
 };
 
 export default function AdminContentScreen() {
@@ -221,7 +222,7 @@ export default function AdminContentScreen() {
       </ScrollView>
 
       {loading ? (
-        <ActivityIndicator color="#2E7DFF" size="large" style={{ marginTop: 60 }} />
+        <ActivityIndicator color={Colors.brandBlue} size="large" style={{ marginTop: 60 }} />
       ) : posts.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>No content matches these filters</Text>
@@ -239,7 +240,7 @@ export default function AdminContentScreen() {
                   <View
                     style={[
                       styles.badge,
-                      { backgroundColor: STATUS_COLORS[post.status] ?? '#6B7C97' },
+                      { backgroundColor: STATUS_COLORS[post.status] ?? Colors.textMuted },
                     ]}
                   >
                     <Text style={styles.badgeText}>{post.status.toUpperCase()}</Text>
@@ -266,7 +267,7 @@ export default function AdminContentScreen() {
                     disabled={isActing}
                   >
                     {isActing ? (
-                      <ActivityIndicator color="#FFFFFF" size="small" />
+                      <ActivityIndicator color={Colors.text} size="small" />
                     ) : (
                       <Text style={styles.actionBtnGhostText}>
                         Make {post.access_level === 'premium' ? 'free' : 'premium'}
@@ -324,41 +325,41 @@ export default function AdminContentScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0B1220' },
+  safe: { flex: 1, backgroundColor: Colors.bg },
   header: {
-    backgroundColor: '#0B1220',
+    backgroundColor: Colors.bg,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#22304A',
+    borderBottomColor: Colors.border,
   },
   headerBack: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  headerBackTxt: { color: '#2E7DFF', fontSize: 28, fontWeight: '700', lineHeight: 28 },
-  headerTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: '800' },
+  headerBackTxt: { color: Colors.brandBlue, fontSize: 28, fontWeight: '700', lineHeight: 28 },
+  headerTitle: { color: Colors.text, fontSize: 18, fontWeight: '800' },
   headerAction: { minWidth: 32, alignItems: 'flex-end' },
-  headerActionTxt: { color: '#2E7DFF', fontSize: 14, fontWeight: '800' },
+  headerActionTxt: { color: Colors.brandBlue, fontSize: 14, fontWeight: '800' },
   filterScroll: { flexGrow: 0 },
   filterRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 8 },
   filterTab: {
-    backgroundColor: '#182437',
+    backgroundColor: Colors.surfaceElevated,
     borderWidth: 1,
-    borderColor: '#22304A',
+    borderColor: Colors.border,
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 8,
   },
-  filterTabActive: { backgroundColor: '#2E7DFF', borderColor: '#2E7DFF' },
-  filterTabText: { color: '#9FB0C9', fontSize: 12, fontWeight: '700' },
-  filterTabTextActive: { color: '#FFFFFF' },
+  filterTabActive: { backgroundColor: Colors.brandBlue, borderColor: Colors.brandBlue },
+  filterTabText: { color: Colors.textSecondary, fontSize: 12, fontWeight: '700' },
+  filterTabTextActive: { color: Colors.text },
   list: { paddingBottom: 12, paddingHorizontal: 16, paddingTop: 4 },
   card: {
-    backgroundColor: '#182437',
+    backgroundColor: Colors.surfaceElevated,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#22304A',
+    borderColor: Colors.border,
     padding: 16,
     marginBottom: 12,
   },
@@ -369,36 +370,36 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     gap: 10,
   },
-  titleText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF', flex: 1 },
+  titleText: { fontSize: 15, fontWeight: '700', color: Colors.text, flex: 1 },
   badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
-  badgeText: { fontSize: 11, fontWeight: '900', color: '#0B1220', letterSpacing: 0.5 },
-  metaText: { fontSize: 13, color: '#9FB0C9', fontWeight: '500', marginBottom: 2 },
-  premiumText: { color: '#FFC65C', fontWeight: '700' },
-  cardDate: { fontSize: 11, color: '#6B7C97', fontWeight: '500', marginTop: 4 },
+  badgeText: { fontSize: 11, fontWeight: '900', color: Colors.bg, letterSpacing: 0.5 },
+  metaText: { fontSize: 13, color: Colors.textSecondary, fontWeight: '500', marginBottom: 2 },
+  premiumText: { color: Colors.gold, fontWeight: '700' },
+  cardDate: { fontSize: 11, color: Colors.textMuted, fontWeight: '500', marginTop: 4 },
   actionsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
   actionBtnGhost: {
-    backgroundColor: '#22304A',
+    backgroundColor: Colors.border,
     paddingHorizontal: 14,
     paddingVertical: 9,
     borderRadius: 8,
     minWidth: 92,
     alignItems: 'center',
   },
-  actionBtnGhostText: { color: '#FFFFFF', fontSize: 12, fontWeight: '700' },
+  actionBtnGhostText: { color: Colors.text, fontSize: 12, fontWeight: '700' },
   actionBtnPrimary: {
-    backgroundColor: '#2E7DFF',
+    backgroundColor: Colors.brandBlue,
     paddingHorizontal: 14,
     paddingVertical: 9,
     borderRadius: 8,
   },
-  actionBtnPrimaryText: { color: '#FFFFFF', fontSize: 12, fontWeight: '800' },
+  actionBtnPrimaryText: { color: Colors.text, fontSize: 12, fontWeight: '800' },
   actionBtnWarn: {
-    backgroundColor: '#FFC65C',
+    backgroundColor: Colors.gold,
     paddingHorizontal: 14,
     paddingVertical: 9,
     borderRadius: 8,
   },
-  actionBtnWarnText: { color: '#0B1220', fontSize: 12, fontWeight: '800' },
+  actionBtnWarnText: { color: Colors.bg, fontSize: 12, fontWeight: '800' },
   emptyState: {
     flex: 1,
     alignItems: 'center',
@@ -406,5 +407,5 @@ const styles = StyleSheet.create({
     paddingVertical: 80,
     paddingHorizontal: 20,
   },
-  emptyText: { fontSize: 16, color: '#9FB0C9', fontWeight: '600', textAlign: 'center' },
+  emptyText: { fontSize: 16, color: Colors.textSecondary, fontWeight: '600', textAlign: 'center' },
 });

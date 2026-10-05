@@ -19,6 +19,7 @@ import {
   ModerationAction,
 } from '@/features/auth/api/complianceApi';
 import { AdminContentService } from '@/features/admin/api/adminContentApi';
+import { Colors } from '@/theme';
 
 interface EnrichedReport extends ContentReport {
   reporterName: string;
@@ -37,10 +38,10 @@ const REASON_LABELS: Record<string, string> = {
 };
 
 const TARGET_BADGE: Record<string, { label: string; color: string }> = {
-  content: { label: 'CONTENT', color: '#2E7DFF' },
-  user: { label: 'USER', color: '#f472b6' },
-  copyright: { label: 'COPYRIGHT', color: '#facc15' },
-  other: { label: 'OTHER', color: '#9FB0C9' },
+  content: { label: 'CONTENT', color: Colors.brandBlue },
+  user: { label: 'USER', color: Colors.pastelPink },
+  copyright: { label: 'COPYRIGHT', color: Colors.pastelButter },
+  other: { label: 'OTHER', color: Colors.textSecondary },
 };
 
 // Moderation queue for content reports. Every action re-checks is_admin server-side in
@@ -190,7 +191,7 @@ export default function AdminReportsScreen() {
       </View>
 
       {loading ? (
-        <ActivityIndicator color="#2E7DFF" size="large" style={{ marginTop: 60 }} />
+        <ActivityIndicator color={Colors.brandBlue} size="large" style={{ marginTop: 60 }} />
       ) : reports.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>No pending reports</Text>
@@ -222,7 +223,7 @@ export default function AdminReportsScreen() {
                     <TextInput
                       style={styles.noteInput}
                       placeholder="Note for the audit log (required)…"
-                      placeholderTextColor="#6B7C97"
+                      placeholderTextColor={Colors.textMuted}
                       value={note}
                       onChangeText={setNote}
                       multiline
@@ -242,7 +243,7 @@ export default function AdminReportsScreen() {
                         disabled={isActing}
                       >
                         {isActing ? (
-                          <ActivityIndicator color="#fff" size="small" />
+                          <ActivityIndicator color={Colors.text} size="small" />
                         ) : (
                           <Text style={styles.confirmBtnText}>Confirm</Text>
                         )}
@@ -314,26 +315,26 @@ export default function AdminReportsScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0B1220' },
+  safe: { flex: 1, backgroundColor: Colors.bg },
   header: {
-    backgroundColor: '#0B1220',
+    backgroundColor: Colors.bg,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#22304A',
+    borderBottomColor: Colors.border,
   },
   headerBack: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  headerBackTxt: { color: '#2E7DFF', fontSize: 28, fontWeight: '700', lineHeight: 28 },
-  headerTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: '800' },
+  headerBackTxt: { color: Colors.brandBlue, fontSize: 28, fontWeight: '700', lineHeight: 28 },
+  headerTitle: { color: Colors.text, fontSize: 18, fontWeight: '800' },
   list: { paddingVertical: 12, paddingHorizontal: 16 },
   card: {
-    backgroundColor: '#182437',
+    backgroundColor: Colors.surfaceElevated,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#22304A',
+    borderColor: Colors.border,
     padding: 16,
     marginBottom: 12,
   },
@@ -344,39 +345,39 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
-  badgeText: { fontSize: 11, fontWeight: '900', color: '#0B1220', letterSpacing: 0.5 },
-  cardDate: { fontSize: 11, color: '#6B7C97', fontWeight: '500' },
-  reasonText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF', marginBottom: 6 },
-  metaText: { fontSize: 13, color: '#9FB0C9', fontWeight: '500', marginBottom: 2 },
+  badgeText: { fontSize: 11, fontWeight: '900', color: Colors.bg, letterSpacing: 0.5 },
+  cardDate: { fontSize: 11, color: Colors.textMuted, fontWeight: '500' },
+  reasonText: { fontSize: 15, fontWeight: '700', color: Colors.text, marginBottom: 6 },
+  metaText: { fontSize: 13, color: Colors.textSecondary, fontWeight: '500', marginBottom: 2 },
   actionsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
   actionBtnGhost: {
-    backgroundColor: '#22304A',
+    backgroundColor: Colors.border,
     paddingHorizontal: 14,
     paddingVertical: 9,
     borderRadius: 8,
   },
-  actionBtnGhostText: { color: '#FFFFFF', fontSize: 12, fontWeight: '700' },
+  actionBtnGhostText: { color: Colors.text, fontSize: 12, fontWeight: '700' },
   actionBtnWarn: {
-    backgroundColor: '#FFC65C',
+    backgroundColor: Colors.gold,
     paddingHorizontal: 14,
     paddingVertical: 9,
     borderRadius: 8,
   },
-  actionBtnWarnText: { color: '#0B1220', fontSize: 12, fontWeight: '800' },
+  actionBtnWarnText: { color: Colors.bg, fontSize: 12, fontWeight: '800' },
   actionBtnDanger: {
-    backgroundColor: '#FF4D6D',
+    backgroundColor: Colors.danger,
     paddingHorizontal: 14,
     paddingVertical: 9,
     borderRadius: 8,
   },
-  actionBtnDangerText: { color: '#FFFFFF', fontSize: 12, fontWeight: '800' },
+  actionBtnDangerText: { color: Colors.text, fontSize: 12, fontWeight: '800' },
   noteForm: { marginTop: 8 },
   noteInput: {
-    backgroundColor: '#22304A',
+    backgroundColor: Colors.border,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#2E7DFF',
-    color: '#FFFFFF',
+    borderColor: Colors.brandBlue,
+    color: Colors.text,
     fontSize: 14,
     paddingHorizontal: 12,
     paddingVertical: 10,
@@ -386,21 +387,21 @@ const styles = StyleSheet.create({
   },
   noteFormActions: { flexDirection: 'row', gap: 10 },
   cancelBtn: {
-    backgroundColor: '#22304A',
+    backgroundColor: Colors.border,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
   },
-  cancelBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
+  cancelBtnText: { color: Colors.text, fontSize: 13, fontWeight: '700' },
   confirmBtn: {
-    backgroundColor: '#2E7DFF',
+    backgroundColor: Colors.brandBlue,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
     minWidth: 90,
     alignItems: 'center',
   },
-  confirmBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
+  confirmBtnText: { color: Colors.text, fontSize: 13, fontWeight: '800' },
   emptyState: {
     flex: 1,
     alignItems: 'center',
@@ -408,5 +409,5 @@ const styles = StyleSheet.create({
     paddingVertical: 80,
     paddingHorizontal: 20,
   },
-  emptyText: { fontSize: 16, color: '#9FB0C9', fontWeight: '600' },
+  emptyText: { fontSize: 16, color: Colors.textSecondary, fontWeight: '600' },
 });

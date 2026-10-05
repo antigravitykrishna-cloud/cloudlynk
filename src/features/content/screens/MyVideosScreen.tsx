@@ -42,9 +42,9 @@ const TABS: { key: FilterTab; label: string }[] = [
 function getStatusColor(status: string): string {
   switch (status) {
     case 'approved':
-      return '#2ED47A';
+      return Colors.success;
     case 'pending':
-      return '#FFB347';
+      return Colors.warning;
     case 'rejected':
       return Colors.brandBlue;
     default:
@@ -176,7 +176,7 @@ export default function MyVideosScreen() {
                 </View>
                 <Text style={styles.cardDate}>Submitted {formatDate(post.created_at)}</Text>
                 {post.status === 'approved' && post.approved_at && (
-                  <Text style={[styles.cardDate, { color: '#2ED47A' }]}>
+                  <Text style={[styles.cardDate, { color: Colors.success }]}>
                     Approved on {formatDate(post.approved_at)}
                   </Text>
                 )}
@@ -208,8 +208,14 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   backBtn: { width: 80 },
-  backTxt: { color: '#ffffff', fontSize: 14, fontWeight: '600' },
-  headerTitle: { color: '#ffffff', fontSize: 18, fontWeight: '800', flex: 1, textAlign: 'center' },
+  backTxt: { color: Colors.text, fontSize: 14, fontWeight: '600' },
+  headerTitle: {
+    color: Colors.text,
+    fontSize: 18,
+    fontWeight: '800',
+    flex: 1,
+    textAlign: 'center',
+  },
   tabStrip: {
     flexDirection: 'row',
     borderBottomWidth: 1,

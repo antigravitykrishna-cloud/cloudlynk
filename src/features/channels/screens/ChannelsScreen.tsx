@@ -17,7 +17,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { ChannelService } from '@/features/channels/api/channelsApi';
 import { supabase, Database } from '@/lib/supabase';
-import { Colors } from '@/theme';
+import { Colors, withAlpha } from '@/theme';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { Icon } from '@/components/ui/Icon';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -487,18 +487,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  redHeaderTitle: { color: '#ffffff', fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
-  crownBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.gold,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#ffffff',
-  },
-  crownText: { fontSize: 18, color: Colors.brandBlue, fontWeight: '900' },
+  redHeaderTitle: { color: Colors.text, fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
   searchBarWrap: { backgroundColor: Colors.surface, paddingHorizontal: 16, paddingBottom: 16 },
   searchBar: {
     flexDirection: 'row',
@@ -511,7 +500,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
   },
-  searchIcon: { fontSize: 14 },
   searchInput: { flex: 1, color: Colors.text, fontSize: 14, paddingVertical: 0 },
   searchClear: { fontSize: 14, color: Colors.textMuted, padding: 4 },
   tabBar: {
@@ -522,15 +510,15 @@ const styles = StyleSheet.create({
     gap: 24,
   },
   tab: { paddingVertical: 4, alignItems: 'center' },
-  tabText: { color: 'rgba(255,255,255,0.7)', fontSize: 15, fontWeight: '600' },
-  tabTextActive: { color: '#ffffff', fontWeight: '800' },
+  tabText: { color: withAlpha(Colors.white, 0.7), fontSize: 15, fontWeight: '600' },
+  tabTextActive: { color: Colors.text, fontWeight: '800' },
   tabUnderline: {
     position: 'absolute',
     bottom: -8,
     left: 0,
     right: 0,
     height: 3,
-    backgroundColor: '#ffffff',
+    backgroundColor: Colors.white,
     borderRadius: 4,
   },
   filterBar: {
@@ -549,7 +537,7 @@ const styles = StyleSheet.create({
   },
   filterPillActive: { backgroundColor: Colors.brandBlue, borderColor: Colors.brandBlue },
   filterPillText: { fontSize: 13, fontWeight: '700', color: Colors.textSecondary },
-  filterPillTextActive: { color: '#ffffff' },
+  filterPillTextActive: { color: Colors.text },
   list: { paddingVertical: 8 },
   channelRow: {
     position: 'relative',
@@ -565,13 +553,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 6,
     right: 16,
-    backgroundColor: '#FFB347',
+    backgroundColor: Colors.warning,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
     zIndex: 1,
   },
-  pendingBadgeText: { fontSize: 11, fontWeight: '800', color: '#ffffff', letterSpacing: 0.5 },
+  pendingBadgeText: { fontSize: 11, fontWeight: '800', color: Colors.text, letterSpacing: 0.5 },
   channelAvatar: {
     width: 48,
     height: 48,
@@ -580,12 +568,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  channelAvatarEmoji: { fontSize: 22 },
   channelInfo: { flex: 1, minWidth: 0 },
   channelName: { fontSize: 15, fontWeight: '700', color: Colors.text, marginBottom: 2 },
   channelStats: { flexDirection: 'row', gap: 14 },
   channelStat: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  channelStatIcon: { fontSize: 12 },
   channelStatText: { fontSize: 12, color: Colors.textSecondary, fontWeight: '600' },
   manageBtn: {
     backgroundColor: Colors.brandBlue,
@@ -593,14 +579,14 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
   },
-  manageBtnText: { color: '#ffffff', fontSize: 13, fontWeight: '800' },
+  manageBtnText: { color: Colors.text, fontSize: 13, fontWeight: '800' },
   joinBtn: {
     backgroundColor: Colors.brandBlue,
     paddingHorizontal: 18,
     paddingVertical: 8,
     borderRadius: 8,
   },
-  joinBtnText: { color: '#ffffff', fontSize: 13, fontWeight: '800' },
+  joinBtnText: { color: Colors.text, fontSize: 13, fontWeight: '800' },
   leaveBtn: {
     backgroundColor: Colors.surfaceElevated,
     paddingHorizontal: 14,
@@ -610,17 +596,6 @@ const styles = StyleSheet.create({
     borderColor: Colors.brandBlue,
   },
   leaveBtnText: { color: Colors.brandBlue, fontSize: 13, fontWeight: '700' },
-  lockBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Colors.surfaceElevated,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  lockBtnIcon: { fontSize: 16 },
   emptyState: {
     flex: 1,
     alignItems: 'center',
@@ -644,5 +619,5 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: Colors.brandBlue,
   },
-  retryBtnText: { fontSize: 14, fontWeight: '700', color: '#ffffff' },
+  retryBtnText: { fontSize: 14, fontWeight: '700', color: Colors.text },
 });

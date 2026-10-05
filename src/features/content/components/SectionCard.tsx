@@ -4,7 +4,7 @@ import { memo } from 'react';
 import { Icon } from '@/components/ui/Icon';
 import { PressScale } from '@/components/ui/Press';
 import { PostService, ChannelPost } from '@/features/content/api/postsApi';
-import { Colors, Radius, FontWeight } from '@/theme';
+import { Colors, FontWeight, Radius, withAlpha } from '@/theme';
 import { contentIcon } from '@/features/content/components/contentIcon';
 
 export const SectionCard = memo(
@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 6,
     left: 6,
-    backgroundColor: 'rgba(11,18,32,0.82)',
+    backgroundColor: withAlpha(Colors.bg, 0.82),
     borderWidth: 1,
     borderColor: Colors.brandCyan,
     borderRadius: Radius.sm,
@@ -72,16 +72,25 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
   },
   sectionCard: { width: 132, marginRight: 0 },
-  sectionCardImg: { width: 132, height: 198, borderRadius: 8, backgroundColor: '#182437' },
+  sectionCardImg: {
+    width: 132,
+    height: 198,
+    borderRadius: 8,
+    backgroundColor: Colors.surfaceElevated,
+  },
   sectionCardTitle: {
     fontSize: 13,
-    color: '#FFFFFF',
+    color: Colors.text,
     marginTop: 6,
     fontWeight: '600',
     lineHeight: 17,
   },
   shortCard: { width: 120, borderRadius: 8, overflow: 'hidden' },
   shortImg: { width: 120, height: 205, borderRadius: 8 },
-  shortPlaceholder: { backgroundColor: '#182437', alignItems: 'center', justifyContent: 'center' },
-  shortTitle: { fontSize: 11, fontWeight: '600', color: '#FFFFFF', marginTop: 4 },
+  shortPlaceholder: {
+    backgroundColor: Colors.surfaceElevated,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  shortTitle: { fontSize: 11, fontWeight: '600', color: Colors.text, marginTop: 4 },
 });

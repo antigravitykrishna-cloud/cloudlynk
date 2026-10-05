@@ -98,7 +98,20 @@ if (existsSync(join(ROOT, 'babel.config.js'))) {
   }
 }
 
-// ─── 4. Release readiness (informational, never fatal) ──────────────────────
+// ─── 4. Colours come from the theme ─────────────────────────────────────────
+// Every colour is a token in src/theme (or withAlpha() of one). Literal hex
+// and rgba() values elsewhere drift: before this check there were 637 of
+// them, many copies of a token and some left over from an older palette.
+for (const f of sources) {
+  if (rel(f).startsWith('src/theme/')) continue;
+  const match = code(readFileSync(f, 'utf8')).match(/['"`](#[0-9a-fA-F]{3,8}|rgba?\()/);
+  if (match) {
+    fail('Colour literal outside the theme',
+      `${rel(f)} — "${match[1]}…": use a token from @/theme (Colors.x, or withAlpha(Colors.x, a)).`);
+  }
+}
+
+// ─── 5. Release readiness (informational, never fatal) ──────────────────────
 // `noop` is correct until the Play Console products exist. But shipping it
 // means every purchase returns "not available yet", so it must not be a
 // surprise at submission time.

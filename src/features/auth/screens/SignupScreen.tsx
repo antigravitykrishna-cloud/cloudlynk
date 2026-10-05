@@ -191,7 +191,7 @@ export default function SignupScreen() {
             disabled={loading || !agreedToTerms}
           >
             {loading ? (
-              <ActivityIndicator color="#000" />
+              <ActivityIndicator color={Colors.black} />
             ) : (
               <Text style={styles.btnText}>Create Account</Text>
             )}
@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   checkboxChecked: { backgroundColor: Colors.brandBlue, borderColor: Colors.brandBlue },
-  checkmark: { color: '#000', fontSize: 13, fontWeight: '900' },
+  checkmark: { color: Colors.black, fontSize: 13, fontWeight: '900' },
   terms: { flex: 1, fontSize: FontSize.sm, color: Colors.textMuted, lineHeight: 18 },
   btn: {
     backgroundColor: Colors.brandBlue,
@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
   },
-  btnText: { color: '#000', fontSize: FontSize.base, fontWeight: FontWeight.extrabold },
+  btnText: { color: Colors.black, fontSize: FontSize.base, fontWeight: FontWeight.extrabold },
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: Spacing.xxl },
   footerText: { color: Colors.textSecondary, fontSize: FontSize.md },
   footerLink: { color: Colors.brandBlue, fontSize: FontSize.md, fontWeight: FontWeight.bold },

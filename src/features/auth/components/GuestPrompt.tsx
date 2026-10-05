@@ -104,7 +104,5 @@ const styles = StyleSheet.create({
     minWidth: 240,
   },
   primaryTxt: { color: Colors.textInverse, fontSize: FontSize.lg, fontWeight: FontWeight.bold },
-  ghostBtn: { paddingVertical: Spacing.lg, paddingHorizontal: Spacing.xl, marginTop: Spacing.xs },
-  ghostTxt: { color: Colors.brandBlue, fontSize: FontSize.lg, fontWeight: FontWeight.semibold },
   footnote: { color: Colors.textMuted, fontSize: FontSize.md, marginTop: Spacing.md },
 });

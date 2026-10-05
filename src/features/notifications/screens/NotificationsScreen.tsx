@@ -13,7 +13,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useNotifications } from '@/features/notifications/hooks/useNotifications';
 import { Notification, NOTIF_META } from '@/features/notifications/api/notificationsApi';
-import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/theme';
+import { Colors, FontSize, FontWeight, Radius, Spacing, withAlpha } from '@/theme';
 import { formatTimeAgo } from '@/utils/format';
 import { Icon } from '@/components/ui/Icon';
 
@@ -50,7 +50,7 @@ export default function NotificationsScreen() {
     const meta = NOTIF_META[notif.type] ?? {
       icon: 'bell' as const,
       color: Colors.textMuted,
-      dimColor: 'rgba(255,255,255,0.06)',
+      dimColor: withAlpha(Colors.white, 0.06),
     };
     return (
       <TouchableOpacity
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.border,
     position: 'relative',
   },
-  cardUnread: { backgroundColor: 'rgba(255,255,255,0.025)' },
+  cardUnread: { backgroundColor: withAlpha(Colors.white, 0.025) },
   unreadDot: { position: 'absolute', left: 6, top: '50%', width: 6, height: 6, borderRadius: 3 },
   iconWrap: {
     width: 44,

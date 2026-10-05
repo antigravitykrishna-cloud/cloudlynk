@@ -76,7 +76,7 @@ export default function DeleteAccountScreen() {
           disabled={!isConfirmed || loading}
         >
           {loading ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={Colors.text} />
           ) : (
             <Text style={styles.deleteBtnText}>Delete My Account Forever</Text>
           )}
@@ -106,11 +106,10 @@ const styles = StyleSheet.create({
     borderRadius: Radius.xl,
     padding: Spacing.xl,
     borderWidth: 0.5,
-    borderColor: 'rgba(248,81,73,0.3)',
+    borderColor: Colors.dangerBorder,
     alignItems: 'center',
     marginBottom: Spacing.xl,
   },
-  warningIcon: { fontSize: 40, marginBottom: Spacing.md },
   warningTitle: {
     fontSize: FontSize.xl,
     fontWeight: FontWeight.extrabold,
@@ -148,5 +147,5 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.lg,
     alignItems: 'center',
   },
-  deleteBtnText: { color: '#fff', fontSize: FontSize.base, fontWeight: FontWeight.extrabold },
+  deleteBtnText: { color: Colors.text, fontSize: FontSize.base, fontWeight: FontWeight.extrabold },
 });

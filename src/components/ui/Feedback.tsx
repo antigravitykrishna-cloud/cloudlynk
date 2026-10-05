@@ -10,7 +10,7 @@ import {
   Platform,
   Dimensions,
 } from 'react-native';
-import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/theme';
+import { Colors, FontSize, FontWeight, Radius, Spacing, withAlpha } from '@/theme';
 
 // Branded alerts and toasts, replacing React Native's Alert.alert (the stock Android dialog ignores
 // the app's theme). State lives in a module-level store, so showAlert() and toast() can be called
@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
     paddingRight: Spacing.lg,
     overflow: 'hidden',
     // A coloured shadow reads as raised on navy where a black one just muddies.
-    shadowColor: '#000',
+    shadowColor: Colors.black,
     shadowOpacity: 0.4,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
   // dialog
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(4,8,16,0.72)',
+    backgroundColor: withAlpha(Colors.bg, 0.72),
     alignItems: 'center',
     justifyContent: 'center',
     padding: Spacing.xl,
@@ -321,7 +321,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     padding: Spacing.xxl,
-    shadowColor: '#000',
+    shadowColor: Colors.black,
     shadowOpacity: 0.5,
     shadowRadius: 28,
     shadowOffset: { width: 0, height: 14 },

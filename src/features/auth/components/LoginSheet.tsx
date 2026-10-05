@@ -13,7 +13,7 @@ import { showAlert } from '@/components/ui/Feedback';
 import { useRouter, type Href } from 'expo-router';
 import Animated, { FadeIn, SlideInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/theme';
+import { Colors, FontSize, FontWeight, Radius, Spacing, withAlpha } from '@/theme';
 import { setPostLoginRoute } from '@/features/auth/postLoginRoute';
 import { PressScale } from '@/components/ui/Press';
 
@@ -108,7 +108,7 @@ export function LoginSheet({
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'flex-end' },
+  backdrop: { flex: 1, backgroundColor: withAlpha(Colors.black, 0.55), justifyContent: 'flex-end' },
   sheet: {
     backgroundColor: Colors.surface,
     borderTopLeftRadius: 28,
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xl,
   },
   btnText: {
-    color: '#FFFFFF',
+    color: Colors.text,
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
     letterSpacing: 0.2,

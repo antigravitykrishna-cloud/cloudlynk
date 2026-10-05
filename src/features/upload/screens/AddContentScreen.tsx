@@ -20,7 +20,7 @@ import {
 import { showAlert } from '@/components/ui/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Colors, Radius, FontSize } from '@/theme';
+import { Colors, FontSize, Radius, withAlpha } from '@/theme';
 import { useUploadQueue } from '@/features/upload/hooks/useUploadQueue';
 import { StreamService } from '@/features/player/api/streamApi';
 import {
@@ -93,7 +93,8 @@ function deriveSeriesId(channelId: string, seriesName: string): string {
 
 function ProgressBar({ progress, status }: { progress: number; status: string }) {
   const pct = Math.round(progress * 100);
-  const color = status === 'done' ? '#00d4aa' : status === 'failed' ? Colors.brandBlue : '#2E7DFF';
+  const color =
+    status === 'done' ? Colors.success : status === 'failed' ? Colors.brandBlue : Colors.brandBlue;
   return (
     <View style={pb.wrap}>
       <View style={[pb.bar, { width: `${pct}%` as any, backgroundColor: color }]} />
@@ -347,7 +348,7 @@ export default function AddContentScreen() {
               </TouchableOpacity>
             ) : (
               <View style={[styles.submitBtn, { opacity: 0.6 }]}>
-                <ActivityIndicator color="#fff" size="small" />
+                <ActivityIndicator color={Colors.text} size="small" />
               </View>
             )}
           </View>
@@ -719,10 +720,16 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   backBtn: { width: 60 },
-  backTxt: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  headerTitle: { color: '#fff', fontSize: 17, fontWeight: '800', flex: 1, textAlign: 'center' },
+  backTxt: { color: Colors.text, fontSize: 16, fontWeight: '700' },
+  headerTitle: {
+    color: Colors.text,
+    fontSize: 17,
+    fontWeight: '800',
+    flex: 1,
+    textAlign: 'center',
+  },
   submitBtn: {
-    backgroundColor: '#fff',
+    backgroundColor: Colors.white,
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 20,
@@ -754,7 +761,6 @@ const styles = StyleSheet.create({
   },
   addVideoBtnTxt: { color: Colors.brandBlue, fontSize: 15, fontWeight: '800' },
   empty: { alignItems: 'center', paddingTop: 48, paddingBottom: 32 },
-  emptyIcon: { fontSize: 48, marginBottom: 12 },
   emptyTxt: { fontSize: 16, fontWeight: '800', color: Colors.text, marginBottom: 6 },
   emptySubTxt: {
     fontSize: 13,
@@ -829,7 +835,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   addMoreBtnTxt: { color: Colors.textMuted, fontSize: 14, fontWeight: '700' },
-  genreOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
+  genreOverlay: {
+    flex: 1,
+    backgroundColor: withAlpha(Colors.black, 0.7),
+    justifyContent: 'flex-end',
+  },
   genreSheet: {
     backgroundColor: Colors.bg,
     borderTopLeftRadius: 20,

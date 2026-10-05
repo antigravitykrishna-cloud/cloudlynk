@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
+import { Colors } from '@/theme';
 
 interface PendingContentItem {
   id: string;
@@ -134,7 +135,7 @@ export default function PendingChannelContentScreen() {
       </View>
 
       {loading ? (
-        <ActivityIndicator color="#2E7DFF" size="large" style={{ marginTop: 60 }} />
+        <ActivityIndicator color={Colors.brandBlue} size="large" style={{ marginTop: 60 }} />
       ) : items.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>No pending content</Text>
@@ -165,7 +166,7 @@ export default function PendingChannelContentScreen() {
                   <TextInput
                     style={styles.rejectInput}
                     placeholder="Reason for rejection..."
-                    placeholderTextColor="#6B7C97"
+                    placeholderTextColor={Colors.textMuted}
                     value={rejectReason}
                     onChangeText={setRejectReason}
                     multiline
@@ -220,17 +221,17 @@ export default function PendingChannelContentScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: '#0B1220',
+    backgroundColor: Colors.bg,
   },
   header: {
-    backgroundColor: '#0B1220',
+    backgroundColor: Colors.bg,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#22304A',
+    borderBottomColor: Colors.border,
   },
   headerBack: {
     width: 44,
@@ -239,13 +240,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerBackTxt: {
-    color: '#2E7DFF',
+    color: Colors.brandBlue,
     fontSize: 28,
     fontWeight: '700',
     lineHeight: 28,
   },
   headerTitle: {
-    color: '#FFFFFF',
+    color: Colors.text,
     fontSize: 18,
     fontWeight: '800',
   },
@@ -254,10 +255,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   card: {
-    backgroundColor: '#182437',
+    backgroundColor: Colors.surfaceElevated,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#22304A',
+    borderColor: Colors.border,
     padding: 16,
     marginBottom: 12,
   },
@@ -267,12 +268,12 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: Colors.text,
     marginBottom: 4,
   },
   cardMeta: {
     fontSize: 13,
-    color: '#9FB0C9',
+    color: Colors.textSecondary,
     fontWeight: '500',
     marginBottom: 6,
   },
@@ -282,7 +283,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   typeBadge: {
-    backgroundColor: '#22304A',
+    backgroundColor: Colors.border,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 4,
@@ -290,12 +291,12 @@ const styles = StyleSheet.create({
   typeBadgeText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#2E7DFF',
+    color: Colors.brandBlue,
     letterSpacing: 0.3,
   },
   cardDate: {
     fontSize: 12,
-    color: '#6B7C97',
+    color: Colors.textMuted,
     fontWeight: '500',
   },
   cardActions: {
@@ -303,24 +304,24 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   approveBtn: {
-    backgroundColor: '#00D4FF',
+    backgroundColor: Colors.brandCyan,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
   },
   approveBtnText: {
-    color: '#0B1220',
+    color: Colors.bg,
     fontSize: 13,
     fontWeight: '800',
   },
   rejectBtn: {
-    backgroundColor: '#FF4D6D',
+    backgroundColor: Colors.danger,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
   },
   rejectBtnText: {
-    color: '#FFFFFF',
+    color: Colors.text,
     fontSize: 13,
     fontWeight: '800',
   },
@@ -328,11 +329,11 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   rejectInput: {
-    backgroundColor: '#22304A',
+    backgroundColor: Colors.border,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#FF4D6D',
-    color: '#FFFFFF',
+    borderColor: Colors.danger,
+    color: Colors.text,
     fontSize: 14,
     paddingHorizontal: 12,
     paddingVertical: 10,
@@ -345,24 +346,24 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   cancelBtn: {
-    backgroundColor: '#22304A',
+    backgroundColor: Colors.border,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
   },
   cancelBtnText: {
-    color: '#FFFFFF',
+    color: Colors.text,
     fontSize: 13,
     fontWeight: '700',
   },
   confirmRejectBtn: {
-    backgroundColor: '#FF4D6D',
+    backgroundColor: Colors.danger,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
   },
   confirmRejectBtnText: {
-    color: '#FFFFFF',
+    color: Colors.text,
     fontSize: 13,
     fontWeight: '800',
   },
@@ -375,7 +376,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#9FB0C9',
+    color: Colors.textSecondary,
     fontWeight: '600',
   },
 });

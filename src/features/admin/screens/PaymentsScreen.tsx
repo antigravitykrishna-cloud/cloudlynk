@@ -136,5 +136,5 @@ const st = StyleSheet.create({
   },
   filterOn: { backgroundColor: Colors.brandBlue, borderColor: Colors.brandBlue },
   filterTxt: { color: Colors.textSecondary, fontSize: FontSize.md, fontWeight: FontWeight.bold },
-  filterTxtOn: { color: '#FFFFFF' },
+  filterTxtOn: { color: Colors.text },
 });

@@ -14,6 +14,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import { AdminContentService, UserGrant } from '@/features/admin/api/adminContentApi';
+import { Colors } from '@/theme';
 
 // Account approval queue: who may buy Premium. It decides nothing about free features or existing
 // purchases. Guests are not listed (they must save their account first). The isAdmin check is UX
@@ -221,7 +222,7 @@ export default function AdminUserApprovalsScreen() {
       </View>
 
       {loading ? (
-        <ActivityIndicator color="#2E7DFF" size="large" style={{ marginTop: 60 }} />
+        <ActivityIndicator color={Colors.brandBlue} size="large" style={{ marginTop: 60 }} />
       ) : rows.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>
@@ -263,7 +264,7 @@ export default function AdminUserApprovalsScreen() {
                     <TextInput
                       style={styles.noteInput}
                       placeholder="Why is this account being rejected? (required)"
-                      placeholderTextColor="#6B7C97"
+                      placeholderTextColor={Colors.textMuted}
                       value={note}
                       onChangeText={setNote}
                       multiline
@@ -286,7 +287,7 @@ export default function AdminUserApprovalsScreen() {
                         disabled={isActing || !note.trim()}
                       >
                         {isActing ? (
-                          <ActivityIndicator color="#fff" size="small" />
+                          <ActivityIndicator color={Colors.text} size="small" />
                         ) : (
                           <Text style={styles.confirmBtnText}>Confirm reject</Text>
                         )}
@@ -303,7 +304,7 @@ export default function AdminUserApprovalsScreen() {
                         disabled={isActing}
                       >
                         {isActing ? (
-                          <ActivityIndicator color="#0B1220" size="small" />
+                          <ActivityIndicator color={Colors.bg} size="small" />
                         ) : (
                           <Text style={styles.approveBtnText}>Approve</Text>
                         )}
@@ -338,7 +339,7 @@ export default function AdminUserApprovalsScreen() {
                   <View style={styles.grantsPanel}>
                     {grantsLoading ? (
                       <ActivityIndicator
-                        color="#2E7DFF"
+                        color={Colors.brandBlue}
                         size="small"
                         style={{ marginVertical: 8 }}
                       />
@@ -383,22 +384,22 @@ export default function AdminUserApprovalsScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0B1220' },
+  safe: { flex: 1, backgroundColor: Colors.bg },
   header: {
-    backgroundColor: '#0B1220',
+    backgroundColor: Colors.bg,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#22304A',
+    borderBottomColor: Colors.border,
   },
   headerBack: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  headerBackTxt: { color: '#2E7DFF', fontSize: 28, fontWeight: '700', lineHeight: 28 },
-  headerTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: '800' },
+  headerBackTxt: { color: Colors.brandBlue, fontSize: 28, fontWeight: '700', lineHeight: 28 },
+  headerTitle: { color: Colors.text, fontSize: 18, fontWeight: '800' },
   blurb: {
-    color: '#9FB0C9',
+    color: Colors.textSecondary,
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 18,
@@ -407,22 +408,22 @@ const styles = StyleSheet.create({
   },
   filterRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 12 },
   filterTab: {
-    backgroundColor: '#182437',
+    backgroundColor: Colors.surfaceElevated,
     borderWidth: 1,
-    borderColor: '#22304A',
+    borderColor: Colors.border,
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 8,
   },
-  filterTabActive: { backgroundColor: '#2E7DFF', borderColor: '#2E7DFF' },
-  filterTabText: { color: '#9FB0C9', fontSize: 12, fontWeight: '700' },
-  filterTabTextActive: { color: '#FFFFFF' },
+  filterTabActive: { backgroundColor: Colors.brandBlue, borderColor: Colors.brandBlue },
+  filterTabText: { color: Colors.textSecondary, fontSize: 12, fontWeight: '700' },
+  filterTabTextActive: { color: Colors.text },
   list: { paddingBottom: 12, paddingHorizontal: 16 },
   card: {
-    backgroundColor: '#182437',
+    backgroundColor: Colors.surfaceElevated,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#22304A',
+    borderColor: Colors.border,
     padding: 16,
     marginBottom: 12,
   },
@@ -433,58 +434,58 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     gap: 10,
   },
-  nameText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF', flex: 1 },
-  cardDate: { fontSize: 11, color: '#6B7C97', fontWeight: '500' },
-  metaText: { fontSize: 13, color: '#9FB0C9', fontWeight: '500', marginBottom: 2 },
-  noteText: { fontSize: 12, color: '#FFC65C', fontWeight: '600', marginTop: 6 },
+  nameText: { fontSize: 15, fontWeight: '700', color: Colors.text, flex: 1 },
+  cardDate: { fontSize: 11, color: Colors.textMuted, fontWeight: '500' },
+  metaText: { fontSize: 13, color: Colors.textSecondary, fontWeight: '500', marginBottom: 2 },
+  noteText: { fontSize: 12, color: Colors.gold, fontWeight: '600', marginTop: 6 },
   actionsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
   approveBtn: {
-    backgroundColor: '#2E7DFF',
+    backgroundColor: Colors.brandBlue,
     paddingHorizontal: 18,
     paddingVertical: 9,
     borderRadius: 8,
     minWidth: 92,
     alignItems: 'center',
   },
-  approveBtnText: { color: '#FFFFFF', fontSize: 12, fontWeight: '800' },
+  approveBtnText: { color: Colors.text, fontSize: 12, fontWeight: '800' },
   rejectBtn: {
-    backgroundColor: '#22304A',
+    backgroundColor: Colors.border,
     paddingHorizontal: 18,
     paddingVertical: 9,
     borderRadius: 8,
   },
-  rejectBtnText: { color: '#FF4D6D', fontSize: 12, fontWeight: '800' },
+  rejectBtnText: { color: Colors.danger, fontSize: 12, fontWeight: '800' },
   grantsBtn: {
-    backgroundColor: '#22304A',
+    backgroundColor: Colors.border,
     paddingHorizontal: 18,
     paddingVertical: 9,
     borderRadius: 8,
   },
-  grantsBtnText: { color: '#38bdf8', fontSize: 12, fontWeight: '800' },
-  grantsPanel: { marginTop: 12, borderTopWidth: 1, borderTopColor: '#22304A', paddingTop: 10 },
+  grantsBtnText: { color: Colors.pastelSky, fontSize: 12, fontWeight: '800' },
+  grantsPanel: { marginTop: 12, borderTopWidth: 1, borderTopColor: Colors.border, paddingTop: 10 },
   grantRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#22304A',
+    borderBottomColor: Colors.border,
   },
-  grantTitle: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
+  grantTitle: { color: Colors.text, fontSize: 13, fontWeight: '700' },
   grantRevokeBtn: {
-    backgroundColor: '#22304A',
+    backgroundColor: Colors.border,
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: 8,
   },
-  grantRevokeText: { color: '#FF4D6D', fontSize: 11, fontWeight: '800' },
+  grantRevokeText: { color: Colors.danger, fontSize: 11, fontWeight: '800' },
   noteForm: { marginTop: 12 },
   noteInput: {
-    backgroundColor: '#22304A',
+    backgroundColor: Colors.border,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#2E7DFF',
-    color: '#FFFFFF',
+    borderColor: Colors.brandBlue,
+    color: Colors.text,
     fontSize: 14,
     paddingHorizontal: 12,
     paddingVertical: 10,
@@ -494,21 +495,21 @@ const styles = StyleSheet.create({
   },
   noteFormActions: { flexDirection: 'row', gap: 10 },
   cancelBtn: {
-    backgroundColor: '#22304A',
+    backgroundColor: Colors.border,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
   },
-  cancelBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
+  cancelBtnText: { color: Colors.text, fontSize: 13, fontWeight: '700' },
   confirmBtn: {
-    backgroundColor: '#FF4D6D',
+    backgroundColor: Colors.danger,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
     minWidth: 120,
     alignItems: 'center',
   },
-  confirmBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
+  confirmBtnText: { color: Colors.text, fontSize: 13, fontWeight: '800' },
   emptyState: {
     flex: 1,
     alignItems: 'center',
@@ -516,5 +517,5 @@ const styles = StyleSheet.create({
     paddingVertical: 80,
     paddingHorizontal: 20,
   },
-  emptyText: { fontSize: 16, color: '#9FB0C9', fontWeight: '600', textAlign: 'center' },
+  emptyText: { fontSize: 16, color: Colors.textSecondary, fontWeight: '600', textAlign: 'center' },
 });

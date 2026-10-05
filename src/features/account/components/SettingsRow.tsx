@@ -38,7 +38,7 @@ export const SettingsRow = ({
         value={toggleValue}
         onValueChange={onToggle}
         trackColor={{ false: Colors.borderStrong, true: Colors.brandBlueDim }}
-        thumbColor={toggleValue ? Colors.brandBlue : '#cccccc'}
+        thumbColor={toggleValue ? Colors.brandBlue : Colors.textSecondary}
       />
     ) : (
       <View style={styles.rowRight}>

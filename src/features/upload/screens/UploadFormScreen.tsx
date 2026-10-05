@@ -20,7 +20,7 @@ import {
 import { showAlert } from '@/components/ui/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Colors, Radius, FontSize } from '@/theme';
+import { Colors, FontSize, Radius, withAlpha } from '@/theme';
 import { useUploadQueue } from '@/features/upload/hooks/useUploadQueue';
 import { QueueItem } from '@/features/upload/uploadQueue';
 import { PostService, ContentType, GENRES } from '@/features/content/api/postsApi';
@@ -188,7 +188,7 @@ export default function FormScreen() {
             <Text style={styles.headerTitle}>Edit Details</Text>
             <TouchableOpacity onPress={handleSaveAndNext} style={styles.saveBtn} disabled={saving}>
               {saving ? (
-                <ActivityIndicator color="#ffffff" size="small" />
+                <ActivityIndicator color={Colors.text} size="small" />
               ) : (
                 <Text style={styles.saveBtnTxt}>Save & next</Text>
               )}
@@ -368,7 +368,7 @@ export default function FormScreen() {
               </TouchableOpacity>
               <TouchableOpacity style={styles.saveFullBtn} onPress={handleSave} disabled={saving}>
                 {saving ? (
-                  <ActivityIndicator color="#ffffff" size="small" />
+                  <ActivityIndicator color={Colors.text} size="small" />
                 ) : (
                   <Text style={styles.saveFullBtnTxt}>Save</Text>
                 )}
@@ -434,10 +434,16 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   backBtn: { width: 70 },
-  backTxt: { color: '#ffffff', fontSize: 14, fontWeight: '600' },
-  headerTitle: { color: '#ffffff', fontSize: 17, fontWeight: '800', flex: 1, textAlign: 'center' },
+  backTxt: { color: Colors.text, fontSize: 14, fontWeight: '600' },
+  headerTitle: {
+    color: Colors.text,
+    fontSize: 17,
+    fontWeight: '800',
+    flex: 1,
+    textAlign: 'center',
+  },
   saveBtn: { width: 90, alignItems: 'flex-end' },
-  saveBtnTxt: { color: '#ffffff', fontSize: 13, fontWeight: '800' },
+  saveBtnTxt: { color: Colors.text, fontSize: 13, fontWeight: '800' },
   body: { flex: 1, padding: 16 },
   videoInfo: {
     flexDirection: 'row',
@@ -450,7 +456,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
   },
-  videoIcon: { fontSize: 28 },
   videoMeta: { flex: 1 },
   videoName: { fontSize: FontSize.base, fontWeight: '700', color: Colors.text },
   videoSize: { fontSize: FontSize.xs, color: Colors.textMuted, fontWeight: '600', marginTop: 2 },
@@ -517,7 +522,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.brandBlue,
   },
-  saveFullBtnTxt: { fontSize: 14, fontWeight: '800', color: '#ffffff' },
+  saveFullBtnTxt: { fontSize: 14, fontWeight: '800', color: Colors.text },
   notFound: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 },
   notFoundText: { fontSize: 15, color: Colors.textMuted, fontWeight: '600', marginBottom: 16 },
   notFoundBtn: {
@@ -526,8 +531,12 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: Radius.sm,
   },
-  notFoundBtnTxt: { color: '#ffffff', fontSize: 14, fontWeight: '800' },
-  genreOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
+  notFoundBtnTxt: { color: Colors.text, fontSize: 14, fontWeight: '800' },
+  genreOverlay: {
+    flex: 1,
+    backgroundColor: withAlpha(Colors.black, 0.7),
+    justifyContent: 'flex-end',
+  },
   genreSheet: {
     backgroundColor: Colors.bg,
     borderTopLeftRadius: 20,

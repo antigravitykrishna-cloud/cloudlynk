@@ -6,7 +6,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { supabase } from '@/lib/supabase';
-import { Colors } from '@/theme';
+import { Colors, withAlpha } from '@/theme';
 import { Icon } from '@/components/ui/Icon';
 import { formatBytes } from '@/utils/format';
 
@@ -129,7 +129,7 @@ export default function ExportDataScreen() {
           disabled={status === 'loading'}
         >
           {status === 'loading' ? (
-            <ActivityIndicator color="#ffffff" size="small" />
+            <ActivityIndicator color={Colors.text} size="small" />
           ) : (
             <Text style={styles.exportBtnText}>Download My Data</Text>
           )}
@@ -158,15 +158,15 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: withAlpha(Colors.white, 0.2),
     alignItems: 'center',
     justifyContent: 'center',
   },
-  backText: { color: '#fff', fontSize: 24, fontWeight: '700', marginTop: -2 },
-  headerTitle: { color: '#fff', fontSize: 17, fontWeight: '800' },
+  backText: { color: Colors.text, fontSize: 24, fontWeight: '700', marginTop: -2 },
+  headerTitle: { color: Colors.text, fontSize: 17, fontWeight: '800' },
   body: { flex: 1, padding: 20 },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: Colors.white,
     borderRadius: 16,
     padding: 24,
     alignItems: 'center',
@@ -174,21 +174,20 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     marginBottom: 20,
   },
-  cardIcon: { fontSize: 48, marginBottom: 12 },
   cardTitle: { fontSize: 18, fontWeight: '800', color: Colors.text, marginBottom: 8 },
   cardDesc: { fontSize: 14, color: Colors.textMuted, textAlign: 'center', lineHeight: 20 },
   successCard: {
-    backgroundColor: '#12261C',
+    backgroundColor: Colors.successDim,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#bbf7d0',
+    borderColor: Colors.successBorder,
     marginBottom: 20,
   },
-  successIcon: { fontSize: 24, color: '#2ED47A', fontWeight: '800', marginBottom: 4 },
-  successText: { fontSize: 15, fontWeight: '700', color: '#2ED47A', marginBottom: 4 },
-  successMeta: { fontSize: 13, color: '#6B7C97', marginTop: 2 },
+  successIcon: { fontSize: 24, color: Colors.success, fontWeight: '800', marginBottom: 4 },
+  successText: { fontSize: 15, fontWeight: '700', color: Colors.success, marginBottom: 4 },
+  successMeta: { fontSize: 13, color: Colors.textMuted, marginTop: 2 },
   exportBtn: {
     backgroundColor: Colors.brandBlue,
     borderRadius: 12,
@@ -197,6 +196,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   exportBtnDisabled: { opacity: 0.7 },
-  exportBtnText: { color: '#fff', fontSize: 16, fontWeight: '800' },
+  exportBtnText: { color: Colors.text, fontSize: 16, fontWeight: '800' },
   note: { fontSize: 12, color: Colors.textMuted, textAlign: 'center', lineHeight: 18 },
 });

@@ -117,8 +117,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconWrapActive: { backgroundColor: Colors.brandBlueDim },
-  icon: { fontSize: 22, color: Colors.textMuted },
-  iconActive: { color: Colors.brandBlue },
   label: {
     fontSize: 11,
     fontWeight: '700',

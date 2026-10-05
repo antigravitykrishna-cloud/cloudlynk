@@ -19,7 +19,7 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useNotifications } from '@/features/notifications/hooks/useNotifications';
 import { supabase } from '@/lib/supabase';
 import type { TablesUpdate } from '@/lib/database.types';
-import { Colors } from '@/theme';
+import { Colors, withAlpha } from '@/theme';
 import { formatBytes } from '@/utils/format';
 import { config } from '@/lib/config';
 import Constants from 'expo-constants';
@@ -188,7 +188,7 @@ export default function ProfileScreen() {
               onPress={() => router.push('/save-account' as never)}
               activeOpacity={0.85}
             >
-              <Icon name="lock" size={20} color="#FFFFFF" />
+              <Icon name="lock" size={20} color={Colors.text} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.saveBannerTitle}>Save your account</Text>
                 <Text style={styles.saveBannerText}>
@@ -301,10 +301,10 @@ export default function ProfileScreen() {
                             {
                               backgroundColor:
                                 ch.status === 'active'
-                                  ? '#A7F3D0'
+                                  ? Colors.successDim
                                   : ch.status === 'pending'
-                                    ? '#FEF3C7'
-                                    : '#FECACA',
+                                    ? Colors.warningDim
+                                    : Colors.dangerDim,
                             },
                           ]}
                         >
@@ -314,10 +314,10 @@ export default function ProfileScreen() {
                               {
                                 color:
                                   ch.status === 'active'
-                                    ? '#065F46'
+                                    ? Colors.success
                                     : ch.status === 'pending'
-                                      ? '#92400E'
-                                      : '#991B1B',
+                                      ? Colors.warning
+                                      : Colors.danger,
                               },
                             ]}
                           >
@@ -361,7 +361,7 @@ export default function ProfileScreen() {
               {isAdmin && (
                 <SettingsRow
                   icon="clipboard"
-                  iconBg="rgba(255,179,71,0.14)"
+                  iconBg={Colors.warningDim}
                   label="Admin: Pending Channels"
                   onPress={() => router.push('/admin/pending-channels')}
                 />
@@ -369,7 +369,7 @@ export default function ProfileScreen() {
               {isAdmin && (
                 <SettingsRow
                   icon="edit"
-                  iconBg="rgba(255,179,71,0.14)"
+                  iconBg={Colors.warningDim}
                   label="Pending Channel Content"
                   onPress={() => router.push('/admin/pending-channel-content')}
                 />
@@ -377,7 +377,7 @@ export default function ProfileScreen() {
               {isAdmin && (
                 <SettingsRow
                   icon="chart"
-                  iconBg="rgba(46,125,255,0.14)"
+                  iconBg={Colors.brandBlueDim}
                   label="Channel Activity"
                   onPress={() => router.push('/admin/channel-activity')}
                 />
@@ -385,7 +385,7 @@ export default function ProfileScreen() {
               {isAdmin && (
                 <SettingsRow
                   icon="flag"
-                  iconBg="rgba(255,77,109,0.14)"
+                  iconBg={Colors.dangerDim}
                   label="Reports (Content & Users)"
                   onPress={() => router.push('/admin/reports')}
                 />
@@ -393,7 +393,7 @@ export default function ProfileScreen() {
               {isAdmin && (
                 <SettingsRow
                   icon="check-circle"
-                  iconBg="rgba(46,212,122,0.14)"
+                  iconBg={Colors.successDim}
                   label="User Approvals"
                   onPress={() => router.push('/admin/user-approvals')}
                 />
@@ -401,7 +401,7 @@ export default function ProfileScreen() {
               {isAdmin && (
                 <SettingsRow
                   icon="diamond"
-                  iconBg="rgba(227,179,65,0.14)"
+                  iconBg={Colors.warningDim}
                   label="Subscribers"
                   onPress={() => router.push('/admin/subscribers')}
                 />
@@ -409,7 +409,7 @@ export default function ProfileScreen() {
               {isAdmin && (
                 <SettingsRow
                   icon="film"
-                  iconBg="rgba(180,169,255,0.14)"
+                  iconBg={Colors.lavenderDim}
                   label="Content & Access"
                   onPress={() => router.push('/admin/content')}
                 />
@@ -417,7 +417,7 @@ export default function ProfileScreen() {
               {isAdmin && (
                 <SettingsRow
                   icon="upload"
-                  iconBg="rgba(46,125,255,0.14)"
+                  iconBg={Colors.brandBlueDim}
                   label="Upload Content"
                   onPress={() => router.push('/admin/upload')}
                 />
@@ -425,7 +425,7 @@ export default function ProfileScreen() {
               {isAdmin && (
                 <SettingsRow
                   icon="history"
-                  iconBg="rgba(159,176,201,0.14)"
+                  iconBg={Colors.neutralDim}
                   label="Audit Log"
                   onPress={() => router.push('/admin/audit')}
                 />
@@ -439,31 +439,31 @@ export default function ProfileScreen() {
               />
               <SettingsRow
                 icon="chart"
-                iconBg="rgba(46,212,122,0.14)"
+                iconBg={Colors.successDim}
                 label="My Subscription"
                 onPress={() => router.push('/my-subscription')}
               />
               <SettingsRow
                 icon="video"
-                iconBg="rgba(255,179,71,0.14)"
+                iconBg={Colors.warningDim}
                 label="My Videos"
                 onPress={() => router.push('/my-videos')}
               />
               <SettingsRow
                 icon="lock"
-                iconBg="rgba(46,125,255,0.14)"
+                iconBg={Colors.brandBlueDim}
                 label="Privacy Policy"
                 onPress={() => Linking.openURL(config.privacyPolicyUrl)}
               />
               <SettingsRow
                 icon="document"
-                iconBg="rgba(255,179,71,0.14)"
+                iconBg={Colors.warningDim}
                 label="Terms of Service"
                 onPress={() => Linking.openURL(config.termsUrl)}
               />
               <SettingsRow
                 icon="package"
-                iconBg="rgba(46,212,122,0.14)"
+                iconBg={Colors.successDim}
                 label="Export My Data"
                 onPress={() => router.push('/export-data')}
               />
@@ -538,22 +538,22 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: withAlpha(Colors.white, 0.2),
     borderWidth: 3,
-    borderColor: '#ffffff',
+    borderColor: Colors.white,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { color: '#ffffff', fontSize: 28, fontWeight: '900' },
+  avatarText: { color: Colors.text, fontSize: 28, fontWeight: '900' },
   userName: {
-    color: '#ffffff',
+    color: Colors.text,
     fontSize: 18,
     fontWeight: '800',
     marginBottom: 2,
     textAlign: 'center',
   },
   userEmail: {
-    color: 'rgba(255,255,255,0.8)',
+    color: withAlpha(Colors.white, 0.8),
     fontSize: 13,
     fontWeight: '500',
     marginBottom: 12,
@@ -564,7 +564,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: withAlpha(Colors.white, 0.2),
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -579,9 +579,14 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 20,
   },
-  saveBannerTitle: { color: '#FFFFFF', fontSize: 16, fontWeight: '800' },
-  saveBannerText: { color: 'rgba(255,255,255,0.9)', fontSize: 13, marginTop: 2, lineHeight: 18 },
-  saveBannerChevron: { color: '#FFFFFF', fontSize: 28, fontWeight: '300' },
+  saveBannerTitle: { color: Colors.text, fontSize: 16, fontWeight: '800' },
+  saveBannerText: {
+    color: withAlpha(Colors.white, 0.9),
+    fontSize: 13,
+    marginTop: 2,
+    lineHeight: 18,
+  },
+  saveBannerChevron: { color: Colors.text, fontSize: 28, fontWeight: '300' },
   plansTitle: { color: Colors.text, fontSize: 20, fontWeight: '800', marginBottom: 12 },
   plansBtn: {
     backgroundColor: Colors.brandBlue,
@@ -590,7 +595,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 4,
   },
-  plansBtnText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
+  plansBtnText: { color: Colors.text, fontSize: 16, fontWeight: '700' },
   planBadge: {
     alignSelf: 'center',
     flexDirection: 'row',
@@ -658,24 +663,24 @@ const styles = StyleSheet.create({
   channelCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#182437',
+    backgroundColor: Colors.surfaceElevated,
     borderRadius: 12,
     padding: 12,
     borderWidth: 0.5,
-    borderColor: '#22304A',
+    borderColor: Colors.border,
   },
-  channelName: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
+  channelName: { fontSize: 14, fontWeight: '700', color: Colors.text },
   channelMeta: { flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 8 },
   statusBadge: { borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
   statusText: { fontSize: 11, fontWeight: '700' },
-  memberCount: { fontSize: 11, color: '#6B7C97' },
+  memberCount: { fontSize: 11, color: Colors.textMuted },
   manageBtn: {
-    backgroundColor: '#2E7DFF',
+    backgroundColor: Colors.brandBlue,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  manageBtnText: { color: '#FFFFFF', fontSize: 12, fontWeight: '700' },
+  manageBtnText: { color: Colors.text, fontSize: 12, fontWeight: '700' },
   bottomButtons: { paddingHorizontal: 16, marginTop: 16, marginBottom: 16, gap: 12 },
   logoutBtn: {
     backgroundColor: Colors.brandBlue,
@@ -683,9 +688,9 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
   },
-  logoutBtnText: { color: '#ffffff', fontSize: 15, fontWeight: '800' },
+  logoutBtnText: { color: Colors.text, fontSize: 15, fontWeight: '800' },
   deleteBtn: {
-    backgroundColor: '#2A1620',
+    backgroundColor: Colors.dangerDim,
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',

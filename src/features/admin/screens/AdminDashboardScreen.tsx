@@ -27,98 +27,98 @@ const TOOLS: { icon: IconName; label: string; hint: string; tint: string; href: 
     icon: 'user',
     label: 'Users',
     hint: 'Premium, admins, uploads, bans',
-    tint: 'rgba(46,125,255,0.22)',
+    tint: Colors.brandBlueDim,
     href: '/admin/users',
   },
   {
     icon: 'check-circle',
     label: 'User approvals',
     hint: 'Approve new accounts',
-    tint: 'rgba(46,212,122,0.2)',
+    tint: Colors.successDim,
     href: '/admin/user-approvals',
   },
   {
     icon: 'diamond',
     label: 'Subscribers',
     hint: 'Active, ending, expired',
-    tint: 'rgba(227,179,65,0.2)',
+    tint: Colors.warningDim,
     href: '/admin/subscribers',
   },
   {
     icon: 'chart',
     label: 'Payments',
     hint: 'UPI, Razorpay, Sabpaisa',
-    tint: 'rgba(0,212,255,0.18)',
+    tint: Colors.brandCyanDim,
     href: '/admin/payments',
   },
   {
     icon: 'package',
     label: 'Plans & prices',
     hint: 'Names, prices, on sale',
-    tint: 'rgba(180,169,255,0.2)',
+    tint: Colors.lavenderDim,
     href: '/admin/plans',
   },
   {
     icon: 'broadcast',
     label: 'Channels',
     hint: 'Edit, hide, suspend, delete',
-    tint: 'rgba(46,125,255,0.22)',
+    tint: Colors.brandBlueDim,
     href: '/admin/channels',
   },
   {
     icon: 'clipboard',
     label: 'Pending channels',
     hint: 'New channels to review',
-    tint: 'rgba(255,179,71,0.2)',
+    tint: Colors.warningDim,
     href: '/admin/pending-channels',
   },
   {
     icon: 'edit',
     label: 'Pending content',
     hint: 'Uploads to review',
-    tint: 'rgba(255,179,71,0.2)',
+    tint: Colors.warningDim,
     href: '/admin/pending-channel-content',
   },
   {
     icon: 'film',
     label: 'Content & access',
     hint: 'Publish, free/premium, edit',
-    tint: 'rgba(180,169,255,0.2)',
+    tint: Colors.lavenderDim,
     href: '/admin/content',
   },
   {
     icon: 'upload',
     label: 'Upload',
     hint: 'Add videos to any channel',
-    tint: 'rgba(46,125,255,0.22)',
+    tint: Colors.brandBlueDim,
     href: '/admin/upload',
   },
   {
     icon: 'bell',
     label: 'Announcement',
     hint: 'Message all users',
-    tint: 'rgba(0,212,255,0.18)',
+    tint: Colors.brandCyanDim,
     href: '/admin/broadcast',
   },
   {
     icon: 'flag',
     label: 'Reports',
     hint: 'Reported content and users',
-    tint: 'rgba(255,77,109,0.2)',
+    tint: Colors.dangerDim,
     href: '/admin/reports',
   },
   {
     icon: 'chart',
     label: 'Channel activity',
     hint: 'What is growing',
-    tint: 'rgba(46,212,122,0.2)',
+    tint: Colors.successDim,
     href: '/admin/channel-activity',
   },
   {
     icon: 'history',
     label: 'Audit log',
     hint: 'Every admin action',
-    tint: 'rgba(159,176,201,0.18)',
+    tint: Colors.neutralDim,
     href: '/admin/audit',
   },
 ];
@@ -287,7 +287,7 @@ export default function AdminScreen() {
           disabled={reviewing === ch.id}
         >
           {reviewing === ch.id ? (
-            <ActivityIndicator color="#000" size="small" />
+            <ActivityIndicator color={Colors.black} size="small" />
           ) : (
             <Text style={styles.approveTxt}>✓ Approve</Text>
           )}
@@ -337,7 +337,7 @@ export default function AdminScreen() {
             disabled={reviewing === post.id}
           >
             {reviewing === post.id ? (
-              <ActivityIndicator color="#000" size="small" />
+              <ActivityIndicator color={Colors.black} size="small" />
             ) : (
               <Text style={styles.approveTxt}>✓ Approve</Text>
             )}
@@ -558,7 +558,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     backgroundColor: Colors.dangerDim,
     borderWidth: 0.5,
-    borderColor: 'rgba(248,81,73,0.3)',
+    borderColor: Colors.dangerBorder,
     alignItems: 'center',
   },
   rejectTxt: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.danger },
@@ -569,7 +569,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.brandBlue,
     alignItems: 'center',
   },
-  approveTxt: { fontSize: FontSize.md, fontWeight: FontWeight.extrabold, color: '#000' },
+  approveTxt: { fontSize: FontSize.md, fontWeight: FontWeight.extrabold, color: Colors.black },
   emptyState: { alignItems: 'center', paddingTop: 60, paddingHorizontal: Spacing.xxxl },
   emptyTitle: {
     fontSize: FontSize.lg,

@@ -5,7 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Icon } from '@/components/ui/Icon';
 import { PressScale } from '@/components/ui/Press';
 import { PostService, ChannelPost } from '@/features/content/api/postsApi';
-import { Colors, Radius, FontWeight } from '@/theme';
+import { Colors, FontWeight, Radius, withAlpha } from '@/theme';
 
 /**
  * Full-width hero for the first Featured title. The gradient keeps the white title readable over
@@ -32,7 +32,7 @@ export const HeroCard = memo(({ item, onPress }: { item: ChannelPost; onPress: (
         </View>
       )}
       <LinearGradient
-        colors={['transparent', 'rgba(11,18,32,0.55)', 'rgba(11,18,32,0.97)']}
+        colors={['transparent', withAlpha(Colors.bg, 0.55), withAlpha(Colors.bg, 0.97)]}
         locations={[0, 0.45, 1]}
         style={styles.heroScrim}
       />
@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
   heroBody: { position: 'absolute', left: 20, right: 20, bottom: 22 },
   heroTag: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(0,212,255,0.16)',
+    backgroundColor: Colors.brandCyanDim,
     borderWidth: 1,
     borderColor: Colors.brandCyan,
     borderRadius: Radius.sm,
@@ -93,17 +93,17 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   heroTagFree: {
-    backgroundColor: 'rgba(46,212,122,0.16)',
+    backgroundColor: Colors.successDim,
     borderColor: Colors.success,
   },
   heroTagText: {
-    color: '#FFFFFF',
+    color: Colors.text,
     fontSize: 11,
     fontWeight: FontWeight.extrabold,
     letterSpacing: 0.8,
   },
   heroTitle: {
-    color: '#FFFFFF',
+    color: Colors.text,
     fontSize: 30,
     fontWeight: '800',
     letterSpacing: -0.6,
@@ -115,12 +115,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     alignSelf: 'flex-start',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.white,
     borderRadius: Radius.full,
     paddingHorizontal: 22,
     paddingVertical: 11,
     marginTop: 16,
   },
   heroPlayText: { color: Colors.textInverse, fontSize: 15, fontWeight: FontWeight.bold },
-  heroPlaceholder: { backgroundColor: '#182437', alignItems: 'center', justifyContent: 'center' },
+  heroPlaceholder: {
+    backgroundColor: Colors.surfaceElevated,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

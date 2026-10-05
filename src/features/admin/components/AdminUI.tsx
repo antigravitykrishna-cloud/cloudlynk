@@ -55,10 +55,10 @@ export function Chip({
 }
 
 const TONES = {
-  neutral: { bg: 'rgba(159,176,201,0.12)', fg: Colors.textSecondary },
-  good: { bg: 'rgba(46,212,122,0.14)', fg: Colors.success },
-  warn: { bg: 'rgba(255,179,71,0.14)', fg: Colors.warning },
-  bad: { bg: 'rgba(255,77,109,0.14)', fg: Colors.danger },
+  neutral: { bg: Colors.neutralDim, fg: Colors.textSecondary },
+  good: { bg: Colors.successDim, fg: Colors.success },
+  warn: { bg: Colors.warningDim, fg: Colors.warning },
+  bad: { bg: Colors.dangerDim, fg: Colors.danger },
   brand: { bg: Colors.brandBlueDim, fg: Colors.brandBlue },
 };
 
@@ -79,13 +79,13 @@ export function ActionButton({
     tone === 'brand'
       ? Colors.brandBlue
       : tone === 'bad'
-        ? 'rgba(255,77,109,0.14)'
+        ? Colors.dangerDim
         : tone === 'good'
-          ? 'rgba(46,212,122,0.16)'
+          ? Colors.successDim
           : Colors.surfaceElevated;
   const fg =
     tone === 'brand'
-      ? '#FFFFFF'
+      ? Colors.white
       : tone === 'bad'
         ? Colors.danger
         : tone === 'good'
@@ -278,5 +278,5 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 6,
   },
-  badgeTxt: { color: '#FFFFFF', fontSize: FontSize.xs, fontWeight: FontWeight.extrabold },
+  badgeTxt: { color: Colors.text, fontSize: FontSize.xs, fontWeight: FontWeight.extrabold },
 });

@@ -17,7 +17,7 @@ import { useEvent } from 'expo';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ScreenOrientation from 'expo-screen-orientation';
-import { Colors, Radius, FontSize } from '@/theme';
+import { Colors, FontSize, Radius, withAlpha } from '@/theme';
 import { useResumePosition } from '@/features/player/hooks/useResumePosition';
 import { formatClock } from '@/utils/format';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -419,7 +419,7 @@ export function VideoPlayerOverlay({
 }
 
 const styles = StyleSheet.create({
-  container: { backgroundColor: '#000', zIndex: 100 },
+  container: { backgroundColor: Colors.black, zIndex: 100 },
   video: { flex: 1, width: '100%', height: '100%' },
 
   // 80px edge strips — only for double-tap skip, don't block center or native controls
@@ -437,16 +437,16 @@ const styles = StyleSheet.create({
   },
   topRight: { flexDirection: 'row', gap: 8 },
   btn: {
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: withAlpha(Colors.black, 0.7),
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  btnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  btnText: { color: Colors.text, fontSize: 14, fontWeight: '700' },
 
   resumeOverlay: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(0,0,0,0.85)',
+    backgroundColor: withAlpha(Colors.black, 0.85),
     justifyContent: 'flex-end',
     alignItems: 'center',
     paddingBottom: 80,
@@ -482,7 +482,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: 'center',
   },
-  resumeBtnTxt: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  resumeBtnTxt: { color: Colors.text, fontSize: 15, fontWeight: '800' },
   restartBtn: {
     flex: 1,
     backgroundColor: Colors.surfaceElevated,
@@ -504,20 +504,20 @@ const styles = StyleSheet.create({
   },
   episodeBtn: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: withAlpha(Colors.black, 0.7),
     borderRadius: 8,
     paddingVertical: 10,
     alignItems: 'center',
     marginHorizontal: 4,
   },
-  episodeBtnTxt: { color: '#fff', fontSize: 13, fontWeight: '700' },
+  episodeBtnTxt: { color: Colors.text, fontSize: 13, fontWeight: '700' },
 
   settingsPanel: {
     position: 'absolute',
     bottom: 130,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(0,0,0,0.92)',
+    backgroundColor: withAlpha(Colors.black, 0.92),
     paddingHorizontal: 16,
     paddingVertical: 10,
     zIndex: 35,
@@ -547,7 +547,7 @@ const styles = StyleSheet.create({
   },
   compactChipActive: { backgroundColor: Colors.brandBlue, borderColor: Colors.brandBlue },
   compactChipTxt: { fontSize: 12, fontWeight: '700', color: Colors.textSecondary },
-  compactChipTxtActive: { color: '#ffffff' },
+  compactChipTxtActive: { color: Colors.text },
 
   bottomRow: {
     position: 'absolute',
@@ -558,13 +558,19 @@ const styles = StyleSheet.create({
     gap: 10,
     zIndex: 20,
   },
-  playIcon: { color: '#fff', fontSize: 20, width: 28, textAlign: 'center' },
-  timeText: { color: '#fff', fontSize: 12, fontWeight: '700', minWidth: 40, textAlign: 'center' },
+  playIcon: { color: Colors.text, fontSize: 20, width: 28, textAlign: 'center' },
+  timeText: {
+    color: Colors.text,
+    fontSize: 12,
+    fontWeight: '700',
+    minWidth: 40,
+    textAlign: 'center',
+  },
   progressTrack: { flex: 1, height: 28, justifyContent: 'center' },
   progressBg: {
     height: 4,
     borderRadius: 4,
-    backgroundColor: 'rgba(255,255,255,0.3)',
+    backgroundColor: withAlpha(Colors.white, 0.3),
     overflow: 'hidden',
   },
   progressFill: { height: 4, borderRadius: 4, backgroundColor: Colors.brandBlue },
@@ -574,11 +580,11 @@ const styles = StyleSheet.create({
     top: '40%',
     paddingHorizontal: 20,
     paddingVertical: 12,
-    backgroundColor: 'rgba(0,0,0,0.65)',
+    backgroundColor: withAlpha(Colors.black, 0.65),
     borderRadius: 24,
     zIndex: 50,
   },
   skipLeft: { left: 20 },
   skipRight: { right: 20 },
-  skipTxt: { color: '#fff', fontSize: 16, fontWeight: '800' },
+  skipTxt: { color: Colors.text, fontSize: 16, fontWeight: '800' },
 });

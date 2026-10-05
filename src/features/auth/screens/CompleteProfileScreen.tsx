@@ -139,7 +139,7 @@ export default function CompleteProfileScreen() {
           disabled={loading || !agreed}
         >
           {loading ? (
-            <ActivityIndicator color="#000" />
+            <ActivityIndicator color={Colors.black} />
           ) : (
             <Text style={styles.btnText}>Continue</Text>
           )}
@@ -188,24 +188,6 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.semibold,
     marginBottom: Spacing.xl,
   },
-  label: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
-    color: Colors.textSecondary,
-    marginBottom: Spacing.xs,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-  },
-  input: {
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.md,
-    borderWidth: 0.5,
-    borderColor: Colors.border,
-    color: Colors.text,
-    fontSize: FontSize.base,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-  },
   agreeRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: Spacing.lg },
   checkbox: {
     width: 20,
@@ -218,7 +200,7 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   checkboxChecked: { backgroundColor: Colors.brandBlue, borderColor: Colors.brandBlue },
-  checkmark: { color: '#000', fontSize: 13, fontWeight: '900' },
+  checkmark: { color: Colors.black, fontSize: 13, fontWeight: '900' },
   terms: { flex: 1, fontSize: FontSize.sm, color: Colors.textMuted, lineHeight: 18 },
   btn: {
     backgroundColor: Colors.brandBlue,
@@ -226,7 +208,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
   },
-  btnText: { color: '#000', fontSize: FontSize.base, fontWeight: FontWeight.extrabold },
+  btnText: { color: Colors.black, fontSize: FontSize.base, fontWeight: FontWeight.extrabold },
   cancelBtn: { alignItems: 'center', marginTop: Spacing.lg },
   cancelText: { color: Colors.textMuted, fontSize: FontSize.sm, fontWeight: FontWeight.bold },
 });

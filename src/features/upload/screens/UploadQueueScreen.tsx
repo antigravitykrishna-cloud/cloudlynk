@@ -16,7 +16,7 @@ import {
 import { showAlert } from '@/components/ui/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Colors, Radius, FontSize } from '@/theme';
+import { Colors, FontSize, Radius } from '@/theme';
 import { useUploadQueue, QueueItem } from '@/features/upload/hooks/useUploadQueue';
 import { StreamService, STREAM_MAX_MB } from '@/features/player/api/streamApi';
 import { Icon } from '@/components/ui/Icon';
@@ -332,10 +332,16 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   backBtn: { width: 70 },
-  backTxt: { color: '#ffffff', fontSize: 14, fontWeight: '600' },
-  headerTitle: { color: '#ffffff', fontSize: 18, fontWeight: '800', flex: 1, textAlign: 'center' },
+  backTxt: { color: Colors.text, fontSize: 14, fontWeight: '600' },
+  headerTitle: {
+    color: Colors.text,
+    fontSize: 18,
+    fontWeight: '800',
+    flex: 1,
+    textAlign: 'center',
+  },
   addBtn: { width: 70, alignItems: 'flex-end' },
-  addBtnTxt: { color: '#ffffff', fontSize: 14, fontWeight: '800' },
+  addBtnTxt: { color: Colors.text, fontSize: 14, fontWeight: '800' },
   statsBar: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -359,7 +365,7 @@ const styles = StyleSheet.create({
   },
   controlBtnPrimary: { backgroundColor: Colors.brandBlue, borderColor: Colors.brandBlue },
   controlBtnTxt: { fontSize: 13, fontWeight: '800', color: Colors.textSecondary },
-  controlBtnTxtPrimary: { color: '#ffffff' },
+  controlBtnTxtPrimary: { color: Colors.text },
   banner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -417,7 +423,6 @@ const styles = StyleSheet.create({
   actionBtn: { paddingVertical: 4, paddingHorizontal: 4 },
   actionBtnTxt: { fontSize: 12, fontWeight: '700', color: Colors.textSecondary },
   emptyState: { alignItems: 'center', paddingTop: 60, paddingHorizontal: 30 },
-  emptyIcon: { fontSize: 48, marginBottom: 16 },
   emptyTitle: { fontSize: 18, fontWeight: '800', color: Colors.text, marginBottom: 8 },
   emptyDesc: {
     fontSize: 13,
@@ -432,5 +437,5 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: Radius.sm,
   },
-  emptyAddTxt: { color: '#ffffff', fontSize: 14, fontWeight: '800' },
+  emptyAddTxt: { color: Colors.text, fontSize: 14, fontWeight: '800' },
 });

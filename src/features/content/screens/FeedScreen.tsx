@@ -7,7 +7,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { CloudlynkLogo } from '@/components/ui/CloudlynkLogo';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { PostService, GuestChannelPost } from '@/features/content/api/postsApi';
-import { Colors } from '@/theme';
+import { Colors, withAlpha } from '@/theme';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { Icon } from '@/components/ui/Icon';
 import { formatTimeAgo } from '@/utils/format';
@@ -171,7 +171,7 @@ export default function FeedScreen() {
                     )}
                     {locked && (
                       <View style={styles.lockBadge}>
-                        <Icon name="lock" size={12} color="#FFFFFF" />
+                        <Icon name="lock" size={12} color={Colors.text} />
                       </View>
                     )}
                   </View>
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  headerTitle: { color: '#ffffff', fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
+  headerTitle: { color: Colors.text, fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
   list: { paddingHorizontal: 16, paddingTop: 12 },
   card: {
     flexDirection: 'row',
@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: 'rgba(0,0,0,0.72)',
+    backgroundColor: withAlpha(Colors.black, 0.72),
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -272,5 +272,5 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: Colors.brandBlue,
   },
-  retryBtnText: { fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
+  retryBtnText: { fontSize: 16, fontWeight: '700', color: Colors.text },
 });

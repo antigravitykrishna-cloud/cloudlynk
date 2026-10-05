@@ -159,7 +159,7 @@ export async function openRazorpay(
 export function sabpaisaFormHtml(order: SabpaisaOrder): string {
   const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
   return `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="background:#0B1220;color:#9FB0C9;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
+<body style="background:${Colors.bg};color:${Colors.textSecondary};font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
 <p>Opening Sabpaisa…</p>
 <form id="f" method="post" action="${esc(order.url)}">
 <input type="hidden" name="encData" value="${esc(order.encData)}">
