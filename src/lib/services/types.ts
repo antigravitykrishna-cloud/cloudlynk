@@ -36,28 +36,3 @@ export interface IIapService {
   // from Google's own record of the purchase token (see verify-play-receipt).
   verifyReceipt(purchaseToken: string, planCode?: string): Promise<PurchaseResult>;
 }
-
-export interface IAnalyticsService {
-  logEvent(name: string, properties?: Record<string, unknown>): void;
-  setUserId(userId: string): void;
-  logError(error: Error, context?: Record<string, unknown>): void;
-}
-
-export interface IAdsService {
-  showBanner(): Promise<void>;
-  hideBanner(): Promise<void>;
-  showInterstitial(): Promise<void>;
-}
-
-export interface IErrorService {
-  captureError(error: Error, context?: Record<string, unknown>): void;
-  captureMessage(message: string, context?: Record<string, unknown>): void;
-}
-
-export interface IPushService {
-  requestPermission(): Promise<boolean>;
-  getToken(): Promise<string | null>;
-  onMessage(
-    handler: (message: { title: string; body: string; data?: Record<string, unknown> }) => void,
-  ): () => void;
-}

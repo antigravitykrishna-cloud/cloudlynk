@@ -6,7 +6,6 @@ import * as SplashScreen from 'expo-splash-screen';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { queryClient, asyncStoragePersister } from '@/lib/queryClient';
-import { ServiceProvider, createServices } from '@/lib/services';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import { AgeGate } from '@/components/auth/AgeGate';
 import { FeedbackHost } from '@/components/ui/Feedback';
@@ -18,8 +17,6 @@ import { Icon } from '@/components/ui/Icon';
 import { peekPostLoginRoute, setPostLoginRoute } from '@/lib/auth/postLogin';
 
 SplashScreen.preventAutoHideAsync();
-
-const services = createServices();
 
 export default function RootLayout() {
   const { session, profile, profileChecked, loading, isPaidUser, approvalStatus, isGuest } =
@@ -139,48 +136,43 @@ export default function RootLayout() {
         client={queryClient}
         persistOptions={{ persister: asyncStoragePersister }}
       >
-        <ServiceProvider value={services}>
-          <GestureHandlerRootView style={{ flex: 1, backgroundColor: Colors.bg }}>
-            <StatusBar style="light" />
-            <Stack
-              screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.bg } }}
-            >
-              <Stack.Screen name="(auth)" />
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen
-                name="admin"
-                options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
-              />
-              <Stack.Screen
-                name="notifications"
-                options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
-              />
-              <Stack.Screen
-                name="create-content"
-                options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
-              />
-              <Stack.Screen name="edit-profile" options={{ animation: 'slide_from_right' }} />
-              <Stack.Screen
-                name="save-account"
-                options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
-              />
-              <Stack.Screen name="delete-account" options={{ animation: 'slide_from_right' }} />
-              <Stack.Screen name="refund-policy" options={{ animation: 'slide_from_right' }} />
-              <Stack.Screen
-                name="community-guidelines"
-                options={{ animation: 'slide_from_right' }}
-              />
-            </Stack>
+        <GestureHandlerRootView style={{ flex: 1, backgroundColor: Colors.bg }}>
+          <StatusBar style="light" />
+          <Stack
+            screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.bg } }}
+          >
+            <Stack.Screen name="(auth)" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen
+              name="admin"
+              options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+            />
+            <Stack.Screen
+              name="notifications"
+              options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+            />
+            <Stack.Screen
+              name="create-content"
+              options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+            />
+            <Stack.Screen name="edit-profile" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen
+              name="save-account"
+              options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+            />
+            <Stack.Screen name="delete-account" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="refund-policy" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="community-guidelines" options={{ animation: 'slide_from_right' }} />
+          </Stack>
 
-            {/* Guests never reach signup, where the 18+ birth-year check
+          {/* Guests never reach signup, where the 18+ birth-year check
                 lives — so without this, opening the app to visitors would
                 remove the only age gate in the product. Signed-in accounts
                 already passed that check and are not asked again. */}
-            <AgeGate enabled={!session && !loading && !isBlocked} />
-            {/* Last child, so branded dialogs/toasts paint over every screen. */}
-            <FeedbackHost />
-          </GestureHandlerRootView>
-        </ServiceProvider>
+          <AgeGate enabled={!session && !loading && !isBlocked} />
+          {/* Last child, so branded dialogs/toasts paint over every screen. */}
+          <FeedbackHost />
+        </GestureHandlerRootView>
       </PersistQueryClientProvider>
     </ErrorBoundary>
   );

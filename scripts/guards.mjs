@@ -107,9 +107,6 @@ if (existsSync(join(ROOT, 'app.json'))) {
   if (extra.IAP_PROVIDER === 'noop') {
     notes.push('IAP_PROVIDER is "noop" — purchases fail with "not available yet". Set "google_play" once the Play products are Activated.');
   }
-  if (String(extra.ADMOB_APP_ID ?? '').includes('3940256099942544')) {
-    notes.push('ADMOB_APP_ID is still a Google TEST unit id. Replace it or drop the ads dependency before release.');
-  }
 }
 
 for (const n of notes) console.log(`note: ${n}`);
