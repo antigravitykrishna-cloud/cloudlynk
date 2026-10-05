@@ -1,45 +1,36 @@
-// verify-play-receipt — server-side Google Play purchase verification.
+// verify-play-receipt -- confirms a Google Play purchase with Google before granting Premium.
 //
-// Why this exists: Google Play's Payments policy requires that content
-// unlocked by a purchase inside the app be verified server-side against
-// Google, not trusted from whatever the client reports. `GooglePlayIapService`
-// (lib/services/iap.ts) calls this function with the raw purchase token from
-// react-native-iap; this function calls the Play Developer API with a
-// service-account credential (never exposed to the client), acknowledges the
-// purchase (Google auto-refunds anything left unacknowledged for 3 days),
-// records it in `iap_purchases` (so `play-rtdn-webhook` can find this user
-// again on renewal/cancellation/refund), and only then marks the user's
-// profile as paid. See docs/archive/PLAY_STORE_COMPLIANCE_AUDIT.md Finding 1.
+// Play's Payments policy requires purchases to be verified on a server, not trusted from the app.
+// The app (premium/billing/googlePlayBilling.ts) sends the raw purchase token; this function asks
+// the Play Developer API about it with a service account the app never sees, acknowledges it
+// (Google refunds anything unacknowledged after 3 days), records it in iap_purchases (so
+// play-rtdn-webhook can find the account on renewal or refund), and only then grants the plan.
 //
-// Required secrets (set via `supabase secrets set`):
-//   GOOGLE_SERVICE_ACCOUNT_JSON  — see supabase/functions/_shared/play-billing.ts
-//   SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY — already used by other functions.
+// Trust boundary: every plan is a base plan of ONE Play product, so the token must be for that
+// product, and the plan granted is the base plan GOOGLE reports -- never the one the app claims.
 //
-// This function does NOT create the Play Console products or the service
-// account itself — those are Play Console / Google Cloud Console steps that
-// have to be done by whoever owns the developer account. See
-// BACKEND_REFERENCE.md "Payments — Google Play Billing" for the full checklist.
+// One purchase, one account: the first account to verify a token owns it. The one exception is a
+// purchase made on a guest ID, which moves to the caller (a guest cannot sign back in, so the
+// plan would otherwise be stranded) and is revoked from the guest.
+//
+// Secrets: GOOGLE_SERVICE_ACCOUNT_JSON (see _shared/play-billing.ts).
+// Request:  POST { purchaseToken, packageName, planCode? }   (signed in; planCode is advisory)
+// Response: { valid: true, planCode, expiresAt } or { valid: false, error }
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { corsHeaders, jsonResponse } from '../_shared/http.ts';
+import { HttpError, readJson, servePost, stringField } from '../_shared/http.ts';
 import {
-  getSubscriptionStatus,
   acknowledgeSubscription,
+  getSubscriptionStatus,
   planStatusFor,
+  type PlaySubscriptionStatus,
 } from '../_shared/play-billing.ts';
+import { adminClient, requireCaller, type SupabaseClient } from '../_shared/supabase.ts';
 
-// All four Cloudlynk plans are base plans under ONE Play Console subscription
-// product. Checking the product id alone proves nothing now — every purchase
-// token is for `cloudlynk_premium` regardless of plan — so the trust boundary
-// is: (1) the token must be for this product, and (2) the granted plan is
-// whatever Google says the token's *base plan* is, never what the client
-// claims. `_shared/play-billing.ts` already surfaces `basePlanId` for this.
-const EXPECTED_PRODUCT_ID = 'cloudlynk_premium';
+const PREMIUM_PRODUCT_ID = 'cloudlynk_premium';
 
-// basePlanId (from Google) -> this app's plan code. Identical strings today
-// (see DEFAULT_PLANS in lib/services/iap.ts), but kept as an explicit map so
-// a future rename of one side doesn't silently mis-grant.
-const BASE_PLAN_ID_TO_PLAN_CODE: Record<string, string> = {
+// Google's base plan id -> our plan code (subscription_plans.code). Kept as an explicit map so
+// renaming one side can never silently grant the wrong plan.
+const PLAN_CODE_BY_BASE_PLAN: Record<string, string> = {
   'trial-3d': 'trial',
   'silver-7d': 'silver-7d',
   'gold-1m': 'gold-1m',
@@ -47,162 +38,61 @@ const BASE_PLAN_ID_TO_PLAN_CODE: Record<string, string> = {
   'diamond-1y': 'diamond-1y',
 };
 
-function verifiedProductId(raw: unknown): string | null {
-  if (!raw || typeof raw !== 'object') return null;
-  const lineItems = (raw as Record<string, unknown>).lineItems;
-  if (!Array.isArray(lineItems) || lineItems.length === 0) return null;
-  const productId = (lineItems[0] as Record<string, unknown>)?.productId;
-  return typeof productId === 'string' ? productId : null;
-}
-
-Deno.serve(async req => {
-  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders() });
-  if (req.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
-
-  try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) throw new Error('MISSING_AUTH');
-
-    const supabaseUser = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } },
-    );
-    const {
-      data: { user },
-      error: userErr,
-    } = await supabaseUser.auth.getUser();
-    if (userErr || !user) throw new Error('UNAUTHORIZED');
-
-    // `planCode` is advisory only — the server derives the real plan below.
-    const { purchaseToken, planCode: claimedPlanCode, packageName } = await req.json();
+servePost(
+  'verify-play-receipt',
+  async (req, respond) => {
+    const { user } = await requireCaller(req);
+    const body = await readJson(req);
+    const purchaseToken = stringField(body, 'purchaseToken');
+    const packageName = stringField(body, 'packageName');
+    const claimedPlanCode = stringField(body, 'planCode');
     if (!purchaseToken || !packageName) {
-      return jsonResponse({ valid: false, error: 'Missing purchaseToken or packageName.' }, 400);
+      return respond({ valid: false, error: 'Missing purchaseToken or packageName.' }, 400);
     }
 
-    const status = await getSubscriptionStatus(packageName, purchaseToken);
+    const status = await fetchStatus(packageName, purchaseToken);
     if (!status.valid) {
-      return jsonResponse({
-        valid: false,
-        error: 'Purchase is not active according to Google Play.',
-      });
+      return respond({ valid: false, error: 'Purchase is not active according to Google Play.' });
     }
 
-    // Trust boundary. Do NOT grant what the client claimed — grant what
-    // Google says this purchase token is actually for.
-    const actualProductId = verifiedProductId(status.raw);
-    if (actualProductId !== EXPECTED_PRODUCT_ID) {
-      console.error(
-        `verify-play-receipt: wrong product — token is for "${actualProductId}", expected "${EXPECTED_PRODUCT_ID}"`,
-      );
-      return jsonResponse(
-        { valid: false, error: "Purchase does not match this app's subscription product." },
+    const productId = productIdOf(status.raw);
+    if (productId !== PREMIUM_PRODUCT_ID) {
+      console.error(`verify-play-receipt: token is for "${productId}", not ${PREMIUM_PRODUCT_ID}`);
+      throw new HttpError(400, "Purchase does not match this app's subscription product.");
+    }
+    const planCode = status.basePlanId ? PLAN_CODE_BY_BASE_PLAN[status.basePlanId] : undefined;
+    if (!planCode) {
+      console.error(`verify-play-receipt: unmapped base plan "${status.basePlanId}"`);
+      throw new HttpError(
         400,
+        "This purchase's plan could not be identified. If you just subscribed, try again shortly.",
       );
     }
-
-    const derivedPlanCode = status.basePlanId
-      ? BASE_PLAN_ID_TO_PLAN_CODE[status.basePlanId]
-      : undefined;
-    if (!derivedPlanCode) {
-      console.error(
-        `verify-play-receipt: unmapped basePlanId "${status.basePlanId}" — Play Console base plans not configured, or not a subscription purchase`,
-      );
-      return jsonResponse(
-        {
-          valid: false,
-          error:
-            "This purchase's plan could not be identified. If you just subscribed, try again shortly.",
-        },
-        400,
-      );
-    }
-    if (claimedPlanCode && claimedPlanCode !== derivedPlanCode) {
-      // Not fatal — grant what they actually paid for. Could be a stale UI or a manipulated client.
+    if (claimedPlanCode && claimedPlanCode !== planCode) {
+      // Not fatal: grant what was actually paid for (a stale screen, or a modified app).
       console.warn(
-        `verify-play-receipt: client claimed "${claimedPlanCode}" but Google says "${derivedPlanCode}" — granting the derived plan`,
+        `verify-play-receipt: app claimed "${claimedPlanCode}", Google says "${planCode}"`,
       );
     }
-    const planCode = derivedPlanCode;
+
+    const db = adminClient();
+    await claimPurchase(db, purchaseToken, user.id);
+
+    const acknowledged =
+      status.acknowledgementState === 'ACKNOWLEDGEMENT_STATE_ACKNOWLEDGED' ||
+      (await acknowledgeSubscription(packageName, productId, purchaseToken));
 
     const { planStatus, expiresAtIso } = planStatusFor(status);
-
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      { auth: { autoRefreshToken: false, persistSession: false } },
-    );
-
-    // One purchase, one account. Without this, anyone holding a purchase
-    // token -- the buyer passing it around, or a modified app -- could call
-    // this function from any number of accounts, and each would be granted
-    // Premium (the upsert below would even move the token to the newest
-    // caller). The first account to verify a token owns it.
-    const { data: existing } = await supabaseAdmin
-      .from('iap_purchases')
-      .select('user_id')
-      .eq('purchase_token', purchaseToken)
-      .maybeSingle();
-    if (existing?.user_id && existing.user_id !== user.id) {
-      // Exception: the purchase was made on a GUEST account (v89). A guest
-      // cannot sign back in after reinstalling or clearing the app, so
-      // without this their subscription would be stranded on an account
-      // nobody can reach. Only someone signed in to the buying Google Play
-      // account can hand us this token, and the purchase MOVES (the old
-      // guest loses it), so it is still one purchase, one account.
-      const { data: owner } = await supabaseAdmin
-        .from('profiles')
-        .select('is_guest')
-        .eq('id', existing.user_id)
-        .maybeSingle();
-      if (!owner?.is_guest) {
-        console.warn(
-          `verify-play-receipt: token already belongs to another account (caller ${user.id})`,
-        );
-        return jsonResponse(
-          {
-            valid: false,
-            error:
-              'This purchase is linked to a different Cloudlynk account. Sign in with the account you bought it on.',
-          },
-          409,
-        );
-      }
-      console.log(
-        `verify-play-receipt: moving purchase from guest ${existing.user_id} to ${user.id}`,
-      );
-      const { error: revokeErr } = await supabaseAdmin.rpc('apply_play_entitlement', {
-        p_user_id: existing.user_id,
-        p_plan_status: 'free',
-        p_expires_at: null,
-      });
-      if (revokeErr) {
-        console.error('verify-play-receipt: could not revoke the old guest:', revokeErr.message);
-        return jsonResponse(
-          { valid: false, error: 'Could not move this purchase. Please try again.' },
-          500,
-        );
-      }
-    }
-
-    // Acknowledge BEFORE granting access is not required, but must happen
-    // within 3 days of purchase regardless — do it here, at the one moment
-    // we're guaranteed to see this purchase token for the first time.
-    let acknowledged = status.acknowledgementState === 'ACKNOWLEDGEMENT_STATE_ACKNOWLEDGED';
-    if (!acknowledged) {
-      acknowledged = await acknowledgeSubscription(packageName, actualProductId, purchaseToken);
-    }
-
-    const { error: upsertErr } = await supabaseAdmin.from('iap_purchases').upsert(
+    const { error: recordError } = await db.from('iap_purchases').upsert(
       {
         user_id: user.id,
         purchase_token: purchaseToken,
-        product_id: actualProductId,
+        product_id: productId,
         plan_code: planCode,
         base_plan_id: status.basePlanId,
         package_name: packageName,
         platform: 'android',
-        status: planStatus === 'active' ? 'active' : planStatus,
+        status: planStatus,
         expires_at: expiresAtIso,
         acknowledged,
         last_notification_type: 'INITIAL_PURCHASE',
@@ -210,54 +100,84 @@ Deno.serve(async req => {
       },
       { onConflict: 'purchase_token' },
     );
-    if (upsertErr) {
-      console.error('verify-play-receipt: failed to record purchase:', upsertErr.message);
-    }
+    if (recordError)
+      console.error('verify-play-receipt: recording purchase failed:', recordError.message);
 
-    // v58: this MUST go through apply_play_entitlement, not a direct UPDATE.
-    //
-    // The direct UPDATE that used to be here was silently reverted on every
-    // call. protect_profile_privileged_fields reverts plan_status for any
-    // writer it does not trust, and its service_role branch tested
-    // `request.jwt.claim.role` — the legacy PostgREST GUC, removed in
-    // PostgREST 10. On a current project that setting is never populated, so
-    // the branch was always false and a service-role write was never trusted.
-    //
-    // The UPDATE reported success. updateErr was null. The row went back to
-    // 'free'. Every Play purchase took the customer's money and granted
-    // nothing, with no error anywhere — which is why this is now a hard
-    // failure rather than a logged warning.
-    const { error: updateErr } = await supabaseAdmin.rpc('apply_play_entitlement', {
+    // Through apply_play_entitlement, never a direct UPDATE: protect_profile_privileged_fields
+    // silently reverts plan_status written any other way. If this fails, money has changed hands
+    // and nothing was granted, so it is a hard error the app retries (this call is idempotent).
+    const { error: grantError } = await db.rpc('apply_play_entitlement', {
       p_user_id: user.id,
       p_plan_status: planStatus,
       p_expires_at: expiresAtIso,
     });
-    if (updateErr) {
-      // Money has changed hands and we could not grant what was paid for.
-      // Telling the client the purchase is valid would leave them believing
-      // they have access they do not have, and would consume the receipt.
-      // Fail loudly so the client can retry — verifyReceipt is idempotent and
-      // restorePurchases replays it.
-      console.error('verify-play-receipt: apply_play_entitlement failed:', updateErr.message);
-      return jsonResponse(
-        {
-          error:
-            'Your purchase went through, but we could not activate it. Reopen the app to retry — you will not be charged twice.',
-        },
+    if (grantError) {
+      console.error('verify-play-receipt: apply_play_entitlement failed:', grantError.message);
+      throw new HttpError(
         500,
+        'Your purchase went through, but we could not activate it. Reopen the app to retry — you will not be charged twice.',
       );
     }
 
-    return jsonResponse({ valid: true, planCode, expiresAt: expiresAtIso });
-  } catch (err: any) {
-    console.error('verify-play-receipt error:', err.message);
-    const clientMessage =
-      err.message === 'MISSING_AUTH' || err.message === 'UNAUTHORIZED'
-        ? 'Authentication required'
-        : err.message === 'MISSING_SERVICE_ACCOUNT'
-          ? 'Receipt verifier is not configured (GOOGLE_SERVICE_ACCOUNT_JSON missing).'
-          : 'Verification failed.';
-    const status = err.message === 'MISSING_AUTH' || err.message === 'UNAUTHORIZED' ? 401 : 500;
-    return jsonResponse({ valid: false, error: clientMessage }, status);
+    return respond({ valid: true, planCode, expiresAt: expiresAtIso });
+  },
+  { fallbackError: 'Verification failed.' },
+);
+
+async function fetchStatus(packageName: string, token: string): Promise<PlaySubscriptionStatus> {
+  try {
+    return await getSubscriptionStatus(packageName, token);
+  } catch (err) {
+    if (err instanceof Error && err.message === 'MISSING_SERVICE_ACCOUNT') {
+      throw new HttpError(
+        500,
+        'Receipt verifier is not configured (GOOGLE_SERVICE_ACCOUNT_JSON missing).',
+      );
+    }
+    throw err;
   }
-});
+}
+
+/** The product a subscription status is for, from Google's own record. */
+function productIdOf(raw: unknown): string | null {
+  const lineItems = (raw as { lineItems?: { productId?: unknown }[] } | null)?.lineItems;
+  const productId = Array.isArray(lineItems) ? lineItems[0]?.productId : undefined;
+  return typeof productId === 'string' ? productId : null;
+}
+
+/**
+ * Makes sure the token belongs to `userId`. A token owned by another saved account is refused;
+ * one owned by a guest ID moves here, and the guest's plan is revoked.
+ */
+async function claimPurchase(db: SupabaseClient, token: string, userId: string): Promise<void> {
+  const { data: existing } = await db
+    .from('iap_purchases')
+    .select('user_id')
+    .eq('purchase_token', token)
+    .maybeSingle();
+  if (!existing?.user_id || existing.user_id === userId) return;
+
+  const { data: owner } = await db
+    .from('profiles')
+    .select('is_guest')
+    .eq('id', existing.user_id)
+    .maybeSingle();
+  if (!owner?.is_guest) {
+    console.warn(`verify-play-receipt: token belongs to another account (caller ${userId})`);
+    throw new HttpError(
+      409,
+      'This purchase is linked to a different Cloudlynk account. Sign in with the account you bought it on.',
+    );
+  }
+
+  console.log(`verify-play-receipt: moving purchase from guest ${existing.user_id} to ${userId}`);
+  const { error } = await db.rpc('apply_play_entitlement', {
+    p_user_id: existing.user_id,
+    p_plan_status: 'free',
+    p_expires_at: null,
+  });
+  if (error) {
+    console.error('verify-play-receipt: revoking the guest failed:', error.message);
+    throw new HttpError(500, 'Could not move this purchase. Please try again.');
+  }
+}

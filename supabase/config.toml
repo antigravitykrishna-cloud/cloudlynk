@@ -1,11 +1,27 @@
+# Supabase CLI settings for this project's edge functions.
+#
+# verify_jwt = false means the gateway lets requests through without a Supabase session. Each of
+# these functions either authenticates the caller itself or must be reachable without signing in:
+#
+#   account-deletion        public web page Google Play links to (visitors are signed out)
+#   legal-pages             public policy pages Play Console links to
+#   payments                gateway webhooks and callbacks carry no session; user routes check it
+#   play-rtdn-webhook       Google Pub/Sub pushes, authenticated by RTDN_SHARED_SECRET
+#   generate-stream-upload  checks the session itself (requireCaller)
+#
+# Every other function keeps the default, verify_jwt = true.
+
+[functions.account-deletion]
+verify_jwt = false
+
+[functions.legal-pages]
+verify_jwt = false
+
+[functions.payments]
+verify_jwt = false
+
+[functions.play-rtdn-webhook]
+verify_jwt = false
 
 [functions.generate-stream-upload]
-enabled = true
 verify_jwt = false
-import_map = "./functions/generate-stream-upload/deno.json"
-# Uncomment to specify a custom file path to the entrypoint.
-# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
-entrypoint = "./functions/generate-stream-upload/index.ts"
-# Specifies static files to be bundled with the function. Supports glob patterns.
-# For example, if you want to serve static HTML pages in your function:
-# static_files = [ "./functions/generate-stream-upload/*.html" ]

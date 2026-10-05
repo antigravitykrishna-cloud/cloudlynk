@@ -1,232 +1,118 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+// generate-stream-upload -- a one-time Cloudflare Stream upload URL, so the app uploads a video
+// straight to Cloudflare without ever holding our API token.
+//
+// Who may upload: into a channel, whoever can_post_to_channel allows; without a channel, admins
+// only (only admins publish). Each user gets at most RATE_LIMIT_PER_MINUTE URLs a minute, which
+// protects the Stream quota from abuse or a looping client.
+//
+// Every video is born requiring a signed URL. Locking at birth means the failure mode is "does not
+// play until stream-playback-token signs it" (visible, harmless), never "premium video served to
+// anyone holding the UID" (silent).
+//
+// Request:  POST { fileName, fileSize, channelId? }   (signed in)
+// Response: { uploadURL, uid }
 
-const ALLOWED_ORIGINS = (Deno.env.get('ALLOWED_ORIGINS') ?? '').split(',').filter(Boolean);
-const APP_ORIGIN = Deno.env.get('APP_ORIGIN') ?? '';
+import { HttpError, readJson, servePost, stringField } from '../_shared/http.ts';
+import { streamApi } from '../_shared/cloudflare-stream.ts';
+import { adminClient, requireCaller, type Caller } from '../_shared/supabase.ts';
 
 const MAX_FILE_SIZE_BYTES = 180 * 1024 * 1024;
-const MAX_DURATION_SECONDS = 7200;
+const MAX_DURATION_SECONDS = 2 * 60 * 60;
 const MAX_FILENAME_LENGTH = 255;
 const ALLOWED_EXTENSIONS = ['mp4', 'mov', 'm4v', 'webm', 'mkv'];
 const RATE_LIMIT_PER_MINUTE = 10;
 
-function corsHeaders(req: Request): Headers {
-  const origin = req.headers.get('Origin') ?? '';
-  const allowed = ALLOWED_ORIGINS.includes(origin) || (APP_ORIGIN && origin === APP_ORIGIN);
-  return new Headers({
-    'Access-Control-Allow-Origin': allowed ? origin : APP_ORIGIN || '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Max-Age': '86400',
-    Vary: 'Origin',
-    'Content-Type': 'application/json',
-  });
-}
+servePost(
+  'generate-stream-upload',
+  async (req, respond) => {
+    const caller = await requireCaller(req);
+    const body = await readJson(req);
+    const fileName = stringField(body, 'fileName');
+    const fileSize = Number(body.fileSize);
+    const channelId = stringField(body, 'channelId') || null;
 
-function jsonResponse(req: Request, body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), { status, headers: corsHeaders(req) });
-}
+    validateFile(fileName, fileSize);
+    await requireUploadRight(caller, channelId);
+    await enforceRateLimit(caller.user.id);
 
-function getExtension(fileName: string): string {
-  const parts = fileName.toLowerCase().split('.');
-  return parts[parts.length - 1] ?? '';
-}
-
-serve(async req => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers: corsHeaders(req) });
-  }
-  if (req.method !== 'POST') {
-    return jsonResponse(req, { error: 'Method not allowed' }, 405);
-  }
-
-  try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) throw new Error('MISSING_AUTH');
-
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } },
-    );
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabaseClient.auth.getUser();
-    if (authError || !user) throw new Error('UNAUTHORIZED');
-
-    let body: any;
-    try {
-      body = await req.json();
-    } catch {
-      throw new Error('INVALID_BODY');
-    }
-
-    const fileSize = Number(body?.fileSize);
-    const fileName = typeof body?.fileName === 'string' ? body.fileName : '';
-    const channelId = body?.channelId ? String(body.channelId) : null;
-
-    if (!Number.isFinite(fileSize) || fileSize <= 0) throw new Error('INVALID_SIZE');
-    if (fileSize > MAX_FILE_SIZE_BYTES) throw new Error('FILE_TOO_LARGE');
-    if (!fileName || fileName.length > MAX_FILENAME_LENGTH) throw new Error('INVALID_NAME');
-
-    const ext = getExtension(fileName);
-    if (!ALLOWED_EXTENSIONS.includes(ext)) throw new Error('INVALID_EXTENSION');
-
-    if (channelId) {
-      const { data: canPost, error: rpcError } = await supabaseClient.rpc('can_post_to_channel', {
-        p_channel_id: channelId,
-      });
-      if (rpcError || !canPost) throw new Error('NO_PERMISSION');
-    } else {
-      const { data: profile, error: profileError } = await supabaseClient
-        .from('profiles')
-        .select('can_upload_content, is_admin')
-        .eq('id', user.id)
-        .single();
-      // v90: only admins publish, so only admins get Stream upload URLs. The
-      // old can_upload_content flag no longer grants anything here -- a
-      // user holding it could otherwise upload videos to our Stream account.
-      if (profileError || !profile?.is_admin) {
-        throw new Error('NO_PERMISSION');
-      }
-    }
-
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      { auth: { autoRefreshToken: false, persistSession: false } },
-    );
-
-    // Rate limit: max RATE_LIMIT_PER_MINUTE upload URLs per user per rolling minute.
-    // Protects the Cloudflare Stream API quota from abuse or a buggy client.
-    const oneMinuteAgo = new Date(Date.now() - 60_000).toISOString();
-    const { count: recentCount, error: rateLimitError } = await supabaseAdmin
-      .from('upload_rate_limit_log')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .gte('created_at', oneMinuteAgo);
-    if (rateLimitError) {
-      console.error('rate limit check failed:', rateLimitError.message);
-    } else if ((recentCount ?? 0) >= RATE_LIMIT_PER_MINUTE) {
-      throw new Error('RATE_LIMITED');
-    }
-    // Log this attempt before doing the expensive Cloudflare call.
-    const { error: rateLimitLogError } = await supabaseAdmin
-      .from('upload_rate_limit_log')
-      .insert({ user_id: user.id });
-    if (rateLimitLogError) {
-      console.error('rate limit log insert failed:', rateLimitLogError.message);
-    }
-
-    const accountId = Deno.env.get('CLOUDFLARE_STREAM_ACCOUNT_ID');
-    const apiToken = Deno.env.get('CLOUDFLARE_STREAM_API_TOKEN');
-
-    const streamResponse = await fetch(
-      `https://api.cloudflare.com/client/v4/accounts/${accountId}/stream/direct_upload`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiToken}`,
-          'Content-Type': 'application/json',
+    const res = await streamApi('direct_upload', {
+      method: 'POST',
+      body: JSON.stringify({
+        maxDurationSeconds: MAX_DURATION_SECONDS,
+        requireSignedURLs: true,
+        meta: {
+          userId: caller.user.id,
+          fileName: fileName.slice(0, 100),
+          channelId: channelId ?? undefined,
         },
-        body: JSON.stringify({
-          maxDurationSeconds: MAX_DURATION_SECONDS,
-          // Every video is born REQUIRING a signed URL. This is deliberate
-          // and is the fix for the window described in v57: before it, a
-          // video was created unsigned and only locked lazily, the first
-          // time stream-playback-token served a premium play. A post created
-          // premium therefore sat world-readable at
-          // videodelivery.net/<uid>/manifest/video.m3u8 for as long as
-          // nobody pressed play — unbounded, and invisible.
-          //
-          // Locking at birth inverts the failure mode. A video that should
-          // be free but never got unlocked simply does not play until
-          // stream-set-access unlocks it (visible, harmless, retryable),
-          // whereas the old default failed the other way: a premium video
-          // that never got locked leaked, silently.
-          //
-          // The unlock for genuinely-free posts happens in stream-set-access,
-          // called by the publish path once access_level is known — the
-          // upload has no way to know it yet.
-          requireSignedURLs: true,
-          meta: {
-            userId: user.id,
-            fileName: fileName.slice(0, 100),
-            channelId: channelId ?? undefined,
-          },
-        }),
-      },
-    );
-
-    if (!streamResponse.ok) {
-      console.error('Cloudflare Stream API error:', await streamResponse.text());
-      throw new Error('STREAM_API_FAILED');
+      }),
+    });
+    if (!res.ok) {
+      console.error('generate-stream-upload: Cloudflare error:', await res.text());
+      throw new HttpError(500, 'Upload service unavailable');
     }
+    const { result } = await res.json();
 
-    const data = await streamResponse.json();
-    const uid = data.result.uid;
+    // Recorded as already locked, so stream-playback-token does not re-assert it on first play.
+    const { error } = await adminClient()
+      .from('stream_videos')
+      .upsert(
+        {
+          user_id: caller.user.id,
+          stream_uid: result.uid,
+          context: channelId ? 'post_video' : 'channel_video',
+          post_id: null,
+          signed_locked: true,
+        },
+        { onConflict: 'user_id,stream_uid', ignoreDuplicates: true },
+      );
+    if (error) console.error('generate-stream-upload: stream_videos insert failed:', error.message);
 
-    const { error: trackErr } = await supabaseAdmin.from('stream_videos').upsert(
-      {
-        user_id: user.id,
-        stream_uid: uid,
-        context: channelId ? 'post_video' : 'channel_video',
-        post_id: null,
-        // Matches requireSignedURLs above, so stream-playback-token's
-        // "is it locked yet?" fast path doesn't re-assert it on every
-        // first play.
-        signed_locked: true,
-      },
-      {
-        onConflict: 'user_id,stream_uid',
-        ignoreDuplicates: true,
-      },
-    );
-    if (trackErr) {
-      console.error('stream_videos insert failed:', trackErr.message);
-    }
+    return respond({ uploadURL: result.uploadURL, uid: result.uid });
+  },
+  { allowSites: true, fallbackError: 'An error occurred. Please try again.' },
+);
 
-    return jsonResponse(req, { uploadURL: data.result.uploadURL, uid });
-  } catch (err: any) {
-    console.error('generate-stream-upload error:', err.message);
-    const clientMessage =
-      err.message === 'MISSING_AUTH'
-        ? 'Authentication required'
-        : err.message === 'UNAUTHORIZED'
-          ? 'Authentication failed'
-          : err.message === 'INVALID_BODY'
-            ? 'Invalid request body'
-            : err.message === 'INVALID_SIZE'
-              ? 'Invalid file size'
-              : err.message === 'FILE_TOO_LARGE'
-                ? `File exceeds ${MAX_FILE_SIZE_BYTES / 1024 / 1024}MB limit`
-                : err.message === 'INVALID_NAME'
-                  ? 'Invalid file name'
-                  : err.message === 'INVALID_EXTENSION'
-                    ? 'File type not supported'
-                    : err.message === 'NO_PERMISSION'
-                      ? "You don't have upload permissions"
-                      : err.message === 'RATE_LIMITED'
-                        ? 'Too many upload requests. Please wait a minute and try again.'
-                        : err.message === 'STREAM_API_FAILED'
-                          ? 'Upload service unavailable'
-                          : 'An error occurred. Please try again.';
-    const statusCode =
-      err.message === 'MISSING_AUTH' || err.message === 'UNAUTHORIZED'
-        ? 401
-        : err.message === 'INVALID_BODY' ||
-            err.message === 'INVALID_SIZE' ||
-            err.message === 'FILE_TOO_LARGE' ||
-            err.message === 'INVALID_NAME' ||
-            err.message === 'INVALID_EXTENSION'
-          ? 400
-          : err.message === 'NO_PERMISSION'
-            ? 403
-            : err.message === 'RATE_LIMITED'
-              ? 429
-              : 500;
-    return jsonResponse(req, { error: clientMessage }, statusCode);
+function validateFile(fileName: string, fileSize: number): void {
+  if (!Number.isFinite(fileSize) || fileSize <= 0) throw new HttpError(400, 'Invalid file size');
+  if (fileSize > MAX_FILE_SIZE_BYTES) {
+    throw new HttpError(400, `File exceeds ${MAX_FILE_SIZE_BYTES / 1024 / 1024}MB limit`);
   }
-});
+  if (!fileName || fileName.length > MAX_FILENAME_LENGTH) {
+    throw new HttpError(400, 'Invalid file name');
+  }
+  const extension = fileName.toLowerCase().split('.').pop() ?? '';
+  if (!ALLOWED_EXTENSIONS.includes(extension)) throw new HttpError(400, 'File type not supported');
+}
+
+async function requireUploadRight({ user, db }: Caller, channelId: string | null): Promise<void> {
+  const NO_PERMISSION = "You don't have upload permissions";
+  if (channelId) {
+    const { data: canPost, error } = await db.rpc('can_post_to_channel', {
+      p_channel_id: channelId,
+    });
+    if (error || !canPost) throw new HttpError(403, NO_PERMISSION);
+    return;
+  }
+  const { data: profile } = await db.from('profiles').select('is_admin').eq('id', user.id).single();
+  if (!profile?.is_admin) throw new HttpError(403, NO_PERMISSION);
+}
+
+/** Refuses the request past the per-minute limit, then logs it (before the Cloudflare call). */
+async function enforceRateLimit(userId: string): Promise<void> {
+  const db = adminClient();
+  const oneMinuteAgo = new Date(Date.now() - 60_000).toISOString();
+  const { count, error } = await db
+    .from('upload_rate_limit_log')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .gte('created_at', oneMinuteAgo);
+  if (error) {
+    console.error('generate-stream-upload: rate limit check failed:', error.message);
+  } else if ((count ?? 0) >= RATE_LIMIT_PER_MINUTE) {
+    throw new HttpError(429, 'Too many upload requests. Please wait a minute and try again.');
+  }
+
+  const { error: logError } = await db.from('upload_rate_limit_log').insert({ user_id: userId });
+  if (logError) console.error('generate-stream-upload: rate limit log failed:', logError.message);
+}

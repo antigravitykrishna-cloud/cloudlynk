@@ -13,7 +13,6 @@
 //   project.
 
 import { getAccessToken } from './google-auth.ts';
-export { getAccessToken };
 
 export interface PlaySubscriptionStatus {
   /** True when the user should currently have access. */
