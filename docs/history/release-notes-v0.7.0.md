@@ -118,7 +118,7 @@
 | bugfix9 | RLS audit | Verified RLS on every table; `content_reports` admin-read is the only documented gap | `b31ad76` |
 | bugfix9 | UPI env | `UPI_ID` now overridable via `EXPO_PUBLIC_UPI_ID` with `app.json` fallback | `b31ad76` |
 | bugfix9 | Console gating | 15 files' `console.log`/`console.error` calls gated behind `__DEV__` | `b31ad76` |
-| bugfix10 | DB cleanup script | `supabase/cleanup/2026-08-03-remove-test-data.sql` — manual run only, requires backup first | `17fd4d2` |
+| bugfix10 | DB cleanup script | `supabase/maintenance/2026-08-03-remove-test-data.sql` — manual run only, requires backup first | `17fd4d2` |
 
 ### Security & privacy
 
@@ -151,7 +151,7 @@
 
 ### Migrations to apply post-launch (not blocking)
 
-- None for v0.7.0 launch. The `cleanup/2026-08-03-remove-test-data.sql` is a **manual one-time cleanup** script, not a migration; the user runs it via SQL editor after backup.
+- None for v0.7.0 launch. The `maintenance/2026-08-03-remove-test-data.sql` is a **manual one-time cleanup** script, not a migration; the user runs it via SQL editor after backup.
 
 ### What the user must do before submitting to Play Store
 

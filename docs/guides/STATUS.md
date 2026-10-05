@@ -200,7 +200,7 @@ Being explicit, because several things read as finished and are not:
 | `docs/ADMIN_WORKFLOW_STATUS.md` | The 11 admin requirements, and the live check for Finding 7 |
 | `docs/PLAY_STORE_LISTING.md` | Paste-ready listing copy |
 | `supabase/BASELINE.md` | The from-scratch database problem |
-| `supabase/rollback/v57_v58_rollback.sql` | Targeted rollback |
+| `supabase/maintenance/rollback-v57-v58.sql` | Targeted rollback |
 | `scripts/verify-stream-access.mjs` | The 8-case access matrix |
 | `scripts/audit-schema-sources.mjs` | Schema inventory, offline |
 | `scripts/audit-admin-guards.mjs` | Every admin RPC's server-side guard |

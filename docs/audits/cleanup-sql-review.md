@@ -1,6 +1,6 @@
 # Review — Phase 2 test-data cleanup script
 
-Reviewing `supabase/cleanup/2026-08-03-remove-test-data.sql` against the **actual current data**, not just in the abstract. Cross-checked the script's `WHERE email ILIKE '%test%' OR email ILIKE '%example%'` clause against the real `auth.users` table content from the local backup taken earlier today (`backups/pre-launch-backup-data-2026-08-03.sql` — not committed, gitignored, contains live PII so treating it as reference-only, not pasting raw dump content anywhere else).
+Reviewing `supabase/maintenance/2026-08-03-remove-test-data.sql` against the **actual current data**, not just in the abstract. Cross-checked the script's `WHERE email ILIKE '%test%' OR email ILIKE '%example%'` clause against the real `auth.users` table content from the local backup taken earlier today (`backups/pre-launch-backup-data-2026-08-03.sql` — not committed, gitignored, contains live PII so treating it as reference-only, not pasting raw dump content anywhere else).
 
 **Note on this file:** it names real user emails below so you can act on it. I have not committed it (per "no new commits without my go") — tell me if you want the emails redacted before it goes in the repo, or if you're fine with it as-is (private repo).
 

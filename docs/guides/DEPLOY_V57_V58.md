@@ -206,7 +206,7 @@ loss); Pro has point-in-time recovery. **Check which plan this project is on
 before pushing** — on Free, the daily backup is the only floor.
 
 Targeted rollback that does not need a restore:
-**`supabase/rollback/v57_v58_rollback.sql`** — restores the v55 trigger body,
+**`supabase/maintenance/rollback-v57-v58.sql`** — restores the v55 trigger body,
 drops the new RPC, and puts `channel_posts_select_v56` back (creating the
 replacement before dropping v57's, inside a transaction, so the feed is never
 policy-less). Read its header: rolling back v58 reintroduces the bug where paid
