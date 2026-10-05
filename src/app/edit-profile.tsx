@@ -1,7 +1,14 @@
 import { useState } from 'react';
 import {
-  View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView,
-  ActivityIndicator, KeyboardAvoidingView, Platform,
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
@@ -42,7 +49,11 @@ export default function EditProfileScreen() {
   const [saving, setSaving] = useState(false);
 
   const initials = (fullName || profile?.email || '?')
-    .split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    .split(' ')
+    .map(w => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
 
   const pickAvatar = async () => {
     // The system photo picker needs no media permission (Play's Photo and
@@ -63,7 +74,10 @@ export default function EditProfileScreen() {
       setAvatarUrl(path);
       toast('Picture updated — remember to save', 'info');
     } catch (err: unknown) {
-      showAlert('Upload failed', err instanceof Error ? err.message : 'Could not upload that image.');
+      showAlert(
+        'Upload failed',
+        err instanceof Error ? err.message : 'Could not upload that image.',
+      );
     } finally {
       setUploading(false);
     }
@@ -73,7 +87,10 @@ export default function EditProfileScreen() {
     const name = fullName.trim();
     const handle = username.trim().toLowerCase();
 
-    if (!name) { showAlert('Name required', 'Enter the name you want shown on your posts.'); return; }
+    if (!name) {
+      showAlert('Name required', 'Enter the name you want shown on your posts.');
+      return;
+    }
     if (handle && !USERNAME_RE.test(handle)) {
       showAlert('Invalid username', 'Use lowercase letters, numbers, dots and underscores only.');
       return;
@@ -128,15 +145,19 @@ export default function EditProfileScreen() {
       >
         <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
           <TouchableOpacity style={styles.avatarWrap} onPress={pickAvatar} activeOpacity={0.85}>
-            {avatarSrc
-              ? <Image source={avatarSrc} style={styles.avatar} contentFit="cover" transition={200} />
-              : <View style={[styles.avatar, styles.avatarFallback]}>
-                  <Text style={styles.initials}>{initials}</Text>
-                </View>}
+            {avatarSrc ? (
+              <Image source={avatarSrc} style={styles.avatar} contentFit="cover" transition={200} />
+            ) : (
+              <View style={[styles.avatar, styles.avatarFallback]}>
+                <Text style={styles.initials}>{initials}</Text>
+              </View>
+            )}
             <View style={styles.avatarBadge}>
-              {uploading
-                ? <ActivityIndicator size="small" color={Colors.textInverse} />
-                : <Icon name="edit" size={15} color={Colors.textInverse} />}
+              {uploading ? (
+                <ActivityIndicator size="small" color={Colors.textInverse} />
+              ) : (
+                <Icon name="edit" size={15} color={Colors.textInverse} />
+              )}
             </View>
           </TouchableOpacity>
           <Text style={styles.avatarHint}>Tap to change your picture</Text>
@@ -165,7 +186,9 @@ export default function EditProfileScreen() {
               maxLength={USERNAME_MAX}
             />
           </View>
-          <Text style={styles.hint}>Lowercase letters, numbers, dots and underscores. Optional.</Text>
+          <Text style={styles.hint}>
+            Lowercase letters, numbers, dots and underscores. Optional.
+          </Text>
 
           <Text style={styles.label}>EMAIL</Text>
           <View style={[styles.input, styles.readonly]}>
@@ -182,9 +205,11 @@ export default function EditProfileScreen() {
             disabled={saving || uploading}
             activeOpacity={0.85}
           >
-            {saving
-              ? <ActivityIndicator color={Colors.textInverse} />
-              : <Text style={styles.saveTxt}>Save changes</Text>}
+            {saving ? (
+              <ActivityIndicator color={Colors.textInverse} />
+            ) : (
+              <Text style={styles.saveTxt}>Save changes</Text>
+            )}
           </TouchableOpacity>
 
           <View style={{ height: 40 }} />
@@ -198,9 +223,14 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
   header: {
     backgroundColor: Colors.surface,
-    borderBottomWidth: RNStyleSheet.hairlineWidth, borderBottomColor: Colors.border,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg, paddingTop: 52, paddingBottom: Spacing.lg,
+    borderBottomWidth: RNStyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.lg,
+    paddingTop: 52,
+    paddingBottom: Spacing.lg,
   },
   // The chevron icon points right, so it is flipped to read as "back".
   back: { width: 44, alignItems: 'flex-start', transform: [{ scaleX: -1 }] },
@@ -212,28 +242,43 @@ const styles = StyleSheet.create({
   avatarFallback: { alignItems: 'center', justifyContent: 'center' },
   initials: { color: Colors.textSecondary, fontSize: 34, fontWeight: FontWeight.bold },
   avatarBadge: {
-    position: 'absolute', right: -2, bottom: -2,
-    width: 34, height: 34, borderRadius: 17,
+    position: 'absolute',
+    right: -2,
+    bottom: -2,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     backgroundColor: Colors.brandBlue,
-    alignItems: 'center', justifyContent: 'center',
-    borderWidth: 3, borderColor: Colors.bg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: Colors.bg,
   },
   avatarHint: {
-    color: Colors.textMuted, fontSize: FontSize.base,
-    textAlign: 'center', marginTop: Spacing.md, marginBottom: Spacing.xl,
+    color: Colors.textMuted,
+    fontSize: FontSize.base,
+    textAlign: 'center',
+    marginTop: Spacing.md,
+    marginBottom: Spacing.xl,
   },
 
   label: {
-    color: Colors.textSecondary, fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold, letterSpacing: 0.8,
-    marginTop: Spacing.lg, marginBottom: Spacing.sm,
+    color: Colors.textSecondary,
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    letterSpacing: 0.8,
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.sm,
   },
   input: {
     backgroundColor: Colors.surface,
-    borderWidth: 1, borderColor: Colors.border,
+    borderWidth: 1,
+    borderColor: Colors.border,
     borderRadius: Radius.md,
-    paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
-    color: Colors.text, fontSize: FontSize.lg,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    color: Colors.text,
+    fontSize: FontSize.lg,
   },
   usernameRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   at: { color: Colors.textMuted, fontSize: FontSize.xl, fontWeight: FontWeight.semibold },
@@ -248,7 +293,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.brandBlue,
     borderRadius: Radius.full,
     paddingVertical: Spacing.lg,
-    alignItems: 'center', justifyContent: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   saveTxt: { color: Colors.textInverse, fontSize: FontSize.lg, fontWeight: FontWeight.bold },
 });

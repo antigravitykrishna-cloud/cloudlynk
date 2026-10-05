@@ -29,12 +29,14 @@ export default function AdminBroadcastScreen() {
     showAlert('Send announcement?', `"${title.trim()}" goes to ${who}. It cannot be unsent.`, [
       { text: 'Cancel', style: 'cancel' },
       {
-        text: 'Send', onPress: async () => {
+        text: 'Send',
+        onPress: async () => {
           setSending(true);
           try {
             const n = await AdminControl.broadcast(title, body, audience);
             fireHaptic('success');
-            setTitle(''); setBody('');
+            setTitle('');
+            setBody('');
             showAlert('Sent', `Delivered to ${n} ${n === 1 ? 'person' : 'people'}.`);
           } catch (e: any) {
             fireHaptic('error');
@@ -58,20 +60,44 @@ export default function AdminBroadcastScreen() {
           <Text style={adminStyles.label}>Send to</Text>
           <View style={[adminStyles.row, { flexWrap: 'wrap' }]}>
             {AUDIENCES.map(a => (
-              <TouchableOpacity key={a.key} style={[st.pill, audience === a.key && st.pillOn]} onPress={() => setAudience(a.key)}>
+              <TouchableOpacity
+                key={a.key}
+                style={[st.pill, audience === a.key && st.pillOn]}
+                onPress={() => setAudience(a.key)}
+              >
                 <Text style={[st.pillTxt, audience === a.key && st.pillTxtOn]}>{a.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
           <Text style={[adminStyles.label, { marginTop: 14 }]}>Title</Text>
-          <TextInput style={adminStyles.input} value={title} onChangeText={setTitle} maxLength={120}
-            placeholder="New movies this week" placeholderTextColor={Colors.textMuted} />
+          <TextInput
+            style={adminStyles.input}
+            value={title}
+            onChangeText={setTitle}
+            maxLength={120}
+            placeholder="New movies this week"
+            placeholderTextColor={Colors.textMuted}
+          />
           <Text style={[adminStyles.label, { marginTop: 10 }]}>Message</Text>
-          <TextInput style={[adminStyles.input, { minHeight: 120, textAlignVertical: 'top' }]} value={body} onChangeText={setBody}
-            maxLength={1000} multiline placeholder="Write the message…" placeholderTextColor={Colors.textMuted} />
-          <Text style={[adminStyles.muted, { textAlign: 'right', marginTop: 4 }]}>{body.length}/1000</Text>
+          <TextInput
+            style={[adminStyles.input, { minHeight: 120, textAlignVertical: 'top' }]}
+            value={body}
+            onChangeText={setBody}
+            maxLength={1000}
+            multiline
+            placeholder="Write the message…"
+            placeholderTextColor={Colors.textMuted}
+          />
+          <Text style={[adminStyles.muted, { textAlign: 'right', marginTop: 4 }]}>
+            {body.length}/1000
+          </Text>
           <View style={{ marginTop: 10 }}>
-            <ActionButton label="Send" busy={sending} disabled={!title.trim() || !body.trim()} onPress={send} />
+            <ActionButton
+              label="Send"
+              busy={sending}
+              disabled={!title.trim() || !body.trim()}
+              onPress={send}
+            />
           </View>
         </Card>
       </ScrollView>
@@ -80,7 +106,14 @@ export default function AdminBroadcastScreen() {
 }
 
 const st = StyleSheet.create({
-  pill: { backgroundColor: Colors.surfaceElevated, borderRadius: Radius.full, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: Colors.border },
+  pill: {
+    backgroundColor: Colors.surfaceElevated,
+    borderRadius: Radius.full,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
   pillOn: { backgroundColor: Colors.brandBlue, borderColor: Colors.brandBlue },
   pillTxt: { color: Colors.textSecondary, fontSize: FontSize.md, fontWeight: FontWeight.bold },
   pillTxtOn: { color: '#FFFFFF' },

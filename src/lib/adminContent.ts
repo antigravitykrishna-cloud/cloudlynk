@@ -101,7 +101,7 @@ function describeRpcError(err: any, feature: string): Error {
   if (code === 'PGRST202' || code === '42883') {
     return new Error(
       `${feature} is not available yet — the backend migration for it has not been deployed. ` +
-      `Everything else in the admin panel works normally.`
+        `Everything else in the admin panel works normally.`,
     );
   }
   return new Error(err?.message ?? 'Something went wrong.');
@@ -147,10 +147,15 @@ export const AdminContentService = {
    * reads every post regardless of status, channel or access level. This is
    * unlike public.profiles, which has no such branch and does need readers.
    */
-  async listPosts(opts?: { status?: AdminPostStatus | 'all'; accessLevel?: AccessLevel | 'all' }): Promise<AdminPost[]> {
+  async listPosts(opts?: {
+    status?: AdminPostStatus | 'all';
+    accessLevel?: AccessLevel | 'all';
+  }): Promise<AdminPost[]> {
     let q = supabase
       .from('channel_posts')
-      .select('id, title, body, status, access_level, content_type, genre, duration_min, video_url, thumbnail_url, channel_id, created_at')
+      .select(
+        'id, title, body, status, access_level, content_type, genre, duration_min, video_url, thumbnail_url, channel_id, created_at',
+      )
       .order('created_at', { ascending: false })
       .limit(200);
     if (opts?.status && opts.status !== 'all') q = q.eq('status', opts.status);
@@ -169,11 +174,18 @@ export const AdminContentService = {
     return (data ?? []) as AdminUser[];
   },
 
-  async getProfilesByIds(ids: string[]): Promise<{ id: string; email: string; full_name: string | null; username: string | null }[]> {
+  async getProfilesByIds(
+    ids: string[],
+  ): Promise<{ id: string; email: string; full_name: string | null; username: string | null }[]> {
     if (ids.length === 0) return [];
     const { data, error } = await supabase.rpc('admin_get_profiles_by_ids', { p_ids: ids });
     if (error) throw error;
-    return (data ?? []) as { id: string; email: string; full_name: string | null; username: string | null }[];
+    return (data ?? []) as {
+      id: string;
+      email: string;
+      full_name: string | null;
+      username: string | null;
+    }[];
   },
 
   async getPostGrantees(postId: string): Promise<PostGrantee[]> {
@@ -189,7 +201,12 @@ export const AdminContentService = {
   },
 
   /** Grants one post to one person. Never touches plan_status. */
-  async grantAccess(userId: string, postId: string, expiresAt: string | null, reason: string | null): Promise<void> {
+  async grantAccess(
+    userId: string,
+    postId: string,
+    expiresAt: string | null,
+    reason: string | null,
+  ): Promise<void> {
     const { error } = await supabase.rpc('admin_grant_content_access', {
       p_user_id: userId,
       p_post_id: postId,
@@ -235,7 +252,9 @@ export const AdminContentService = {
    * than silently half-applying.
    */
   async setPostAccessLevel(postId: string, accessLevel: AccessLevel): Promise<void> {
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     if (!session) throw new Error('Not authenticated');
 
     const fnUrl = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/stream-set-access`;
@@ -316,7 +335,9 @@ export const AdminContentService = {
    * old video is left on Cloudflare on purpose; its UID is in the audit row.
    */
   async replaceVideo(postId: string, newUid: string): Promise<{ previousUid: string | null }> {
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     if (!session) throw new Error('Not authenticated');
 
     const fnUrl = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/admin-replace-video`;
@@ -339,8 +360,10 @@ export const AdminContentService = {
       // The edge function itself is missing, not the post — a deployed
       // function answering about a missing post returns its own 404 body with
       // an `error` field, so distinguish on that.
-      throw new Error(json?.error
-        ?? 'Replacing videos is not available yet — the admin-replace-video function has not been deployed.');
+      throw new Error(
+        json?.error ??
+          'Replacing videos is not available yet — the admin-replace-video function has not been deployed.',
+      );
     }
     if (!res.ok) throw new Error(json?.error ?? 'Could not replace the video.');
     return { previousUid: json?.previousUid ?? null };

@@ -93,9 +93,12 @@ const MERGE_REMOVE_MARKER = [
 ];
 
 module.exports = function withRemoveAndroidPermissions(config) {
-  return withAndroidManifest(config, (config) => {
+  return withAndroidManifest(config, config => {
     const manifest = config.modResults;
-    AndroidConfig.Permissions.removePermissions(manifest, [...PLAIN_REMOVE, ...MERGE_REMOVE_MARKER]);
+    AndroidConfig.Permissions.removePermissions(manifest, [
+      ...PLAIN_REMOVE,
+      ...MERGE_REMOVE_MARKER,
+    ]);
     const usesPermissions = manifest.manifest['uses-permission'] || [];
     for (const name of MERGE_REMOVE_MARKER) {
       usesPermissions.push({ $: { 'android:name': name, 'tools:node': 'remove' } });

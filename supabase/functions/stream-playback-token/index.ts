@@ -29,8 +29,8 @@
 // Deploy: npx supabase functions deploy stream-playback-token
 // (keep JWT verification ON — only signed-in users should reach this.)
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { corsHeaders, jsonResponse } from "../_shared/http.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { corsHeaders, jsonResponse } from '../_shared/http.ts';
 
 // ~6 hours: long enough for one uninterrupted viewing session, short enough
 // that a leaked URL stops working the same day. Cloudflare's max is 24h.
@@ -41,39 +41,46 @@ const TOKEN_TTL_SECONDS = 6 * 60 * 60;
 const UNAVAILABLE = "This video isn't available.";
 
 async function cloudflare(path: string, init: RequestInit): Promise<Response> {
-  const accountId = Deno.env.get("CLOUDFLARE_STREAM_ACCOUNT_ID");
-  const apiToken = Deno.env.get("CLOUDFLARE_STREAM_API_TOKEN");
-  if (!accountId || !apiToken) throw new Error("CF_NOT_CONFIGURED");
+  const accountId = Deno.env.get('CLOUDFLARE_STREAM_ACCOUNT_ID');
+  const apiToken = Deno.env.get('CLOUDFLARE_STREAM_API_TOKEN');
+  if (!accountId || !apiToken) throw new Error('CF_NOT_CONFIGURED');
   return fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/stream/${path}`, {
     ...init,
-    headers: { Authorization: `Bearer ${apiToken}`, "Content-Type": "application/json", ...(init.headers ?? {}) },
+    headers: {
+      Authorization: `Bearer ${apiToken}`,
+      'Content-Type': 'application/json',
+      ...(init.headers ?? {}),
+    },
   });
 }
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders() });
-  if (req.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405);
+Deno.serve(async req => {
+  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders() });
+  if (req.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return jsonResponse({ error: "Authentication required" }, 401);
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) return jsonResponse({ error: 'Authentication required' }, 401);
 
     // Caller-scoped client: every channel_posts / profiles read below runs
     // under THIS user's RLS, so we never see a row they couldn't see.
     const supabaseUser = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       { global: { headers: { Authorization: authHeader } } },
     );
-    const { data: { user }, error: userErr } = await supabaseUser.auth.getUser();
-    if (userErr || !user) return jsonResponse({ error: "Authentication required" }, 401);
+    const {
+      data: { user },
+      error: userErr,
+    } = await supabaseUser.auth.getUser();
+    if (userErr || !user) return jsonResponse({ error: 'Authentication required' }, 401);
     // v90: a guest account sees previews only -- nothing plays until the
     // account is saved (Google/email) and has the right to the title.
-    if (user.is_anonymous) return jsonResponse({ error: "Save your account to watch." }, 403);
+    if (user.is_anonymous) return jsonResponse({ error: 'Save your account to watch.' }, 403);
 
     const body = await req.json().catch(() => ({}));
-    const postId = typeof body?.postId === "string" ? body.postId : "";
-    if (!postId) return jsonResponse({ error: "Missing postId." }, 400);
+    const postId = typeof body?.postId === 'string' ? body.postId : '';
+    if (!postId) return jsonResponse({ error: 'Missing postId.' }, 400);
 
     // channel_posts_select_v52 (v52 migration) already governs this read. It
     // enforces, on SELECT: approved status; author account active; not
@@ -82,9 +89,9 @@ Deno.serve(async (req) => {
     // So a non-entitled or non-member caller gets no row here — we return 404
     // and don't distinguish "not found" from "not allowed".
     const { data: post, error: postErr } = await supabaseUser
-      .from("channel_posts")
-      .select("id, video_url, access_level, channel_id, author_id")
-      .eq("id", postId)
+      .from('channel_posts')
+      .select('id, video_url, access_level, channel_id, author_id')
+      .eq('id', postId)
       .maybeSingle();
     if (postErr || !post || !post.video_url) {
       return jsonResponse({ error: UNAVAILABLE }, 404);
@@ -103,14 +110,14 @@ Deno.serve(async (req) => {
     // scoped to this one video and expires. What must never happen is the
     // reverse — a PREMIUM video served unsigned — which is why the
     // entitlement block below is skipped only for access_level='free'.
-    const isPremium = post.access_level === "premium";
+    const isPremium = post.access_level === 'premium';
 
     // Defence in depth: re-derive entitlement here even though RLS above
     // already required it. Reading your own profile is allowed by RLS.
     const { data: me, error: meErr } = await supabaseUser
-      .from("profiles")
-      .select("plan_status, plan_expires_at, account_status")
-      .eq("id", user.id)
+      .from('profiles')
+      .select('plan_status, plan_expires_at, account_status')
+      .eq('id', user.id)
       .maybeSingle();
     if (meErr || !me) return jsonResponse({ error: UNAVAILABLE }, 403);
 
@@ -126,12 +133,12 @@ Deno.serve(async (req) => {
     //
     // Checked before the entitlement branch, and for free content too: a
     // banned account should not be pulling video at all.
-    if (me.account_status !== "active") {
+    if (me.account_status !== 'active') {
       return jsonResponse({ error: UNAVAILABLE }, 403);
     }
 
     const notExpired = !me.plan_expires_at || new Date(me.plan_expires_at) > new Date();
-    const paid = me.plan_status === "lifetime" || (me.plan_status === "active" && notExpired);
+    const paid = me.plan_status === 'lifetime' || (me.plan_status === 'active' && notExpired);
 
     // v56: a paid subscription is not the only way to be entitled. An admin
     // can grant one named user access to one named post
@@ -149,12 +156,12 @@ Deno.serve(async (req) => {
     // live grant is.
     let entitled = !isPremium || paid;
     if (!entitled) {
-      const { data: granted, error: grantErr } = await supabaseUser.rpc("has_content_access", {
+      const { data: granted, error: grantErr } = await supabaseUser.rpc('has_content_access', {
         p_post_id: postId,
         p_user_id: user.id,
       });
       if (grantErr) {
-        console.error("stream-playback-token: has_content_access failed:", grantErr.message);
+        console.error('stream-playback-token: has_content_access failed:', grantErr.message);
       }
       entitled = granted === true;
     }
@@ -169,17 +176,17 @@ Deno.serve(async (req) => {
     // ── Ensure the video is locked on Cloudflare's side before minting ──
     // service-role client: stream_videos has no RLS and clients never touch it.
     const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
       { auth: { autoRefreshToken: false, persistSession: false } },
     );
 
     // .limit(1) not .maybeSingle(): a re-uploaded UID could in theory have
     // more than one stream_videos row (unique is on (user_id, stream_uid)).
     const { data: trackedRows } = await supabaseAdmin
-      .from("stream_videos")
-      .select("id, signed_locked")
-      .eq("stream_uid", uid)
+      .from('stream_videos')
+      .select('id, signed_locked')
+      .eq('stream_uid', uid)
       .limit(1);
     const tracked = trackedRows?.[0];
 
@@ -198,22 +205,29 @@ Deno.serve(async (req) => {
       // self-heals videos flagged premium before this system existed, or
       // switched from free to premium after upload.
       const patchRes = await cloudflare(uid, {
-        method: "POST",
+        method: 'POST',
         body: JSON.stringify({ uid, requireSignedURLs: true }),
       });
       if (!patchRes.ok) {
-        console.error("stream-playback-token: requireSignedURLs edit failed:", patchRes.status, await patchRes.text().catch(() => ""));
+        console.error(
+          'stream-playback-token: requireSignedURLs edit failed:',
+          patchRes.status,
+          await patchRes.text().catch(() => ''),
+        );
         return jsonResponse({ error: UNAVAILABLE }, 502);
       }
       if (tracked?.id) {
-        await supabaseAdmin.from("stream_videos").update({ signed_locked: true }).eq("id", tracked.id);
+        await supabaseAdmin
+          .from('stream_videos')
+          .update({ signed_locked: true })
+          .eq('id', tracked.id);
       } else {
         // No tracking row (e.g. an old upload predating stream_videos, or a
         // backfill gap) — create one so the next request is fast.
-        await supabaseAdmin.from("stream_videos").insert({
+        await supabaseAdmin.from('stream_videos').insert({
           user_id: post.author_id,
           stream_uid: uid,
-          context: "post_video",
+          context: 'post_video',
           post_id: post.id,
           signed_locked: true,
         });
@@ -223,26 +237,30 @@ Deno.serve(async (req) => {
     // ── Mint the token ──
     const exp = Math.floor(Date.now() / 1000) + TOKEN_TTL_SECONDS;
     const tokenRes = await cloudflare(`${uid}/token`, {
-      method: "POST",
+      method: 'POST',
       body: JSON.stringify({ exp, downloadable: false }),
     });
     const tokenJson = await tokenRes.json().catch(() => null);
     const token: string | undefined = tokenJson?.result?.token;
     if (!tokenRes.ok || !token) {
-      console.error("stream-playback-token: token mint failed:", tokenRes.status, JSON.stringify(tokenJson));
+      console.error(
+        'stream-playback-token: token mint failed:',
+        tokenRes.status,
+        JSON.stringify(tokenJson),
+      );
       return jsonResponse({ error: UNAVAILABLE }, 502);
     }
 
-    const customerCode = Deno.env.get("CLOUDFLARE_STREAM_CUSTOMER_CODE");
+    const customerCode = Deno.env.get('CLOUDFLARE_STREAM_CUSTOMER_CODE');
     if (!customerCode) {
-      console.error("stream-playback-token: CLOUDFLARE_STREAM_CUSTOMER_CODE is not set");
+      console.error('stream-playback-token: CLOUDFLARE_STREAM_CUSTOMER_CODE is not set');
       return jsonResponse({ error: UNAVAILABLE }, 500);
     }
 
     const url = `https://customer-${customerCode}.cloudflarestream.com/${uid}/manifest/video.m3u8?token=${token}`;
     return jsonResponse({ url });
   } catch (err: any) {
-    console.error("stream-playback-token error:", err?.message ?? err);
+    console.error('stream-playback-token error:', err?.message ?? err);
     return jsonResponse({ error: UNAVAILABLE }, 500);
   }
 });

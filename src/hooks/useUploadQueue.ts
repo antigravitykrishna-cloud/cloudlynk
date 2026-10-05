@@ -16,7 +16,7 @@ export function useUploadQueue(channelId: string | undefined) {
 
   // Subscribe to queue state changes
   useEffect(() => {
-    const unsubscribe = UploadQueue.subscribe((newState) => {
+    const unsubscribe = UploadQueue.subscribe(newState => {
       setState(newState);
     });
     return unsubscribe;
@@ -27,21 +27,43 @@ export function useUploadQueue(channelId: string | undefined) {
     UploadQueue.init();
   }, []);
 
-  const addToQueue = useCallback(async (entries: Parameters<typeof UploadQueue.addToQueue>[0]): Promise<number> => {
-    if (!channelId || !user?.id) return 0;
-    return UploadQueue.addToQueue(entries, channelId, user.id, isPaidUser);
-  }, [channelId, user?.id, isPaidUser]);
+  const addToQueue = useCallback(
+    async (entries: Parameters<typeof UploadQueue.addToQueue>[0]): Promise<number> => {
+      if (!channelId || !user?.id) return 0;
+      return UploadQueue.addToQueue(entries, channelId, user.id, isPaidUser);
+    },
+    [channelId, user?.id, isPaidUser],
+  );
 
   const removeFromQueue = useCallback(async (itemId: string): Promise<boolean> => {
     return UploadQueue.removeItem(itemId);
   }, []);
 
-  const updateItem = useCallback(async (
-    itemId: string,
-    updates: Partial<Pick<QueueItem, 'title' | 'body' | 'contentType' | 'accessLevel' | 'genre' | 'durationMin' | 'seasonNo' | 'episodeNo' | 'episodeTitle' | 'releaseYear' | 'thumbnailUri' | 'channelId'>>
-  ): Promise<boolean> => {
-    return UploadQueue.updateItem(itemId, updates);
-  }, []);
+  const updateItem = useCallback(
+    async (
+      itemId: string,
+      updates: Partial<
+        Pick<
+          QueueItem,
+          | 'title'
+          | 'body'
+          | 'contentType'
+          | 'accessLevel'
+          | 'genre'
+          | 'durationMin'
+          | 'seasonNo'
+          | 'episodeNo'
+          | 'episodeTitle'
+          | 'releaseYear'
+          | 'thumbnailUri'
+          | 'channelId'
+        >
+      >,
+    ): Promise<boolean> => {
+      return UploadQueue.updateItem(itemId, updates);
+    },
+    [],
+  );
 
   const startUpload = useCallback(async () => {
     await UploadQueue.startUpload();

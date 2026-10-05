@@ -24,13 +24,19 @@ export default function ExportDataScreen() {
         setFileSize('');
         setRecordCount(0);
       };
-    }, [])
+    }, []),
   );
 
   const countRecords = (data: Record<string, unknown>): number => {
     let count = 0;
     if (data.profile) count += 1;
-    const arrayKeys = ['channel_memberships', 'channels_owned', 'channel_posts_authored', 'subscription_requests', 'uploaded_videos'];
+    const arrayKeys = [
+      'channel_memberships',
+      'channels_owned',
+      'channel_posts_authored',
+      'subscription_requests',
+      'uploaded_videos',
+    ];
     for (const key of arrayKeys) {
       const arr = data[key];
       if (Array.isArray(arr)) count += arr.length;
@@ -75,7 +81,10 @@ export default function ExportDataScreen() {
       setStatus('success');
     } catch (err: unknown) {
       setStatus('error');
-      showAlert('Export Failed', err instanceof Error ? err.message : 'An unexpected error occurred');
+      showAlert(
+        'Export Failed',
+        err instanceof Error ? err.message : 'An unexpected error occurred',
+      );
     }
   };
 
@@ -83,7 +92,10 @@ export default function ExportDataScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backBtn}
+          activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
@@ -99,7 +111,8 @@ export default function ExportDataScreen() {
           <Icon name="package" size={30} color={Colors.brandBlue} />
           <Text style={styles.cardTitle}>Download Your Data</Text>
           <Text style={styles.cardDesc}>
-            Download a copy of all your data in JSON format. Includes your profile, channel memberships, posts, subscription history, and uploaded videos.
+            Download a copy of all your data in JSON format. Includes your profile, channel
+            memberships, posts, subscription history, and uploaded videos.
           </Text>
         </View>
 
@@ -108,7 +121,9 @@ export default function ExportDataScreen() {
             <Text style={styles.successIcon}>{'✓'}</Text>
             <Text style={styles.successText}>Download started</Text>
             {fileSize ? <Text style={styles.successMeta}>File size: {fileSize}</Text> : null}
-            {recordCount > 0 ? <Text style={styles.successMeta}>{recordCount} records exported</Text> : null}
+            {recordCount > 0 ? (
+              <Text style={styles.successMeta}>{recordCount} records exported</Text>
+            ) : null}
           </View>
         )}
 
@@ -126,7 +141,8 @@ export default function ExportDataScreen() {
         </TouchableOpacity>
 
         <Text style={styles.note}>
-          Your data is exported as a JSON file that you can open with any text editor. No data is sent to third parties during this process.
+          Your data is exported as a JSON file that you can open with any text editor. No data is
+          sent to third parties during this process.
         </Text>
       </View>
     </SafeAreaView>
@@ -136,30 +152,54 @@ export default function ExportDataScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
   header: {
-    backgroundColor: Colors.brand, flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14,
+    backgroundColor: Colors.brand,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
-  backBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
+  backBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   backText: { color: '#fff', fontSize: 24, fontWeight: '700', marginTop: -2 },
   headerTitle: { color: '#fff', fontSize: 17, fontWeight: '800' },
   body: { flex: 1, padding: 20 },
   card: {
-    backgroundColor: '#fff', borderRadius: 16, padding: 24, alignItems: 'center',
-    borderWidth: 1, borderColor: Colors.border, marginBottom: 20,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    marginBottom: 20,
   },
   cardIcon: { fontSize: 48, marginBottom: 12 },
   cardTitle: { fontSize: 18, fontWeight: '800', color: Colors.text, marginBottom: 8 },
   cardDesc: { fontSize: 14, color: Colors.textMuted, textAlign: 'center', lineHeight: 20 },
   successCard: {
-    backgroundColor: '#12261C', borderRadius: 12, padding: 16, alignItems: 'center',
-    borderWidth: 1, borderColor: '#bbf7d0', marginBottom: 20,
+    backgroundColor: '#12261C',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#bbf7d0',
+    marginBottom: 20,
   },
   successIcon: { fontSize: 24, color: '#2ED47A', fontWeight: '800', marginBottom: 4 },
   successText: { fontSize: 15, fontWeight: '700', color: '#2ED47A', marginBottom: 4 },
   successMeta: { fontSize: 13, color: '#6B7C97', marginTop: 2 },
   exportBtn: {
-    backgroundColor: Colors.brand, borderRadius: 12, paddingVertical: 16,
-    alignItems: 'center', marginBottom: 20,
+    backgroundColor: Colors.brand,
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginBottom: 20,
   },
   exportBtnDisabled: { opacity: 0.7 },
   exportBtnText: { color: '#fff', fontSize: 16, fontWeight: '800' },

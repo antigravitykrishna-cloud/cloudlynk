@@ -1,5 +1,13 @@
 import { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  TextInput,
+} from 'react-native';
 import { showAlert } from '../../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
@@ -50,7 +58,10 @@ export default function AdminPostAccessScreen() {
   const [reason, setReason] = useState('');
 
   const load = useCallback(async () => {
-    if (!postId) { setLoading(false); return; }
+    if (!postId) {
+      setLoading(false);
+      return;
+    }
     try {
       setGrantees(await AdminContentService.getPostGrantees(postId));
     } catch (err) {
@@ -61,7 +72,12 @@ export default function AdminPostAccessScreen() {
     }
   }, [postId]);
 
-  useFocusEffect(useCallback(() => { setLoading(true); load(); }, [load]));
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      load();
+    }, [load]),
+  );
 
   const runSearch = async () => {
     setSearching(true);
@@ -102,40 +118,49 @@ export default function AdminPostAccessScreen() {
 
   const revoke = (g: PostGrantee) => {
     if (!postId) return;
-    showAlert('Revoke access?', `${g.email} will no longer be able to watch this post. Their subscription, if any, is unaffected.`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Revoke',
-        style: 'destructive',
-        onPress: async () => {
-          setActingId(g.user_id);
-          try {
-            await AdminContentService.revokeAccess(g.user_id, postId);
-            await load();
-          } catch (err: any) {
-            showAlert('Error', err?.message ?? 'Could not revoke access.');
-          } finally {
-            setActingId(null);
-          }
+    showAlert(
+      'Revoke access?',
+      `${g.email} will no longer be able to watch this post. Their subscription, if any, is unaffected.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Revoke',
+          style: 'destructive',
+          onPress: async () => {
+            setActingId(g.user_id);
+            try {
+              await AdminContentService.revokeAccess(g.user_id, postId);
+              await load();
+            } catch (err: any) {
+              showAlert('Error', err?.message ?? 'Could not revoke access.');
+            } finally {
+              setActingId(null);
+            }
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   if (!isAdmin) {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.headerBack} activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.headerBack}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
             <Text style={styles.headerBackTxt}>{'‹'}</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Post Access</Text>
           <View style={{ width: 32 }} />
         </View>
-        <View style={styles.emptyState}><Text style={styles.emptyText}>Access denied</Text></View>
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>Access denied</Text>
+        </View>
       </SafeAreaView>
     );
   }
@@ -144,10 +169,13 @@ export default function AdminPostAccessScreen() {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.headerBack} activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.headerBack}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
             <Text style={styles.headerBackTxt}>{'‹'}</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Post Access</Text>
@@ -163,7 +191,10 @@ export default function AdminPostAccessScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.headerBack} activeOpacity={0.7}
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.headerBack}
+          activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
@@ -173,7 +204,11 @@ export default function AdminPostAccessScreen() {
         <View style={{ width: 32 }} />
       </View>
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.list} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.list}
+        keyboardShouldPersistTaps="handled"
+      >
         <Text style={styles.blurb}>
           Granting access lets one person watch this post without a subscription. It never changes
           their plan, and revoking it never affects anything they have paid for.
@@ -193,8 +228,17 @@ export default function AdminPostAccessScreen() {
               onSubmitEditing={runSearch}
               returnKeyType="search"
             />
-            <TouchableOpacity style={styles.searchBtn} onPress={runSearch} activeOpacity={0.7} disabled={searching}>
-              {searching ? <ActivityIndicator color="#FFFFFF" size="small" /> : <Text style={styles.searchBtnText}>Find</Text>}
+            <TouchableOpacity
+              style={styles.searchBtn}
+              onPress={runSearch}
+              activeOpacity={0.7}
+              disabled={searching}
+            >
+              {searching ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : (
+                <Text style={styles.searchBtnText}>Find</Text>
+              )}
             </TouchableOpacity>
           </View>
 
@@ -227,7 +271,9 @@ export default function AdminPostAccessScreen() {
                     onPress={() => setDuration(d.key)}
                     activeOpacity={0.7}
                   >
-                    <Text style={[styles.chipText, duration === d.key && styles.chipTextActive]}>{d.label}</Text>
+                    <Text style={[styles.chipText, duration === d.key && styles.chipTextActive]}>
+                      {d.label}
+                    </Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -253,13 +299,24 @@ export default function AdminPostAccessScreen() {
               />
 
               <View style={styles.formActions}>
-                <TouchableOpacity style={styles.cancelBtn} onPress={() => setSelected(null)} activeOpacity={0.7}>
+                <TouchableOpacity
+                  style={styles.cancelBtn}
+                  onPress={() => setSelected(null)}
+                  activeOpacity={0.7}
+                >
                   <Text style={styles.cancelBtnText}>Cancel</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.confirmBtn} onPress={grant} activeOpacity={0.7} disabled={actingId === selected.id}>
-                  {actingId === selected.id
-                    ? <ActivityIndicator color="#FFFFFF" size="small" />
-                    : <Text style={styles.confirmBtnText}>Grant access</Text>}
+                <TouchableOpacity
+                  style={styles.confirmBtn}
+                  onPress={grant}
+                  activeOpacity={0.7}
+                  disabled={actingId === selected.id}
+                >
+                  {actingId === selected.id ? (
+                    <ActivityIndicator color="#FFFFFF" size="small" />
+                  ) : (
+                    <Text style={styles.confirmBtnText}>Grant access</Text>
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
@@ -271,28 +328,48 @@ export default function AdminPostAccessScreen() {
         {loading ? (
           <ActivityIndicator color="#2E7DFF" size="large" style={{ marginTop: 30 }} />
         ) : grantees.length === 0 ? (
-          <View style={styles.card}><Text style={styles.emptyText}>Nobody has been granted access to this post.</Text></View>
+          <View style={styles.card}>
+            <Text style={styles.emptyText}>Nobody has been granted access to this post.</Text>
+          </View>
         ) : (
           grantees.map(g => (
             <View key={g.grant_id} style={styles.card}>
               <View style={styles.cardTopRow}>
-                <Text style={styles.userName} numberOfLines={1}>{g.full_name || g.email}</Text>
-                <View style={[styles.badge, { backgroundColor: g.status === 'active' ? '#2ED47A' : '#6B7C97' }]}>
+                <Text style={styles.userName} numberOfLines={1}>
+                  {g.full_name || g.email}
+                </Text>
+                <View
+                  style={[
+                    styles.badge,
+                    { backgroundColor: g.status === 'active' ? '#2ED47A' : '#6B7C97' },
+                  ]}
+                >
                   <Text style={styles.badgeText}>{g.status.toUpperCase()}</Text>
                 </View>
               </View>
               <Text style={styles.metaText}>{g.email}</Text>
               <Text style={styles.metaText}>
-                {g.expires_at ? `Expires ${new Date(g.expires_at).toLocaleString()}` : 'No expiry — until revoked'}
+                {g.expires_at
+                  ? `Expires ${new Date(g.expires_at).toLocaleString()}`
+                  : 'No expiry — until revoked'}
               </Text>
               {!!g.reason && <Text style={styles.reasonText}>Reason: {g.reason}</Text>}
-              {!!g.granted_by_email && <Text style={styles.metaText}>Granted by {g.granted_by_email}</Text>}
+              {!!g.granted_by_email && (
+                <Text style={styles.metaText}>Granted by {g.granted_by_email}</Text>
+              )}
               {g.status === 'active' && (
                 <View style={styles.actionsWrap}>
-                  <TouchableOpacity style={styles.revokeBtn} onPress={() => revoke(g)} activeOpacity={0.7} disabled={actingId === g.user_id}>
-                    {actingId === g.user_id
-                      ? <ActivityIndicator color="#FF4D6D" size="small" />
-                      : <Text style={styles.revokeBtnText}>Revoke</Text>}
+                  <TouchableOpacity
+                    style={styles.revokeBtn}
+                    onPress={() => revoke(g)}
+                    activeOpacity={0.7}
+                    disabled={actingId === g.user_id}
+                  >
+                    {actingId === g.user_id ? (
+                      <ActivityIndicator color="#FF4D6D" size="small" />
+                    ) : (
+                      <Text style={styles.revokeBtnText}>Revoke</Text>
+                    )}
                   </TouchableOpacity>
                 </View>
               )}
@@ -308,53 +385,147 @@ export default function AdminPostAccessScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#0B1220' },
   header: {
-    backgroundColor: '#0B1220', flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: '#22304A',
+    backgroundColor: '#0B1220',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#22304A',
   },
   headerBack: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   headerBackTxt: { color: '#2E7DFF', fontSize: 28, fontWeight: '700', lineHeight: 28 },
   headerTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: '800' },
   list: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12 },
   blurb: { color: '#9FB0C9', fontSize: 12, fontWeight: '500', lineHeight: 18, marginBottom: 12 },
-  card: { backgroundColor: '#182437', borderRadius: 12, borderWidth: 1, borderColor: '#22304A', padding: 16, marginBottom: 12 },
-  cardTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, gap: 10 },
+  card: {
+    backgroundColor: '#182437',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#22304A',
+    padding: 16,
+    marginBottom: 12,
+  },
+  cardTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+    gap: 10,
+  },
   sectionTitle: { color: '#FFFFFF', fontSize: 15, fontWeight: '800', marginBottom: 10 },
-  sectionHeading: { color: '#9FB0C9', fontSize: 12, fontWeight: '800', letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 8, marginTop: 4 },
+  sectionHeading: {
+    color: '#9FB0C9',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+    marginTop: 4,
+  },
   searchRow: { flexDirection: 'row', gap: 8 },
   searchInput: {
-    flex: 1, backgroundColor: '#22304A', borderRadius: 8, borderWidth: 1, borderColor: '#22304A',
-    color: '#FFFFFF', fontSize: 14, paddingHorizontal: 12, paddingVertical: 10,
+    flex: 1,
+    backgroundColor: '#22304A',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#22304A',
+    color: '#FFFFFF',
+    fontSize: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
-  searchBtn: { backgroundColor: '#2E7DFF', paddingHorizontal: 18, borderRadius: 8, alignItems: 'center', justifyContent: 'center', minWidth: 70 },
+  searchBtn: {
+    backgroundColor: '#2E7DFF',
+    paddingHorizontal: 18,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 70,
+  },
   searchBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
-  userRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#22304A' },
+  userRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#22304A',
+  },
   userRowSelected: { backgroundColor: '#241a12' },
   userName: { fontSize: 14, fontWeight: '700', color: '#FFFFFF', flex: 1 },
   tick: { color: '#2E7DFF', fontSize: 18, fontWeight: '900' },
   metaText: { fontSize: 12, color: '#9FB0C9', fontWeight: '500', marginTop: 2 },
   reasonText: { fontSize: 12, color: '#FFC65C', fontWeight: '600', marginTop: 6 },
   grantForm: { marginTop: 12 },
-  label: { color: '#9FB0C9', fontSize: 11, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 6, marginTop: 8 },
+  label: {
+    color: '#9FB0C9',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    marginBottom: 6,
+    marginTop: 8,
+  },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { backgroundColor: '#22304A', borderWidth: 1, borderColor: '#22304A', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
+  chip: {
+    backgroundColor: '#22304A',
+    borderWidth: 1,
+    borderColor: '#22304A',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
   chipActive: { backgroundColor: '#2E7DFF', borderColor: '#2E7DFF' },
   chipText: { color: '#9FB0C9', fontSize: 12, fontWeight: '700' },
   chipTextActive: { color: '#FFFFFF' },
   input: {
-    backgroundColor: '#22304A', borderRadius: 8, borderWidth: 1, borderColor: '#22304A',
-    color: '#FFFFFF', fontSize: 14, paddingHorizontal: 12, paddingVertical: 10, marginTop: 4,
+    backgroundColor: '#22304A',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#22304A',
+    color: '#FFFFFF',
+    fontSize: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginTop: 4,
   },
   formActions: { flexDirection: 'row', gap: 10, marginTop: 14 },
-  cancelBtn: { backgroundColor: '#22304A', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 },
+  cancelBtn: {
+    backgroundColor: '#22304A',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
   cancelBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
-  confirmBtn: { backgroundColor: '#2E7DFF', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8, minWidth: 120, alignItems: 'center' },
+  confirmBtn: {
+    backgroundColor: '#2E7DFF',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    minWidth: 120,
+    alignItems: 'center',
+  },
   confirmBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
   badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
   badgeText: { fontSize: 11, fontWeight: '900', color: '#0B1220', letterSpacing: 0.5 },
   actionsWrap: { flexDirection: 'row', gap: 8, marginTop: 12 },
-  revokeBtn: { backgroundColor: '#22304A', paddingHorizontal: 18, paddingVertical: 9, borderRadius: 8, minWidth: 90, alignItems: 'center' },
+  revokeBtn: {
+    backgroundColor: '#22304A',
+    paddingHorizontal: 18,
+    paddingVertical: 9,
+    borderRadius: 8,
+    minWidth: 90,
+    alignItems: 'center',
+  },
   revokeBtnText: { color: '#FF4D6D', fontSize: 12, fontWeight: '800' },
-  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80, paddingHorizontal: 20 },
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 80,
+    paddingHorizontal: 20,
+  },
   emptyText: { fontSize: 14, color: '#9FB0C9', fontWeight: '600', textAlign: 'center' },
 });

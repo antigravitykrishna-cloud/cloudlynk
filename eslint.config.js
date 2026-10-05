@@ -4,11 +4,29 @@
 // Workaround: spread all expo config blocks, then override every react/* rule to 'off'.
 // We retain full TS, import, expo, and react-hooks coverage.
 
-const expoConfig = require('eslint-config-expo/flat/default');
+const expoConfig = require('eslint-config-expo/flat/default').map(block => {
+  // Drop the TypeScript import resolver (see the settings block below).
+  const resolver = block.settings?.['import/resolver'];
+  if (!resolver || typeof resolver !== 'object' || !('typescript' in resolver)) return block;
+  const { typescript: _dropped, ...rest } = resolver;
+  return { ...block, settings: { ...block.settings, 'import/resolver': rest } };
+});
 
 module.exports = [
   // Full Expo config (core + TS + React + Expo rules)
   ...expoConfig,
+
+  // The TypeScript import resolver bundled with eslint-config-expo does not
+  // load under ESLint 10 ("invalid interface"), which crashed every lint run.
+  // TypeScript itself (tsc --noEmit) already checks that imports resolve, so
+  // the plain Node resolver is enough for the import/* rules.
+  {
+    settings: {
+      'import/resolver': {
+        node: { extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'] },
+      },
+    },
+  },
 
   // ── Disable rules that are incompatible with ESLint 10 or produce false positives ──
   {
@@ -73,7 +91,8 @@ module.exports = [
       'fix_png.js',
       'tmp/**',
       'scripts/**',
+      'android/**',
+      'cloudflare/**',
     ],
   },
 ];
-

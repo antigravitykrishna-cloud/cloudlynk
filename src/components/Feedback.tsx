@@ -1,7 +1,14 @@
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, Animated,
-  Modal, Easing, Platform, Dimensions,
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Animated,
+  Modal,
+  Easing,
+  Platform,
+  Dimensions,
 } from 'react-native';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '../constants/theme';
 
@@ -41,12 +48,16 @@ type ConfirmButton = {
 function normalize(b: ConfirmButton, isLast: boolean) {
   const label = b.label ?? b.text ?? 'OK';
   const variant =
-    b.variant
-    ?? (b.style === 'destructive' ? 'danger'
-      : b.style === 'cancel' ? 'ghost'
-      // No explicit style: the last button is the affirmative one, matching
-      // both Alert.alert's emphasis and the order these calls already use.
-      : isLast ? 'primary' : 'ghost');
+    b.variant ??
+    (b.style === 'destructive'
+      ? 'danger'
+      : b.style === 'cancel'
+        ? 'ghost'
+        : // No explicit style: the last button is the affirmative one, matching
+          // both Alert.alert's emphasis and the order these calls already use.
+          isLast
+          ? 'primary'
+          : 'ghost');
   return { label, variant, onPress: b.onPress };
 }
 
@@ -63,7 +74,12 @@ let confirmState: ConfirmState = null;
 let seq = 0;
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach(l => l());
-const subscribe = (l: () => void) => { listeners.add(l); return () => { listeners.delete(l); }; };
+const subscribe = (l: () => void) => {
+  listeners.add(l);
+  return () => {
+    listeners.delete(l);
+  };
+};
 
 /** Brief, non-blocking confirmation. Use for "saved", "copied", "sent". */
 export function toast(message: string, kind: ToastKind = 'info') {
@@ -94,9 +110,15 @@ export function alertError(title: string, message?: string) {
   showAlert(title, message, [{ label: 'Close', variant: 'ghost' }]);
 }
 
-function dismissConfirm() { confirmState = null; emit(); }
+function dismissConfirm() {
+  confirmState = null;
+  emit();
+}
 function dismissToast(id: number) {
-  if (toastState?.id === id) { toastState = null; emit(); }
+  if (toastState?.id === id) {
+    toastState = null;
+    emit();
+  }
 }
 
 const getToast = () => toastState;
@@ -127,7 +149,9 @@ function Toast() {
         duration: 180,
         easing: Easing.in(Easing.cubic),
         useNativeDriver: true,
-      }).start(() => { if (idRef.current !== null) dismissToast(idRef.current); });
+      }).start(() => {
+        if (idRef.current !== null) dismissToast(idRef.current);
+      });
     }, TOAST_MS);
     return () => clearTimeout(t);
   }, [state?.id, slide, state]);
@@ -135,9 +159,11 @@ function Toast() {
   if (!state) return null;
 
   const accent =
-    state.kind === 'success' ? Colors.success
-    : state.kind === 'error' ? Colors.danger
-    : Colors.brandCyan;
+    state.kind === 'success'
+      ? Colors.success
+      : state.kind === 'error'
+        ? Colors.danger
+        : Colors.brandCyan;
 
   return (
     <Animated.View
@@ -146,13 +172,17 @@ function Toast() {
         styles.toastWrap,
         {
           opacity: slide,
-          transform: [{ translateY: slide.interpolate({ inputRange: [0, 1], outputRange: [-24, 0] }) }],
+          transform: [
+            { translateY: slide.interpolate({ inputRange: [0, 1], outputRange: [-24, 0] }) },
+          ],
         },
       ]}
     >
       <View style={styles.toast}>
         <View style={[styles.toastBar, { backgroundColor: accent }]} />
-        <Text style={styles.toastText} numberOfLines={3}>{state.message}</Text>
+        <Text style={styles.toastText} numberOfLines={3}>
+          {state.message}
+        </Text>
       </View>
     </Animated.View>
   );
@@ -184,14 +214,22 @@ function ConfirmDialog() {
   };
 
   return (
-    <Modal visible transparent animationType="fade" statusBarTranslucent onRequestClose={dismissConfirm}>
+    <Modal
+      visible
+      transparent
+      animationType="fade"
+      statusBarTranslucent
+      onRequestClose={dismissConfirm}
+    >
       <View style={styles.backdrop}>
         <Animated.View
           style={[
             styles.dialog,
             {
               opacity: anim,
-              transform: [{ scale: anim.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1] }) }],
+              transform: [
+                { scale: anim.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1] }) },
+              ],
             },
           ]}
         >
@@ -251,56 +289,75 @@ const styles = StyleSheet.create({
   toastWrap: {
     position: 'absolute',
     top: Platform.OS === 'ios' ? 58 : 44,
-    left: Spacing.lg, right: Spacing.lg,
+    left: Spacing.lg,
+    right: Spacing.lg,
     zIndex: 9999,
   },
   toast: {
-    flexDirection: 'row', alignItems: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: Colors.surfaceElevated,
     borderRadius: Radius.lg,
-    borderWidth: 1, borderColor: Colors.border,
+    borderWidth: 1,
+    borderColor: Colors.border,
     paddingRight: Spacing.lg,
     overflow: 'hidden',
     // A coloured shadow reads as raised on navy where a black one just muddies.
-    shadowColor: '#000', shadowOpacity: 0.4,
-    shadowRadius: 16, shadowOffset: { width: 0, height: 8 },
+    shadowColor: '#000',
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
     elevation: 10,
   },
   toastBar: { width: 4, alignSelf: 'stretch' },
   toastText: {
-    flex: 1, color: Colors.text, fontSize: FontSize.base,
-    paddingVertical: Spacing.md, paddingLeft: Spacing.md, lineHeight: 19,
+    flex: 1,
+    color: Colors.text,
+    fontSize: FontSize.base,
+    paddingVertical: Spacing.md,
+    paddingLeft: Spacing.md,
+    lineHeight: 19,
   },
 
   // dialog
   backdrop: {
-    flex: 1, backgroundColor: 'rgba(4,8,16,0.72)',
-    alignItems: 'center', justifyContent: 'center',
+    flex: 1,
+    backgroundColor: 'rgba(4,8,16,0.72)',
+    alignItems: 'center',
+    justifyContent: 'center',
     padding: Spacing.xl,
   },
   dialog: {
     width: Math.min(width - Spacing.xl * 2, 380),
     backgroundColor: Colors.surface,
     borderRadius: Radius.xxl,
-    borderWidth: 1, borderColor: Colors.border,
+    borderWidth: 1,
+    borderColor: Colors.border,
     padding: Spacing.xxl,
-    shadowColor: '#000', shadowOpacity: 0.5,
-    shadowRadius: 28, shadowOffset: { width: 0, height: 14 },
+    shadowColor: '#000',
+    shadowOpacity: 0.5,
+    shadowRadius: 28,
+    shadowOffset: { width: 0, height: 14 },
     elevation: 24,
   },
   dialogTitle: {
-    color: Colors.text, fontSize: FontSize.xl,
-    fontWeight: FontWeight.bold, marginBottom: Spacing.sm,
+    color: Colors.text,
+    fontSize: FontSize.xl,
+    fontWeight: FontWeight.bold,
+    marginBottom: Spacing.sm,
   },
   dialogBody: {
-    color: Colors.textSecondary, fontSize: FontSize.lg,
-    lineHeight: 22, marginBottom: Spacing.sm,
+    color: Colors.textSecondary,
+    fontSize: FontSize.lg,
+    lineHeight: 22,
+    marginBottom: Spacing.sm,
   },
   dialogButtons: { marginTop: Spacing.lg, gap: Spacing.sm },
   btn: {
     borderRadius: Radius.full,
     paddingVertical: Spacing.md,
-    alignItems: 'center', justifyContent: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   btnPrimary: { backgroundColor: Colors.brandBlue },
   btnDanger: { backgroundColor: Colors.danger },

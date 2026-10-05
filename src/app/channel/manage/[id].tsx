@@ -1,5 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  ActivityIndicator,
+} from 'react-native';
 import { showAlert } from '../../../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -28,11 +36,7 @@ export default function ManageChannelScreen() {
   const [saving, setSaving] = useState(false);
 
   const loadChannel = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('channels')
-      .select('*')
-      .eq('id', id)
-      .single();
+    const { data, error } = await supabase.from('channels').select('*').eq('id', id).single();
 
     if (error) {
       showAlert('Error', 'Failed to load channel');
@@ -97,7 +101,7 @@ export default function ManageChannelScreen() {
       const updated = await ChannelService.updateChannel(
         id as string,
         editName.trim(),
-        editDesc.trim()
+        editDesc.trim(),
       );
       setChannel(updated);
       setEditing(false);
@@ -128,35 +132,28 @@ export default function ManageChannelScreen() {
             }
           },
         },
-      ]
+      ],
     );
   };
 
   const handleDeletePost = (postId: string, postTitle: string | null) => {
-    showAlert(
-      'Delete Post',
-      `Are you sure you want to delete "${postTitle || 'Untitled'}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const { error } = await supabase
-                .from('channel_posts')
-                .delete()
-                .eq('id', postId);
+    showAlert('Delete Post', `Are you sure you want to delete "${postTitle || 'Untitled'}"?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const { error } = await supabase.from('channel_posts').delete().eq('id', postId);
 
-              if (error) throw error;
-              setPosts((prev) => prev.filter((p) => p.id !== postId));
-            } catch (err: any) {
-              showAlert('Error', err.message || 'Failed to delete post');
-            }
-          },
+            if (error) throw error;
+            setPosts(prev => prev.filter(p => p.id !== postId));
+          } catch (err: any) {
+            showAlert('Error', err.message || 'Failed to delete post');
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   if (loading) {
@@ -179,7 +176,10 @@ export default function ManageChannelScreen() {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.replace('/(tabs)/channels')} style={styles.backButton}>
+        <TouchableOpacity
+          onPress={() => router.replace('/(tabs)/channels')}
+          style={styles.backButton}
+        >
           <Text style={styles.backButtonText}>{'←'}</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Manage Channel</Text>
@@ -216,29 +216,27 @@ export default function ManageChannelScreen() {
             </View>
 
             <View style={styles.badge}>
-              <Text style={styles.badgeText}>
-                {channel.is_public ? 'Public' : 'Private'}
-              </Text>
+              <Text style={styles.badgeText}>{channel.is_public ? 'Public' : 'Private'}</Text>
             </View>
 
             {channel.member_count !== undefined && (
               <View style={styles.badge}>
-                <Text style={styles.badgeText}>
-                  {channel.member_count} members
-                </Text>
+                <Text style={styles.badgeText}>{channel.member_count} members</Text>
               </View>
             )}
           </View>
         </View>
 
         {isAdmin && (
-        <TouchableOpacity
-          style={styles.addContentBtn}
-          onPress={() => router.push({ pathname: '/upload/add-content', params: { channelId: id as string } })}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.addContentBtnText}>+ Add Content</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.addContentBtn}
+            onPress={() =>
+              router.push({ pathname: '/upload/add-content', params: { channelId: id as string } })
+            }
+            activeOpacity={0.7}
+          >
+            <Text style={styles.addContentBtnText}>+ Add Content</Text>
+          </TouchableOpacity>
         )}
 
         {/* Edit Form */}
@@ -304,9 +302,7 @@ export default function ManageChannelScreen() {
               <Text style={styles.detailLabel}>Name</Text>
               <Text style={styles.detailValue}>{channel.name}</Text>
               <Text style={styles.detailLabel}>Description</Text>
-              <Text style={styles.detailValue}>
-                {channel.description || 'No description'}
-              </Text>
+              <Text style={styles.detailValue}>{channel.description || 'No description'}</Text>
             </View>
           )}
         </View>
@@ -320,7 +316,7 @@ export default function ManageChannelScreen() {
           {posts.length === 0 ? (
             <Text style={styles.emptyText}>No content yet</Text>
           ) : (
-            posts.map((post) => (
+            posts.map(post => (
               <View key={post.id} style={styles.postItem}>
                 <View style={styles.postInfo}>
                   <Text style={styles.postTitle} numberOfLines={1}>

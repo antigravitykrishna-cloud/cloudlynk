@@ -12,7 +12,7 @@
 //   permissions, with Android Publisher API enabled in the matching GCP
 //   project.
 
-import { getAccessToken } from "./google-auth.ts";
+import { getAccessToken } from './google-auth.ts';
 export { getAccessToken };
 
 export interface PlaySubscriptionStatus {
@@ -32,11 +32,11 @@ export interface PlaySubscriptionStatus {
 // paid one; a revoked subscription is a refund and access must be pulled
 // immediately per Play's Payments policy).
 const NEVER_VALID_STATES = new Set([
-  "SUBSCRIPTION_STATE_ON_HOLD",
-  "SUBSCRIPTION_STATE_PAUSED",
-  "SUBSCRIPTION_STATE_REVOKED",
-  "SUBSCRIPTION_STATE_EXPIRED",
-  "SUBSCRIPTION_STATE_PENDING",
+  'SUBSCRIPTION_STATE_ON_HOLD',
+  'SUBSCRIPTION_STATE_PAUSED',
+  'SUBSCRIPTION_STATE_REVOKED',
+  'SUBSCRIPTION_STATE_EXPIRED',
+  'SUBSCRIPTION_STATE_PENDING',
 ]);
 
 /**
@@ -47,13 +47,23 @@ const NEVER_VALID_STATES = new Set([
  * keeps access until `expiryTime`, same as canceling any other subscription.
  * We treat it as valid as long as `expiryTime` is still in the future.
  */
-export async function getSubscriptionStatus(packageName: string, purchaseToken: string): Promise<PlaySubscriptionStatus> {
+export async function getSubscriptionStatus(
+  packageName: string,
+  purchaseToken: string,
+): Promise<PlaySubscriptionStatus> {
   const accessToken = await getAccessToken();
   const url = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(packageName)}/purchases/subscriptionsv2/tokens/${encodeURIComponent(purchaseToken)}`;
   const resp = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
   const json = await resp.json();
   if (!resp.ok) {
-    return { valid: false, expiryTimeMillis: null, subscriptionState: null, acknowledgementState: null, basePlanId: null, raw: json };
+    return {
+      valid: false,
+      expiryTimeMillis: null,
+      subscriptionState: null,
+      acknowledgementState: null,
+      basePlanId: null,
+      raw: json,
+    };
   }
 
   const state: string | undefined = json.subscriptionState;
@@ -83,25 +93,44 @@ export async function getSubscriptionStatus(packageName: string, purchaseToken: 
  * Safe to call even if already acknowledged (Google just returns an error we
  * can ignore) since we check `acknowledgementState` before calling in practice.
  */
-export async function acknowledgeSubscription(packageName: string, subscriptionId: string, purchaseToken: string): Promise<boolean> {
+export async function acknowledgeSubscription(
+  packageName: string,
+  subscriptionId: string,
+  purchaseToken: string,
+): Promise<boolean> {
   const accessToken = await getAccessToken();
   const url = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(packageName)}/purchases/subscriptions/${encodeURIComponent(subscriptionId)}/tokens/${encodeURIComponent(purchaseToken)}:acknowledge`;
-  const resp = await fetch(url, { method: "POST", headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" }, body: "{}" });
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: '{}',
+  });
   if (!resp.ok) {
-    const text = await resp.text().catch(() => "");
-    console.error("acknowledgeSubscription failed:", resp.status, text);
+    const text = await resp.text().catch(() => '');
+    console.error('acknowledgeSubscription failed:', resp.status, text);
     return false;
   }
   return true;
 }
 
 /** Maps a Play subscription status to this app's `profiles.plan_status` values. */
-export function planStatusFor(status: PlaySubscriptionStatus): { planStatus: string; expiresAtIso: string | null } {
+export function planStatusFor(status: PlaySubscriptionStatus): {
+  planStatus: string;
+  expiresAtIso: string | null;
+} {
   if (status.valid) {
-    return { planStatus: "active", expiresAtIso: status.expiryTimeMillis ? new Date(status.expiryTimeMillis).toISOString() : null };
+    return {
+      planStatus: 'active',
+      expiresAtIso: status.expiryTimeMillis
+        ? new Date(status.expiryTimeMillis).toISOString()
+        : null,
+    };
   }
-  if (status.subscriptionState === "SUBSCRIPTION_STATE_REVOKED") {
-    return { planStatus: "cancelled", expiresAtIso: null };
+  if (status.subscriptionState === 'SUBSCRIPTION_STATE_REVOKED') {
+    return { planStatus: 'cancelled', expiresAtIso: null };
   }
-  return { planStatus: "expired", expiresAtIso: status.expiryTimeMillis ? new Date(status.expiryTimeMillis).toISOString() : null };
+  return {
+    planStatus: 'expired',
+    expiresAtIso: status.expiryTimeMillis ? new Date(status.expiryTimeMillis).toISOString() : null,
+  };
 }

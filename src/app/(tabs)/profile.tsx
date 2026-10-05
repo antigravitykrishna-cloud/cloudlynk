@@ -1,5 +1,14 @@
 import { CloudlynkLogo } from '../../components/CloudlynkLogo';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Linking, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Switch,
+  Linking,
+  ActivityIndicator,
+} from 'react-native';
 import { showAlert } from '../../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -17,12 +26,25 @@ import Constants from 'expo-constants';
 import { Icon, type IconName } from '../../components/Icon';
 
 const SettingsRow = ({
-  icon, iconBg, label, value, onPress, danger = false,
-  toggle, toggleValue, onToggle,
+  icon,
+  iconBg,
+  label,
+  value,
+  onPress,
+  danger = false,
+  toggle,
+  toggleValue,
+  onToggle,
 }: {
-  icon: IconName; iconBg: string; label: string;
-  value?: string; onPress?: () => void; danger?: boolean;
-  toggle?: boolean; toggleValue?: boolean; onToggle?: (v: boolean) => void;
+  icon: IconName;
+  iconBg: string;
+  label: string;
+  value?: string;
+  onPress?: () => void;
+  danger?: boolean;
+  toggle?: boolean;
+  toggleValue?: boolean;
+  onToggle?: (v: boolean) => void;
 }) => (
   <TouchableOpacity
     style={styles.row}
@@ -51,7 +73,17 @@ const SettingsRow = ({
 );
 
 export default function ProfileScreen() {
-  const { profile, user, signOut, refreshProfile, isAdmin, isPaidUser, planStatus, approvalStatus, isGuest } = useAuth();
+  const {
+    profile,
+    user,
+    signOut,
+    refreshProfile,
+    isAdmin,
+    isPaidUser,
+    planStatus,
+    approvalStatus,
+    isGuest,
+  } = useAuth();
   // Until they subscribe, the plans are the first thing on Profile.
   const showPlans = !!user?.id && !isPaidUser && approvalStatus !== 'rejected';
   const plansQuery = useSubscriptionPlans();
@@ -76,16 +108,26 @@ export default function ProfileScreen() {
       const data = await ChannelService.getMyOwnedChannels(user.id);
       setMyChannels(data ?? []);
     } catch (err) {
-      if (__DEV__) console.error("loadMyChannels:", err);
+      if (__DEV__) console.error('loadMyChannels:', err);
     } finally {
       setChannelsLoading(false);
     }
   }, [user?.id]);
 
-  useFocusEffect(useCallback(() => { setChannelsLoading(true); loadMyChannels(); }, [loadMyChannels]));
+  useFocusEffect(
+    useCallback(() => {
+      setChannelsLoading(true);
+      loadMyChannels();
+    }, [loadMyChannels]),
+  );
 
   const initials = profile?.full_name
-    ? profile.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+    ? profile.full_name
+        .split(' ')
+        .map(n => n[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase()
     : '??';
 
   // Both read plan_status via useAuth, not the legacy `plan` column. `plan`
@@ -102,7 +144,11 @@ export default function ProfileScreen() {
         'You will lose this guest account',
         'Guest accounts cannot be signed back into. Anything on it, including a plan, will be lost. Save your account first.',
         [
-          { text: 'Save account', style: 'cancel', onPress: () => router.push('/save-account' as never) },
+          {
+            text: 'Save account',
+            style: 'cancel',
+            onPress: () => router.push('/save-account' as never),
+          },
           { text: 'Sign out anyway', style: 'destructive', onPress: signOut },
         ],
       );
@@ -114,10 +160,16 @@ export default function ProfileScreen() {
     ]);
   };
 
-  const handleToggle = async (field: 'auto_backup' | 'wifi_only' | 'notifications_enabled', value: boolean) => {
+  const handleToggle = async (
+    field: 'auto_backup' | 'wifi_only' | 'notifications_enabled',
+    value: boolean,
+  ) => {
     if (!user) return;
     try {
-      const { error } = await supabase.from('profiles').update({ [field]: value }).eq('id', user.id);
+      const { error } = await supabase
+        .from('profiles')
+        .update({ [field]: value })
+        .eq('id', user.id);
       if (error) throw error;
       await refreshProfile();
     } catch (err: unknown) {
@@ -152,7 +204,9 @@ export default function ProfileScreen() {
             </View>
           </View>
           <Text style={styles.userName}>{profile?.full_name ?? 'User'}</Text>
-          <Text style={styles.userEmail}>{isGuest ? 'Guest account · not saved' : (user?.email ?? '')}</Text>
+          <Text style={styles.userEmail}>
+            {isGuest ? 'Guest account · not saved' : (user?.email ?? '')}
+          </Text>
           <View style={styles.headerActions}>
             <TouchableOpacity
               style={styles.headerActionBtn}
@@ -206,7 +260,9 @@ export default function ProfileScreen() {
               <TouchableOpacity
                 style={[styles.plansBtn, !pickedPlan && { opacity: 0.5 }]}
                 disabled={!pickedPlan}
-                onPress={() => router.push({ pathname: '/premium', params: { plan: pickedPlan ?? '' } } as never)}
+                onPress={() =>
+                  router.push({ pathname: '/premium', params: { plan: pickedPlan ?? '' } } as never)
+                }
                 activeOpacity={0.85}
               >
                 <Text style={styles.plansBtnText}>Continue</Text>
@@ -216,12 +272,18 @@ export default function ProfileScreen() {
 
           {/* Plan badge */}
           {!showPlans && (
-          <TouchableOpacity style={styles.planBadge} onPress={handlePlanPress} activeOpacity={0.7}>
-            <Text style={styles.planBadgeText}>
-              {'✦ '}{planName}{' PLAN'}
-            </Text>
-            {!isPaidUser && <Text style={styles.planUpgradeText}>{'  · Tap to Upgrade'}</Text>}
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.planBadge}
+              onPress={handlePlanPress}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.planBadgeText}>
+                {'✦ '}
+                {planName}
+                {' PLAN'}
+              </Text>
+              {!isPaidUser && <Text style={styles.planUpgradeText}>{'  · Tap to Upgrade'}</Text>}
+            </TouchableOpacity>
           )}
 
           {/* Storage card */}
@@ -235,10 +297,18 @@ export default function ProfileScreen() {
               </Text>
             </View>
             <View style={styles.barTrack}>
-              <View style={[styles.barFill, { width: `${profile ? Math.min((profile.storage_used / profile.storage_limit) * 100, 100) : 0}%` }]} />
+              <View
+                style={[
+                  styles.barFill,
+                  {
+                    width: `${profile ? Math.min((profile.storage_used / profile.storage_limit) * 100, 100) : 0}%`,
+                  },
+                ]}
+              />
             </View>
             <Text style={styles.cardSub}>
-              {formatBytes(profile?.storage_used ?? 0)} used of {formatBytes(profile?.storage_limit ?? 15 * 1024 * 1024 * 1024)}
+              {formatBytes(profile?.storage_used ?? 0)} used of{' '}
+              {formatBytes(profile?.storage_limit ?? 15 * 1024 * 1024 * 1024)}
             </Text>
           </View>
 
@@ -248,7 +318,10 @@ export default function ProfileScreen() {
               <Text style={styles.sectionTitle}>My Channels</Text>
               {/* v90: only admins publish. */}
               {isAdmin && (
-                <TouchableOpacity onPress={() => router.push('/create-content')} activeOpacity={0.7}>
+                <TouchableOpacity
+                  onPress={() => router.push('/create-content')}
+                  activeOpacity={0.7}
+                >
                   <Text style={styles.addChannelText}>+ Add Channel</Text>
                 </TouchableOpacity>
               )}
@@ -262,21 +335,53 @@ export default function ProfileScreen() {
               </View>
             ) : (
               <View style={styles.channelsList}>
-                {myChannels.map((ch) => (
+                {myChannels.map(ch => (
                   <View key={ch.id} style={styles.channelCard}>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.channelName}>{ch.name}</Text>
                       <View style={styles.channelMeta}>
-                        <View style={[styles.statusBadge, { backgroundColor: ch.status === "active" ? "#A7F3D0" : ch.status === "pending" ? "#FEF3C7" : "#FECACA" }]}>
-                          <Text style={[styles.statusText, { color: ch.status === "active" ? "#065F46" : ch.status === "pending" ? "#92400E" : "#991B1B" }]}>
-                            {ch.status === "active" ? "Active" : ch.status === "pending" ? "Pending" : "Suspended"}
+                        <View
+                          style={[
+                            styles.statusBadge,
+                            {
+                              backgroundColor:
+                                ch.status === 'active'
+                                  ? '#A7F3D0'
+                                  : ch.status === 'pending'
+                                    ? '#FEF3C7'
+                                    : '#FECACA',
+                            },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.statusText,
+                              {
+                                color:
+                                  ch.status === 'active'
+                                    ? '#065F46'
+                                    : ch.status === 'pending'
+                                      ? '#92400E'
+                                      : '#991B1B',
+                              },
+                            ]}
+                          >
+                            {ch.status === 'active'
+                              ? 'Active'
+                              : ch.status === 'pending'
+                                ? 'Pending'
+                                : 'Suspended'}
                           </Text>
                         </View>
                         <Text style={styles.memberCount}>{ch.member_count ?? 0} members</Text>
                       </View>
                     </View>
                     {(ch.owner_id === user?.id || isAdmin) && (
-                      <TouchableOpacity style={styles.manageBtn} onPress={() => router.push(`/channel/manage/${ch.id}` as any)} activeOpacity={0.7}>
+                      <TouchableOpacity
+                        style={styles.manageBtn}
+                        onPress={() => router.push(`/channel/manage/${ch.id}` as any)}
+                        activeOpacity={0.7}
+                      >
                         <Text style={styles.manageBtnText}>Manage</Text>
                       </TouchableOpacity>
                     )}
@@ -311,7 +416,7 @@ export default function ProfileScreen() {
                   icon="edit"
                   iconBg="rgba(255,179,71,0.14)"
                   label="Pending Channel Content"
-                  onPress={() => router.push("/admin/pending-channel-content")}
+                  onPress={() => router.push('/admin/pending-channel-content')}
                 />
               )}
               {isAdmin && (
@@ -319,7 +424,7 @@ export default function ProfileScreen() {
                   icon="chart"
                   iconBg="rgba(46,125,255,0.14)"
                   label="Channel Activity"
-                  onPress={() => router.push("/admin/channel-activity")}
+                  onPress={() => router.push('/admin/channel-activity')}
                 />
               )}
               {isAdmin && (
@@ -327,7 +432,7 @@ export default function ProfileScreen() {
                   icon="flag"
                   iconBg="rgba(255,77,109,0.14)"
                   label="Reports (Content & Users)"
-                  onPress={() => router.push("/admin/reports")}
+                  onPress={() => router.push('/admin/reports')}
                 />
               )}
               {isAdmin && (
@@ -335,7 +440,7 @@ export default function ProfileScreen() {
                   icon="check-circle"
                   iconBg="rgba(46,212,122,0.14)"
                   label="User Approvals"
-                  onPress={() => router.push("/admin/user-approvals")}
+                  onPress={() => router.push('/admin/user-approvals')}
                 />
               )}
               {isAdmin && (
@@ -343,7 +448,7 @@ export default function ProfileScreen() {
                   icon="diamond"
                   iconBg="rgba(227,179,65,0.14)"
                   label="Subscribers"
-                  onPress={() => router.push("/admin/subscribers")}
+                  onPress={() => router.push('/admin/subscribers')}
                 />
               )}
               {isAdmin && (
@@ -351,7 +456,7 @@ export default function ProfileScreen() {
                   icon="film"
                   iconBg="rgba(180,169,255,0.14)"
                   label="Content & Access"
-                  onPress={() => router.push("/admin/content")}
+                  onPress={() => router.push('/admin/content')}
                 />
               )}
               {isAdmin && (
@@ -359,7 +464,7 @@ export default function ProfileScreen() {
                   icon="upload"
                   iconBg="rgba(46,125,255,0.14)"
                   label="Upload Content"
-                  onPress={() => router.push("/admin/upload")}
+                  onPress={() => router.push('/admin/upload')}
                 />
               )}
               {isAdmin && (
@@ -367,7 +472,7 @@ export default function ProfileScreen() {
                   icon="history"
                   iconBg="rgba(159,176,201,0.14)"
                   label="Audit Log"
-                  onPress={() => router.push("/admin/audit")}
+                  onPress={() => router.push('/admin/audit')}
                 />
               )}
               <SettingsRow
@@ -420,7 +525,7 @@ export default function ProfileScreen() {
                 label="Auto Backup"
                 toggle
                 toggleValue={profile?.auto_backup ?? true}
-                onToggle={(v) => handleToggle('auto_backup', v)}
+                onToggle={v => handleToggle('auto_backup', v)}
               />
               <SettingsRow
                 icon="wifi"
@@ -428,7 +533,7 @@ export default function ProfileScreen() {
                 label="Wi-Fi Only Uploads"
                 toggle
                 toggleValue={profile?.wifi_only ?? false}
-                onToggle={(v) => handleToggle('wifi_only', v)}
+                onToggle={v => handleToggle('wifi_only', v)}
               />
               <SettingsRow
                 icon="settings"
@@ -439,18 +544,23 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-
           {/* Logout + Delete Account */}
           <View style={styles.bottomButtons}>
             <TouchableOpacity style={styles.logoutBtn} onPress={handleSignOut} activeOpacity={0.7}>
               <Text style={styles.logoutBtnText}>Logout</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.deleteBtn} onPress={() => router.push('/delete-account')} activeOpacity={0.7}>
+            <TouchableOpacity
+              style={styles.deleteBtn}
+              onPress={() => router.push('/delete-account')}
+              activeOpacity={0.7}
+            >
               <Text style={styles.deleteBtnText}>Delete Account</Text>
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.version}>{`Cloudlynk · v${Constants.expoConfig?.version ?? '0.0.0'}\n© 2026 Cloudlynk Inc. All rights reserved.`}</Text>
+          <Text
+            style={styles.version}
+          >{`Cloudlynk · v${Constants.expoConfig?.version ?? '0.0.0'}\n© 2026 Cloudlynk Inc. All rights reserved.`}</Text>
           <View style={{ height: 32 }} />
         </View>
       </ScrollView>
@@ -461,68 +571,225 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
   scroll: { flex: 1 },
-  redHeader: { backgroundColor: Colors.surface, paddingTop: 24, paddingBottom: 24, paddingHorizontal: 20, alignItems: 'center' },
+  redHeader: {
+    backgroundColor: Colors.surface,
+    paddingTop: 24,
+    paddingBottom: 24,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+  },
   avatarWrap: { marginBottom: 12 },
-  avatar: { width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(255,255,255,0.2)', borderWidth: 3, borderColor: '#ffffff', alignItems: 'center', justifyContent: 'center' },
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderWidth: 3,
+    borderColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   avatarText: { color: '#ffffff', fontSize: 28, fontWeight: '900' },
-  userName: { color: '#ffffff', fontSize: 18, fontWeight: '800', marginBottom: 2, textAlign: 'center' },
-  userEmail: { color: 'rgba(255,255,255,0.8)', fontSize: 13, fontWeight: '500', marginBottom: 12, textAlign: 'center' },
+  userName: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: '800',
+    marginBottom: 2,
+    textAlign: 'center',
+  },
+  userEmail: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 13,
+    fontWeight: '500',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
   headerActions: { flexDirection: 'row', gap: 12 },
-  headerActionBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
+  headerActionBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   headerActionIcon: { fontSize: 18 },
   body: { backgroundColor: Colors.bg, paddingTop: 16 },
   plansBlock: { marginBottom: 20 },
   saveBanner: {
-    flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: Colors.brandBlue,
-    borderRadius: 16, padding: 16, marginBottom: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: Colors.brandBlue,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
   },
   saveBannerTitle: { color: '#FFFFFF', fontSize: 16, fontWeight: '800' },
   saveBannerText: { color: 'rgba(255,255,255,0.9)', fontSize: 13, marginTop: 2, lineHeight: 18 },
   saveBannerChevron: { color: '#FFFFFF', fontSize: 28, fontWeight: '300' },
   plansTitle: { color: Colors.text, fontSize: 20, fontWeight: '800', marginBottom: 12 },
-  plansBtn: { backgroundColor: Colors.brandBlue, borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 4 },
+  plansBtn: {
+    backgroundColor: Colors.brandBlue,
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 4,
+  },
   plansBtnText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
-  planBadge: { alignSelf: 'center', flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.brandLight, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: Colors.brand, marginBottom: 16 },
+  planBadge: {
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.brandLight,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: Colors.brand,
+    marginBottom: 16,
+  },
   planBadgeText: { fontSize: 13, fontWeight: '900', color: Colors.brand, letterSpacing: 0.5 },
   planUpgradeText: { fontSize: 12, color: Colors.textMuted, fontWeight: '600' },
-  card: { marginHorizontal: 16, marginBottom: 16, backgroundColor: Colors.bg, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: Colors.border },
+  card: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+    backgroundColor: Colors.bg,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   cardTitle: { fontSize: 14, fontWeight: '700', color: Colors.text },
   cardMeta: { fontSize: 14, fontWeight: '900' },
-  barTrack: { height: 6, backgroundColor: Colors.surfaceHover, borderRadius: 4, overflow: 'hidden', marginBottom: 8 },
+  barTrack: {
+    height: 6,
+    backgroundColor: Colors.surfaceHover,
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
   barFill: { height: '100%', backgroundColor: Colors.brand, borderRadius: 4 },
   cardSub: { fontSize: 12, color: Colors.textMuted, fontWeight: '500' },
   section: { marginBottom: 16 },
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, marginBottom: 8 },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginBottom: 8,
+  },
   sectionTitle: { fontSize: 16, fontWeight: '800', color: Colors.text },
-  sectionHeaderTitle: { fontSize: 12, fontWeight: '800', color: Colors.textMuted, letterSpacing: 0.8, paddingHorizontal: 20, marginBottom: 8 },
+  sectionHeaderTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: Colors.textMuted,
+    letterSpacing: 0.8,
+    paddingHorizontal: 20,
+    marginBottom: 8,
+  },
   addChannelText: { fontSize: 13, fontWeight: '700', color: Colors.brand },
-  menuGroup: { marginHorizontal: 16, backgroundColor: Colors.bg, borderRadius: 12, borderWidth: 1, borderColor: Colors.border, overflow: 'hidden' },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, paddingHorizontal: 14, borderBottomWidth: 0.5, borderBottomColor: Colors.border },
-  rowIcon: { width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  menuGroup: {
+    marginHorizontal: 16,
+    backgroundColor: Colors.bg,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    overflow: 'hidden',
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.border,
+  },
+  rowIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   rowLabel: { flex: 1, fontSize: 14, fontWeight: '600', color: Colors.text },
   rowRight: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   rowValue: { fontSize: 12, color: Colors.textMuted, fontWeight: '600' },
   chevron: { fontSize: 18, color: Colors.textMuted },
   emptyState: { alignItems: 'center', paddingVertical: 40, paddingHorizontal: 20 },
-  emptyIcon: { width: 80, height: 80, borderRadius: 20, backgroundColor: Colors.brand, alignItems: 'center', justifyContent: 'center', marginBottom: 12, shadowColor: Colors.brand, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6 },
+  emptyIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 20,
+    backgroundColor: Colors.brand,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+    shadowColor: Colors.brand,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
   emptyIconText: { fontSize: 36 },
-  emptyIconUpload: { position: 'absolute', bottom: 12, width: 28, height: 28, borderRadius: 14, backgroundColor: '#ffffff', alignItems: 'center', justifyContent: 'center' },
+  emptyIconUpload: {
+    position: 'absolute',
+    bottom: 12,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   emptyIconUploadText: { fontSize: 14, fontWeight: '900', color: Colors.brand },
   emptyText: { fontSize: 14, color: Colors.text, fontWeight: '600' },
   channelsList: { gap: 8 },
-  channelCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#182437', borderRadius: 12, padding: 12, borderWidth: 0.5, borderColor: '#22304A' },
+  channelCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#182437',
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 0.5,
+    borderColor: '#22304A',
+  },
   channelName: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
   channelMeta: { flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 8 },
   statusBadge: { borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
   statusText: { fontSize: 11, fontWeight: '700' },
   memberCount: { fontSize: 11, color: '#6B7C97' },
-  manageBtn: { backgroundColor: '#2E7DFF', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 },
+  manageBtn: {
+    backgroundColor: '#2E7DFF',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
   manageBtnText: { color: '#FFFFFF', fontSize: 12, fontWeight: '700' },
   bottomButtons: { paddingHorizontal: 16, marginTop: 16, marginBottom: 16, gap: 12 },
-  logoutBtn: { backgroundColor: Colors.brand, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
+  logoutBtn: {
+    backgroundColor: Colors.brand,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
   logoutBtnText: { color: '#ffffff', fontSize: 15, fontWeight: '800' },
-  deleteBtn: { backgroundColor: '#2A1620', borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: Colors.danger },
+  deleteBtn: {
+    backgroundColor: '#2A1620',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.danger,
+  },
   deleteBtnText: { color: Colors.danger, fontSize: 15, fontWeight: '800' },
-  version: { textAlign: 'center', fontSize: 11, color: Colors.textMuted, lineHeight: 18, paddingHorizontal: 16 },
+  version: {
+    textAlign: 'center',
+    fontSize: 11,
+    color: Colors.textMuted,
+    lineHeight: 18,
+    paddingHorizontal: 16,
+  },
 });

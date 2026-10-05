@@ -1,5 +1,16 @@
 import { useState, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, Image, KeyboardAvoidingView, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  TextInput,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import { showAlert } from '../../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -53,7 +64,9 @@ export default function AdminUploadScreen() {
     }
   }, []);
 
-  useEffect(() => { loadChannel(); }, [loadChannel]);
+  useEffect(() => {
+    loadChannel();
+  }, [loadChannel]);
 
   const pickVideo = async () => {
     try {
@@ -74,10 +87,22 @@ export default function AdminUploadScreen() {
   };
 
   const submit = async (saveAsDraft: boolean) => {
-    if (!channel) { showAlert('No official channel', 'The Cloudlynk Official channel does not exist yet.'); return; }
-    if (!profile?.id) { showAlert('Not signed in', 'Please sign in again.'); return; }
-    if (!title.trim()) { showAlert('Title required', 'Give this content a title.'); return; }
-    if (!video && contentType !== 'post') { showAlert('Video required', 'Pick a video file to upload.'); return; }
+    if (!channel) {
+      showAlert('No official channel', 'The Cloudlynk Official channel does not exist yet.');
+      return;
+    }
+    if (!profile?.id) {
+      showAlert('Not signed in', 'Please sign in again.');
+      return;
+    }
+    if (!title.trim()) {
+      showAlert('Title required', 'Give this content a title.');
+      return;
+    }
+    if (!video && contentType !== 'post') {
+      showAlert('Video required', 'Pick a video file to upload.');
+      return;
+    }
 
     setSubmitting(true);
     setProgress(0);
@@ -116,16 +141,21 @@ export default function AdminUploadScreen() {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.replace('/(tabs)/profile')} style={styles.headerBack} activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
+          <TouchableOpacity
+            onPress={() => router.replace('/(tabs)/profile')}
+            style={styles.headerBack}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
             <Text style={styles.headerBackTxt}>{'‹'}</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Upload</Text>
           <View style={{ width: 32 }} />
         </View>
-        <View style={styles.emptyState}><Text style={styles.emptyText}>Access denied</Text></View>
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>Access denied</Text>
+        </View>
       </SafeAreaView>
     );
   }
@@ -133,7 +163,10 @@ export default function AdminUploadScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.headerBack} activeOpacity={0.7}
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.headerBack}
+          activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
@@ -143,15 +176,18 @@ export default function AdminUploadScreen() {
         <View style={{ width: 32 }} />
       </View>
 
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
         <ScrollView contentContainerStyle={styles.list} keyboardShouldPersistTaps="handled">
           {channelLoading ? (
             <ActivityIndicator color="#2E7DFF" style={{ marginTop: 30 }} />
           ) : !channel ? (
             <View style={styles.card}>
               <Text style={styles.emptyText}>
-                The Cloudlynk Official channel does not exist yet. It is created by the v56 migration
-                once an admin profile exists.
+                The Cloudlynk Official channel does not exist yet. It is created by the v56
+                migration once an admin profile exists.
               </Text>
             </View>
           ) : (
@@ -159,26 +195,55 @@ export default function AdminUploadScreen() {
               <Text style={styles.blurb}>Publishing to {channel.name}.</Text>
 
               <View style={styles.card}>
-                <TouchableOpacity style={styles.pickBtn} onPress={pickVideo} activeOpacity={0.7} disabled={submitting}>
+                <TouchableOpacity
+                  style={styles.pickBtn}
+                  onPress={pickVideo}
+                  activeOpacity={0.7}
+                  disabled={submitting}
+                >
                   <Text style={styles.pickBtnText}>
-                    {video ? `${video.name} (${(video.size / 1048576).toFixed(1)} MB)` : 'Pick video file'}
+                    {video
+                      ? `${video.name} (${(video.size / 1048576).toFixed(1)} MB)`
+                      : 'Pick video file'}
                   </Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.pickBtn} onPress={pickThumbnail} activeOpacity={0.7} disabled={submitting}>
-                  <Text style={styles.pickBtnText}>{thumbnailUri ? 'Change thumbnail' : 'Pick thumbnail'}</Text>
+                <TouchableOpacity
+                  style={styles.pickBtn}
+                  onPress={pickThumbnail}
+                  activeOpacity={0.7}
+                  disabled={submitting}
+                >
+                  <Text style={styles.pickBtnText}>
+                    {thumbnailUri ? 'Change thumbnail' : 'Pick thumbnail'}
+                  </Text>
                 </TouchableOpacity>
-                {!!thumbnailUri && <Image source={{ uri: thumbnailUri }} style={styles.thumb} resizeMode="cover" />}
+                {!!thumbnailUri && (
+                  <Image source={{ uri: thumbnailUri }} style={styles.thumb} resizeMode="cover" />
+                )}
               </View>
 
               <View style={styles.card}>
                 <Text style={styles.label}>Title</Text>
-                <TextInput style={styles.input} value={title} onChangeText={setTitle}
-                  placeholder="Title" placeholderTextColor="#6B7C97" editable={!submitting} />
+                <TextInput
+                  style={styles.input}
+                  value={title}
+                  onChangeText={setTitle}
+                  placeholder="Title"
+                  placeholderTextColor="#6B7C97"
+                  editable={!submitting}
+                />
 
                 <Text style={styles.label}>Description</Text>
-                <TextInput style={[styles.input, styles.multiline]} value={description} onChangeText={setDescription}
-                  placeholder="Description" placeholderTextColor="#6B7C97" multiline editable={!submitting} />
+                <TextInput
+                  style={[styles.input, styles.multiline]}
+                  value={description}
+                  onChangeText={setDescription}
+                  placeholder="Description"
+                  placeholderTextColor="#6B7C97"
+                  multiline
+                  editable={!submitting}
+                />
 
                 <Text style={styles.label}>Content type</Text>
                 <View style={styles.chipRow}>
@@ -186,18 +251,32 @@ export default function AdminUploadScreen() {
                     <TouchableOpacity
                       key={ct.id}
                       style={[styles.chip, contentType === ct.id && styles.chipActive]}
-                      onPress={() => { setContentType(ct.id); setAccessLevel(defaultAccessLevel(ct.id)); }}
+                      onPress={() => {
+                        setContentType(ct.id);
+                        setAccessLevel(defaultAccessLevel(ct.id));
+                      }}
                       activeOpacity={0.7}
                       disabled={submitting}
                     >
-                      <Text style={[styles.chipText, contentType === ct.id && styles.chipTextActive]}>{ct.label}</Text>
+                      <Text
+                        style={[styles.chipText, contentType === ct.id && styles.chipTextActive]}
+                      >
+                        {ct.label}
+                      </Text>
                     </TouchableOpacity>
                   ))}
                 </View>
 
                 <Text style={styles.label}>Genre</Text>
-                <TouchableOpacity style={styles.input} onPress={() => setGenrePickerOpen(!genrePickerOpen)} activeOpacity={0.7} disabled={submitting}>
-                  <Text style={{ color: genre ? '#FFFFFF' : '#6B7C97', fontSize: 14 }}>{genre || 'Select a genre'}</Text>
+                <TouchableOpacity
+                  style={styles.input}
+                  onPress={() => setGenrePickerOpen(!genrePickerOpen)}
+                  activeOpacity={0.7}
+                  disabled={submitting}
+                >
+                  <Text style={{ color: genre ? '#FFFFFF' : '#6B7C97', fontSize: 14 }}>
+                    {genre || 'Select a genre'}
+                  </Text>
                 </TouchableOpacity>
                 {genrePickerOpen && (
                   <View style={styles.chipRow}>
@@ -205,18 +284,30 @@ export default function AdminUploadScreen() {
                       <TouchableOpacity
                         key={g}
                         style={[styles.chip, genre === g && styles.chipActive]}
-                        onPress={() => { setGenre(g); setGenrePickerOpen(false); }}
+                        onPress={() => {
+                          setGenre(g);
+                          setGenrePickerOpen(false);
+                        }}
                         activeOpacity={0.7}
                       >
-                        <Text style={[styles.chipText, genre === g && styles.chipTextActive]}>{g}</Text>
+                        <Text style={[styles.chipText, genre === g && styles.chipTextActive]}>
+                          {g}
+                        </Text>
                       </TouchableOpacity>
                     ))}
                   </View>
                 )}
 
                 <Text style={styles.label}>Duration (minutes)</Text>
-                <TextInput style={styles.input} value={durationMin} onChangeText={setDurationMin}
-                  placeholder="e.g. 118" placeholderTextColor="#6B7C97" keyboardType="number-pad" editable={!submitting} />
+                <TextInput
+                  style={styles.input}
+                  value={durationMin}
+                  onChangeText={setDurationMin}
+                  placeholder="e.g. 118"
+                  placeholderTextColor="#6B7C97"
+                  keyboardType="number-pad"
+                  editable={!submitting}
+                />
 
                 <Text style={styles.label}>Access level</Text>
                 <View style={styles.chipRow}>
@@ -241,19 +332,33 @@ export default function AdminUploadScreen() {
                 <View style={styles.card}>
                   <Text style={styles.metaText}>Uploading… {Math.round(progress * 100)}%</Text>
                   <View style={styles.progressTrack}>
-                    <View style={[styles.progressFill, { width: `${Math.round(progress * 100)}%` }]} />
+                    <View
+                      style={[styles.progressFill, { width: `${Math.round(progress * 100)}%` }]}
+                    />
                   </View>
                 </View>
               )}
 
               <View style={styles.formActions}>
-                <TouchableOpacity style={styles.cancelBtn} onPress={() => submit(true)} activeOpacity={0.7} disabled={submitting}>
+                <TouchableOpacity
+                  style={styles.cancelBtn}
+                  onPress={() => submit(true)}
+                  activeOpacity={0.7}
+                  disabled={submitting}
+                >
                   <Text style={styles.cancelBtnText}>Save as draft</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.confirmBtn} onPress={() => submit(false)} activeOpacity={0.7} disabled={submitting}>
-                  {submitting
-                    ? <ActivityIndicator color="#FFFFFF" size="small" />
-                    : <Text style={styles.confirmBtnText}>Publish</Text>}
+                <TouchableOpacity
+                  style={styles.confirmBtn}
+                  onPress={() => submit(false)}
+                  activeOpacity={0.7}
+                  disabled={submitting}
+                >
+                  {submitting ? (
+                    <ActivityIndicator color="#FFFFFF" size="small" />
+                  ) : (
+                    <Text style={styles.confirmBtnText}>Publish</Text>
+                  )}
                 </TouchableOpacity>
               </View>
             </>
@@ -268,39 +373,102 @@ export default function AdminUploadScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#0B1220' },
   header: {
-    backgroundColor: '#0B1220', flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: '#22304A',
+    backgroundColor: '#0B1220',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#22304A',
   },
   headerBack: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   headerBackTxt: { color: '#2E7DFF', fontSize: 28, fontWeight: '700', lineHeight: 28 },
   headerTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: '800' },
   list: { paddingHorizontal: 16, paddingTop: 12 },
   blurb: { color: '#9FB0C9', fontSize: 12, fontWeight: '500', marginBottom: 12 },
-  card: { backgroundColor: '#182437', borderRadius: 12, borderWidth: 1, borderColor: '#22304A', padding: 16, marginBottom: 12 },
-  pickBtn: { backgroundColor: '#22304A', borderRadius: 8, paddingVertical: 12, alignItems: 'center', marginBottom: 10 },
+  card: {
+    backgroundColor: '#182437',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#22304A',
+    padding: 16,
+    marginBottom: 12,
+  },
+  pickBtn: {
+    backgroundColor: '#22304A',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
   pickBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
   thumb: { width: '100%', height: 160, borderRadius: 8 },
-  label: { color: '#9FB0C9', fontSize: 11, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 6, marginTop: 10 },
+  label: {
+    color: '#9FB0C9',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    marginBottom: 6,
+    marginTop: 10,
+  },
   input: {
-    backgroundColor: '#22304A', borderRadius: 8, borderWidth: 1, borderColor: '#22304A',
-    color: '#FFFFFF', fontSize: 14, paddingHorizontal: 12, paddingVertical: 10,
+    backgroundColor: '#22304A',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#22304A',
+    color: '#FFFFFF',
+    fontSize: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
   multiline: { minHeight: 70, textAlignVertical: 'top' },
   hint: { color: '#6B7C97', fontSize: 11, fontWeight: '500', marginTop: 8 },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
-  chip: { backgroundColor: '#22304A', borderWidth: 1, borderColor: '#22304A', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
+  chip: {
+    backgroundColor: '#22304A',
+    borderWidth: 1,
+    borderColor: '#22304A',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
   chipActive: { backgroundColor: '#2E7DFF', borderColor: '#2E7DFF' },
   chipText: { color: '#9FB0C9', fontSize: 12, fontWeight: '700' },
   chipTextActive: { color: '#FFFFFF' },
   metaText: { fontSize: 13, color: '#9FB0C9', fontWeight: '600' },
-  progressTrack: { height: 6, backgroundColor: '#22304A', borderRadius: 4, marginTop: 8, overflow: 'hidden' },
+  progressTrack: {
+    height: 6,
+    backgroundColor: '#22304A',
+    borderRadius: 4,
+    marginTop: 8,
+    overflow: 'hidden',
+  },
   progressFill: { height: 6, backgroundColor: '#2E7DFF' },
   formActions: { flexDirection: 'row', gap: 10, marginBottom: 12 },
-  cancelBtn: { flex: 1, backgroundColor: '#22304A', paddingVertical: 12, borderRadius: 8, alignItems: 'center' },
+  cancelBtn: {
+    flex: 1,
+    backgroundColor: '#22304A',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
   cancelBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
-  confirmBtn: { flex: 1, backgroundColor: '#2E7DFF', paddingVertical: 12, borderRadius: 8, alignItems: 'center' },
+  confirmBtn: {
+    flex: 1,
+    backgroundColor: '#2E7DFF',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
   confirmBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
-  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80, paddingHorizontal: 20 },
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 80,
+    paddingHorizontal: 20,
+  },
   emptyText: { fontSize: 14, color: '#9FB0C9', fontWeight: '600', textAlign: 'center' },
 });

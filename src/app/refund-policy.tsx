@@ -34,7 +34,9 @@ export default function RefundPolicyScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backBtn}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
@@ -46,14 +48,22 @@ export default function RefundPolicyScreen() {
       <View style={styles.content}>
         {config.refundPolicyUrl ? (
           <>
-            {opening && <ActivityIndicator color={Colors.accent} size="large" style={{ marginBottom: Spacing.lg }} />}
+            {opening && (
+              <ActivityIndicator
+                color={Colors.accent}
+                size="large"
+                style={{ marginBottom: Spacing.lg }}
+              />
+            )}
             <Text style={styles.body}>Opening the Refund Policy…</Text>
             <TouchableOpacity onPress={open} style={styles.retryBtn} activeOpacity={0.7}>
               <Text style={styles.retryTxt}>Tap here if it didn't open</Text>
             </TouchableOpacity>
           </>
         ) : (
-          <Text style={styles.body}>The Refund Policy isn't configured yet. Contact support for a copy.</Text>
+          <Text style={styles.body}>
+            The Refund Policy isn't configured yet. Contact support for a copy.
+          </Text>
         )}
       </View>
     </SafeAreaView>
@@ -75,7 +85,12 @@ const styles = StyleSheet.create({
   backTxt: { color: Colors.accent, fontSize: FontSize.md, fontWeight: FontWeight.semibold },
   headerTitle: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.text },
   content: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl },
-  body: { fontSize: FontSize.base, color: Colors.textSecondary, textAlign: 'center', lineHeight: 24 },
+  body: {
+    fontSize: FontSize.base,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
   retryBtn: { marginTop: Spacing.lg },
   retryTxt: { color: Colors.accent, fontSize: FontSize.sm, fontWeight: FontWeight.semibold },
 });

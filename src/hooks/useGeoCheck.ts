@@ -46,13 +46,19 @@ export function useGeoCheck(): GeoState {
 
         const res = await fetch(config.geoCheckWorkerUrl);
         if (!res.ok) throw new Error('geo-check unavailable');
-        const { country, blocked } = (await res.json()) as { country: string | null; blocked: boolean };
+        const { country, blocked } = (await res.json()) as {
+          country: string | null;
+          blocked: boolean;
+        };
 
-        await AsyncStorage.setItem(GEO_CACHE_KEY, JSON.stringify({
-          blocked: !!blocked,
-          country: country ?? null,
-          ts: Date.now(),
-        }));
+        await AsyncStorage.setItem(
+          GEO_CACHE_KEY,
+          JSON.stringify({
+            blocked: !!blocked,
+            country: country ?? null,
+            ts: Date.now(),
+          }),
+        );
 
         setState({ isBlocked: !!blocked, country: country ?? null, loading: false });
       } catch {

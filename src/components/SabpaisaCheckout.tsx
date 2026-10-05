@@ -1,4 +1,12 @@
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Linking, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Modal,
+  Linking,
+  ActivityIndicator,
+} from 'react-native';
 import { WebView, type WebViewNavigation } from 'react-native-webview';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, FontSize, FontWeight, Spacing } from '../constants/theme';
@@ -39,7 +47,7 @@ export function SabpaisaCheckout({
   if (!order) return null;
 
   const openExternal = async (url: string) => {
-    const target = url.toLowerCase().startsWith('intent:') ? intentToUri(url) ?? url : url;
+    const target = url.toLowerCase().startsWith('intent:') ? (intentToUri(url) ?? url) : url;
     try {
       await Linking.openURL(target);
     } catch {
@@ -65,7 +73,11 @@ export function SabpaisaCheckout({
       <View style={[styles.wrap, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <Text style={styles.title}>Sabpaisa</Text>
-          <TouchableOpacity onPress={() => onDone('closed')} activeOpacity={0.7} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TouchableOpacity
+            onPress={() => onDone('closed')}
+            activeOpacity={0.7}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
             <Text style={styles.close}>Close</Text>
           </TouchableOpacity>
         </View>
@@ -79,7 +91,9 @@ export function SabpaisaCheckout({
           setSupportMultipleWindows={false}
           startInLoadingState
           renderLoading={() => (
-            <View style={styles.loading}><ActivityIndicator color={Colors.brandBlue} /></View>
+            <View style={styles.loading}>
+              <ActivityIndicator color={Colors.brandBlue} />
+            </View>
           )}
           style={{ flex: 1, backgroundColor: Colors.bg }}
         />
@@ -91,11 +105,24 @@ export function SabpaisaCheckout({
 const styles = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: Colors.bg },
   header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border,
   },
   title: { color: Colors.text, fontSize: FontSize.lg, fontWeight: FontWeight.bold },
   close: { color: Colors.brandBlue, fontSize: FontSize.lg, fontWeight: FontWeight.semibold },
-  loading: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.bg },
+  loading: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.bg,
+  },
 });

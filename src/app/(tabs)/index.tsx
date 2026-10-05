@@ -9,7 +9,13 @@ import { useAuth } from '../../hooks/useAuth';
 import { promptSaveAccount } from '../../lib/guest';
 import { useFiles } from '../../hooks/useFiles';
 import { Colors } from '../../constants/theme';
-import { formatBytes, formatTimeAgo, CATEGORY_ICONS, CATEGORY_DIM, CATEGORY_COLORS } from '../../lib/storage';
+import {
+  formatBytes,
+  formatTimeAgo,
+  CATEGORY_ICONS,
+  CATEGORY_DIM,
+  CATEGORY_COLORS,
+} from '../../lib/storage';
 import { Icon, type IconName } from '../../components/Icon';
 
 const CATEGORIES: { key: string; label: string; icon: IconName }[] = [
@@ -22,7 +28,9 @@ const CATEGORIES: { key: string; label: string; icon: IconName }[] = [
 
 export default function CloudScreen() {
   const { user, isGuest } = useAuth();
-  const { files, activeTransfers, loadFiles, uploadImage, uploadDocument, deleteFile } = useFiles(user?.id);
+  const { files, activeTransfers, loadFiles, uploadImage, uploadDocument, deleteFile } = useFiles(
+    user?.id,
+  );
   const router = useRouter();
 
   const [search, setSearch] = useState('');
@@ -36,7 +44,9 @@ export default function CloudScreen() {
     prevUserIdRef.current = user?.id;
   }, [user?.id, loadFiles]);
 
-  useEffect(() => { loadFiles(); }, [loadFiles]);
+  useEffect(() => {
+    loadFiles();
+  }, [loadFiles]);
 
   const filteredFiles = files.filter(f => {
     const matchesSearch = f.name.toLowerCase().includes(search.toLowerCase());
@@ -46,20 +56,28 @@ export default function CloudScreen() {
 
   // v90 (client rule): what a user uploads is visible to that user only, so
   // there is no Share / Copy Link. A share link is a public URL to the file.
-  const handleFileOptions = useCallback((file: typeof files[0]) => {
-    showAlert(file.name, `${formatBytes(file.size)} · ${formatTimeAgo(file.created_at)}`, [
-      {
-        text: 'Delete', style: 'destructive',
-        onPress: () => {
-          showAlert('Delete File', `Are you sure you want to delete "${file.name}"?`, [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Delete', style: 'destructive', onPress: () => deleteFile(file.id, file.storage_path, file.size) },
-          ]);
+  const handleFileOptions = useCallback(
+    (file: (typeof files)[0]) => {
+      showAlert(file.name, `${formatBytes(file.size)} · ${formatTimeAgo(file.created_at)}`, [
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            showAlert('Delete File', `Are you sure you want to delete "${file.name}"?`, [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'Delete',
+                style: 'destructive',
+                onPress: () => deleteFile(file.id, file.storage_path, file.size),
+              },
+            ]);
+          },
         },
-      },
-      { text: 'Cancel', style: 'cancel' },
-    ]);
-  }, [deleteFile]);
+        { text: 'Cancel', style: 'cancel' },
+      ]);
+    },
+    [deleteFile],
+  );
 
   // v61: guests reach this tab but every query here early-returns on
   // !user?.id, so without this they get a blank screen and assume the app
@@ -67,7 +85,11 @@ export default function CloudScreen() {
   if (!user?.id) {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
-        <GuestPrompt icon="cloud" title="Your 15 GB cloud drive" message="Back up photos, videos and documents, and stream them from anywhere. Every account gets 15 GB, free." />
+        <GuestPrompt
+          icon="cloud"
+          title="Your 15 GB cloud drive"
+          message="Back up photos, videos and documents, and stream them from anywhere. Every account gets 15 GB, free."
+        />
       </SafeAreaView>
     );
   }
@@ -112,15 +134,31 @@ export default function CloudScreen() {
             </View>
 
             {/* Category chips */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryRow}>
-              {CATEGORIES.map((cat) => (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.categoryRow}
+            >
+              {CATEGORIES.map(cat => (
                 <TouchableOpacity
                   key={cat.key}
-                  style={[styles.categoryChip, activeCategory === cat.key && styles.categoryChipActive]}
+                  style={[
+                    styles.categoryChip,
+                    activeCategory === cat.key && styles.categoryChipActive,
+                  ]}
                   onPress={() => setActiveCategory(cat.key)}
                 >
-                  <Icon name={cat.icon} size={15} color={activeCategory === cat.key ? Colors.brandBlue : Colors.textMuted} />
-                  <Text style={[styles.categoryLabel, activeCategory === cat.key && styles.categoryLabelActive]}>
+                  <Icon
+                    name={cat.icon}
+                    size={15}
+                    color={activeCategory === cat.key ? Colors.brandBlue : Colors.textMuted}
+                  />
+                  <Text
+                    style={[
+                      styles.categoryLabel,
+                      activeCategory === cat.key && styles.categoryLabelActive,
+                    ]}
+                  >
                     {cat.label}
                   </Text>
                 </TouchableOpacity>
@@ -128,14 +166,29 @@ export default function CloudScreen() {
             </ScrollView>
 
             {/* File rows */}
-            {filteredFiles.map((file) => (
-              <TouchableOpacity key={file.id} style={styles.fileRow} activeOpacity={0.7}
-                onPress={() => handleFileOptions(file)}>
-                <View style={[styles.fileIcon, { backgroundColor: CATEGORY_DIM[file.category] ?? Colors.card }]}>
-                  <Icon name={(CATEGORY_ICONS[file.category] ?? 'package') as IconName} size={20} color={CATEGORY_COLORS[file.category] ?? Colors.textMuted} />
+            {filteredFiles.map(file => (
+              <TouchableOpacity
+                key={file.id}
+                style={styles.fileRow}
+                activeOpacity={0.7}
+                onPress={() => handleFileOptions(file)}
+              >
+                <View
+                  style={[
+                    styles.fileIcon,
+                    { backgroundColor: CATEGORY_DIM[file.category] ?? Colors.card },
+                  ]}
+                >
+                  <Icon
+                    name={(CATEGORY_ICONS[file.category] ?? 'package') as IconName}
+                    size={20}
+                    color={CATEGORY_COLORS[file.category] ?? Colors.textMuted}
+                  />
                 </View>
                 <View style={styles.fileInfo}>
-                  <Text style={styles.fileName} numberOfLines={1}>{file.name}</Text>
+                  <Text style={styles.fileName} numberOfLines={1}>
+                    {file.name}
+                  </Text>
                   <Text style={styles.fileMeta}>
                     {formatBytes(file.size)} · {formatTimeAgo(file.created_at)}
                   </Text>
@@ -163,7 +216,11 @@ export default function CloudScreen() {
               {activeTransfers.length} upload{activeTransfers.length > 1 ? 's' : ''} in progress
             </Text>
             <Text style={styles.transferBannerPct}>
-              {Math.round(activeTransfers.reduce((a, t) => a + t.progress.percentage, 0) / activeTransfers.length)}%
+              {Math.round(
+                activeTransfers.reduce((a, t) => a + t.progress.percentage, 0) /
+                  activeTransfers.length,
+              )}
+              %
             </Text>
           </View>
         )}
@@ -173,7 +230,10 @@ export default function CloudScreen() {
       <TouchableOpacity
         style={styles.fab}
         onPress={() => {
-          if (isGuest) { promptSaveAccount(router); return; }
+          if (isGuest) {
+            promptSaveAccount(router);
+            return;
+          }
           showAlert('Upload', 'What would you like to upload?', [
             { text: 'Photo / Video', onPress: () => uploadImage() },
             { text: 'Document', onPress: () => uploadDocument() },
@@ -190,50 +250,130 @@ export default function CloudScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
-  redHeader: { backgroundColor: Colors.surface, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  redHeader: {
+    backgroundColor: Colors.surface,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   redHeaderTitle: { color: '#ffffff', fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
-  crownBadge: { width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.gold, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#ffffff' },
+  crownBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.gold,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#ffffff',
+  },
   crownText: { fontSize: 18, color: Colors.brand, fontWeight: '900' },
   body: { flex: 1, backgroundColor: Colors.bg },
-  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80, paddingHorizontal: 20 },
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 80,
+    paddingHorizontal: 20,
+  },
   emptyText: { fontSize: 16, color: Colors.text, fontWeight: '600', marginTop: 16 },
-  emptyHint: { fontSize: 14, color: Colors.textSecondary, marginTop: 8, textAlign: 'center', paddingHorizontal: 40, lineHeight: 20 },
+  emptyHint: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    marginTop: 8,
+    textAlign: 'center',
+    paddingHorizontal: 40,
+    lineHeight: 20,
+  },
   searchBar: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    marginHorizontal: 16, marginTop: 16, marginBottom: 12,
-    backgroundColor: Colors.bg, borderRadius: 12,
-    borderWidth: 1, borderColor: Colors.border,
-    paddingHorizontal: 14, paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 12,
+    backgroundColor: Colors.bg,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
   searchInput: { flex: 1, color: Colors.text, fontSize: 14, paddingVertical: 0 },
-  categoryRow: { paddingHorizontal: 16, gap: 8, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: Colors.border, marginBottom: 8 },
+  categoryRow: {
+    paddingHorizontal: 16,
+    gap: 8,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+    marginBottom: 8,
+  },
   categoryChip: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20,
-    backgroundColor: Colors.bg, borderWidth: 1, borderColor: Colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    backgroundColor: Colors.bg,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   categoryChipActive: { backgroundColor: Colors.brandLight, borderColor: Colors.brand },
   categoryLabel: { fontSize: 12, fontWeight: '700', color: Colors.textSecondary },
   categoryLabelActive: { color: Colors.brand },
   fileRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    paddingVertical: 14, paddingHorizontal: 16,
-    borderBottomWidth: 1, borderBottomColor: Colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
   },
-  fileIcon: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  fileIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   fileInfo: { flex: 1, minWidth: 0 },
   fileName: { fontSize: 14, fontWeight: '700', color: Colors.text },
   fileMeta: { fontSize: 12, color: Colors.textSecondary, fontWeight: '500', marginTop: 2 },
   moreBtn: { padding: 8 },
   moreDots: { fontSize: 20, color: Colors.textMuted, fontWeight: '700' },
   transferBanner: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    marginHorizontal: 16, marginBottom: 12,
-    backgroundColor: Colors.brandLight, borderRadius: 12,
-    paddingHorizontal: 14, paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    backgroundColor: Colors.brandLight,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
   transferBannerText: { flex: 1, fontSize: 12, fontWeight: '700', color: Colors.brand },
   transferBannerPct: { fontSize: 12, fontWeight: '800', color: Colors.brand },
-  fab: { position: 'absolute', bottom: 80, right: 20, width: 56, height: 56, borderRadius: 28, backgroundColor: Colors.brand, alignItems: 'center', justifyContent: 'center', elevation: 6, shadowColor: Colors.brand, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8 },
+  fab: {
+    position: 'absolute',
+    bottom: 80,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: Colors.brand,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 6,
+    shadowColor: Colors.brand,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+  },
   fabText: { fontSize: 28, fontWeight: '800', color: '#ffffff', marginTop: -2 },
 });

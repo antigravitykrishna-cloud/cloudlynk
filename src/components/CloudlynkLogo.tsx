@@ -38,9 +38,7 @@ export function CloudlynkLogo({ size = 32, variant = 'mark' }: Props) {
         </LinearGradient>
       </Defs>
 
-      {variant === 'tile' && (
-        <Rect x="0" y="0" width="100" height="100" rx="24" fill={Colors.bg} />
-      )}
+      {variant === 'tile' && <Rect x="0" y="0" width="100" height="100" rx="24" fill={Colors.bg} />}
 
       {/* Cloud silhouette: three lobes over a flat base, as one closed path so
           the gradient sweeps the whole shape instead of restarting per lobe.

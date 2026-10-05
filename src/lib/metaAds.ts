@@ -54,13 +54,19 @@ export async function getMetaMeasurement(): Promise<boolean> {
  */
 export async function setMetaMeasurement(on: boolean): Promise<void> {
   optedOut = !on;
-  try { await AsyncStorage.setItem(OPT_KEY, on ? 'on' : 'off'); } catch { /* best effort */ }
+  try {
+    await AsyncStorage.setItem(OPT_KEY, on ? 'on' : 'off');
+  } catch {
+    /* best effort */
+  }
   if (!metaConfigured()) return;
   try {
     const { Settings } = sdk();
     Settings.setAutoLogAppEventsEnabled(on);
     Settings.setAdvertiserIDCollectionEnabled(on);
-  } catch { /* SDK not started */ }
+  } catch {
+    /* SDK not started */
+  }
 }
 
 /** A new account finished sign-up (after the age / policy step). */
@@ -71,7 +77,9 @@ export async function logRegistration(method: 'email' | 'google' | 'guest'): Pro
     AppEventsLogger.logEvent(AppEventsLogger.AppEvents.CompletedRegistration, {
       [AppEventsLogger.AppEventParams.RegistrationMethod]: method,
     });
-  } catch { /* never let measurement break sign-up */ }
+  } catch {
+    /* never let measurement break sign-up */
+  }
 }
 
 /** The person pressed Pay on a plan. */
@@ -84,7 +92,9 @@ export async function logCheckoutStarted(planCode: string, priceInr: number): Pr
       [AppEventsLogger.AppEventParams.ContentID]: planCode,
       [AppEventsLogger.AppEventParams.ContentType]: 'subscription',
     });
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 export interface MetaDeviceSignals {
@@ -108,25 +118,38 @@ export async function metaDeviceSignals(): Promise<MetaDeviceSignals | null> {
       AppEventsLogger.getAdvertiserID().catch(() => null),
     ]);
     const { width, height } = Dimensions.get('screen');
-    const tz = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { return ''; } })();
-    const locale = (() => { try { return Intl.DateTimeFormat().resolvedOptions().locale.replace('-', '_'); } catch { return 'en_IN'; } })();
-    const android = Constants.expoConfig?.android as { package?: string; versionCode?: number } | undefined;
+    const tz = (() => {
+      try {
+        return Intl.DateTimeFormat().resolvedOptions().timeZone;
+      } catch {
+        return '';
+      }
+    })();
+    const locale = (() => {
+      try {
+        return Intl.DateTimeFormat().resolvedOptions().locale.replace('-', '_');
+      } catch {
+        return 'en_IN';
+      }
+    })();
+    const android = Constants.expoConfig?.android as
+      { package?: string; versionCode?: number } | undefined;
     const extinfo = [
-      'a2',                                        // Android
+      'a2', // Android
       android?.package ?? 'com.cloudlynk.app',
       String(android?.versionCode ?? ''),
       Constants.expoConfig?.version ?? '',
       String(Platform.Version ?? ''),
-      '',                                          // device model
+      '', // device model
       locale,
-      '',                                          // timezone abbreviation
-      '',                                          // carrier
+      '', // timezone abbreviation
+      '', // carrier
       String(Math.round(width)),
       String(Math.round(height)),
       PixelRatio.get().toFixed(2),
-      '',                                          // CPU cores
-      '',                                          // storage size
-      '',                                          // free storage
+      '', // CPU cores
+      '', // storage size
+      '', // free storage
       tz,
     ];
     return { anonId: anonId ?? null, advertiserId: advertiserId ?? null, extinfo };

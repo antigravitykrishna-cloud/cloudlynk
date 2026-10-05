@@ -5,7 +5,14 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
 import { showAlert } from '../../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -18,9 +25,19 @@ export default function QueueScreen() {
   const router = useRouter();
   const { channelId } = useLocalSearchParams<{ channelId: string }>();
   const {
-    items, isUploading, completedCount, failedCount, queuedCount, maxItems,
-    addToQueue, removeFromQueue, startUpload, pauseUpload, resumeUpload,
-    retryItem, clearCompleted,
+    items,
+    isUploading,
+    completedCount,
+    failedCount,
+    queuedCount,
+    maxItems,
+    addToQueue,
+    removeFromQueue,
+    startUpload,
+    pauseUpload,
+    resumeUpload,
+    retryItem,
+    clearCompleted,
   } = useUploadQueue(channelId);
 
   const [adding, setAdding] = useState(false);
@@ -57,27 +74,40 @@ export default function QueueScreen() {
     }
   }, [addToQueue, maxItems]);
 
-  const handleRemove = useCallback((itemId: string, title: string) => {
-    showAlert('Remove', `Remove "${title || 'Untitled'}" from the queue?`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Remove', style: 'destructive', onPress: () => removeFromQueue(itemId) },
-    ]);
-  }, [removeFromQueue]);
+  const handleRemove = useCallback(
+    (itemId: string, title: string) => {
+      showAlert('Remove', `Remove "${title || 'Untitled'}" from the queue?`, [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Remove', style: 'destructive', onPress: () => removeFromQueue(itemId) },
+      ]);
+    },
+    [removeFromQueue],
+  );
 
-  const handleRetry = useCallback(async (itemId: string) => {
-    await retryItem(itemId);
-  }, [retryItem]);
+  const handleRetry = useCallback(
+    async (itemId: string) => {
+      await retryItem(itemId);
+    },
+    [retryItem],
+  );
 
-  const handleEdit = useCallback((itemId: string) => {
-    router.push({ pathname: '/upload/form/[id]', params: { id: itemId } });
-  }, [router]);
+  const handleEdit = useCallback(
+    (itemId: string) => {
+      router.push({ pathname: '/upload/form/[id]', params: { id: itemId } });
+    },
+    [router],
+  );
 
   const getStatusBadge = (status: string, progress: number) => {
     switch (status) {
       case 'done':
         return { label: 'Done', color: Colors.success, bg: Colors.successDim };
       case 'uploading':
-        return { label: `${Math.round(progress * 100)}%`, color: Colors.accentOrange, bg: Colors.accentOrangeDim };
+        return {
+          label: `${Math.round(progress * 100)}%`,
+          color: Colors.accentOrange,
+          bg: Colors.accentOrangeDim,
+        };
       case 'failed':
         return { label: 'Failed', color: Colors.danger, bg: Colors.dangerDim };
       case 'paused':
@@ -93,7 +123,10 @@ export default function QueueScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backBtn}
+          activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
@@ -106,7 +139,11 @@ export default function QueueScreen() {
           style={styles.addBtn}
           activeOpacity={0.7}
         >
-          {adding ? <ActivityIndicator color={Colors.brand} size="small" /> : <Text style={styles.addBtnTxt}>+ Add</Text>}
+          {adding ? (
+            <ActivityIndicator color={Colors.brand} size="small" />
+          ) : (
+            <Text style={styles.addBtnTxt}>+ Add</Text>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -121,7 +158,9 @@ export default function QueueScreen() {
           <Text style={styles.statLabel}>Done</Text>
         </View>
         <View style={styles.stat}>
-          <Text style={[styles.statValue, failedCount > 0 && { color: Colors.danger }]}>{failedCount}</Text>
+          <Text style={[styles.statValue, failedCount > 0 && { color: Colors.danger }]}>
+            {failedCount}
+          </Text>
           <Text style={styles.statLabel}>Failed</Text>
         </View>
         <View style={styles.stat}>
@@ -150,7 +189,11 @@ export default function QueueScreen() {
             </TouchableOpacity>
           )}
           {(completedCount > 0 || failedCount > 0) && (
-            <TouchableOpacity style={styles.controlBtn} onPress={clearCompleted} activeOpacity={0.7}>
+            <TouchableOpacity
+              style={styles.controlBtn}
+              onPress={clearCompleted}
+              activeOpacity={0.7}
+            >
               <Text style={styles.controlBtnTxt}>Clear done</Text>
             </TouchableOpacity>
           )}
@@ -168,7 +211,11 @@ export default function QueueScreen() {
       )}
 
       {/* Queue list */}
-      <ScrollView style={styles.list} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.list}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+      >
         {items.length === 0 ? (
           <View style={styles.emptyState}>
             <Icon name="folder" size={16} color={Colors.textMuted} />
@@ -177,7 +224,11 @@ export default function QueueScreen() {
               Tap "+ Add" to pick videos from your device. You can queue{' '}
               {maxItems === Infinity ? 'as many files as you like' : `${maxItems} files`} at once.
             </Text>
-            <TouchableOpacity style={styles.emptyAddBtn} onPress={handleAddMore} activeOpacity={0.7}>
+            <TouchableOpacity
+              style={styles.emptyAddBtn}
+              onPress={handleAddMore}
+              activeOpacity={0.7}
+            >
               <Text style={styles.emptyAddTxt}>Pick Videos</Text>
             </TouchableOpacity>
           </View>
@@ -194,7 +245,12 @@ export default function QueueScreen() {
                 {/* Progress bar */}
                 {item.status === 'uploading' && (
                   <View style={styles.progressBar}>
-                    <View style={[styles.progressFill, { width: `${Math.round(item.progress * 100)}%` }]} />
+                    <View
+                      style={[
+                        styles.progressFill,
+                        { width: `${Math.round(item.progress * 100)}%` },
+                      ]}
+                    />
                   </View>
                 )}
 
@@ -216,7 +272,9 @@ export default function QueueScreen() {
 
                 {/* Error message */}
                 {item.status === 'failed' && item.error && (
-                  <Text style={styles.errorText} numberOfLines={2}>{item.error}</Text>
+                  <Text style={styles.errorText} numberOfLines={2}>
+                    {item.error}
+                  </Text>
                 )}
                 {isOversize && (
                   <Text style={styles.errorText} numberOfLines={2}>
@@ -227,17 +285,29 @@ export default function QueueScreen() {
                 {/* Action row */}
                 <View style={styles.itemActions}>
                   {canEdit && (
-                    <TouchableOpacity style={styles.actionBtn} onPress={() => handleEdit(item.id)} activeOpacity={0.7}>
+                    <TouchableOpacity
+                      style={styles.actionBtn}
+                      onPress={() => handleEdit(item.id)}
+                      activeOpacity={0.7}
+                    >
                       <Text style={styles.actionBtnTxt}>Edit</Text>
                     </TouchableOpacity>
                   )}
                   {canRetry && (
-                    <TouchableOpacity style={styles.actionBtn} onPress={() => handleRetry(item.id)} activeOpacity={0.7}>
+                    <TouchableOpacity
+                      style={styles.actionBtn}
+                      onPress={() => handleRetry(item.id)}
+                      activeOpacity={0.7}
+                    >
                       <Text style={[styles.actionBtnTxt, { color: Colors.success }]}>Retry</Text>
                     </TouchableOpacity>
                   )}
                   {canRemove && (
-                    <TouchableOpacity style={styles.actionBtn} onPress={() => handleRemove(item.id, item.title || item.video.name)} activeOpacity={0.7}>
+                    <TouchableOpacity
+                      style={styles.actionBtn}
+                      onPress={() => handleRemove(item.id, item.title || item.video.name)}
+                      activeOpacity={0.7}
+                    >
                       <Text style={[styles.actionBtnTxt, { color: Colors.danger }]}>Remove</Text>
                     </TouchableOpacity>
                   )}
@@ -312,22 +382,51 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     overflow: 'hidden',
   },
-  progressBar: { height: 3, backgroundColor: Colors.surfaceHover, marginBottom: 10, borderRadius: 4, overflow: 'hidden' },
+  progressBar: {
+    height: 3,
+    backgroundColor: Colors.surfaceHover,
+    marginBottom: 10,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
   progressFill: { height: '100%', backgroundColor: Colors.accentOrange, borderRadius: 4 },
-  itemBody: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  itemBody: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
   itemMain: { flex: 1, marginRight: 10 },
   itemName: { fontSize: FontSize.base, fontWeight: '700', color: Colors.text },
   itemSize: { fontSize: FontSize.xs, color: Colors.textMuted, fontWeight: '600', marginTop: 2 },
   badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: Radius.sm },
   badgeText: { fontSize: 11, fontWeight: '900', letterSpacing: 0.3 },
-  errorText: { fontSize: 11, color: Colors.danger, fontWeight: '600', lineHeight: 16, marginBottom: 8 },
-  itemActions: { flexDirection: 'row', gap: 12, paddingTop: 4, borderTopWidth: 0.5, borderTopColor: Colors.border },
+  errorText: {
+    fontSize: 11,
+    color: Colors.danger,
+    fontWeight: '600',
+    lineHeight: 16,
+    marginBottom: 8,
+  },
+  itemActions: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingTop: 4,
+    borderTopWidth: 0.5,
+    borderTopColor: Colors.border,
+  },
   actionBtn: { paddingVertical: 4, paddingHorizontal: 4 },
   actionBtnTxt: { fontSize: 12, fontWeight: '700', color: Colors.textSecondary },
   emptyState: { alignItems: 'center', paddingTop: 60, paddingHorizontal: 30 },
   emptyIcon: { fontSize: 48, marginBottom: 16 },
   emptyTitle: { fontSize: 18, fontWeight: '800', color: Colors.text, marginBottom: 8 },
-  emptyDesc: { fontSize: 13, color: Colors.textMuted, textAlign: 'center', lineHeight: 20, marginBottom: 24 },
+  emptyDesc: {
+    fontSize: 13,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
   emptyAddBtn: {
     backgroundColor: Colors.brand,
     paddingHorizontal: 28,

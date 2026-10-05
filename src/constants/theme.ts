@@ -139,16 +139,16 @@ export const Radius = {
  * on metadata and badges — precisely the text people squint at.
  */
 export const FontSize = {
-  xs: 11,     // caption2 — the floor
-  sm: 12,     // caption1
-  md: 13,     // footnote
+  xs: 11, // caption2 — the floor
+  sm: 12, // caption1
+  md: 13, // footnote
   base: 14,
   subhead: 15, // subheadline
-  lg: 16,     // callout
+  lg: 16, // callout
   xl: 18,
-  title: 20,  // title3
-  xxl: 22,    // title2
-  xxxl: 28,   // title1
+  title: 20, // title3
+  xxl: 22, // title2
+  xxxl: 28, // title1
 };
 
 export const FontWeight = {

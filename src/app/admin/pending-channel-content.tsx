@@ -1,6 +1,14 @@
 import { useState, useCallback } from 'react';
 import { fireHaptic } from '../../components/Press';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  TextInput,
+} from 'react-native';
 import { showAlert } from '../../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -36,7 +44,10 @@ export default function PendingChannelContentScreen() {
       // A moderation queue that renders "nothing here" after a failed
       // fetch is worse than one that errors: the admin concludes there is
       // nothing to review and stops checking, while the queue fills up.
-      showAlert('Could not load pending content', err instanceof Error ? err.message : 'Check your connection and try again.');
+      showAlert(
+        'Could not load pending content',
+        err instanceof Error ? err.message : 'Check your connection and try again.',
+      );
     } finally {
       setLoading(false);
     }
@@ -46,7 +57,7 @@ export default function PendingChannelContentScreen() {
     useCallback(() => {
       setLoading(true);
       loadPendingContent();
-    }, [loadPendingContent])
+    }, [loadPendingContent]),
   );
 
   const handleApprove = async (item: PendingContentItem) => {
@@ -88,10 +99,13 @@ export default function PendingChannelContentScreen() {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.replace('/(tabs)/profile')} style={styles.headerBack} activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
+          <TouchableOpacity
+            onPress={() => router.replace('/(tabs)/profile')}
+            style={styles.headerBack}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
             <Text style={styles.headerBackTxt}>{'‹'}</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Pending Content</Text>
@@ -107,7 +121,10 @@ export default function PendingChannelContentScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.replace('/(tabs)/profile')} style={styles.headerBack} activeOpacity={0.7}
+        <TouchableOpacity
+          onPress={() => router.replace('/(tabs)/profile')}
+          style={styles.headerBack}
+          activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
@@ -128,7 +145,9 @@ export default function PendingChannelContentScreen() {
           {items.map(item => (
             <View key={item.id} style={styles.card}>
               <View style={styles.cardInfo}>
-                <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
+                <Text style={styles.cardTitle} numberOfLines={1}>
+                  {item.title}
+                </Text>
                 <Text style={styles.cardMeta} numberOfLines={1}>
                   {item.channel_name} · {item.owner_name}
                 </Text>
@@ -155,7 +174,10 @@ export default function PendingChannelContentScreen() {
                   <View style={styles.rejectFormActions}>
                     <TouchableOpacity
                       style={styles.cancelBtn}
-                      onPress={() => { setRejectingId(null); setRejectReason(''); }}
+                      onPress={() => {
+                        setRejectingId(null);
+                        setRejectReason('');
+                      }}
                       activeOpacity={0.7}
                     >
                       <Text style={styles.cancelBtnText}>Cancel</Text>

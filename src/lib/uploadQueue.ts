@@ -79,7 +79,7 @@ function generateId(): string {
 
 function notify() {
   const snapshot = { ...state, items: [...state.items] };
-  listeners.forEach((fn) => fn(snapshot));
+  listeners.forEach(fn => fn(snapshot));
 }
 
 function isOverSizeLimit(size: number): boolean {
@@ -89,15 +89,22 @@ function isOverSizeLimit(size: number): boolean {
 // ── Public API ─────────────────────────────────────────────────
 
 export const UploadQueue = {
-
   /** Load persisted queue from AsyncStorage (call once on app start) */
   async init(): Promise<QueueState> {
     const persisted = await loadQueue();
     if (persisted && Array.isArray(persisted.items)) {
       state = { ...persisted, isUploading: false, currentIndex: -1 };
       // Reset any items stuck in 'uploading' back to 'queued' (app was killed mid-upload)
-      state.items = state.items.map((item) =>
-        item.status === 'uploading' ? { ...item, status: 'queued' as const, progress: 0, error: null, updatedAt: new Date().toISOString() } : item
+      state.items = state.items.map(item =>
+        item.status === 'uploading'
+          ? {
+              ...item,
+              status: 'queued' as const,
+              progress: 0,
+              error: null,
+              updatedAt: new Date().toISOString(),
+            }
+          : item,
       );
     }
     notify();
@@ -107,7 +114,9 @@ export const UploadQueue = {
   subscribe(listener: StateListener): () => void {
     listeners.add(listener);
     listener(state);
-    return () => { listeners.delete(listener); };
+    return () => {
+      listeners.delete(listener);
+    };
   },
 
   getState(): QueueState {
@@ -141,13 +150,14 @@ export const UploadQueue = {
     isPremium: boolean,
   ): Promise<number> {
     const maxItems = isPremium ? Infinity : MAX_FREE_ITEMS;
-    const uploadableCount = state.items.filter((i) => i.status !== 'over_limit').length;
+    const uploadableCount = state.items.filter(i => i.status !== 'over_limit').length;
     const availableSlots = maxItems - uploadableCount;
 
     const newItems: QueueItem[] = [];
     for (const entry of entries) {
       const oversized = isOverSizeLimit(entry.video.size);
-      if (!oversized && newItems.filter((i) => i.status !== 'over_limit').length >= availableSlots) break;
+      if (!oversized && newItems.filter(i => i.status !== 'over_limit').length >= availableSlots)
+        break;
 
       newItems.push({
         id: generateId(),
@@ -188,7 +198,7 @@ export const UploadQueue = {
 
   /** Remove an item from the queue (any status). Cannot remove while uploading. */
   async removeItem(itemId: string): Promise<boolean> {
-    const idx = state.items.findIndex((i) => i.id === itemId);
+    const idx = state.items.findIndex(i => i.id === itemId);
     if (idx === -1) return false;
     if (state.currentIndex === idx) return false; // can't remove currently uploading item
     state.items = state.items.filter((_, i) => i !== idx);
@@ -199,8 +209,27 @@ export const UploadQueue = {
   },
 
   /** Update form fields for a queued item */
-  async updateItem(itemId: string, updates: Partial<Pick<QueueItem, 'title' | 'body' | 'contentType' | 'accessLevel' | 'genre' | 'durationMin' | 'seasonNo' | 'episodeNo' | 'episodeTitle' | 'releaseYear' | 'thumbnailUri' | 'channelId'>>): Promise<boolean> {
-    const idx = state.items.findIndex((i) => i.id === itemId);
+  async updateItem(
+    itemId: string,
+    updates: Partial<
+      Pick<
+        QueueItem,
+        | 'title'
+        | 'body'
+        | 'contentType'
+        | 'accessLevel'
+        | 'genre'
+        | 'durationMin'
+        | 'seasonNo'
+        | 'episodeNo'
+        | 'episodeTitle'
+        | 'releaseYear'
+        | 'thumbnailUri'
+        | 'channelId'
+      >
+    >,
+  ): Promise<boolean> {
+    const idx = state.items.findIndex(i => i.id === itemId);
     if (idx === -1) return false;
     state.items[idx] = { ...state.items[idx], ...updates, updatedAt: new Date().toISOString() };
     await this._persist();
@@ -236,7 +265,7 @@ export const UploadQueue = {
 
   /** Retry a failed item (re-queues it and starts upload if idle) */
   async retryItem(itemId: string): Promise<boolean> {
-    const idx = state.items.findIndex((i) => i.id === itemId);
+    const idx = state.items.findIndex(i => i.id === itemId);
     if (idx === -1 || state.items[idx].status !== 'failed') return false;
     state.items[idx] = {
       ...state.items[idx],
@@ -258,12 +287,14 @@ export const UploadQueue = {
   /** Remove all completed/failed items */
   async clearCompleted(): Promise<void> {
     state.items = state.items.filter(
-      (i) => i.status !== 'done' && i.status !== 'failed' && i.status !== 'over_limit'
+      i => i.status !== 'done' && i.status !== 'failed' && i.status !== 'over_limit',
     );
     // Recalculate currentIndex
-    const currentId = state.currentIndex >= 0 && state.currentIndex < state.items.length
-      ? state.items[state.currentIndex]?.id : null;
-    state.currentIndex = currentId ? state.items.findIndex((i) => i.id === currentId) : -1;
+    const currentId =
+      state.currentIndex >= 0 && state.currentIndex < state.items.length
+        ? state.items[state.currentIndex]?.id
+        : null;
+    state.currentIndex = currentId ? state.items.findIndex(i => i.id === currentId) : -1;
     await this._persist();
     notify();
   },
@@ -288,7 +319,7 @@ export const UploadQueue = {
   async _processNext(): Promise<void> {
     if (!state.isUploading) return;
 
-    const nextIdx = state.items.findIndex((i) => i.status === 'queued');
+    const nextIdx = state.items.findIndex(i => i.status === 'queued');
     if (nextIdx === -1) {
       state.isUploading = false;
       state.currentIndex = -1;
@@ -310,7 +341,13 @@ export const UploadQueue = {
       return;
     }
 
-    state.items[nextIdx] = { ...item, status: 'uploading', progress: 0, error: null, updatedAt: new Date().toISOString() };
+    state.items[nextIdx] = {
+      ...item,
+      status: 'uploading',
+      progress: 0,
+      error: null,
+      updatedAt: new Date().toISOString(),
+    };
     await this._persist();
     notify();
 
@@ -319,7 +356,7 @@ export const UploadQueue = {
 
       const streamUid = await StreamService.uploadVideo(
         item.video,
-        (pct) => {
+        pct => {
           state.items[nextIdx] = { ...state.items[nextIdx], progress: pct };
           notify();
         },
@@ -328,25 +365,20 @@ export const UploadQueue = {
       );
 
       // Upload succeeded — create the channel_posts row using item.userId
-      const post = await PostService.createPost(
-        item.channelId,
-        item.userId,
-        item.body || '',
-        {
-          title: item.title || item.video.name,
-          contentType: (item.contentType as any) || 'movie',
-          accessLevel: item.accessLevel,
-          genre: item.genre || undefined,
-          durationMin: item.durationMin ? parseInt(item.durationMin) : undefined,
-          seasonNumber: item.seasonNo ? parseInt(item.seasonNo) : undefined,
-          episodeNumber: item.episodeNo ? parseInt(item.episodeNo) : undefined,
-          episodeTitle: item.episodeTitle || undefined,
-          releaseYear: item.releaseYear ? parseInt(item.releaseYear) : undefined,
-          thumbnailUri: item.thumbnailUri ?? undefined,
-          streamVideoUid: streamUid,
-          seriesId: item.seriesId ?? undefined,
-        },
-      );
+      const post = await PostService.createPost(item.channelId, item.userId, item.body || '', {
+        title: item.title || item.video.name,
+        contentType: (item.contentType as any) || 'movie',
+        accessLevel: item.accessLevel,
+        genre: item.genre || undefined,
+        durationMin: item.durationMin ? parseInt(item.durationMin) : undefined,
+        seasonNumber: item.seasonNo ? parseInt(item.seasonNo) : undefined,
+        episodeNumber: item.episodeNo ? parseInt(item.episodeNo) : undefined,
+        episodeTitle: item.episodeTitle || undefined,
+        releaseYear: item.releaseYear ? parseInt(item.releaseYear) : undefined,
+        thumbnailUri: item.thumbnailUri ?? undefined,
+        streamVideoUid: streamUid,
+        seriesId: item.seriesId ?? undefined,
+      });
 
       state.items[nextIdx] = {
         ...state.items[nextIdx],

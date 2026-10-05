@@ -1,5 +1,13 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Pressable, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Modal,
+  Pressable,
+  ActivityIndicator,
+} from 'react-native';
 import { useAuth } from '../hooks/useAuth';
 import { showAlert } from './Feedback';
 import { useRouter, type Href } from 'expo-router';
@@ -60,12 +68,21 @@ export function LoginSheet({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="none" statusBarTranslucent onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="none"
+      statusBarTranslucent
+      onRequestClose={onClose}
+    >
       <Animated.View entering={FadeIn.duration(180)} style={styles.backdrop}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
         <Animated.View
           entering={SlideInDown.springify().damping(20).stiffness(220)}
-          style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, Spacing.lg) + Spacing.sm }]}
+          style={[
+            styles.sheet,
+            { paddingBottom: Math.max(insets.bottom, Spacing.lg) + Spacing.sm },
+          ]}
         >
           <View style={styles.grabber} />
           <Text style={styles.title}>Please sign in</Text>
@@ -74,16 +91,18 @@ export function LoginSheet({
             <Text style={styles.btnText}>Sign in</Text>
           </PressScale>
           {allowGuest && (
-          <PressScale
-            style={styles.guestBtn}
-            onPress={continueAsGuest}
-            disabled={guestBusy}
-            accessibilityRole="button"
-          >
-            {guestBusy
-              ? <ActivityIndicator color={Colors.text} />
-              : <Text style={styles.guestBtnText}>Continue as guest</Text>}
-          </PressScale>
+            <PressScale
+              style={styles.guestBtn}
+              onPress={continueAsGuest}
+              disabled={guestBusy}
+              accessibilityRole="button"
+            >
+              {guestBusy ? (
+                <ActivityIndicator color={Colors.text} />
+              ) : (
+                <Text style={styles.guestBtnText}>Continue as guest</Text>
+              )}
+            </PressScale>
           )}
           <TouchableOpacity onPress={onClose} activeOpacity={0.7} style={styles.notNow}>
             <Text style={styles.notNowText}>Not now</Text>
@@ -97,26 +116,63 @@ export function LoginSheet({
 const styles = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'flex-end' },
   sheet: {
-    backgroundColor: Colors.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28,
-    paddingHorizontal: Spacing.xl, paddingTop: Spacing.sm, alignItems: 'center',
+    backgroundColor: Colors.surface,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing.sm,
+    alignItems: 'center',
   },
-  grabber: { width: 36, height: 5, borderRadius: 3, backgroundColor: Colors.borderStrong, marginBottom: Spacing.xl },
-  title: { color: Colors.text, fontSize: FontSize.xxl, fontWeight: FontWeight.bold, letterSpacing: -0.3 },
+  grabber: {
+    width: 36,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: Colors.borderStrong,
+    marginBottom: Spacing.xl,
+  },
+  title: {
+    color: Colors.text,
+    fontSize: FontSize.xxl,
+    fontWeight: FontWeight.bold,
+    letterSpacing: -0.3,
+  },
   text: {
-    color: Colors.textSecondary, fontSize: FontSize.lg, lineHeight: 22, textAlign: 'center',
-    marginTop: Spacing.sm, maxWidth: 320,
+    color: Colors.textSecondary,
+    fontSize: FontSize.lg,
+    lineHeight: 22,
+    textAlign: 'center',
+    marginTop: Spacing.sm,
+    maxWidth: 320,
   },
   btn: {
-    alignSelf: 'stretch', backgroundColor: Colors.brandBlue, borderRadius: Radius.lg,
-    paddingVertical: 16, alignItems: 'center', marginTop: Spacing.xl,
+    alignSelf: 'stretch',
+    backgroundColor: Colors.brandBlue,
+    borderRadius: Radius.lg,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: Spacing.xl,
   },
-  btnText: { color: '#FFFFFF', fontSize: FontSize.lg, fontWeight: FontWeight.bold, letterSpacing: 0.2 },
+  btnText: {
+    color: '#FFFFFF',
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+    letterSpacing: 0.2,
+  },
   guestBtn: {
-    alignSelf: 'stretch', backgroundColor: Colors.surfaceElevated, borderRadius: Radius.lg,
-    borderWidth: 1, borderColor: Colors.border,
-    paddingVertical: 15, alignItems: 'center', marginTop: Spacing.sm,
+    alignSelf: 'stretch',
+    backgroundColor: Colors.surfaceElevated,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingVertical: 15,
+    alignItems: 'center',
+    marginTop: Spacing.sm,
   },
   guestBtnText: { color: Colors.text, fontSize: FontSize.lg, fontWeight: FontWeight.semibold },
   notNow: { paddingVertical: Spacing.md, marginTop: Spacing.xs },
-  notNowText: { color: Colors.textSecondary, fontSize: FontSize.subhead, fontWeight: FontWeight.semibold },
+  notNowText: {
+    color: Colors.textSecondary,
+    fontSize: FontSize.subhead,
+    fontWeight: FontWeight.semibold,
+  },
 });

@@ -1,0 +1,10 @@
+node_modules
+android
+.expo
+dist
+supabase/legacy-sql
+supabase/migrations
+docs
+package-lock.json
+deno.lock
+*.md

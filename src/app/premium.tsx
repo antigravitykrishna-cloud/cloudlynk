@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
 import { showAlert } from '../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -11,8 +18,13 @@ import { useSubscriptionPlans } from '../lib/subscriptionService';
 import { getIapService } from '../lib/services/iap';
 import { config } from '../lib/config';
 import {
-  createGatewayOrder, getGatewayMethods, openRazorpay, waitForPayment,
-  type GatewayMethod, type OrderStatus, type SabpaisaOrder,
+  createGatewayOrder,
+  getGatewayMethods,
+  openRazorpay,
+  waitForPayment,
+  type GatewayMethod,
+  type OrderStatus,
+  type SabpaisaOrder,
 } from '../lib/payments';
 import { PaymentSheet, type PaymentChoice } from '../components/PaymentSheet';
 import { SabpaisaCheckout } from '../components/SabpaisaCheckout';
@@ -39,7 +51,8 @@ const BENEFITS = [
 
 export default function PremiumScreen() {
   const router = useRouter();
-  const { user, isActive, planStatus, isApproved, approvalStatus, refreshProfile, isGuest } = useAuth();
+  const { user, isActive, planStatus, isApproved, approvalStatus, refreshProfile, isGuest } =
+    useAuth();
   const { data: plans, isLoading: plansLoading } = useSubscriptionPlans();
 
   const [selectedPlanIndex, setSelectedPlanIndex] = useState(2);
@@ -66,9 +79,7 @@ export default function PremiumScreen() {
   // to it rather than to Explore.
   const signInForPlan = () => {
     setPostLoginRoute(
-      selectedPlan
-        ? { pathname: '/premium', params: { plan: selectedPlan.code } }
-        : '/premium',
+      selectedPlan ? { pathname: '/premium', params: { plan: selectedPlan.code } } : '/premium',
     );
     router.push('/(auth)/login');
   };
@@ -120,7 +131,10 @@ export default function PremiumScreen() {
     if (status === 'paid') return onPaid();
     fireHaptic(status === 'failed' ? 'error' : 'warning');
     if (status === 'failed') {
-      showAlert('Payment failed', 'The payment did not go through. You can try again or pick another way to pay.');
+      showAlert(
+        'Payment failed',
+        'The payment did not go through. You can try again or pick another way to pay.',
+      );
     } else if (status === 'abandoned') {
       showAlert(
         'Payment not completed',
@@ -160,7 +174,9 @@ export default function PremiumScreen() {
     logCheckoutStarted(selectedPlan.code, selectedPlan.price_inr);
     if (config.alternativeBilling === 'test' && gatewayMethods.length > 0) {
       const order: PaymentChoice[] = ['upi', 'play', 'razorpay', 'sabpaisa'];
-      setSheet({ choices: order.filter(c => c === 'play' || gatewayMethods.includes(c as GatewayMethod)) });
+      setSheet({
+        choices: order.filter(c => c === 'play' || gatewayMethods.includes(c as GatewayMethod)),
+      });
       return;
     }
     await playPurchase(config.alternativeBilling === 'user_choice' && gatewayMethods.length > 0);
@@ -183,7 +199,11 @@ export default function PremiumScreen() {
         // Without a checkout result the person most likely backed out, so do
         // not keep them waiting long -- but still ask, because a UPI payment
         // can go through even when the UPI app never reports back.
-        const st = await waitForPayment(order.orderId, result ?? undefined, result ? 45_000 : 8_000);
+        const st = await waitForPayment(
+          order.orderId,
+          result ?? undefined,
+          result ? 45_000 : 8_000,
+        );
         await reportGatewayResult(st === 'pending' && !result ? 'abandoned' : st);
       } else {
         sabpaisaOrderId.current = order.orderId;
@@ -246,10 +266,13 @@ export default function PremiumScreen() {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={goBack} style={styles.backBtn} activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
+          <TouchableOpacity
+            onPress={goBack}
+            style={styles.backBtn}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
             <Text style={styles.backTxt}>{'< Back'}</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Premium</Text>
@@ -289,21 +312,27 @@ export default function PremiumScreen() {
   // v92: a guest ACCOUNT saves it (Google/email) before paying -- a plan on
   // a guest account could not be watched and would be lost on uninstall.
   // The database refuses a guest's payment order too.
-  const gate: 'guest' | 'save' | 'pending' | 'rejected' | null =
-    !user ? 'guest'
-    : isGuest ? 'save'
-    : approvalStatus === 'rejected' ? 'rejected'
-    : !isApproved ? 'pending'
-    : null;
+  const gate: 'guest' | 'save' | 'pending' | 'rejected' | null = !user
+    ? 'guest'
+    : isGuest
+      ? 'save'
+      : approvalStatus === 'rejected'
+        ? 'rejected'
+        : !isApproved
+          ? 'pending'
+          : null;
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={goBack} style={styles.backBtn} activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
+          <TouchableOpacity
+            onPress={goBack}
+            style={styles.backBtn}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
             <Text style={styles.backTxt}>{'< Back'}</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Premium</Text>
@@ -313,19 +342,22 @@ export default function PremiumScreen() {
         {gate && (
           <View style={[styles.gateBanner, gate === 'rejected' && styles.gateBannerMuted]}>
             <Text style={styles.gateBannerTitle}>
-              {gate === 'guest' ? 'Create a free account to subscribe'
-               : gate === 'save' ? 'Save your account to subscribe'
-               : gate === 'rejected' ? 'Premium is not available for this account'
-               : 'Your account is being reviewed'}
+              {gate === 'guest'
+                ? 'Create a free account to subscribe'
+                : gate === 'save'
+                  ? 'Save your account to subscribe'
+                  : gate === 'rejected'
+                    ? 'Premium is not available for this account'
+                    : 'Your account is being reviewed'}
             </Text>
             <Text style={styles.gateBannerText}>
               {gate === 'guest'
                 ? "Here's everything Premium includes. Making an account is free and takes a moment."
                 : gate === 'save'
-                ? 'You are using a guest ID. Save it with Google or email first, so your plan is never lost if you change phones or reinstall.'
-                : gate === 'rejected'
-                ? 'You can keep using Cloudlynk’s free features as normal. Contact support if you think this is a mistake.'
-                : 'An admin approves new accounts before they can subscribe. You’ll be notified once that’s done — everything else in Cloudlynk keeps working in the meantime.'}
+                  ? 'You are using a guest ID. Save it with Google or email first, so your plan is never lost if you change phones or reinstall.'
+                  : gate === 'rejected'
+                    ? 'You can keep using Cloudlynk’s free features as normal. Contact support if you think this is a mistake.'
+                    : 'An admin approves new accounts before they can subscribe. You’ll be notified once that’s done — everything else in Cloudlynk keeps working in the meantime.'}
             </Text>
           </View>
         )}
@@ -337,7 +369,7 @@ export default function PremiumScreen() {
               <Text style={styles.badgePillText}>Premium</Text>
             </View>
           </View>
-          {BENEFITS.map((benefit) => (
+          {BENEFITS.map(benefit => (
             <View key={benefit} style={styles.benefitRow}>
               <View style={styles.benefitCheck}>
                 <Text style={styles.benefitCheckText}>{'✓'}</Text>
@@ -364,7 +396,10 @@ export default function PremiumScreen() {
                 <PressScale
                   key={plan.code}
                   style={[styles.planRowItem, isSelected && styles.planRowItemSelected]}
-                  onPress={() => { fireHaptic('selection'); setSelectedPlanIndex(i); }}
+                  onPress={() => {
+                    fireHaptic('selection');
+                    setSelectedPlanIndex(i);
+                  }}
                   scaleTo={0.98}
                   accessibilityRole="radio"
                   accessibilityState={{ selected: isSelected }}
@@ -378,19 +413,25 @@ export default function PremiumScreen() {
                       <Text style={styles.planName}>{plan.name}</Text>
                       {plan.is_popular && (
                         <View style={styles.popularBadge}>
-                          <Text style={styles.popularBadgeText} numberOfLines={1}>POPULAR</Text>
+                          <Text style={styles.popularBadgeText} numberOfLines={1}>
+                            POPULAR
+                          </Text>
                         </View>
                       )}
                     </View>
                     <Text style={styles.planDuration}>
-                      {plan.duration_days >= 365 ? '1 year'
-                        : plan.duration_days >= 180 ? '6 months'
-                        : plan.duration_days >= 30 ? '1 month'
-                        : `${plan.duration_days} days`}
+                      {plan.duration_days >= 365
+                        ? '1 year'
+                        : plan.duration_days >= 180
+                          ? '6 months'
+                          : plan.duration_days >= 30
+                            ? '1 month'
+                            : `${plan.duration_days} days`}
                     </Text>
                   </View>
                   <Text style={styles.planPrice}>
-                    <Text style={styles.planPriceCurrency}>{'₹ '}</Text>{plan.price_inr}
+                    <Text style={styles.planPriceCurrency}>{'₹ '}</Text>
+                    {plan.price_inr}
                   </Text>
                 </PressScale>
               );
@@ -411,29 +452,45 @@ export default function PremiumScreen() {
           // app/(tabs)/explore.tsx. A guest here is mid-purchase, which is the
           // worst possible moment to ask for a password they have to invent.
           onPress={
-            gate === 'guest' ? signInForPlan
-            : gate === 'save'
-              ? () => router.push({ pathname: '/save-account', params: { reason: 'subscribe' } } as never)
-              : handleProceed
+            gate === 'guest'
+              ? signInForPlan
+              : gate === 'save'
+                ? () =>
+                    router.push({
+                      pathname: '/save-account',
+                      params: { reason: 'subscribe' },
+                    } as never)
+                : handleProceed
           }
-          disabled={gate === 'pending' || gate === 'rejected' || plansLoading || (!gate && !selectedPlan) || purchasing}
+          disabled={
+            gate === 'pending' ||
+            gate === 'rejected' ||
+            plansLoading ||
+            (!gate && !selectedPlan) ||
+            purchasing
+          }
           activeOpacity={0.8}
         >
-          {purchasing
-            ? <ActivityIndicator color="#ffffff" />
-            : (
-              <Text style={[
+          {purchasing ? (
+            <ActivityIndicator color="#ffffff" />
+          ) : (
+            <Text
+              style={[
                 styles.proceedBtnText,
                 (gate === 'pending' || gate === 'rejected') && styles.proceedBtnTextDisabled,
-              ]}>
-                {gate === 'guest' ? 'Create free account'
-                 : gate === 'save' ? 'Save account to continue'
-                 : gate === 'pending' ? 'Awaiting admin approval'
-                 : gate === 'rejected' ? 'Not available'
-                 : 'Proceed to Payment'}
-              </Text>
-            )
-          }
+              ]}
+            >
+              {gate === 'guest'
+                ? 'Create free account'
+                : gate === 'save'
+                  ? 'Save account to continue'
+                  : gate === 'pending'
+                    ? 'Awaiting admin approval'
+                    : gate === 'rejected'
+                      ? 'Not available'
+                      : 'Proceed to Payment'}
+            </Text>
+          )}
         </TouchableOpacity>
 
         {gate === 'guest' && (
@@ -446,7 +503,11 @@ export default function PremiumScreen() {
             account, so there has to be an account to resolve it onto. A guest
             is already being offered sign-in directly above. */}
         {!gate && (
-          <TouchableOpacity onPress={handleRestore} disabled={restoring || purchasing} activeOpacity={0.7}>
+          <TouchableOpacity
+            onPress={handleRestore}
+            disabled={restoring || purchasing}
+            activeOpacity={0.7}
+          >
             <Text style={[styles.restoreLink, (restoring || purchasing) && { opacity: 0.5 }]}>
               {restoring ? 'Restoring…' : 'Already subscribed? Restore purchase'}
             </Text>
@@ -487,9 +548,12 @@ export default function PremiumScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
   gateBanner: {
-    marginHorizontal: 16, marginTop: 16, padding: 16,
+    marginHorizontal: 16,
+    marginTop: 16,
+    padding: 16,
     backgroundColor: Colors.accentOrangeDim,
-    borderWidth: 1, borderColor: Colors.accentBorder,
+    borderWidth: 1,
+    borderColor: Colors.accentBorder,
     borderRadius: Radius.lg,
   },
   gateBannerMuted: {
@@ -497,11 +561,17 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
   },
   gateBannerTitle: {
-    color: Colors.text, fontSize: FontSize.lg,
-    fontWeight: FontWeight.bold, marginBottom: 6,
+    color: Colors.text,
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+    marginBottom: 6,
   },
   gateBannerText: { color: Colors.textSecondary, fontSize: FontSize.base, lineHeight: 19 },
-  proceedBtnDisabled: { backgroundColor: Colors.surfaceElevated, borderWidth: 1, borderColor: Colors.border },
+  proceedBtnDisabled: {
+    backgroundColor: Colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
   proceedBtnTextDisabled: { color: Colors.textMuted },
   restoreLink: {
     fontSize: FontSize.md,
@@ -512,32 +582,70 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   gateSignIn: {
-    color: Colors.brandBlue, fontSize: FontSize.lg,
-    fontWeight: FontWeight.semibold, textAlign: 'center', marginTop: 14,
+    color: Colors.brandBlue,
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.semibold,
+    textAlign: 'center',
+    marginTop: 14,
   },
   content: { paddingBottom: 40 },
-  header: { backgroundColor: Colors.surface, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14 },
+  header: {
+    backgroundColor: Colors.surface,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
   backBtn: { width: 80 },
   backTxt: { color: '#ffffff', fontSize: 14, fontWeight: '600' },
   headerTitle: { color: '#ffffff', fontSize: 18, fontWeight: '800', flex: 1, textAlign: 'center' },
   badgeCard: { margin: 16, backgroundColor: Colors.accentOrangeDim, borderRadius: 16, padding: 18 },
   badgeHeader: { marginBottom: 14 },
-  badgePill: { alignSelf: 'flex-start', backgroundColor: Colors.brand, paddingHorizontal: 14, paddingVertical: 4, borderRadius: 12 },
+  badgePill: {
+    alignSelf: 'flex-start',
+    backgroundColor: Colors.brand,
+    paddingHorizontal: 14,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
   badgePillText: { color: '#ffffff', fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
   benefitRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, gap: 10 },
-  benefitCheck: { width: 20, height: 20, borderRadius: 10, backgroundColor: Colors.brand, alignItems: 'center', justifyContent: 'center' },
+  benefitCheck: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: Colors.brand,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   benefitCheckText: { color: '#ffffff', fontSize: 12, fontWeight: '900' },
   benefitText: { fontSize: 14, color: '#9FB0C9', fontWeight: '500', flex: 1 },
-  planSectionTitle: { fontSize: 15, fontWeight: '800', color: Colors.text, marginLeft: 18, marginTop: 24, marginBottom: 12 },
+  planSectionTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: Colors.text,
+    marginLeft: 18,
+    marginTop: 24,
+    marginBottom: 12,
+  },
   plansContainer: { paddingHorizontal: 16, gap: 10 },
   // Four-up plan ladder. Equal flex so no plan looks favoured by width —
   // emphasis is carried by the POPULAR tag and the selected border, both of
   // which are deliberate, where a wider column would be accidental.
   planList: { paddingHorizontal: 16, gap: 10 },
   planRowItem: {
-    flexDirection: 'row', alignItems: 'center', gap: 14,
-    backgroundColor: Colors.card, borderRadius: Radius.lg,
-    borderWidth: 1.5, borderColor: Colors.border, paddingVertical: 16, paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    backgroundColor: Colors.card,
+    borderRadius: Radius.lg,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
   },
   planRowItemSelected: { borderColor: Colors.brand, backgroundColor: Colors.accentOrangeDim },
   planRow: { flexDirection: 'row', paddingHorizontal: 16, gap: 8 },
@@ -553,45 +661,106 @@ const styles = StyleSheet.create({
     minHeight: 104,
     justifyContent: 'center',
   },
-  planTileSelected: { borderColor: Colors.brand, backgroundColor: Colors.accentOrangeDim, borderWidth: 2 },
+  planTileSelected: {
+    borderColor: Colors.brand,
+    backgroundColor: Colors.accentOrangeDim,
+    borderWidth: 2,
+  },
   // Sits on the border rather than inside the tile, so it does not steal
   // vertical space from the price it is advertising.
   popularTag: {
-    position: 'absolute', top: -9, alignSelf: 'center',
-    backgroundColor: Colors.brand, paddingHorizontal: 7, paddingVertical: 2,
+    position: 'absolute',
+    top: -9,
+    alignSelf: 'center',
+    backgroundColor: Colors.brand,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
     borderRadius: Radius.xs,
   },
   popularTagText: { fontSize: 9, fontWeight: '800', color: '#ffffff', letterSpacing: 0.4 },
   tileTerm: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: Colors.textSecondary },
-  tilePrice: { fontSize: FontSize.title, fontWeight: FontWeight.extrabold, color: Colors.text, marginTop: 4 },
+  tilePrice: {
+    fontSize: FontSize.title,
+    fontWeight: FontWeight.extrabold,
+    color: Colors.text,
+    marginTop: 4,
+  },
   tileCurrency: { fontSize: FontSize.md, fontWeight: FontWeight.bold },
   tileDuration: { fontSize: FontSize.xs, color: Colors.textMuted, marginTop: 3 },
   tileTextSelected: { color: Colors.text },
 
-  planCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.bg, borderWidth: 1.5, borderColor: Colors.border, borderRadius: 12, padding: 14, gap: 12 },
+  planCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.bg,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    borderRadius: 12,
+    padding: 14,
+    gap: 12,
+  },
   planCardSelected: { borderColor: Colors.brand, backgroundColor: Colors.accentOrangeDim },
-  radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: '#9FB0C9', alignItems: 'center', justifyContent: 'center' },
+  radio: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: '#9FB0C9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   radioSelected: { borderColor: Colors.brand },
   radioInner: { width: 12, height: 12, borderRadius: 6, backgroundColor: Colors.brand },
   planInfo: { flex: 1 },
   planName: { fontSize: 16, fontWeight: '700', color: Colors.text },
   planDuration: { fontSize: 14, color: Colors.textSecondary, marginTop: 3 },
   planDescription: { fontSize: 11, color: Colors.textSecondary, marginTop: 2, fontWeight: '500' },
-  popularBadge: { backgroundColor: Colors.brand, paddingHorizontal: 6, paddingVertical: 2, borderRadius: Radius.xs },
+  popularBadge: {
+    backgroundColor: Colors.brand,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: Radius.xs,
+  },
   popularBadgeText: { color: '#ffffff', fontSize: 9, fontWeight: '800', letterSpacing: 0.4 },
   planPriceWrap: { alignItems: 'flex-end' },
   planPrice: { fontSize: 20, fontWeight: '800', color: Colors.text },
   planPriceCurrency: { fontSize: 12, fontWeight: '700', color: Colors.text },
-  proceedBtn: { marginHorizontal: 16, marginTop: 20, backgroundColor: Colors.brand, borderRadius: 12, paddingVertical: 16, alignItems: 'center' },
+  proceedBtn: {
+    marginHorizontal: 16,
+    marginTop: 20,
+    backgroundColor: Colors.brand,
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
   proceedBtnText: { color: '#ffffff', fontSize: 16, fontWeight: '800', letterSpacing: 0.3 },
-  legal: { textAlign: 'center', fontSize: 11, color: Colors.textMuted, marginTop: 12, paddingHorizontal: 24 },
+  legal: {
+    textAlign: 'center',
+    fontSize: 11,
+    color: Colors.textMuted,
+    marginTop: 12,
+    paddingHorizontal: 24,
+  },
   confirmOverlay: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(11,18,32,0.88)',
-    alignItems: 'center', justifyContent: 'center', gap: 14,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(11,18,32,0.88)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 14,
   },
   confirmText: { color: Colors.text, fontSize: FontSize.lg, fontWeight: FontWeight.semibold },
   pendingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 },
   pendingIcon: { fontSize: 48, marginBottom: 16 },
-  pendingTitle: { fontSize: 20, fontWeight: '800', color: Colors.text, marginBottom: 8, textAlign: 'center' },
+  pendingTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: Colors.text,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
   pendingText: { fontSize: 14, color: Colors.textMuted, textAlign: 'center', lineHeight: 22 },
 });

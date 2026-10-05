@@ -6,8 +6,17 @@ import { ChannelPost, GUEST_POST_COLUMNS } from './posts';
 // query never asks for.
 export type SearchChannel = Pick<
   Database['public']['Tables']['channels']['Row'],
-  'id' | 'owner_id' | 'name' | 'description' | 'category' | 'is_public'
-  | 'is_official' | 'status' | 'member_count' | 'post_count' | 'created_at'
+  | 'id'
+  | 'owner_id'
+  | 'name'
+  | 'description'
+  | 'category'
+  | 'is_public'
+  | 'is_official'
+  | 'status'
+  | 'member_count'
+  | 'post_count'
+  | 'created_at'
 >;
 
 export type SearchResults = {
@@ -32,7 +41,9 @@ export const SearchService = {
         // Named columns, not '*': anon is granted a subset of channels, and
         // PostgREST fails the whole request for a column the caller cannot
         // read rather than omitting it. Search is meant to work signed-out.
-        .select('id, owner_id, name, description, category, is_public, is_official, status, member_count, post_count, created_at')
+        .select(
+          'id, owner_id, name, description, category, is_public, is_official, status, member_count, post_count, created_at',
+        )
         .eq('status', 'active')
         .eq('is_public', true)
         .or(`name.ilike.${pattern},description.ilike.${pattern}`)
@@ -40,7 +51,9 @@ export const SearchService = {
 
       supabase
         .from('channel_posts')
-        .select(`${GUEST_POST_COLUMNS}, author:profiles!channel_posts_author_id_fkey(id, full_name, avatar_url), channel:channels!channel_posts_channel_id_fkey(name)`)
+        .select(
+          `${GUEST_POST_COLUMNS}, author:profiles!channel_posts_author_id_fkey(id, full_name, avatar_url), channel:channels!channel_posts_channel_id_fkey(name)`,
+        )
         .eq('status', 'approved')
         // The `visibility` filter is gone. That column is the ad-attribution
         // cloaking flag from the pre-v46 design; v46 stopped every policy

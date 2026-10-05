@@ -1,5 +1,12 @@
 import { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
 import { showAlert } from '../../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -41,34 +48,30 @@ export default function ChannelActivityScreen() {
   useFocusEffect(
     useCallback(() => {
       if (isAdmin) fetchActivity();
-    }, [isAdmin, fetchActivity])
+    }, [isAdmin, fetchActivity]),
   );
 
   const handleSuspend = (channelId: string, channelName: string) => {
-    showAlert(
-      'Suspend Channel',
-      `Are you sure you want to suspend "${channelName}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Suspend',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const { error } = await supabase
-                .from('channels')
-                .update({ status: 'suspended' })
-                .eq('id', channelId);
-              if (error) throw error;
-              showAlert('Done', `"${channelName}" has been suspended.`);
-              fetchActivity();
-            } catch (err: any) {
-              showAlert('Error', err.message ?? 'Failed to suspend channel');
-            }
-          },
+    showAlert('Suspend Channel', `Are you sure you want to suspend "${channelName}"?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Suspend',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const { error } = await supabase
+              .from('channels')
+              .update({ status: 'suspended' })
+              .eq('id', channelId);
+            if (error) throw error;
+            showAlert('Done', `"${channelName}" has been suspended.`);
+            fetchActivity();
+          } catch (err: any) {
+            showAlert('Error', err.message ?? 'Failed to suspend channel');
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   if (!isAdmin) {
@@ -89,10 +92,14 @@ export default function ChannelActivityScreen() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return '#4CAF50';
-      case 'pending': return '#2E7DFF';
-      case 'suspended': return '#FF4D6D';
-      default: return '#6B7C97';
+      case 'active':
+        return '#4CAF50';
+      case 'pending':
+        return '#2E7DFF';
+      case 'suspended':
+        return '#FF4D6D';
+      default:
+        return '#6B7C97';
     }
   };
 
@@ -118,13 +125,18 @@ export default function ChannelActivityScreen() {
         </View>
       ) : (
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-          {channels.map((channel) => (
+          {channels.map(channel => (
             <View key={channel.id} style={styles.card}>
               <View style={styles.cardHeader}>
                 <Text style={styles.channelName} numberOfLines={1}>
                   {channel.name}
                 </Text>
-                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(channel.status) + '20' }]}>
+                <View
+                  style={[
+                    styles.statusBadge,
+                    { backgroundColor: getStatusColor(channel.status) + '20' },
+                  ]}
+                >
                   <Text style={[styles.statusText, { color: getStatusColor(channel.status) }]}>
                     {channel.status.toUpperCase()}
                   </Text>
@@ -143,10 +155,12 @@ export default function ChannelActivityScreen() {
                   <Text style={styles.statLabel}>Content</Text>
                 </View>
                 <View style={styles.statItem}>
-                  <Text style={[
-                    styles.statValue,
-                    channel.pending_content_count > 0 && styles.pendingHighlight,
-                  ]}>
+                  <Text
+                    style={[
+                      styles.statValue,
+                      channel.pending_content_count > 0 && styles.pendingHighlight,
+                    ]}
+                  >
                     {channel.pending_content_count}
                   </Text>
                   <Text style={styles.statLabel}>Pending</Text>

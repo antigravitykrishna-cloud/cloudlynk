@@ -9,10 +9,13 @@
     "build:android": "eas build --platform android",
     "build:android:preview": "eas build --platform android --profile preview",
     "submit:android": "eas submit --platform android",
-    "lint": "eslint . --ext .ts,.tsx",
+    "lint": "eslint src",
     "typecheck": "tsc --noEmit",
     "guards": "node scripts/guards.mjs",
-    "check": "npm run typecheck && npm run guards"
+    "check": "npm run typecheck && npm run lint && npm run format:check && node scripts/guards.mjs",
+    "lint:fix": "eslint src --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx}\" \"supabase/functions/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx}\" \"supabase/functions/**/*.ts\""
   },
   "dependencies": {
     "@expo/metro-runtime": "~56.0.13",
@@ -68,6 +71,7 @@
     "eas-cli": "^20.3.0",
     "eslint": "^10.4.1",
     "eslint-config-expo": "~56.0.4",
+    "prettier": "^3.9.9",
     "typescript": "^6.0.3"
   }
 }

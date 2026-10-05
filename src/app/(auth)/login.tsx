@@ -1,6 +1,13 @@
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
-  KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import { showAlert } from '../../components/Feedback';
 import { Link, useRouter } from 'expo-router';
@@ -141,14 +148,18 @@ export default function LoginScreen() {
                 disabled={busy !== null}
                 activeOpacity={0.85}
               >
-                {busy === 'guest'
-                  ? <ActivityIndicator color="#FFFFFF" />
-                  : <>
-                      <Icon name="compass" size={18} color="#FFFFFF" />
-                      <Text style={styles.primaryBtnText}>Continue as guest</Text>
-                    </>}
+                {busy === 'guest' ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <>
+                    <Icon name="compass" size={18} color="#FFFFFF" />
+                    <Text style={styles.primaryBtnText}>Continue as guest</Text>
+                  </>
+                )}
               </TouchableOpacity>
-              <Text style={styles.helper}>We create a guest ID for you. Save it later with Google or email.</Text>
+              <Text style={styles.helper}>
+                We create a guest ID for you. Save it later with Google or email.
+              </Text>
 
               {googleAvailable && (
                 <TouchableOpacity
@@ -157,12 +168,14 @@ export default function LoginScreen() {
                   disabled={busy !== null}
                   activeOpacity={0.85}
                 >
-                  {busy === 'google'
-                    ? <ActivityIndicator color={Colors.text} />
-                    : <>
-                        <Icon name="globe" size={18} color={Colors.text} />
-                        <Text style={styles.secondaryBtnText}>Sign in with Google</Text>
-                      </>}
+                  {busy === 'google' ? (
+                    <ActivityIndicator color={Colors.text} />
+                  ) : (
+                    <>
+                      <Icon name="globe" size={18} color={Colors.text} />
+                      <Text style={styles.secondaryBtnText}>Sign in with Google</Text>
+                    </>
+                  )}
                 </TouchableOpacity>
               )}
 
@@ -207,9 +220,11 @@ export default function LoginScreen() {
                 disabled={busy !== null}
                 activeOpacity={0.85}
               >
-                {busy === 'email'
-                  ? <ActivityIndicator color="#FFFFFF" />
-                  : <Text style={styles.primaryBtnText}>Send code</Text>}
+                {busy === 'email' ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.primaryBtnText}>Send code</Text>
+                )}
               </TouchableOpacity>
 
               <TouchableOpacity onPress={() => setMode('choose')} disabled={busy !== null}>
@@ -248,15 +263,23 @@ export default function LoginScreen() {
                 disabled={busy !== null}
                 activeOpacity={0.85}
               >
-                {busy === 'code'
-                  ? <ActivityIndicator color="#FFFFFF" />
-                  : <Text style={styles.primaryBtnText}>Sign in</Text>}
+                {busy === 'code' ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.primaryBtnText}>Sign in</Text>
+                )}
               </TouchableOpacity>
 
               <TouchableOpacity onPress={requestCode} disabled={busy !== null}>
                 <Text style={styles.linkBack}>Send a new code</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => { setMode('email'); setCode(''); }} disabled={busy !== null}>
+              <TouchableOpacity
+                onPress={() => {
+                  setMode('email');
+                  setCode('');
+                }}
+                disabled={busy !== null}
+              >
                 <Text style={styles.linkBack}>‹ Use a different email</Text>
               </TouchableOpacity>
             </>
@@ -265,9 +288,14 @@ export default function LoginScreen() {
 
         <Text style={styles.legal}>
           By continuing you agree to the Cloudlynk{' '}
-          <Link href="/terms" style={styles.legalLink}>Terms &amp; Conditions</Link>
-          {' '}and{' '}
-          <Link href="/privacy" style={styles.legalLink}>Privacy Policy</Link>.
+          <Link href="/terms" style={styles.legalLink}>
+            Terms &amp; Conditions
+          </Link>{' '}
+          and{' '}
+          <Link href="/privacy" style={styles.legalLink}>
+            Privacy Policy
+          </Link>
+          .
         </Text>
 
         <Text style={styles.version}>v{APP_VERSION}</Text>
@@ -277,37 +305,104 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: Spacing.xl, paddingVertical: Spacing.xxxl },
+  container: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.xxxl,
+  },
   logoRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   logo: { fontSize: 34 },
-  logoText: { fontSize: 30, fontWeight: FontWeight.extrabold, color: Colors.text, letterSpacing: -0.5 },
-  tagline: { textAlign: 'center', color: Colors.textSecondary, fontSize: FontSize.md, marginTop: 6, marginBottom: Spacing.xxxl },
+  logoText: {
+    fontSize: 30,
+    fontWeight: FontWeight.extrabold,
+    color: Colors.text,
+    letterSpacing: -0.5,
+  },
+  tagline: {
+    textAlign: 'center',
+    color: Colors.textSecondary,
+    fontSize: FontSize.md,
+    marginTop: 6,
+    marginBottom: Spacing.xxxl,
+  },
   card: {
-    backgroundColor: Colors.card, borderRadius: Radius.xl, borderWidth: 0.5, borderColor: Colors.border,
+    backgroundColor: Colors.card,
+    borderRadius: Radius.xl,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
     padding: Spacing.xl,
   },
   heading: { fontSize: FontSize.xl, fontWeight: FontWeight.extrabold, color: Colors.text },
-  subheading: { fontSize: FontSize.md, color: Colors.textSecondary, marginTop: 4, marginBottom: Spacing.xl },
+  subheading: {
+    fontSize: FontSize.md,
+    color: Colors.textSecondary,
+    marginTop: 4,
+    marginBottom: Spacing.xl,
+  },
   primaryBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: Colors.accent, borderRadius: Radius.md, paddingVertical: 15, marginTop: Spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: Colors.accent,
+    borderRadius: Radius.md,
+    paddingVertical: 15,
+    marginTop: Spacing.sm,
   },
   primaryBtnText: { color: '#FFFFFF', fontSize: FontSize.md, fontWeight: FontWeight.extrabold },
   secondaryBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: Colors.surface, borderRadius: Radius.md, borderWidth: 0.5, borderColor: Colors.border,
-    paddingVertical: 15, marginTop: Spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.md,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    paddingVertical: 15,
+    marginTop: Spacing.md,
   },
   secondaryBtnText: { color: Colors.text, fontSize: FontSize.md, fontWeight: FontWeight.bold },
   btnDisabled: { opacity: 0.6 },
   helper: { color: Colors.textMuted, fontSize: FontSize.sm, textAlign: 'center', marginTop: 8 },
   input: {
-    backgroundColor: Colors.surface, borderRadius: Radius.md, borderWidth: 0.5, borderColor: Colors.border,
-    color: Colors.text, fontSize: FontSize.md, paddingHorizontal: 14, paddingVertical: 13, marginBottom: Spacing.sm,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.md,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    color: Colors.text,
+    fontSize: FontSize.md,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    marginBottom: Spacing.sm,
   },
-  codeInput: { textAlign: 'center', letterSpacing: 8, fontSize: 22, fontWeight: FontWeight.extrabold },
-  linkBack: { color: Colors.accent, fontSize: FontSize.md, fontWeight: FontWeight.semibold, textAlign: 'center', marginTop: Spacing.md },
-  legal: { color: Colors.textMuted, fontSize: FontSize.sm, textAlign: 'center', marginTop: Spacing.xl, lineHeight: 19, paddingHorizontal: 8 },
+  codeInput: {
+    textAlign: 'center',
+    letterSpacing: 8,
+    fontSize: 22,
+    fontWeight: FontWeight.extrabold,
+  },
+  linkBack: {
+    color: Colors.accent,
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.semibold,
+    textAlign: 'center',
+    marginTop: Spacing.md,
+  },
+  legal: {
+    color: Colors.textMuted,
+    fontSize: FontSize.sm,
+    textAlign: 'center',
+    marginTop: Spacing.xl,
+    lineHeight: 19,
+    paddingHorizontal: 8,
+  },
   legalLink: { color: Colors.accent, fontWeight: FontWeight.semibold },
-  version: { color: Colors.textMuted, fontSize: FontSize.sm, textAlign: 'center', marginTop: Spacing.lg },
+  version: {
+    color: Colors.textMuted,
+    fontSize: FontSize.sm,
+    textAlign: 'center',
+    marginTop: Spacing.lg,
+  },
 });

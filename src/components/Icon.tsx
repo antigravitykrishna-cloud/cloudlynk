@@ -19,13 +19,43 @@ import { Colors } from '../constants/theme';
 // greys, from the same component.
 
 export type IconName =
-  | 'cloud' | 'compass' | 'broadcast' | 'user'
-  | 'shield' | 'clipboard' | 'edit' | 'chart' | 'flag' | 'check-circle'
-  | 'film' | 'upload' | 'history' | 'bell' | 'video' | 'lock'
-  | 'document' | 'package' | 'diamond' | 'tv' | 'play' | 'plus'
-  | 'settings' | 'chevron-right' | 'search' | 'trash' | 'logout'
-  | 'wifi' | 'refresh' | 'tools'
-  | 'eye' | 'eye-off' | 'folder' | 'image' | 'music' | 'globe' | 'mail';
+  | 'cloud'
+  | 'compass'
+  | 'broadcast'
+  | 'user'
+  | 'shield'
+  | 'clipboard'
+  | 'edit'
+  | 'chart'
+  | 'flag'
+  | 'check-circle'
+  | 'film'
+  | 'upload'
+  | 'history'
+  | 'bell'
+  | 'video'
+  | 'lock'
+  | 'document'
+  | 'package'
+  | 'diamond'
+  | 'tv'
+  | 'play'
+  | 'plus'
+  | 'settings'
+  | 'chevron-right'
+  | 'search'
+  | 'trash'
+  | 'logout'
+  | 'wifi'
+  | 'refresh'
+  | 'tools'
+  | 'eye'
+  | 'eye-off'
+  | 'folder'
+  | 'image'
+  | 'music'
+  | 'globe'
+  | 'mail';
 
 type Props = {
   name: IconName;
@@ -50,7 +80,10 @@ export function Icon({ name, size = 24, color = Colors.textSecondary, filled = f
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
       {name === 'cloud' && (
-        <Path d="M6.5 19a4.5 4.5 0 0 1-.5-8.97A6 6 0 0 1 17.7 8.6 4.2 4.2 0 0 1 18 19H6.5Z" {...common} />
+        <Path
+          d="M6.5 19a4.5 4.5 0 0 1-.5-8.97A6 6 0 0 1 17.7 8.6 4.2 4.2 0 0 1 18 19H6.5Z"
+          {...common}
+        />
       )}
 
       {name === 'compass' && (
@@ -97,7 +130,10 @@ export function Icon({ name, size = 24, color = Colors.textSecondary, filled = f
 
       {name === 'edit' && (
         <>
-          <Path d="M11 4.5H6.5A2.5 2.5 0 0 0 4 7v10.5A2.5 2.5 0 0 0 6.5 20H17a2.5 2.5 0 0 0 2.5-2.5V13" {...common} />
+          <Path
+            d="M11 4.5H6.5A2.5 2.5 0 0 0 4 7v10.5A2.5 2.5 0 0 0 6.5 20H17a2.5 2.5 0 0 0 2.5-2.5V13"
+            {...common}
+          />
           <Path d="M17.4 3.6a2 2 0 0 1 2.8 2.8L12.8 13.8l-3.6 1 1-3.6 7.2-7.6Z" {...common} />
         </>
       )}
@@ -173,7 +209,10 @@ export function Icon({ name, size = 24, color = Colors.textSecondary, filled = f
 
       {name === 'document' && (
         <>
-          <Path d="M13.5 3H7.5A2.5 2.5 0 0 0 5 5.5v13A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V8.5L13.5 3Z" {...common} />
+          <Path
+            d="M13.5 3H7.5A2.5 2.5 0 0 0 5 5.5v13A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V8.5L13.5 3Z"
+            {...common}
+          />
           <Polyline points="13.2,3.2 13.2,8.8 18.8,8.8" {...common} fill="none" />
         </>
       )}
@@ -215,7 +254,10 @@ export function Icon({ name, size = 24, color = Colors.textSecondary, filled = f
       {name === 'settings' && (
         <>
           <Circle cx="12" cy="12" r="3.2" {...common} />
-          <Path d="M19.1 14.5a1.5 1.5 0 0 0 .3 1.7l.1.1a1.9 1.9 0 1 1-2.7 2.7l-.1-.1a1.5 1.5 0 0 0-2.5 1v.3a1.9 1.9 0 1 1-3.8 0v-.2a1.5 1.5 0 0 0-2.6-1l-.1.1a1.9 1.9 0 1 1-2.7-2.7l.1-.1a1.5 1.5 0 0 0-1-2.5H3.8a1.9 1.9 0 1 1 0-3.8H4a1.5 1.5 0 0 0 1-2.6l-.1-.1a1.9 1.9 0 1 1 2.7-2.7l.1.1a1.5 1.5 0 0 0 1.7.3H9.6a1.5 1.5 0 0 0 .9-1.4V3.8a1.9 1.9 0 1 1 3.8 0V4a1.5 1.5 0 0 0 2.5 1l.1-.1a1.9 1.9 0 1 1 2.7 2.7l-.1.1a1.5 1.5 0 0 0-.3 1.7v.1a1.5 1.5 0 0 0 1.4.9h.3a1.9 1.9 0 1 1 0 3.8H20a1.5 1.5 0 0 0-1.4.9Z" {...common} />
+          <Path
+            d="M19.1 14.5a1.5 1.5 0 0 0 .3 1.7l.1.1a1.9 1.9 0 1 1-2.7 2.7l-.1-.1a1.5 1.5 0 0 0-2.5 1v.3a1.9 1.9 0 1 1-3.8 0v-.2a1.5 1.5 0 0 0-2.6-1l-.1.1a1.9 1.9 0 1 1-2.7-2.7l.1-.1a1.5 1.5 0 0 0-1-2.5H3.8a1.9 1.9 0 1 1 0-3.8H4a1.5 1.5 0 0 0 1-2.6l-.1-.1a1.9 1.9 0 1 1 2.7-2.7l.1.1a1.5 1.5 0 0 0 1.7.3H9.6a1.5 1.5 0 0 0 .9-1.4V3.8a1.9 1.9 0 1 1 3.8 0V4a1.5 1.5 0 0 0 2.5 1l.1-.1a1.9 1.9 0 1 1 2.7 2.7l-.1.1a1.5 1.5 0 0 0-.3 1.7v.1a1.5 1.5 0 0 0 1.4.9h.3a1.9 1.9 0 1 1 0 3.8H20a1.5 1.5 0 0 0-1.4.9Z"
+            {...common}
+          />
         </>
       )}
 
@@ -249,35 +291,51 @@ export function Icon({ name, size = 24, color = Colors.textSecondary, filled = f
 
       {name === 'tools' && (
         <>
-          <Path d="M14.2 6.4a3.8 3.8 0 0 0 5 5l-8.4 8.4a2.2 2.2 0 0 1-3.1-3.1l8.4-8.4a3.8 3.8 0 0 0-1.9-1.9Z" {...common} />
+          <Path
+            d="M14.2 6.4a3.8 3.8 0 0 0 5 5l-8.4 8.4a2.2 2.2 0 0 1-3.1-3.1l8.4-8.4a3.8 3.8 0 0 0-1.9-1.9Z"
+            {...common}
+          />
           <Path d="M9.6 9.6 5.2 5.2" {...common} />
         </>
       )}
 
       {name === 'eye' && (
         <>
-          <Path d="M2.2 12S5.8 5.4 12 5.4 21.8 12 21.8 12 18.2 18.6 12 18.6 2.2 12 2.2 12Z" {...common} />
+          <Path
+            d="M2.2 12S5.8 5.4 12 5.4 21.8 12 21.8 12 18.2 18.6 12 18.6 2.2 12 2.2 12Z"
+            {...common}
+          />
           <Circle cx="12" cy="12" r="3.1" {...common} />
         </>
       )}
 
       {name === 'eye-off' && (
         <>
-          <Path d="M9.6 5.8A8.9 8.9 0 0 1 12 5.4c6.2 0 9.8 6.6 9.8 6.6a17 17 0 0 1-3 3.9M6.3 7.9A17 17 0 0 0 2.2 12S5.8 18.6 12 18.6a8.8 8.8 0 0 0 3.7-.8" {...common} />
+          <Path
+            d="M9.6 5.8A8.9 8.9 0 0 1 12 5.4c6.2 0 9.8 6.6 9.8 6.6a17 17 0 0 1-3 3.9M6.3 7.9A17 17 0 0 0 2.2 12S5.8 18.6 12 18.6a8.8 8.8 0 0 0 3.7-.8"
+            {...common}
+          />
           <Path d="M9.9 9.9a3.1 3.1 0 0 0 4.3 4.3" {...common} />
           <Line x1="3.5" y1="3.5" x2="20.5" y2="20.5" {...common} />
         </>
       )}
 
       {name === 'folder' && (
-        <Path d="M3.5 7.4a2 2 0 0 1 2-2h3.2l2 2.4h7.8a2 2 0 0 1 2 2v8.8a2 2 0 0 1-2 2H5.5a2 2 0 0 1-2-2V7.4Z" {...common} />
+        <Path
+          d="M3.5 7.4a2 2 0 0 1 2-2h3.2l2 2.4h7.8a2 2 0 0 1 2 2v8.8a2 2 0 0 1-2 2H5.5a2 2 0 0 1-2-2V7.4Z"
+          {...common}
+        />
       )}
 
       {name === 'image' && (
         <>
           <Rect x="3.5" y="5" width="17" height="14" rx="2.5" {...common} />
           <Circle cx="9" cy="10" r="1.6" {...common} />
-          <Polyline points="4.2,17.4 9.6,12.6 13.4,15.6 16.6,13 20.2,16.4" {...common} fill="none" />
+          <Polyline
+            points="4.2,17.4 9.6,12.6 13.4,15.6 16.6,13 20.2,16.4"
+            {...common}
+            fill="none"
+          />
         </>
       )}
 

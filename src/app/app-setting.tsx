@@ -23,13 +23,25 @@ export default function AppSettingScreen() {
   // app ID -- a switch for something the app does not do would be noise.
   const showMeta = metaConfigured();
   const [metaOn, setMetaOn] = useState(true);
-  useEffect(() => { if (showMeta) getMetaMeasurement().then(setMetaOn); }, [showMeta]);
-  const toggleMeta = (on: boolean) => { setMetaOn(on); setMetaMeasurement(on); };
+  useEffect(() => {
+    if (showMeta) getMetaMeasurement().then(setMetaOn);
+  }, [showMeta]);
+  const toggleMeta = (on: boolean) => {
+    setMetaOn(on);
+    setMetaMeasurement(on);
+  };
 
   const handleSignOut = () => {
     showAlert('Sign out', 'Are you sure you want to sign out?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign out', style: 'destructive', onPress: () => { signOut(); router.replace('/(auth)/login'); } },
+      {
+        text: 'Sign out',
+        style: 'destructive',
+        onPress: () => {
+          signOut();
+          router.replace('/(auth)/login');
+        },
+      },
     ]);
   };
 
@@ -44,7 +56,11 @@ export default function AppSettingScreen() {
   const menuRows: MenuRow[] = [
     { icon: 'lock', label: 'Privacy Policy', onPress: () => router.push('/privacy') },
     { icon: 'document', label: 'Terms & Conditions', onPress: () => router.push('/terms') },
-    { icon: 'user', label: 'Community Guidelines', onPress: () => router.push('/community-guidelines') },
+    {
+      icon: 'user',
+      label: 'Community Guidelines',
+      onPress: () => router.push('/community-guidelines'),
+    },
     { icon: 'diamond', label: 'Refund Policy', onPress: () => router.push('/refund-policy') },
     { icon: 'shield', label: 'Copyright & IP Policy', onPress: () => router.push('/copyright') },
   ];
@@ -53,7 +69,10 @@ export default function AppSettingScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       {/* Red header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backBtn}
+          activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
@@ -91,18 +110,24 @@ export default function AppSettingScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={styles.menuLabel}>Ad measurement</Text>
                 <Text style={styles.menuHint}>
-                  Lets Meta know when an ad led to installing or buying, using this device's advertising ID. Turning it off stops that.
+                  Lets Meta know when an ad led to installing or buying, using this device's
+                  advertising ID. Turning it off stops that.
                 </Text>
               </View>
-              <Switch value={metaOn} onValueChange={toggleMeta}
-                trackColor={{ false: Colors.borderStrong, true: Colors.brandBlue }} />
+              <Switch
+                value={metaOn}
+                onValueChange={toggleMeta}
+                trackColor={{ false: Colors.borderStrong, true: Colors.brandBlue }}
+              />
             </View>
           </View>
         )}
 
         {/* Version info */}
         <View style={styles.versionBlock}>
-          <Text style={styles.versionText}>Cloudlynk · v{Constants.expoConfig?.version ?? '0.0.0'}</Text>
+          <Text style={styles.versionText}>
+            Cloudlynk · v{Constants.expoConfig?.version ?? '0.0.0'}
+          </Text>
           <Text style={styles.versionSub}>© 2026 Cloudlynk Inc. All rights reserved.</Text>
         </View>
 
@@ -124,15 +149,46 @@ export default function AppSettingScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
-  header: { backgroundColor: Colors.surface, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14 },
+  header: {
+    backgroundColor: Colors.surface,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
   backBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   backTxt: { color: '#ffffff', fontSize: 28, fontWeight: '700', lineHeight: 28 },
   headerTitle: { color: '#ffffff', fontSize: 18, fontWeight: '800' },
   body: { flex: 1 },
-  menuGroup: { marginHorizontal: 16, marginTop: 16, marginBottom: 16, backgroundColor: Colors.bg, borderRadius: 12, borderWidth: 1, borderColor: Colors.border, overflow: 'hidden' },
-  menuRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, paddingHorizontal: 14, borderBottomWidth: 0.5, borderBottomColor: Colors.border },
+  menuGroup: {
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 16,
+    backgroundColor: Colors.bg,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    overflow: 'hidden',
+  },
+  menuRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.border,
+  },
   menuRowLast: { borderBottomWidth: 0 },
-  menuIcon: { width: 32, height: 32, borderRadius: 8, backgroundColor: '#182437', alignItems: 'center', justifyContent: 'center' },
+  menuIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#182437',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   menuLabel: { flex: 1, fontSize: 14, fontWeight: '600', color: Colors.text },
   chevron: { fontSize: 18, color: Colors.textMuted },
   menuHint: { fontSize: 12, color: Colors.textMuted, marginTop: 3, lineHeight: 16 },
@@ -140,8 +196,20 @@ const styles = StyleSheet.create({
   versionText: { fontSize: 12, color: Colors.text, fontWeight: '700' },
   versionSub: { fontSize: 11, color: Colors.textMuted, fontWeight: '500', marginTop: 2 },
   bottomButtons: { paddingHorizontal: 16, marginTop: 8, gap: 12 },
-  logoutBtn: { backgroundColor: Colors.brand, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
+  logoutBtn: {
+    backgroundColor: Colors.brand,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
   logoutBtnText: { color: '#ffffff', fontSize: 15, fontWeight: '800' },
-  deleteBtn: { backgroundColor: '#2A1620', borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: Colors.danger },
+  deleteBtn: {
+    backgroundColor: '#2A1620',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.danger,
+  },
   deleteBtnText: { color: Colors.danger, fontSize: 15, fontWeight: '800' },
 });

@@ -6,7 +6,19 @@
  */
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Image, KeyboardAvoidingView, Platform, Modal } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  ActivityIndicator,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  Modal,
+} from 'react-native';
 import { showAlert } from '../../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -17,10 +29,10 @@ import { PostService, ContentType, GENRES, AccessLevel, defaultAccessLevel } fro
 import { Icon, type IconName } from '../../components/Icon';
 
 const CONTENT_TYPES: { id: ContentType; label: string; icon: IconName }[] = [
-  { id: 'movie',  label: 'Movie',      icon: 'film' },
+  { id: 'movie', label: 'Movie', icon: 'film' },
   { id: 'series', label: 'Web Series', icon: 'tv' },
-  { id: 'short',  label: 'Short Film', icon: 'video' },
-  { id: 'post',   label: 'Post',       icon: 'document' },
+  { id: 'short', label: 'Short Film', icon: 'video' },
+  { id: 'post', label: 'Post', icon: 'document' },
 ];
 
 type EntryForm = {
@@ -61,7 +73,11 @@ function blankEntry(video: { uri: string; name: string; size: number }): EntryFo
 }
 
 function deriveSeriesId(channelId: string, seriesName: string): string {
-  const slug = seriesName.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  const slug = seriesName
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '');
   let hash = 5381;
   const str = `${channelId}:${slug}`;
   for (let i = 0; i < str.length; i++) {
@@ -78,19 +94,31 @@ function ProgressBar({ progress, status }: { progress: number; status: string })
     <View style={pb.wrap}>
       <View style={[pb.bar, { width: `${pct}%` as any, backgroundColor: color }]} />
       <Text style={pb.label}>
-        {status === 'done' ? '✓ Done'
-          : status === 'failed' ? '✕ Failed'
-          : status === 'uploading' ? `${pct}%`
-          : status === 'queued' ? 'Queued'
-          : status === 'over_limit' ? 'Too large'
-          : status}
+        {status === 'done'
+          ? '✓ Done'
+          : status === 'failed'
+            ? '✕ Failed'
+            : status === 'uploading'
+              ? `${pct}%`
+              : status === 'queued'
+                ? 'Queued'
+                : status === 'over_limit'
+                  ? 'Too large'
+                  : status}
       </Text>
     </View>
   );
 }
 
 const pb = StyleSheet.create({
-  wrap: { height: 24, backgroundColor: Colors.surface, borderRadius: 4, overflow: 'hidden', marginTop: 8, justifyContent: 'center' },
+  wrap: {
+    height: 24,
+    backgroundColor: Colors.surface,
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginTop: 8,
+    justifyContent: 'center',
+  },
   bar: { position: 'absolute', left: 0, top: 0, bottom: 0 },
   label: { fontSize: 11, fontWeight: '800', color: Colors.text, textAlign: 'center', zIndex: 1 },
 });
@@ -98,7 +126,8 @@ const pb = StyleSheet.create({
 export default function AddContentScreen() {
   const router = useRouter();
   const { channelId } = useLocalSearchParams<{ channelId: string }>();
-  const { addToQueue, startUpload, items, isUploading, maxItems, queuedCount } = useUploadQueue(channelId);
+  const { addToQueue, startUpload, items, isUploading, maxItems, queuedCount } =
+    useUploadQueue(channelId);
 
   const [entries, setEntries] = useState<EntryForm[]>([]);
   const [picking, setPicking] = useState(false);
@@ -108,9 +137,11 @@ export default function AddContentScreen() {
   const [thumbPickingFor, setThumbPickingFor] = useState<number | null>(null);
 
   const sessionItems = items.filter(i => sessionItemIds.includes(i.id));
-  const allDone = sessionItems.length > 0 && sessionItems.every(i =>
-    i.status === 'done' || i.status === 'failed' || i.status === 'over_limit'
-  );
+  const allDone =
+    sessionItems.length > 0 &&
+    sessionItems.every(
+      i => i.status === 'done' || i.status === 'failed' || i.status === 'over_limit',
+    );
 
   // Debounce timer for series propagation — avoids re-rendering all sibling entries
   // on every keystroke, which interrupts the TextInput IME and causes "B only" bug.
@@ -118,11 +149,15 @@ export default function AddContentScreen() {
 
   const updateEntry = useCallback((idx: number, patch: Partial<EntryForm>) => {
     // Step 1: apply patch to source entry immediately (no propagation yet)
-    setEntries(prev => prev.map((e, i) => i === idx ? { ...e, ...patch } : e));
+    setEntries(prev => prev.map((e, i) => (i === idx ? { ...e, ...patch } : e)));
 
     // Step 2: propagate to siblings only after user pauses typing (250ms)
-    const isSeriesChange = 'contentType' in patch || 'seriesName' in patch
-      || 'seasonNo' in patch || 'genre' in patch || 'releaseYear' in patch;
+    const isSeriesChange =
+      'contentType' in patch ||
+      'seriesName' in patch ||
+      'seasonNo' in patch ||
+      'genre' in patch ||
+      'releaseYear' in patch;
     if (!isSeriesChange) return;
 
     if (propagateTimer.current) clearTimeout(propagateTimer.current);
@@ -135,7 +170,10 @@ export default function AddContentScreen() {
         const propagated = prev.map((e, i) => {
           if (i <= idx) return e;
           // Only propagate to entries the user hasn't individually customised
-          const isUncustomised = !e.seriesName || source.seriesName.startsWith(e.seriesName) || e.seriesName === source.seriesName;
+          const isUncustomised =
+            !e.seriesName ||
+            source.seriesName.startsWith(e.seriesName) ||
+            e.seriesName === source.seriesName;
           if (!isUncustomised) return e;
           return {
             ...e,
@@ -162,9 +200,10 @@ export default function AddContentScreen() {
     try {
       const videos = await StreamService.pickVideos();
       if (!videos.length) return;
-      const slotsLeft = maxItems === Infinity
-        ? videos.length
-        : Math.max(0, maxItems - queuedCount - entries.length);
+      const slotsLeft =
+        maxItems === Infinity
+          ? videos.length
+          : Math.max(0, maxItems - queuedCount - entries.length);
       if (slotsLeft === 0) {
         showAlert('Queue full', `Free plan allows up to ${maxItems} videos. Upgrade to add more.`);
         return;
@@ -172,7 +211,10 @@ export default function AddContentScreen() {
       const toAdd = videos.slice(0, slotsLeft);
       setEntries(prev => [...prev, ...toAdd.map(blankEntry)]);
       if (videos.length > slotsLeft) {
-        showAlert('Limit reached', `${videos.length - slotsLeft} file(s) skipped — free plan limit of ${maxItems}.`);
+        showAlert(
+          'Limit reached',
+          `${videos.length - slotsLeft} file(s) skipped — free plan limit of ${maxItems}.`,
+        );
       }
     } catch (err: any) {
       showAlert('Error', err.message ?? 'Could not pick videos');
@@ -195,8 +237,14 @@ export default function AddContentScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!channelId) { showAlert('Error', 'No channel selected.'); return; }
-    if (entries.length === 0) { showAlert('No videos', 'Add at least one video first.'); return; }
+    if (!channelId) {
+      showAlert('Error', 'No channel selected.');
+      return;
+    }
+    if (entries.length === 0) {
+      showAlert('No videos', 'Add at least one video first.');
+      return;
+    }
 
     const missingIdx = entries.findIndex(e => !e.title.trim());
     if (missingIdx !== -1) {
@@ -218,9 +266,10 @@ export default function AddContentScreen() {
       releaseYear: e.releaseYear,
       thumbnailUri: e.thumbnailUri,
       seriesName: e.seriesName.trim(),
-      seriesId: e.contentType === 'series' && e.seriesName.trim()
-        ? deriveSeriesId(channelId, e.seriesName.trim())
-        : null,
+      seriesId:
+        e.contentType === 'series' && e.seriesName.trim()
+          ? deriveSeriesId(channelId, e.seriesName.trim())
+          : null,
     }));
 
     try {
@@ -243,9 +292,13 @@ export default function AddContentScreen() {
   useEffect(() => {
     if (!submitted || sessionItemIds.length > 0) return;
     const entryTitles = new Set(entries.map(e => e.title.trim()).filter(Boolean));
-    const matching = items.filter(i =>
-      entryTitles.has(i.title) &&
-      (i.status === 'queued' || i.status === 'uploading' || i.status === 'done' || i.status === 'failed')
+    const matching = items.filter(
+      i =>
+        entryTitles.has(i.title) &&
+        (i.status === 'queued' ||
+          i.status === 'uploading' ||
+          i.status === 'done' ||
+          i.status === 'failed'),
     );
     if (matching.length > 0) {
       setSessionItemIds(matching.map(i => i.id));
@@ -255,7 +308,10 @@ export default function AddContentScreen() {
   return (
     <>
       <SafeAreaView style={styles.safe} edges={['top']}>
-        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
           <View style={styles.header}>
             <TouchableOpacity
               onPress={() => {
@@ -293,8 +349,11 @@ export default function AddContentScreen() {
             )}
           </View>
 
-          <ScrollView style={styles.body} keyboardShouldPersistTaps="handled" keyboardDismissMode="none">
-
+          <ScrollView
+            style={styles.body}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="none"
+          >
             {submitted && (
               <View style={styles.progressPanel}>
                 <Text style={styles.progressTitle}>
@@ -314,10 +373,17 @@ export default function AddContentScreen() {
 
             {!submitted && (
               <>
-                <TouchableOpacity style={styles.addVideoBtn} onPress={handleAddVideos} disabled={picking} activeOpacity={0.75}>
-                  {picking
-                    ? <ActivityIndicator color={Colors.brand} size="small" />
-                    : <Text style={styles.addVideoBtnTxt}>{'+ Add Videos'}</Text>}
+                <TouchableOpacity
+                  style={styles.addVideoBtn}
+                  onPress={handleAddVideos}
+                  disabled={picking}
+                  activeOpacity={0.75}
+                >
+                  {picking ? (
+                    <ActivityIndicator color={Colors.brand} size="small" />
+                  ) : (
+                    <Text style={styles.addVideoBtnTxt}>{'+ Add Videos'}</Text>
+                  )}
                 </TouchableOpacity>
 
                 {entries.length === 0 && (
@@ -325,7 +391,9 @@ export default function AddContentScreen() {
                     <Icon name="film" size={16} color={Colors.textMuted} />
                     <Text style={styles.emptyTxt}>No videos yet</Text>
                     <Text style={styles.emptySubTxt}>
-                      {'Tap "Add Videos" to pick one or more files.\nFor a series, pick all episodes together.'}
+                      {
+                        'Tap "Add Videos" to pick one or more files.\nFor a series, pick all episodes together.'
+                      }
                     </Text>
                   </View>
                 )}
@@ -335,8 +403,12 @@ export default function AddContentScreen() {
                     <View style={styles.entryHeader}>
                       <Text style={styles.entryNum}>{'#' + (idx + 1)}</Text>
                       <View style={styles.entryVideoMeta}>
-                        <Text style={styles.entryFileName} numberOfLines={1}>{entry.video.name}</Text>
-                        <Text style={styles.entryFileSize}>{(entry.video.size / 1024 / 1024).toFixed(1)} MB</Text>
+                        <Text style={styles.entryFileName} numberOfLines={1}>
+                          {entry.video.name}
+                        </Text>
+                        <Text style={styles.entryFileSize}>
+                          {(entry.video.size / 1024 / 1024).toFixed(1)} MB
+                        </Text>
                       </View>
                       <TouchableOpacity onPress={() => removeEntry(idx)} style={styles.removeBtn}>
                         <Text style={styles.removeBtnTxt}>{'✕'}</Text>
@@ -348,11 +420,26 @@ export default function AddContentScreen() {
                       {CONTENT_TYPES.map(ct => (
                         <TouchableOpacity
                           key={ct.id}
-                          style={[styles.typeChip, entry.contentType === ct.id && styles.typeChipActive]}
-                          onPress={() => updateEntry(idx, { contentType: ct.id, accessLevel: defaultAccessLevel(ct.id) })}
+                          style={[
+                            styles.typeChip,
+                            entry.contentType === ct.id && styles.typeChipActive,
+                          ]}
+                          onPress={() =>
+                            updateEntry(idx, {
+                              contentType: ct.id,
+                              accessLevel: defaultAccessLevel(ct.id),
+                            })
+                          }
                         >
                           <Icon name={ct.icon} size={14} color={Colors.textSecondary} />
-                          <Text style={[styles.typeChipTxt, entry.contentType === ct.id && { color: Colors.brand }]}>{ct.label}</Text>
+                          <Text
+                            style={[
+                              styles.typeChipTxt,
+                              entry.contentType === ct.id && { color: Colors.brand },
+                            ]}
+                          >
+                            {ct.label}
+                          </Text>
                         </TouchableOpacity>
                       ))}
                     </View>
@@ -360,18 +447,38 @@ export default function AddContentScreen() {
                     <Text style={styles.label}>ACCESS</Text>
                     <View style={styles.typeRow}>
                       <TouchableOpacity
-                        style={[styles.typeChip, entry.accessLevel === 'free' && styles.typeChipActive]}
+                        style={[
+                          styles.typeChip,
+                          entry.accessLevel === 'free' && styles.typeChipActive,
+                        ]}
                         onPress={() => updateEntry(idx, { accessLevel: 'free' })}
                       >
                         <Icon name="lock" size={16} color={Colors.success} />
-                        <Text style={[styles.typeChipTxt, entry.accessLevel === 'free' && { color: Colors.brand }]}>Free</Text>
+                        <Text
+                          style={[
+                            styles.typeChipTxt,
+                            entry.accessLevel === 'free' && { color: Colors.brand },
+                          ]}
+                        >
+                          Free
+                        </Text>
                       </TouchableOpacity>
                       <TouchableOpacity
-                        style={[styles.typeChip, entry.accessLevel === 'premium' && styles.typeChipActive]}
+                        style={[
+                          styles.typeChip,
+                          entry.accessLevel === 'premium' && styles.typeChipActive,
+                        ]}
                         onPress={() => updateEntry(idx, { accessLevel: 'premium' })}
                       >
                         <Icon name="lock" size={16} color={Colors.textMuted} />
-                        <Text style={[styles.typeChipTxt, entry.accessLevel === 'premium' && { color: Colors.brand }]}>Premium</Text>
+                        <Text
+                          style={[
+                            styles.typeChipTxt,
+                            entry.accessLevel === 'premium' && { color: Colors.brand },
+                          ]}
+                        >
+                          Premium
+                        </Text>
                       </TouchableOpacity>
                     </View>
                     <Text style={styles.fieldHint}>
@@ -392,7 +499,8 @@ export default function AddContentScreen() {
                           blurOnSubmit={false}
                         />
                         <Text style={styles.fieldHint}>
-                          Episodes with the same series name are grouped together on the channel page.
+                          Episodes with the same series name are grouped together on the channel
+                          page.
                         </Text>
                       </>
                     )}
@@ -405,15 +513,21 @@ export default function AddContentScreen() {
                       activeOpacity={0.75}
                     >
                       {entry.thumbnailUri ? (
-                        <Image source={{ uri: entry.thumbnailUri }} style={styles.thumbPreview} resizeMode="cover" />
+                        <Image
+                          source={{ uri: entry.thumbnailUri }}
+                          style={styles.thumbPreview}
+                          resizeMode="cover"
+                        />
                       ) : (
                         <View style={styles.thumbEmpty}>
-                          {thumbPickingFor === idx
-                            ? <ActivityIndicator color={Colors.brand} />
-                            : <>
-                                <Icon name="image" size={24} color={Colors.textMuted} />
-                                <Text style={styles.thumbEmptyTxt}>Add Thumbnail</Text>
-                              </>}
+                          {thumbPickingFor === idx ? (
+                            <ActivityIndicator color={Colors.brand} />
+                          ) : (
+                            <>
+                              <Icon name="image" size={24} color={Colors.textMuted} />
+                              <Text style={styles.thumbEmptyTxt}>Add Thumbnail</Text>
+                            </>
+                          )}
                         </View>
                       )}
                     </TouchableOpacity>
@@ -440,8 +554,16 @@ export default function AddContentScreen() {
                     />
 
                     <Text style={styles.label}>GENRE</Text>
-                    <TouchableOpacity style={[styles.input, { justifyContent: 'center' }]} onPress={() => setGenrePickerFor(idx)}>
-                      <Text style={{ color: entry.genre ? Colors.text : Colors.textMuted, fontSize: 14 }}>
+                    <TouchableOpacity
+                      style={[styles.input, { justifyContent: 'center' }]}
+                      onPress={() => setGenrePickerFor(idx)}
+                    >
+                      <Text
+                        style={{
+                          color: entry.genre ? Colors.text : Colors.textMuted,
+                          fontSize: 14,
+                        }}
+                      >
                         {entry.genre || 'Select genre'}
                       </Text>
                     </TouchableOpacity>
@@ -478,25 +600,39 @@ export default function AddContentScreen() {
                         <View style={styles.rowInputs}>
                           <View style={{ flex: 1 }}>
                             <Text style={styles.label}>SEASON</Text>
-                            <TextInput style={styles.input} value={entry.seasonNo}
+                            <TextInput
+                              style={styles.input}
+                              value={entry.seasonNo}
                               onChangeText={v => updateEntry(idx, { seasonNo: v })}
-                              placeholder="1" placeholderTextColor={Colors.textMuted}
-                              keyboardType="numeric" blurOnSubmit={false} />
+                              placeholder="1"
+                              placeholderTextColor={Colors.textMuted}
+                              keyboardType="numeric"
+                              blurOnSubmit={false}
+                            />
                           </View>
                           <View style={{ width: 10 }} />
                           <View style={{ flex: 1 }}>
                             <Text style={styles.label}>EPISODE</Text>
-                            <TextInput style={styles.input} value={entry.episodeNo}
+                            <TextInput
+                              style={styles.input}
+                              value={entry.episodeNo}
                               onChangeText={v => updateEntry(idx, { episodeNo: v })}
-                              placeholder="1" placeholderTextColor={Colors.textMuted}
-                              keyboardType="numeric" blurOnSubmit={false} />
+                              placeholder="1"
+                              placeholderTextColor={Colors.textMuted}
+                              keyboardType="numeric"
+                              blurOnSubmit={false}
+                            />
                           </View>
                         </View>
                         <Text style={styles.label}>EPISODE TITLE</Text>
-                        <TextInput style={styles.input} value={entry.episodeTitle}
+                        <TextInput
+                          style={styles.input}
+                          value={entry.episodeTitle}
                           onChangeText={v => updateEntry(idx, { episodeTitle: v })}
-                          placeholder="e.g. Pilot" placeholderTextColor={Colors.textMuted}
-                          blurOnSubmit={false} />
+                          placeholder="e.g. Pilot"
+                          placeholderTextColor={Colors.textMuted}
+                          blurOnSubmit={false}
+                        />
                       </>
                     )}
 
@@ -505,7 +641,12 @@ export default function AddContentScreen() {
                 ))}
 
                 {entries.length > 0 && (
-                  <TouchableOpacity style={styles.addMoreBtn} onPress={handleAddVideos} disabled={picking} activeOpacity={0.75}>
+                  <TouchableOpacity
+                    style={styles.addMoreBtn}
+                    onPress={handleAddVideos}
+                    disabled={picking}
+                    activeOpacity={0.75}
+                  >
                     <Text style={styles.addMoreBtnTxt}>{'+ Add More Videos'}</Text>
                   </TouchableOpacity>
                 )}
@@ -517,18 +658,34 @@ export default function AddContentScreen() {
         </KeyboardAvoidingView>
       </SafeAreaView>
 
-      <Modal visible={genrePickerFor !== null} transparent animationType="slide" onRequestClose={() => setGenrePickerFor(null)}>
-        <TouchableOpacity style={styles.genreOverlay} activeOpacity={1} onPress={() => setGenrePickerFor(null)}>
+      <Modal
+        visible={genrePickerFor !== null}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setGenrePickerFor(null)}
+      >
+        <TouchableOpacity
+          style={styles.genreOverlay}
+          activeOpacity={1}
+          onPress={() => setGenrePickerFor(null)}
+        >
           <View style={styles.genreSheet}>
             <Text style={styles.genreTitle}>Select Genre</Text>
             <ScrollView keyboardShouldPersistTaps="handled">
               {GENRES.map(g => {
                 const selected = genrePickerFor !== null && entries[genrePickerFor]?.genre === g;
                 return (
-                  <TouchableOpacity key={g} style={styles.genreRow}
-                    onPress={() => { if (genrePickerFor !== null) updateEntry(genrePickerFor, { genre: g }); setGenrePickerFor(null); }}
+                  <TouchableOpacity
+                    key={g}
+                    style={styles.genreRow}
+                    onPress={() => {
+                      if (genrePickerFor !== null) updateEntry(genrePickerFor, { genre: g });
+                      setGenrePickerFor(null);
+                    }}
                   >
-                    <Text style={[styles.genreRowTxt, selected && { color: Colors.brand }]}>{g}</Text>
+                    <Text style={[styles.genreRowTxt, selected && { color: Colors.brand }]}>
+                      {g}
+                    </Text>
                     {selected && <Text style={{ color: Colors.brand, fontSize: 16 }}>{'✓'}</Text>}
                   </TouchableOpacity>
                 );
@@ -546,24 +703,61 @@ export default function AddContentScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
-  header: { backgroundColor: Colors.surface, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14 },
+  header: {
+    backgroundColor: Colors.surface,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
   backBtn: { width: 60 },
   backTxt: { color: '#fff', fontSize: 16, fontWeight: '700' },
   headerTitle: { color: '#fff', fontSize: 17, fontWeight: '800', flex: 1, textAlign: 'center' },
-  submitBtn: { backgroundColor: '#fff', paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, minWidth: 80, alignItems: 'center' },
+  submitBtn: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    minWidth: 80,
+    alignItems: 'center',
+  },
   submitBtnTxt: { color: Colors.brand, fontSize: 13, fontWeight: '900' },
   body: { flex: 1, paddingHorizontal: 16 },
-  progressPanel: { marginTop: 16, backgroundColor: Colors.surface, borderRadius: Radius.md, padding: 16, borderWidth: 1, borderColor: Colors.border },
+  progressPanel: {
+    marginTop: 16,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.md,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
   progressTitle: { fontSize: 14, fontWeight: '800', color: Colors.text, marginBottom: 12 },
   progressRow: { marginBottom: 12 },
   progressName: { fontSize: 13, fontWeight: '600', color: Colors.text },
   progressError: { fontSize: 11, color: Colors.brand, marginTop: 4, fontWeight: '600' },
-  addVideoBtn: { marginTop: 16, borderWidth: 2, borderColor: Colors.brand, borderStyle: 'dashed', borderRadius: Radius.md, paddingVertical: 18, alignItems: 'center' },
+  addVideoBtn: {
+    marginTop: 16,
+    borderWidth: 2,
+    borderColor: Colors.brand,
+    borderStyle: 'dashed',
+    borderRadius: Radius.md,
+    paddingVertical: 18,
+    alignItems: 'center',
+  },
   addVideoBtnTxt: { color: Colors.brand, fontSize: 15, fontWeight: '800' },
   empty: { alignItems: 'center', paddingTop: 48, paddingBottom: 32 },
   emptyIcon: { fontSize: 48, marginBottom: 12 },
   emptyTxt: { fontSize: 16, fontWeight: '800', color: Colors.text, marginBottom: 6 },
-  emptySubTxt: { fontSize: 13, color: Colors.textMuted, fontWeight: '500', textAlign: 'center', lineHeight: 20 },
+  emptySubTxt: {
+    fontSize: 13,
+    color: Colors.textMuted,
+    fontWeight: '500',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
   entryCard: { marginTop: 20 },
   entryHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 },
   entryNum: { fontSize: FontSize.sm, fontWeight: '900', color: Colors.brand, width: 24 },
@@ -572,27 +766,94 @@ const styles = StyleSheet.create({
   entryFileSize: { fontSize: FontSize.xs, color: Colors.textMuted, marginTop: 2 },
   removeBtn: { padding: 6 },
   removeBtnTxt: { color: Colors.textMuted, fontSize: 16, fontWeight: '700' },
-  label: { fontSize: 11, fontWeight: '800', color: Colors.textMuted, letterSpacing: 1.2, marginBottom: 6, marginTop: 14 },
+  label: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: Colors.textMuted,
+    letterSpacing: 1.2,
+    marginBottom: 6,
+    marginTop: 14,
+  },
   fieldHint: { fontSize: 11, color: Colors.textMuted, marginTop: 4, lineHeight: 16 },
-  input: { backgroundColor: Colors.surface, borderRadius: Radius.sm, borderWidth: 1, borderColor: Colors.border, color: Colors.text, fontSize: 14, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 4 },
+  input: {
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    color: Colors.text,
+    fontSize: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 4,
+  },
   textArea: { height: 72, textAlignVertical: 'top' },
   typeRow: { flexDirection: 'row', gap: 6 },
-  typeChip: { flex: 1, alignItems: 'center', gap: 3, paddingVertical: 8, backgroundColor: Colors.surface, borderRadius: Radius.sm, borderWidth: 1, borderColor: Colors.border },
+  typeChip: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 3,
+    paddingVertical: 8,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
   typeChipActive: { borderColor: Colors.brand, backgroundColor: Colors.accentOrangeDim },
   typeChipTxt: { fontSize: 8, color: Colors.textMuted, fontWeight: '700' },
-  thumbPicker: { height: 130, backgroundColor: Colors.surface, borderRadius: Radius.md, borderWidth: 1, borderColor: Colors.border, overflow: 'hidden', marginBottom: 4 },
+  thumbPicker: {
+    height: 130,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    overflow: 'hidden',
+    marginBottom: 4,
+  },
   thumbPreview: { width: '100%', height: '100%' },
   thumbEmpty: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   thumbEmptyTxt: { color: Colors.textMuted, fontSize: 12, fontWeight: '700' },
   rowInputs: { flexDirection: 'row' },
   entryDivider: { height: 1, backgroundColor: Colors.border, marginTop: 20 },
-  addMoreBtn: { marginTop: 20, borderWidth: 1, borderColor: Colors.border, borderStyle: 'dashed', borderRadius: Radius.md, paddingVertical: 14, alignItems: 'center' },
+  addMoreBtn: {
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderStyle: 'dashed',
+    borderRadius: Radius.md,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
   addMoreBtnTxt: { color: Colors.textMuted, fontSize: 14, fontWeight: '700' },
   genreOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
-  genreSheet: { backgroundColor: Colors.bg, borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '60%', paddingTop: 20 },
-  genreTitle: { fontSize: 16, fontWeight: '900', color: Colors.text, textAlign: 'center', marginBottom: 16 },
-  genreRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingVertical: 14, borderBottomWidth: 0.5, borderBottomColor: Colors.border },
+  genreSheet: {
+    backgroundColor: Colors.bg,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '60%',
+    paddingTop: 20,
+  },
+  genreTitle: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: Colors.text,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  genreRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.border,
+  },
   genreRowTxt: { fontSize: 15, color: Colors.text, fontWeight: '600' },
-  genreCancel: { padding: 20, alignItems: 'center', borderTopWidth: 0.5, borderTopColor: Colors.border },
+  genreCancel: {
+    padding: 20,
+    alignItems: 'center',
+    borderTopWidth: 0.5,
+    borderTopColor: Colors.border,
+  },
   genreCancelTxt: { color: Colors.textMuted, fontWeight: '600', fontSize: 15 },
 });

@@ -64,27 +64,21 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          tabBarIcon: ({ focused }) => (
-            <TabIcon icon="cloud" label="Cloud" focused={focused} />
-          ),
+          tabBarIcon: ({ focused }) => <TabIcon icon="cloud" label="Cloud" focused={focused} />,
         }}
       />
 
       <Tabs.Screen
         name="feed"
         options={{
-          tabBarIcon: ({ focused }) => (
-            <TabIcon icon="globe" label="Feed" focused={focused} />
-          ),
+          tabBarIcon: ({ focused }) => <TabIcon icon="globe" label="Feed" focused={focused} />,
         }}
       />
 
       <Tabs.Screen
         name="explore"
         options={{
-          tabBarIcon: ({ focused }) => (
-            <TabIcon icon="compass" label="Explore" focused={focused} />
-          ),
+          tabBarIcon: ({ focused }) => <TabIcon icon="compass" label="Explore" focused={focused} />,
         }}
       />
 
@@ -100,12 +94,9 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          tabBarIcon: ({ focused }) => (
-            <TabIcon icon="user" label="Profile" focused={focused} />
-          ),
+          tabBarIcon: ({ focused }) => <TabIcon icon="user" label="Profile" focused={focused} />,
         }}
       />
-
     </Tabs>
   );
 }

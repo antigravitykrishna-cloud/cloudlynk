@@ -1,5 +1,13 @@
 import { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  TextInput,
+} from 'react-native';
 import { showAlert } from '../../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -65,7 +73,10 @@ export default function AdminUserApprovalsScreen() {
       // A moderation queue that renders "nothing here" after a failed
       // fetch is worse than one that errors: the admin concludes there is
       // nothing to review and stops checking, while the queue fills up.
-      showAlert('Could not load accounts', err instanceof Error ? err.message : 'Check your connection and try again.');
+      showAlert(
+        'Could not load accounts',
+        err instanceof Error ? err.message : 'Check your connection and try again.',
+      );
     } finally {
       setLoading(false);
     }
@@ -75,7 +86,7 @@ export default function AdminUserApprovalsScreen() {
     useCallback(() => {
       setLoading(true);
       load(filter);
-    }, [load, filter])
+    }, [load, filter]),
   );
 
   const selectFilter = (next: ApprovalStatus) => {
@@ -87,7 +98,11 @@ export default function AdminUserApprovalsScreen() {
     load(next);
   };
 
-  const setApproval = async (userId: string, status: 'approved' | 'rejected', reviewNote?: string) => {
+  const setApproval = async (
+    userId: string,
+    status: 'approved' | 'rejected',
+    reviewNote?: string,
+  ) => {
     setActingId(userId);
     try {
       const { error } = await supabase.rpc('admin_set_user_approval', {
@@ -108,7 +123,11 @@ export default function AdminUserApprovalsScreen() {
   };
 
   const toggleGrants = async (userId: string) => {
-    if (grantsFor === userId) { setGrantsFor(null); setGrants([]); return; }
+    if (grantsFor === userId) {
+      setGrantsFor(null);
+      setGrants([]);
+      return;
+    }
     setGrantsFor(userId);
     setGrants([]);
     setGrantsLoading(true);
@@ -155,10 +174,13 @@ export default function AdminUserApprovalsScreen() {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.replace('/(tabs)/profile')} style={styles.headerBack} activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
+          <TouchableOpacity
+            onPress={() => router.replace('/(tabs)/profile')}
+            style={styles.headerBack}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
             <Text style={styles.headerBackTxt}>{'‹'}</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>User Approvals</Text>
@@ -174,7 +196,10 @@ export default function AdminUserApprovalsScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.replace('/(tabs)/profile')} style={styles.headerBack} activeOpacity={0.7}
+        <TouchableOpacity
+          onPress={() => router.replace('/(tabs)/profile')}
+          style={styles.headerBack}
+          activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
@@ -220,10 +245,16 @@ export default function AdminUserApprovalsScreen() {
             return (
               <View key={item.id} style={styles.card}>
                 <View style={styles.cardTopRow}>
-                  <Text style={styles.nameText} numberOfLines={1}>{displayName(item)}</Text>
-                  <Text style={styles.cardDate}>{new Date(item.created_at).toLocaleDateString()}</Text>
+                  <Text style={styles.nameText} numberOfLines={1}>
+                    {displayName(item)}
+                  </Text>
+                  <Text style={styles.cardDate}>
+                    {new Date(item.created_at).toLocaleDateString()}
+                  </Text>
                 </View>
-                <Text style={styles.metaText} numberOfLines={1}>{item.email}</Text>
+                <Text style={styles.metaText} numberOfLines={1}>
+                  {item.email}
+                </Text>
                 <Text style={styles.metaText}>
                   Signed up {new Date(item.created_at).toLocaleString()}
                 </Text>
@@ -249,7 +280,10 @@ export default function AdminUserApprovalsScreen() {
                     <View style={styles.noteFormActions}>
                       <TouchableOpacity
                         style={styles.cancelBtn}
-                        onPress={() => { setPendingReject(null); setNote(''); }}
+                        onPress={() => {
+                          setPendingReject(null);
+                          setNote('');
+                        }}
                         activeOpacity={0.7}
                       >
                         <Text style={styles.cancelBtnText}>Cancel</Text>
@@ -260,9 +294,11 @@ export default function AdminUserApprovalsScreen() {
                         activeOpacity={0.7}
                         disabled={isActing || !note.trim()}
                       >
-                        {isActing
-                          ? <ActivityIndicator color="#fff" size="small" />
-                          : <Text style={styles.confirmBtnText}>Confirm reject</Text>}
+                        {isActing ? (
+                          <ActivityIndicator color="#fff" size="small" />
+                        ) : (
+                          <Text style={styles.confirmBtnText}>Confirm reject</Text>
+                        )}
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -275,15 +311,20 @@ export default function AdminUserApprovalsScreen() {
                         activeOpacity={0.7}
                         disabled={isActing}
                       >
-                        {isActing
-                          ? <ActivityIndicator color="#0B1220" size="small" />
-                          : <Text style={styles.approveBtnText}>Approve</Text>}
+                        {isActing ? (
+                          <ActivityIndicator color="#0B1220" size="small" />
+                        ) : (
+                          <Text style={styles.approveBtnText}>Approve</Text>
+                        )}
                       </TouchableOpacity>
                     )}
                     {item.approval_status !== 'rejected' && (
                       <TouchableOpacity
                         style={styles.rejectBtn}
-                        onPress={() => { setPendingReject(item.id); setNote(''); }}
+                        onPress={() => {
+                          setPendingReject(item.id);
+                          setNote('');
+                        }}
                         activeOpacity={0.7}
                         disabled={isActing}
                       >
@@ -305,7 +346,11 @@ export default function AdminUserApprovalsScreen() {
                 {grantsFor === item.id && (
                   <View style={styles.grantsPanel}>
                     {grantsLoading ? (
-                      <ActivityIndicator color="#2E7DFF" size="small" style={{ marginVertical: 8 }} />
+                      <ActivityIndicator
+                        color="#2E7DFF"
+                        size="small"
+                        style={{ marginVertical: 8 }}
+                      />
                     ) : grants.length === 0 ? (
                       <Text style={styles.metaText}>No content grants.</Text>
                     ) : (
@@ -317,7 +362,9 @@ export default function AdminUserApprovalsScreen() {
                             </Text>
                             <Text style={styles.metaText}>
                               {g.status === 'active' ? 'Active' : 'Revoked'}
-                              {g.expires_at ? ` · expires ${new Date(g.expires_at).toLocaleDateString()}` : ' · until revoked'}
+                              {g.expires_at
+                                ? ` · expires ${new Date(g.expires_at).toLocaleDateString()}`
+                                : ' · until revoked'}
                             </Text>
                           </View>
                           {g.status === 'active' && (
@@ -360,44 +407,123 @@ const styles = StyleSheet.create({
   headerBackTxt: { color: '#2E7DFF', fontSize: 28, fontWeight: '700', lineHeight: 28 },
   headerTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: '800' },
   blurb: {
-    color: '#9FB0C9', fontSize: 12, fontWeight: '500', lineHeight: 18,
-    paddingHorizontal: 16, paddingTop: 12,
+    color: '#9FB0C9',
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 18,
+    paddingHorizontal: 16,
+    paddingTop: 12,
   },
   filterRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 12 },
-  filterTab: { backgroundColor: '#182437', borderWidth: 1, borderColor: '#22304A', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
+  filterTab: {
+    backgroundColor: '#182437',
+    borderWidth: 1,
+    borderColor: '#22304A',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
   filterTabActive: { backgroundColor: '#2E7DFF', borderColor: '#2E7DFF' },
   filterTabText: { color: '#9FB0C9', fontSize: 12, fontWeight: '700' },
   filterTabTextActive: { color: '#FFFFFF' },
   list: { paddingBottom: 12, paddingHorizontal: 16 },
-  card: { backgroundColor: '#182437', borderRadius: 12, borderWidth: 1, borderColor: '#22304A', padding: 16, marginBottom: 12 },
-  cardTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, gap: 10 },
+  card: {
+    backgroundColor: '#182437',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#22304A',
+    padding: 16,
+    marginBottom: 12,
+  },
+  cardTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+    gap: 10,
+  },
   nameText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF', flex: 1 },
   cardDate: { fontSize: 11, color: '#6B7C97', fontWeight: '500' },
   metaText: { fontSize: 13, color: '#9FB0C9', fontWeight: '500', marginBottom: 2 },
   noteText: { fontSize: 12, color: '#FFC65C', fontWeight: '600', marginTop: 6 },
   actionsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
-  approveBtn: { backgroundColor: '#2E7DFF', paddingHorizontal: 18, paddingVertical: 9, borderRadius: 8, minWidth: 92, alignItems: 'center' },
+  approveBtn: {
+    backgroundColor: '#2E7DFF',
+    paddingHorizontal: 18,
+    paddingVertical: 9,
+    borderRadius: 8,
+    minWidth: 92,
+    alignItems: 'center',
+  },
   approveBtnText: { color: '#FFFFFF', fontSize: 12, fontWeight: '800' },
-  rejectBtn: { backgroundColor: '#22304A', paddingHorizontal: 18, paddingVertical: 9, borderRadius: 8 },
+  rejectBtn: {
+    backgroundColor: '#22304A',
+    paddingHorizontal: 18,
+    paddingVertical: 9,
+    borderRadius: 8,
+  },
   rejectBtnText: { color: '#FF4D6D', fontSize: 12, fontWeight: '800' },
-  grantsBtn: { backgroundColor: '#22304A', paddingHorizontal: 18, paddingVertical: 9, borderRadius: 8 },
+  grantsBtn: {
+    backgroundColor: '#22304A',
+    paddingHorizontal: 18,
+    paddingVertical: 9,
+    borderRadius: 8,
+  },
   grantsBtnText: { color: '#38bdf8', fontSize: 12, fontWeight: '800' },
   grantsPanel: { marginTop: 12, borderTopWidth: 1, borderTopColor: '#22304A', paddingTop: 10 },
-  grantRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#22304A' },
+  grantRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#22304A',
+  },
   grantTitle: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
-  grantRevokeBtn: { backgroundColor: '#22304A', paddingHorizontal: 12, paddingVertical: 7, borderRadius: 8 },
+  grantRevokeBtn: {
+    backgroundColor: '#22304A',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 8,
+  },
   grantRevokeText: { color: '#FF4D6D', fontSize: 11, fontWeight: '800' },
   noteForm: { marginTop: 12 },
   noteInput: {
-    backgroundColor: '#22304A', borderRadius: 8, borderWidth: 1, borderColor: '#2E7DFF',
-    color: '#FFFFFF', fontSize: 14, paddingHorizontal: 12, paddingVertical: 10, minHeight: 60,
-    textAlignVertical: 'top', marginBottom: 10,
+    backgroundColor: '#22304A',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#2E7DFF',
+    color: '#FFFFFF',
+    fontSize: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    minHeight: 60,
+    textAlignVertical: 'top',
+    marginBottom: 10,
   },
   noteFormActions: { flexDirection: 'row', gap: 10 },
-  cancelBtn: { backgroundColor: '#22304A', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 },
+  cancelBtn: {
+    backgroundColor: '#22304A',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
   cancelBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
-  confirmBtn: { backgroundColor: '#FF4D6D', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8, minWidth: 120, alignItems: 'center' },
+  confirmBtn: {
+    backgroundColor: '#FF4D6D',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    minWidth: 120,
+    alignItems: 'center',
+  },
   confirmBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
-  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80, paddingHorizontal: 20 },
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 80,
+    paddingHorizontal: 20,
+  },
   emptyText: { fontSize: 16, color: '#9FB0C9', fontWeight: '600', textAlign: 'center' },
 });

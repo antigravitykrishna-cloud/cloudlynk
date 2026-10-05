@@ -37,7 +37,9 @@ export function GuestPrompt({
 
   return (
     <View style={styles.wrap}>
-      <View style={styles.icon}><Icon name={icon} size={46} color={Colors.brandBlue} /></View>
+      <View style={styles.icon}>
+        <Icon name={icon} size={46} color={Colors.brandBlue} />
+      </View>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.message}>{message}</Text>
 
@@ -68,35 +70,48 @@ export function GuestPrompt({
         </TouchableOpacity>
       ) : null}
 
-      <Text style={styles.footnote}>
-        Free forever. 15 GB of storage included.
-      </Text>
+      <Text style={styles.footnote}>Free forever. 15 GB of storage included.</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   link: {
-    color: Colors.brandCyan, fontSize: FontSize.base,
-    fontWeight: FontWeight.semibold, marginTop: Spacing.lg,
+    color: Colors.brandCyan,
+    fontSize: FontSize.base,
+    fontWeight: FontWeight.semibold,
+    marginTop: Spacing.lg,
   },
   wrap: {
-    flex: 1, alignItems: 'center', justifyContent: 'center',
-    paddingHorizontal: Spacing.xxl, paddingBottom: Spacing.xxxl,
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.xxl,
+    paddingBottom: Spacing.xxxl,
   },
   icon: { marginBottom: Spacing.lg },
   title: {
-    color: Colors.text, fontSize: FontSize.xxl, fontWeight: FontWeight.bold,
-    textAlign: 'center', marginBottom: Spacing.sm,
+    color: Colors.text,
+    fontSize: FontSize.xxl,
+    fontWeight: FontWeight.bold,
+    textAlign: 'center',
+    marginBottom: Spacing.sm,
   },
   message: {
-    color: Colors.textSecondary, fontSize: FontSize.lg, lineHeight: 22,
-    textAlign: 'center', marginBottom: Spacing.xxl, maxWidth: 320,
+    color: Colors.textSecondary,
+    fontSize: FontSize.lg,
+    lineHeight: 22,
+    textAlign: 'center',
+    marginBottom: Spacing.xxl,
+    maxWidth: 320,
   },
   primaryBtn: {
-    backgroundColor: Colors.brandBlue, borderRadius: Radius.full,
-    paddingVertical: Spacing.lg, paddingHorizontal: Spacing.xxxl,
-    alignItems: 'center', minWidth: 240,
+    backgroundColor: Colors.brandBlue,
+    borderRadius: Radius.full,
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.xxxl,
+    alignItems: 'center',
+    minWidth: 240,
   },
   primaryTxt: { color: Colors.textInverse, fontSize: FontSize.lg, fontWeight: FontWeight.bold },
   ghostBtn: { paddingVertical: Spacing.lg, paddingHorizontal: Spacing.xl, marginTop: Spacing.xs },

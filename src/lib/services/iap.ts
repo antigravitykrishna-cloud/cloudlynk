@@ -12,11 +12,61 @@ import { IIapService, IapProduct, PurchaseResult } from './types';
 const PREMIUM_PRODUCT_ID = 'cloudlynk_premium';
 const DEFAULT_PLANS: IapProduct[] = [
   // Play base plan 'trial-3d' must be PREPAID: Play cannot auto-renew every 3 days.
-  { code: 'trial', name: 'Trial', description: '3-day access', durationDays: 3, priceInr: 99, iapProductId: PREMIUM_PRODUCT_ID, basePlanId: 'trial-3d', isPopular: false, sortOrder: 0 },
-  { code: 'silver-7d', name: 'Silver', description: '7-day access', durationDays: 7, priceInr: 149, iapProductId: PREMIUM_PRODUCT_ID, basePlanId: 'silver-7d', isPopular: false, sortOrder: 1 },
-  { code: 'gold-1m', name: 'Gold', description: '1-month access', durationDays: 30, priceInr: 259, iapProductId: PREMIUM_PRODUCT_ID, basePlanId: 'gold-1m', isPopular: true, sortOrder: 2 },
-  { code: 'platinum-6m', name: 'Platinum', description: '6-month access', durationDays: 180, priceInr: 599, iapProductId: PREMIUM_PRODUCT_ID, basePlanId: 'platinum-6m', isPopular: false, sortOrder: 3 },
-  { code: 'diamond-1y', name: 'Diamond', description: '1-year access', durationDays: 365, priceInr: 999, iapProductId: PREMIUM_PRODUCT_ID, basePlanId: 'diamond-1y', isPopular: false, sortOrder: 4 },
+  {
+    code: 'trial',
+    name: 'Trial',
+    description: '3-day access',
+    durationDays: 3,
+    priceInr: 99,
+    iapProductId: PREMIUM_PRODUCT_ID,
+    basePlanId: 'trial-3d',
+    isPopular: false,
+    sortOrder: 0,
+  },
+  {
+    code: 'silver-7d',
+    name: 'Silver',
+    description: '7-day access',
+    durationDays: 7,
+    priceInr: 149,
+    iapProductId: PREMIUM_PRODUCT_ID,
+    basePlanId: 'silver-7d',
+    isPopular: false,
+    sortOrder: 1,
+  },
+  {
+    code: 'gold-1m',
+    name: 'Gold',
+    description: '1-month access',
+    durationDays: 30,
+    priceInr: 259,
+    iapProductId: PREMIUM_PRODUCT_ID,
+    basePlanId: 'gold-1m',
+    isPopular: true,
+    sortOrder: 2,
+  },
+  {
+    code: 'platinum-6m',
+    name: 'Platinum',
+    description: '6-month access',
+    durationDays: 180,
+    priceInr: 599,
+    iapProductId: PREMIUM_PRODUCT_ID,
+    basePlanId: 'platinum-6m',
+    isPopular: false,
+    sortOrder: 3,
+  },
+  {
+    code: 'diamond-1y',
+    name: 'Diamond',
+    description: '1-year access',
+    durationDays: 365,
+    priceInr: 999,
+    iapProductId: PREMIUM_PRODUCT_ID,
+    basePlanId: 'diamond-1y',
+    isPopular: false,
+    sortOrder: 4,
+  },
 ];
 
 export class NoOpIapService implements IIapService {
@@ -24,13 +74,25 @@ export class NoOpIapService implements IIapService {
     return DEFAULT_PLANS;
   }
   async purchasePlan(planCode: string): Promise<PurchaseResult> {
-    return { success: false, planCode, purchaseToken: null, expiresAt: null, errorMessage: 'Premium purchases are not available yet — check back soon.' };
+    return {
+      success: false,
+      planCode,
+      purchaseToken: null,
+      expiresAt: null,
+      errorMessage: 'Premium purchases are not available yet — check back soon.',
+    };
   }
   async restorePurchases(): Promise<PurchaseResult[]> {
     return [];
   }
   async verifyReceipt(purchaseToken: string, planCode?: string): Promise<PurchaseResult> {
-    return { success: false, planCode: planCode ?? '', purchaseToken, expiresAt: null, errorMessage: 'No receipt verifier configured.' };
+    return {
+      success: false,
+      planCode: planCode ?? '',
+      purchaseToken,
+      expiresAt: null,
+      errorMessage: 'No receipt verifier configured.',
+    };
   }
 }
 
@@ -80,7 +142,10 @@ export class GooglePlayIapService implements IIapService {
    * Whichever of those settles first tears down both listeners.
    */
   private awaitPurchaseResult(
-    RNIap: any, productId: string, dispatch: () => Promise<unknown>, userChoice = false,
+    RNIap: any,
+    productId: string,
+    dispatch: () => Promise<unknown>,
+    userChoice = false,
   ): Promise<any> {
     return new Promise((resolve, reject) => {
       let settled = false;
@@ -91,12 +156,15 @@ export class GooglePlayIapService implements IIapService {
         choiceSub?.remove();
       };
 
-      const timeout = setTimeout(() => {
-        if (settled) return;
-        settled = true;
-        cleanup();
-        reject(new Error('Purchase timed out.'));
-      }, 5 * 60 * 1000);
+      const timeout = setTimeout(
+        () => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          reject(new Error('Purchase timed out.'));
+        },
+        5 * 60 * 1000,
+      );
 
       const updateSub = RNIap.purchaseUpdatedListener((purchase: any) => {
         if (settled || purchase?.productId !== productId) return;
@@ -107,14 +175,15 @@ export class GooglePlayIapService implements IIapService {
       // User choice billing: if the person picks the app's own payment
       // option on Google's screen, no purchase happens here -- Google hands
       // over a token instead, and the caller opens our payment methods.
-      const choiceSub = userChoice && typeof RNIap.userChoiceBillingListenerAndroid === 'function'
-        ? RNIap.userChoiceBillingListenerAndroid((details: any) => {
-            if (settled || !details?.externalTransactionToken) return;
-            settled = true;
-            cleanup();
-            resolve({ __alternativeBillingToken: details.externalTransactionToken });
-          })
-        : null;
+      const choiceSub =
+        userChoice && typeof RNIap.userChoiceBillingListenerAndroid === 'function'
+          ? RNIap.userChoiceBillingListenerAndroid((details: any) => {
+              if (settled || !details?.externalTransactionToken) return;
+              settled = true;
+              cleanup();
+              resolve({ __alternativeBillingToken: details.externalTransactionToken });
+            })
+          : null;
       const errorSub = RNIap.purchaseErrorListener((error: any) => {
         if (settled) return;
         settled = true;
@@ -122,7 +191,7 @@ export class GooglePlayIapService implements IIapService {
         reject(new Error(error?.message ?? 'Purchase failed or was cancelled.'));
       });
 
-      dispatch().catch((err) => {
+      dispatch().catch(err => {
         if (settled) return;
         settled = true;
         cleanup();
@@ -131,13 +200,28 @@ export class GooglePlayIapService implements IIapService {
     });
   }
 
-  async purchasePlan(planCode: string, opts?: { userChoiceBilling?: boolean }): Promise<PurchaseResult> {
+  async purchasePlan(
+    planCode: string,
+    opts?: { userChoiceBilling?: boolean },
+  ): Promise<PurchaseResult> {
     if (Platform.OS !== 'android') {
-      return { success: false, planCode, purchaseToken: null, expiresAt: null, errorMessage: 'Google Play Billing is Android-only.' };
+      return {
+        success: false,
+        planCode,
+        purchaseToken: null,
+        expiresAt: null,
+        errorMessage: 'Google Play Billing is Android-only.',
+      };
     }
     const plan = DEFAULT_PLANS.find(p => p.code === planCode);
     if (!plan?.iapProductId) {
-      return { success: false, planCode, purchaseToken: null, expiresAt: null, errorMessage: `No Play product configured for plan "${planCode}".` };
+      return {
+        success: false,
+        planCode,
+        purchaseToken: null,
+        expiresAt: null,
+        errorMessage: `No Play product configured for plan "${planCode}".`,
+      };
     }
     try {
       // Lazy-required so the native module is only touched on Android, and so
@@ -148,37 +232,63 @@ export class GooglePlayIapService implements IIapService {
       // With user choice billing on, Google shows its choice screen before
       // the purchase. If the account is not enrolled in the program, or the
       // user is outside India, Play simply runs the normal purchase.
-      await RNIap.initConnection(userChoice ? { alternativeBillingModeAndroid: 'user-choice' } : undefined);
+      await RNIap.initConnection(
+        userChoice ? { alternativeBillingModeAndroid: 'user-choice' } : undefined,
+      );
       try {
         const products = await RNIap.fetchProducts({ skus: [plan.iapProductId], type: 'subs' });
         const product = Array.isArray(products) ? products[0] : null;
         // All 4 plans share one product, so pick the offer whose base plan
         // matches this plan — index 0 would silently buy whichever base plan
         // Play happened to list first.
-        const offerToken: string | undefined = product?.subscriptionOfferDetailsAndroid
-          ?.find((o: any) => o?.basePlanId === plan.basePlanId)?.offerToken;
+        const offerToken: string | undefined = product?.subscriptionOfferDetailsAndroid?.find(
+          (o: any) => o?.basePlanId === plan.basePlanId,
+        )?.offerToken;
         if (!offerToken) {
-          return { success: false, planCode, purchaseToken: null, expiresAt: null, errorMessage: `The "${plan.basePlanId}" base plan isn't live in Play Console yet.` };
+          return {
+            success: false,
+            planCode,
+            purchaseToken: null,
+            expiresAt: null,
+            errorMessage: `The "${plan.basePlanId}" base plan isn't live in Play Console yet.`,
+          };
         }
 
-        const purchase = await this.awaitPurchaseResult(RNIap, plan.iapProductId, () =>
-          RNIap.requestPurchase({
-            request: { google: { skus: [plan.iapProductId], subscriptionOffers: [{ sku: plan.iapProductId, offerToken }] } },
-            type: 'subs',
-          }),
+        const purchase = await this.awaitPurchaseResult(
+          RNIap,
+          plan.iapProductId,
+          () =>
+            RNIap.requestPurchase({
+              request: {
+                google: {
+                  skus: [plan.iapProductId],
+                  subscriptionOffers: [{ sku: plan.iapProductId, offerToken }],
+                },
+              },
+              type: 'subs',
+            }),
           userChoice,
         );
 
         if (purchase?.__alternativeBillingToken) {
           return {
-            success: false, planCode, purchaseToken: null, expiresAt: null,
+            success: false,
+            planCode,
+            purchaseToken: null,
+            expiresAt: null,
             alternativeBillingToken: purchase.__alternativeBillingToken as string,
           };
         }
 
         const purchaseToken: string | null = purchase?.purchaseToken ?? null;
         if (!purchaseToken) {
-          return { success: false, planCode, purchaseToken: null, expiresAt: null, errorMessage: 'Purchase completed but no token was returned.' };
+          return {
+            success: false,
+            planCode,
+            purchaseToken: null,
+            expiresAt: null,
+            errorMessage: 'Purchase completed but no token was returned.',
+          };
         }
 
         // The purchase is NOT considered final here — verifyReceipt (server-side)
@@ -193,7 +303,10 @@ export class GooglePlayIapService implements IIapService {
             // Acknowledgment failing here isn't fatal to the user's purchase —
             // the server already granted access, and verify-play-receipt also
             // acknowledges server-side as a second, more reliable path. Log and move on.
-            console.error('IAP: finishTransaction failed after successful verification:', finishErr);
+            console.error(
+              'IAP: finishTransaction failed after successful verification:',
+              finishErr,
+            );
           }
         }
         return verified;
@@ -201,7 +314,13 @@ export class GooglePlayIapService implements IIapService {
         await RNIap.endConnection();
       }
     } catch (err: any) {
-      return { success: false, planCode, purchaseToken: null, expiresAt: null, errorMessage: err?.message ?? 'Google Play purchase failed.' };
+      return {
+        success: false,
+        planCode,
+        purchaseToken: null,
+        expiresAt: null,
+        errorMessage: err?.message ?? 'Google Play purchase failed.',
+      };
     }
   }
 
@@ -220,7 +339,10 @@ export class GooglePlayIapService implements IIapService {
           // base plan id react-native-iap reports (advisory only) and let
           // verify-play-receipt derive the authoritative plan from Google.
           if (token && purchase?.productId === PREMIUM_PRODUCT_ID) {
-            const verified = await this.verifyReceipt(token, purchase?.basePlanIdAndroid ?? undefined);
+            const verified = await this.verifyReceipt(
+              token,
+              purchase?.basePlanIdAndroid ?? undefined,
+            );
             if (verified.success) {
               try {
                 await RNIap.finishTransaction({ purchase, isConsumable: false });
@@ -243,7 +365,14 @@ export class GooglePlayIapService implements IIapService {
   async verifyReceipt(purchaseToken: string, planCode?: string): Promise<PurchaseResult> {
     const claimed = planCode ?? '';
     if (!config.receiptVerifierUrl) {
-      return { success: false, planCode: claimed, purchaseToken, expiresAt: null, errorMessage: 'RECEIPT_VERIFIER_URL is not configured — set up the server-side Play receipt verifier before going live.' };
+      return {
+        success: false,
+        planCode: claimed,
+        purchaseToken,
+        expiresAt: null,
+        errorMessage:
+          'RECEIPT_VERIFIER_URL is not configured — set up the server-side Play receipt verifier before going live.',
+      };
     }
     try {
       // The verifier grants Premium to the signed-in caller, so it needs the
@@ -251,9 +380,17 @@ export class GooglePlayIapService implements IIapService {
       // the function answered every real purchase with 401 -- money taken,
       // nothing granted.
       const { supabase } = require('../supabase');
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session?.access_token) {
-        return { success: false, planCode: claimed, purchaseToken, expiresAt: null, errorMessage: 'Please sign in again, then use "Restore purchase".' };
+        return {
+          success: false,
+          planCode: claimed,
+          purchaseToken,
+          expiresAt: null,
+          errorMessage: 'Please sign in again, then use "Restore purchase".',
+        };
       }
       const res = await fetch(config.receiptVerifierUrl, {
         method: 'POST',
@@ -264,15 +401,36 @@ export class GooglePlayIapService implements IIapService {
         },
         // `planCode` is advisory — the server derives the real plan from
         // Google's record of the token and returns it as `json.planCode`.
-        body: JSON.stringify({ purchaseToken, planCode, packageName: config.googlePlayPackageName }),
+        body: JSON.stringify({
+          purchaseToken,
+          planCode,
+          packageName: config.googlePlayPackageName,
+        }),
       });
       const json = await res.json();
       if (!res.ok || !json?.valid) {
-        return { success: false, planCode: claimed, purchaseToken, expiresAt: null, errorMessage: json?.error ?? 'Receipt verification failed.' };
+        return {
+          success: false,
+          planCode: claimed,
+          purchaseToken,
+          expiresAt: null,
+          errorMessage: json?.error ?? 'Receipt verification failed.',
+        };
       }
-      return { success: true, planCode: json.planCode ?? claimed, purchaseToken, expiresAt: json.expiresAt ?? null };
+      return {
+        success: true,
+        planCode: json.planCode ?? claimed,
+        purchaseToken,
+        expiresAt: json.expiresAt ?? null,
+      };
     } catch (err: any) {
-      return { success: false, planCode: claimed, purchaseToken, expiresAt: null, errorMessage: err?.message ?? 'Could not reach the receipt verifier.' };
+      return {
+        success: false,
+        planCode: claimed,
+        purchaseToken,
+        expiresAt: null,
+        errorMessage: err?.message ?? 'Could not reach the receipt verifier.',
+      };
     }
   }
 }

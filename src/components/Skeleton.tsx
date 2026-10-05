@@ -24,8 +24,18 @@ function Shimmer({ style }: { style?: object }) {
     // placeholders costs more than the loading state is worth.
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(pulse, { toValue: 1, duration: 750, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-        Animated.timing(pulse, { toValue: 0, duration: 750, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+        Animated.timing(pulse, {
+          toValue: 1,
+          duration: 750,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulse, {
+          toValue: 0,
+          duration: 750,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
       ]),
     );
     loop.start();

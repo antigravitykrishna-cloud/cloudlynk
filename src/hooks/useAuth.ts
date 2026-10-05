@@ -63,11 +63,7 @@ function clearSharedProfile() {
 }
 
 async function loadSharedProfile(userId: string) {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single();
+  const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
   // Keep the previous value on a failed read rather than blanking it —
   // a transient network error must not look like "profile is missing" to
   // the root redirect. `checked` still flips so callers stop waiting.
@@ -104,7 +100,9 @@ export function useAuth() {
   // still in flight, or it'll bounce a legitimate user through
   // complete-profile for a split second on every login.
   const profileChecked = useSyncExternalStore(
-    subscribeToProfile, getSharedProfileChecked, getSharedProfileChecked,
+    subscribeToProfile,
+    getSharedProfileChecked,
+    getSharedProfileChecked,
   );
 
   const fetchProfile = useCallback(function fetchProfile(userId: string, force = false) {
@@ -272,8 +270,9 @@ export function useAuth() {
   // year is no longer asked for after sign-in.
   async function completeProfile() {
     if (!user) throw new Error('Not authenticated');
-    const adultOnFile = !!profile?.adult_confirmed_at
-      || (!!profile?.birth_year && new Date().getFullYear() - profile.birth_year >= 18);
+    const adultOnFile =
+      !!profile?.adult_confirmed_at ||
+      (!!profile?.birth_year && new Date().getFullYear() - profile.birth_year >= 18);
     if (!adultOnFile) {
       const { error } = await supabase.rpc('confirm_adult' as never);
       if (error) throw error;
@@ -365,7 +364,9 @@ export function useAuth() {
   }
 
   async function deleteAccount() {
-    const { data: { session: s } } = await supabase.auth.getSession();
+    const {
+      data: { session: s },
+    } = await supabase.auth.getSession();
     if (!s) throw new Error('Not authenticated');
     const fnUrl = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/delete-account`;
     const res = await fetch(fnUrl, {
@@ -377,9 +378,12 @@ export function useAuth() {
     await supabase.auth.signOut();
   }
 
-  const refreshProfile = useCallback(async function refreshProfile() {
-    if (user) await fetchProfile(user.id, true);
-  }, [user, fetchProfile]);
+  const refreshProfile = useCallback(
+    async function refreshProfile() {
+      if (user) await fetchProfile(user.id, true);
+    },
+    [user, fetchProfile],
+  );
 
   const storagePercentage = profile
     ? Math.min((profile.storage_used / profile.storage_limit) * 100, 100)
@@ -395,10 +399,13 @@ export function useAuth() {
   const approvalStatus = (profile?.approval_status as string | undefined) ?? 'approved';
   const isApproved = approvalStatus === 'approved';
 
-  const planStatus = (profile as Record<string, unknown>)?.plan_status as string | undefined ?? 'free';
-  const planExpiresAt = (profile as Record<string, unknown>)?.plan_expires_at as string | null ?? null;
-  const isActive = planStatus === 'active' && (!planExpiresAt || new Date(planExpiresAt) > new Date());
-  const isPaidUser = isActive || planStatus === 'lifetime' || !!(profile?.is_admin);
+  const planStatus =
+    ((profile as Record<string, unknown>)?.plan_status as string | undefined) ?? 'free';
+  const planExpiresAt =
+    ((profile as Record<string, unknown>)?.plan_expires_at as string | null) ?? null;
+  const isActive =
+    planStatus === 'active' && (!planExpiresAt || new Date(planExpiresAt) > new Date());
+  const isPaidUser = isActive || planStatus === 'lifetime' || !!profile?.is_admin;
 
   return {
     session,
@@ -423,7 +430,7 @@ export function useAuth() {
     storagePercentage,
     isAuthenticated: !!session,
     canUpload: !!(profile?.can_upload_content || profile?.is_admin),
-    isAdmin: !!(profile?.is_admin),
+    isAdmin: !!profile?.is_admin,
     requestPasswordReset,
     updatePassword,
     planStatus,
@@ -431,7 +438,9 @@ export function useAuth() {
     isApproved,
     isPaidUser,
     isActive,
-    isExpired: planStatus === 'expired' || (planStatus === 'active' && !!planExpiresAt && new Date(planExpiresAt) <= new Date()),
+    isExpired:
+      planStatus === 'expired' ||
+      (planStatus === 'active' && !!planExpiresAt && new Date(planExpiresAt) <= new Date()),
     isCancelled: planStatus === 'cancelled',
     isLifetime: planStatus === 'lifetime',
   };

@@ -86,13 +86,24 @@ export type GuestChannelPost = Omit<
 >;
 
 export const GENRES = [
-  'Action', 'Adventure', 'Comedy', 'Drama', 'Horror',
-  'Romance', 'Sci-Fi', 'Thriller', 'Documentary', 'Animation',
-  'Fantasy', 'Crime', 'Mystery', 'Biography', 'Other',
+  'Action',
+  'Adventure',
+  'Comedy',
+  'Drama',
+  'Horror',
+  'Romance',
+  'Sci-Fi',
+  'Thriller',
+  'Documentary',
+  'Animation',
+  'Fantasy',
+  'Crime',
+  'Mystery',
+  'Biography',
+  'Other',
 ];
 
 export const PostService = {
-
   // ── Read ────────────────────────────────────────────────────
 
   /**
@@ -247,25 +258,31 @@ export const PostService = {
   async getGuestExplorePosts(
     filter?: 'all' | 'popular' | 'most_watched' | 'latest' | 'most_searched',
   ): Promise<GuestChannelPost[]> {
-    const orderCol = (filter === 'popular' || filter === 'most_watched') ? 'view_count' : 'created_at';
+    const orderCol =
+      filter === 'popular' || filter === 'most_watched' ? 'view_count' : 'created_at';
 
     // No channel filter needed: channel_posts_select_anon already restricts to
     // approved posts in public, active channels, so RLS is doing the work the
     // authenticated path does with an explicit .in() list.
     const { data, error } = await supabase
       .from('channel_posts')
-      .select(`${GUEST_POST_COLUMNS}, author:profiles!channel_posts_author_id_fkey(id, full_name, avatar_url)`)
+      .select(
+        `${GUEST_POST_COLUMNS}, author:profiles!channel_posts_author_id_fkey(id, full_name, avatar_url)`,
+      )
       .eq('status', 'approved')
       .order(orderCol, { ascending: false })
       .limit(300);
     if (error) throw error;
 
-    return (data ?? []).filter((p: any) =>
-      p.content_type !== 'post' || p.thumbnail_url
+    return (data ?? []).filter(
+      (p: any) => p.content_type !== 'post' || p.thumbnail_url,
     ) as unknown as GuestChannelPost[];
   },
 
-  async getExplorePosts(userId: string, filter?: 'all' | 'popular' | 'most_watched' | 'latest' | 'most_searched'): Promise<ChannelPost[]> {
+  async getExplorePosts(
+    userId: string,
+    filter?: 'all' | 'popular' | 'most_watched' | 'latest' | 'most_searched',
+  ): Promise<ChannelPost[]> {
     // v52: the free/premium split is now enforced server-side by RLS
     // (channel_posts_select_v52 — see the v52 migration) based on each
     // post's own access_level and the caller's plan_status. This function
@@ -297,7 +314,8 @@ export const PostService = {
     const myChannelSet = new Set(myChannelIds);
     const publicOnlyIds = publicChannelIds.filter(id => !myChannelSet.has(id));
 
-    const orderCol = (filter === 'popular' || filter === 'most_watched') ? 'view_count' : 'created_at';
+    const orderCol =
+      filter === 'popular' || filter === 'most_watched' ? 'view_count' : 'created_at';
 
     const results: any[] = [];
 
@@ -371,13 +389,15 @@ export const PostService = {
       return true;
     });
 
-    return unique.filter(p =>
-      p.content_type !== 'post' || p.video_url || p.thumbnail_url || p.media_url
+    return unique.filter(
+      p => p.content_type !== 'post' || p.video_url || p.thumbnail_url || p.media_url,
     ) as ChannelPost[];
   },
 
   async recordView(postId: string) {
-    try { await supabase.rpc('record_post_view', { p_post_id: postId }); } catch {}
+    try {
+      await supabase.rpc('record_post_view', { p_post_id: postId });
+    } catch {}
   },
 
   /**
@@ -400,7 +420,10 @@ export const PostService = {
     const seenSeriesIds = new Set<string>();
     for (const p of seriesPosts) {
       const key = p.series_id ?? p.id;
-      if (!seenSeriesIds.has(key)) { seenSeriesIds.add(key); featured.push(p); }
+      if (!seenSeriesIds.has(key)) {
+        seenSeriesIds.add(key);
+        featured.push(p);
+      }
       if (featured.length >= 5) break;
     }
     if (featured.length < 5 && shorts[0]) featured.push(shorts[0]);
@@ -426,7 +449,11 @@ export const PostService = {
         return s !== 0 ? s : (a.episode_number ?? 0) - (b.episode_number ?? 0);
       });
       const rawTitle = sorted[0]?.title ?? 'Series';
-      const seriesLabel = rawTitle.replace(/\s*[-:]\s*[Ss]\d+.*$/, '').replace(/\s*[-:]\s*[Ee]p.*$/i, '').trim() || rawTitle;
+      const seriesLabel =
+        rawTitle
+          .replace(/\s*[-:]\s*[Ss]\d+.*$/, '')
+          .replace(/\s*[-:]\s*[Ee]p.*$/i, '')
+          .trim() || rawTitle;
       groups[`Series: ${seriesLabel}`] = sorted;
     });
     if (ungroupedSeries.length > 0) groups['Web Series'] = ungroupedSeries;
@@ -455,7 +482,9 @@ export const PostService = {
   async getPendingPosts(): Promise<ChannelPost[]> {
     const { data, error } = await supabase
       .from('channel_posts')
-      .select('*, author:profiles!channel_posts_author_id_fkey(id, full_name, avatar_url), channel:channels(name)')
+      .select(
+        '*, author:profiles!channel_posts_author_id_fkey(id, full_name, avatar_url), channel:channels(name)',
+      )
       .eq('status', 'pending')
       .order('created_at', { ascending: true });
     if (error) throw error;
@@ -540,7 +569,7 @@ export const PostService = {
       seriesId?: string;
       /** Defaults via defaultAccessLevel(contentType) if not given — see there. */
       accessLevel?: AccessLevel;
-    }
+    },
   ): Promise<ChannelPost> {
     let mediaUrl: string | null = null;
     let thumbnailUrl: string | null = null;
@@ -572,7 +601,7 @@ export const PostService = {
           title: options?.title?.trim() || null,
           body: body.trim(),
           media_url: mediaUrl,
-          media_type: mediaUrl ? options?.mediaType ?? 'image' : null,
+          media_type: mediaUrl ? (options?.mediaType ?? 'image') : null,
           thumbnail_url: thumbnailUrl,
           content_type: options?.contentType ?? 'post',
           genre: options?.genre || null,
@@ -590,7 +619,7 @@ export const PostService = {
         .select('*')
         .single(),
       30_000,
-      'Saving your content timed out. Please check your connection and try again.'
+      'Saving your content timed out. Please check your connection and try again.',
     );
 
     if (error) throw error;
@@ -628,25 +657,43 @@ export const PostService = {
   // ── Admin ───────────────────────────────────────────────────
 
   async approveChannel(channelId: string) {
-    const { error } = await supabase.from('channels').update({ status: 'active' }).eq('id', channelId);
+    const { error } = await supabase
+      .from('channels')
+      .update({ status: 'active' })
+      .eq('id', channelId);
     if (error) throw error;
   },
 
   async rejectChannel(channelId: string) {
-    const { error } = await supabase.from('channels').update({ status: 'suspended' }).eq('id', channelId);
+    const { error } = await supabase
+      .from('channels')
+      .update({ status: 'suspended' })
+      .eq('id', channelId);
     if (error) throw error;
   },
 
   async approvePost(postId: string, adminId: string) {
-    const { error } = await supabase.from('channel_posts')
-      .update({ status: 'approved', approved_by: adminId, approved_at: new Date().toISOString(), rejection_note: null })
+    const { error } = await supabase
+      .from('channel_posts')
+      .update({
+        status: 'approved',
+        approved_by: adminId,
+        approved_at: new Date().toISOString(),
+        rejection_note: null,
+      })
       .eq('id', postId);
     if (error) throw error;
   },
 
   async rejectPost(postId: string, adminId: string, note?: string) {
-    const { error } = await supabase.from('channel_posts')
-      .update({ status: 'rejected', approved_by: adminId, approved_at: new Date().toISOString(), rejection_note: note ?? null })
+    const { error } = await supabase
+      .from('channel_posts')
+      .update({
+        status: 'rejected',
+        approved_by: adminId,
+        approved_at: new Date().toISOString(),
+        rejection_note: note ?? null,
+      })
       .eq('id', postId);
     if (error) throw error;
   },
@@ -672,8 +719,14 @@ function withTimeout<T>(thenable: PromiseLike<T>, ms: number, message: string): 
   return new Promise<T>((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error(message)), ms);
     Promise.resolve(thenable).then(
-      (value) => { clearTimeout(timer); resolve(value); },
-      (err) => { clearTimeout(timer); reject(err); }
+      value => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      err => {
+        clearTimeout(timer);
+        reject(err);
+      },
     );
   });
 }
@@ -689,8 +742,10 @@ function decode(base64: string): Uint8Array {
   const buffer = new Uint8Array(bufferLength);
   let p = 0;
   for (let i = 0; i < len; i += 4) {
-    const e1 = lookup[base64.charCodeAt(i)], e2 = lookup[base64.charCodeAt(i + 1)];
-    const e3 = lookup[base64.charCodeAt(i + 2)], e4 = lookup[base64.charCodeAt(i + 3)];
+    const e1 = lookup[base64.charCodeAt(i)],
+      e2 = lookup[base64.charCodeAt(i + 1)];
+    const e3 = lookup[base64.charCodeAt(i + 2)],
+      e4 = lookup[base64.charCodeAt(i + 3)];
     buffer[p++] = (e1 << 2) | (e2 >> 4);
     if (p < bufferLength) buffer[p++] = ((e2 & 15) << 4) | (e3 >> 2);
     if (p < bufferLength) buffer[p++] = ((e3 & 3) << 6) | (e4 & 63);

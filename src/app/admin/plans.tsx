@@ -37,7 +37,11 @@ export default function AdminPlansScreen() {
     }
   }, []);
 
-  useFocusEffect(useCallback(() => { load(); }, [load]));
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load]),
+  );
 
   const set = (code: string, patch: Partial<AdminPlan>) =>
     setDrafts(d => ({ ...d, [code]: { ...d[code], ...patch } }));
@@ -52,7 +56,10 @@ export default function AdminPlansScreen() {
       // shows on this phone immediately.
       qc.invalidateQueries({ queryKey: ['subscription-plans'] });
       await load();
-      showAlert('Saved', `${p.name} is updated. Remember to set the same price in Play Console for Google Play.`);
+      showAlert(
+        'Saved',
+        `${p.name} is updated. Remember to set the same price in Play Console for Google Play.`,
+      );
     } catch (e: any) {
       fireHaptic('error');
       showAlert('Could not save', e?.message ?? 'Please try again.');
@@ -67,60 +74,104 @@ export default function AdminPlansScreen() {
       <ScrollView
         contentContainerStyle={adminStyles.list}
         keyboardShouldPersistTaps="handled"
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={Colors.brandBlue} />}
+        refreshControl={
+          <RefreshControl refreshing={loading} onRefresh={load} tintColor={Colors.brandBlue} />
+        }
       >
         <Text style={[adminStyles.muted, { marginBottom: 12 }]}>
-          Changes apply to the app and to UPI / Razorpay / Sabpaisa payments right away. Google Play prices are set separately in Play Console.
+          Changes apply to the app and to UPI / Razorpay / Sabpaisa payments right away. Google Play
+          prices are set separately in Play Console.
         </Text>
         {plans.map(orig => {
           const p = drafts[orig.code] ?? orig;
           const dirty = JSON.stringify(p) !== JSON.stringify(orig);
           return (
             <Card key={orig.code}>
-              <View style={[adminStyles.row, { justifyContent: 'space-between', marginBottom: 10 }]}>
+              <View
+                style={[adminStyles.row, { justifyContent: 'space-between', marginBottom: 10 }]}
+              >
                 <Text style={adminStyles.name}>{orig.code}</Text>
                 <View style={adminStyles.row}>
                   {orig.is_popular && <Chip label="POPULAR" tone="brand" />}
-                  <Chip label={orig.is_active ? 'ON SALE' : 'HIDDEN'} tone={orig.is_active ? 'good' : 'neutral'} />
+                  <Chip
+                    label={orig.is_active ? 'ON SALE' : 'HIDDEN'}
+                    tone={orig.is_active ? 'good' : 'neutral'}
+                  />
                 </View>
               </View>
 
               <Text style={adminStyles.label}>Name</Text>
-              <TextInput style={adminStyles.input} value={p.name} onChangeText={t => set(orig.code, { name: t })} maxLength={40} />
+              <TextInput
+                style={adminStyles.input}
+                value={p.name}
+                onChangeText={t => set(orig.code, { name: t })}
+                maxLength={40}
+              />
 
               <Text style={[adminStyles.label, { marginTop: 10 }]}>Description</Text>
-              <TextInput style={adminStyles.input} value={p.description} onChangeText={t => set(orig.code, { description: t })} maxLength={80} />
+              <TextInput
+                style={adminStyles.input}
+                value={p.description}
+                onChangeText={t => set(orig.code, { description: t })}
+                maxLength={80}
+              />
 
               <View style={[adminStyles.row, { marginTop: 10 }]}>
                 <View style={{ flex: 1 }}>
                   <Text style={adminStyles.label}>Price (₹)</Text>
-                  <TextInput style={adminStyles.input} keyboardType="number-pad" maxLength={6}
+                  <TextInput
+                    style={adminStyles.input}
+                    keyboardType="number-pad"
+                    maxLength={6}
                     value={String(p.price_inr || '')}
-                    onChangeText={t => set(orig.code, { price_inr: parseInt(t.replace(/[^0-9]/g, ''), 10) || 0 })} />
+                    onChangeText={t =>
+                      set(orig.code, { price_inr: parseInt(t.replace(/[^0-9]/g, ''), 10) || 0 })
+                    }
+                  />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={adminStyles.label}>Length (days)</Text>
-                  <TextInput style={adminStyles.input} keyboardType="number-pad" maxLength={4}
+                  <TextInput
+                    style={adminStyles.input}
+                    keyboardType="number-pad"
+                    maxLength={4}
                     value={String(p.duration_days || '')}
-                    onChangeText={t => set(orig.code, { duration_days: parseInt(t.replace(/[^0-9]/g, ''), 10) || 0 })} />
+                    onChangeText={t =>
+                      set(orig.code, { duration_days: parseInt(t.replace(/[^0-9]/g, ''), 10) || 0 })
+                    }
+                  />
                 </View>
               </View>
 
               <View style={[adminStyles.row, { justifyContent: 'space-between', marginTop: 12 }]}>
                 <Text style={adminStyles.value}>Most popular</Text>
-                <Switch value={p.is_popular} onValueChange={v => set(orig.code, { is_popular: v })}
-                  trackColor={{ false: Colors.borderStrong, true: Colors.brandBlue }} />
+                <Switch
+                  value={p.is_popular}
+                  onValueChange={v => set(orig.code, { is_popular: v })}
+                  trackColor={{ false: Colors.borderStrong, true: Colors.brandBlue }}
+                />
               </View>
               <View style={[adminStyles.row, { justifyContent: 'space-between', marginTop: 8 }]}>
                 <Text style={adminStyles.value}>On sale</Text>
-                <Switch value={p.is_active} onValueChange={v => set(orig.code, { is_active: v })}
-                  trackColor={{ false: Colors.borderStrong, true: Colors.brandBlue }} />
+                <Switch
+                  value={p.is_active}
+                  onValueChange={v => set(orig.code, { is_active: v })}
+                  trackColor={{ false: Colors.borderStrong, true: Colors.brandBlue }}
+                />
               </View>
 
               {dirty && (
                 <View style={[adminStyles.row, { marginTop: 12 }]}>
-                  <ActionButton label="Undo" tone="neutral" onPress={() => set(orig.code, { ...orig })} />
-                  <ActionButton label="Save" busy={saving === orig.code} onPress={() => save(orig.code)} />
+                  <ActionButton
+                    label="Undo"
+                    tone="neutral"
+                    onPress={() => set(orig.code, { ...orig })}
+                  />
+                  <ActionButton
+                    label="Save"
+                    busy={saving === orig.code}
+                    onPress={() => save(orig.code)}
+                  />
                 </View>
               )}
             </Card>

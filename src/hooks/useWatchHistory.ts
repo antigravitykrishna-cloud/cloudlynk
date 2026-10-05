@@ -18,11 +18,16 @@ export function useContinueWatching(userId: string | undefined) {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    if (!userId) { setItems([]); setLoading(false); return; }
+    if (!userId) {
+      setItems([]);
+      setLoading(false);
+      return;
+    }
     try {
       const { data, error } = await supabase
         .from('watch_history')
-        .select(`
+        .select(
+          `
           id, user_id, post_id, position_seconds, duration_seconds, completed, last_watched_at,
           post:channel_posts!watch_history_post_id_fkey(
             id, channel_id, author_id, title, body, media_url, media_type, thumbnail_url,
@@ -30,7 +35,8 @@ export function useContinueWatching(userId: string | undefined) {
             release_year, tags, status, video_url, submitted_at, series_id, approved_by,
             approved_at, rejection_note, created_at
           )
-        `)
+        `,
+        )
         .eq('user_id', userId)
         .eq('completed', false)
         .order('last_watched_at', { ascending: false })
@@ -50,7 +56,9 @@ export function useContinueWatching(userId: string | undefined) {
     }
   }, [userId]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   return { items, loading, refresh: load };
 }
@@ -77,19 +85,17 @@ export function useRecordProgress(
 
     const completed = position >= duration * 0.9;
 
-    const { error } = await supabase
-      .from('watch_history')
-      .upsert(
-        {
-          user_id: userId,
-          post_id: postId,
-          position_seconds: position,
-          duration_seconds: duration,
-          completed,
-          last_watched_at: new Date().toISOString(),
-        },
-        { onConflict: 'user_id,post_id' }
-      );
+    const { error } = await supabase.from('watch_history').upsert(
+      {
+        user_id: userId,
+        post_id: postId,
+        position_seconds: position,
+        duration_seconds: duration,
+        completed,
+        last_watched_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id,post_id' },
+    );
 
     if (error && __DEV__) console.error('saveProgress:', error.message);
   }, [userId, postId]);
@@ -107,7 +113,9 @@ export function useRecordProgress(
   }, [isPlaying, userId, postId, saveProgress]);
 
   useEffect(() => {
-    return () => { saveProgress(); };
+    return () => {
+      saveProgress();
+    };
   }, [saveProgress]);
 
   return { updatePosition, saveProgress };

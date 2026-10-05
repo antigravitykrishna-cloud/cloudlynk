@@ -1,5 +1,12 @@
 import { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
 import { showAlert } from '../../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -60,7 +67,10 @@ export default function AdminContentScreen() {
       // A moderation queue that renders "nothing here" after a failed
       // fetch is worse than one that errors: the admin concludes there is
       // nothing to review and stops checking, while the queue fills up.
-      showAlert('Could not load content', err instanceof Error ? err.message : 'Check your connection and try again.');
+      showAlert(
+        'Could not load content',
+        err instanceof Error ? err.message : 'Check your connection and try again.',
+      );
     } finally {
       setLoading(false);
     }
@@ -70,7 +80,7 @@ export default function AdminContentScreen() {
     useCallback(() => {
       setLoading(true);
       load(statusFilter, accessFilter);
-    }, [load, statusFilter, accessFilter])
+    }, [load, statusFilter, accessFilter]),
   );
 
   const applyFilters = (status: StatusFilter, access: AccessFilter) => {
@@ -96,7 +106,9 @@ export default function AdminContentScreen() {
             setActingId(post.id);
             try {
               await AdminContentService.setPostAccessLevel(post.id, next);
-              setPosts(prev => prev.map(p => (p.id === post.id ? { ...p, access_level: next } : p)));
+              setPosts(prev =>
+                prev.map(p => (p.id === post.id ? { ...p, access_level: next } : p)),
+              );
             } catch (err: any) {
               showAlert('Not changed', err?.message ?? 'Could not change the access level.');
             } finally {
@@ -125,16 +137,21 @@ export default function AdminContentScreen() {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.replace('/(tabs)/profile')} style={styles.headerBack} activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
+          <TouchableOpacity
+            onPress={() => router.replace('/(tabs)/profile')}
+            style={styles.headerBack}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
             <Text style={styles.headerBackTxt}>{'‹'}</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Content</Text>
           <View style={{ width: 32 }} />
         </View>
-        <View style={styles.emptyState}><Text style={styles.emptyText}>Access denied</Text></View>
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>Access denied</Text>
+        </View>
       </SafeAreaView>
     );
   }
@@ -142,19 +159,31 @@ export default function AdminContentScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.replace('/(tabs)/profile')} style={styles.headerBack} activeOpacity={0.7}
+        <TouchableOpacity
+          onPress={() => router.replace('/(tabs)/profile')}
+          style={styles.headerBack}
+          activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
           <Text style={styles.headerBackTxt}>{'‹'}</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Content</Text>
-        <TouchableOpacity onPress={() => router.push('/admin/upload')} style={styles.headerAction} activeOpacity={0.7}>
+        <TouchableOpacity
+          onPress={() => router.push('/admin/upload')}
+          style={styles.headerAction}
+          activeOpacity={0.7}
+        >
           <Text style={styles.headerActionTxt}>Upload</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={styles.filterRow}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.filterScroll}
+        contentContainerStyle={styles.filterRow}
+      >
         {STATUS_FILTERS.map(f => (
           <TouchableOpacity
             key={f.key}
@@ -162,12 +191,21 @@ export default function AdminContentScreen() {
             onPress={() => applyFilters(f.key, accessFilter)}
             activeOpacity={0.7}
           >
-            <Text style={[styles.filterTabText, statusFilter === f.key && styles.filterTabTextActive]}>{f.label}</Text>
+            <Text
+              style={[styles.filterTabText, statusFilter === f.key && styles.filterTabTextActive]}
+            >
+              {f.label}
+            </Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={styles.filterRow}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.filterScroll}
+        contentContainerStyle={styles.filterRow}
+      >
         {ACCESS_FILTERS.map(f => (
           <TouchableOpacity
             key={f.key}
@@ -175,7 +213,11 @@ export default function AdminContentScreen() {
             onPress={() => applyFilters(statusFilter, f.key)}
             activeOpacity={0.7}
           >
-            <Text style={[styles.filterTabText, accessFilter === f.key && styles.filterTabTextActive]}>{f.label}</Text>
+            <Text
+              style={[styles.filterTabText, accessFilter === f.key && styles.filterTabTextActive]}
+            >
+              {f.label}
+            </Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -183,7 +225,9 @@ export default function AdminContentScreen() {
       {loading ? (
         <ActivityIndicator color="#2E7DFF" size="large" style={{ marginTop: 60 }} />
       ) : posts.length === 0 ? (
-        <View style={styles.emptyState}><Text style={styles.emptyText}>No content matches these filters</Text></View>
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>No content matches these filters</Text>
+        </View>
       ) : (
         <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.list}>
           {posts.map(post => {
@@ -194,7 +238,12 @@ export default function AdminContentScreen() {
                   <Text style={styles.titleText} numberOfLines={1}>
                     {post.title || post.body?.slice(0, 40) || 'Untitled'}
                   </Text>
-                  <View style={[styles.badge, { backgroundColor: STATUS_COLORS[post.status] ?? '#6B7C97' }]}>
+                  <View
+                    style={[
+                      styles.badge,
+                      { backgroundColor: STATUS_COLORS[post.status] ?? '#6B7C97' },
+                    ]}
+                  >
                     <Text style={styles.badgeText}>{post.status.toUpperCase()}</Text>
                   </View>
                 </View>
@@ -204,7 +253,9 @@ export default function AdminContentScreen() {
                   {post.genre ? ` · ${post.genre}` : ''}
                   {post.duration_min ? ` · ${post.duration_min} min` : ''}
                 </Text>
-                <Text style={[styles.metaText, post.access_level === 'premium' && styles.premiumText]}>
+                <Text
+                  style={[styles.metaText, post.access_level === 'premium' && styles.premiumText]}
+                >
                   {post.access_level === 'premium' ? 'Premium' : 'Free'}
                 </Text>
                 <Text style={styles.cardDate}>{new Date(post.created_at).toLocaleString()}</Text>
@@ -216,11 +267,13 @@ export default function AdminContentScreen() {
                     activeOpacity={0.7}
                     disabled={isActing}
                   >
-                    {isActing
-                      ? <ActivityIndicator color="#FFFFFF" size="small" />
-                      : <Text style={styles.actionBtnGhostText}>
-                          Make {post.access_level === 'premium' ? 'free' : 'premium'}
-                        </Text>}
+                    {isActing ? (
+                      <ActivityIndicator color="#FFFFFF" size="small" />
+                    ) : (
+                      <Text style={styles.actionBtnGhostText}>
+                        Make {post.access_level === 'premium' ? 'free' : 'premium'}
+                      </Text>
+                    )}
                   </TouchableOpacity>
 
                   <TouchableOpacity
@@ -244,12 +297,20 @@ export default function AdminContentScreen() {
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    style={post.status === 'approved' ? styles.actionBtnWarn : styles.actionBtnPrimary}
+                    style={
+                      post.status === 'approved' ? styles.actionBtnWarn : styles.actionBtnPrimary
+                    }
                     onPress={() => togglePublished(post)}
                     activeOpacity={0.7}
                     disabled={isActing}
                   >
-                    <Text style={post.status === 'approved' ? styles.actionBtnWarnText : styles.actionBtnPrimaryText}>
+                    <Text
+                      style={
+                        post.status === 'approved'
+                          ? styles.actionBtnWarnText
+                          : styles.actionBtnPrimaryText
+                      }
+                    >
                       {post.status === 'approved' ? 'Unpublish' : 'Publish'}
                     </Text>
                   </TouchableOpacity>
@@ -267,9 +328,14 @@ export default function AdminContentScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#0B1220' },
   header: {
-    backgroundColor: '#0B1220', flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: '#22304A',
+    backgroundColor: '#0B1220',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#22304A',
   },
   headerBack: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   headerBackTxt: { color: '#2E7DFF', fontSize: 28, fontWeight: '700', lineHeight: 28 },
@@ -278,13 +344,33 @@ const styles = StyleSheet.create({
   headerActionTxt: { color: '#2E7DFF', fontSize: 14, fontWeight: '800' },
   filterScroll: { flexGrow: 0 },
   filterRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 8 },
-  filterTab: { backgroundColor: '#182437', borderWidth: 1, borderColor: '#22304A', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
+  filterTab: {
+    backgroundColor: '#182437',
+    borderWidth: 1,
+    borderColor: '#22304A',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
   filterTabActive: { backgroundColor: '#2E7DFF', borderColor: '#2E7DFF' },
   filterTabText: { color: '#9FB0C9', fontSize: 12, fontWeight: '700' },
   filterTabTextActive: { color: '#FFFFFF' },
   list: { paddingBottom: 12, paddingHorizontal: 16, paddingTop: 4 },
-  card: { backgroundColor: '#182437', borderRadius: 12, borderWidth: 1, borderColor: '#22304A', padding: 16, marginBottom: 12 },
-  cardTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, gap: 10 },
+  card: {
+    backgroundColor: '#182437',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#22304A',
+    padding: 16,
+    marginBottom: 12,
+  },
+  cardTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+    gap: 10,
+  },
   titleText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF', flex: 1 },
   badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
   badgeText: { fontSize: 11, fontWeight: '900', color: '#0B1220', letterSpacing: 0.5 },
@@ -292,12 +378,35 @@ const styles = StyleSheet.create({
   premiumText: { color: '#FFC65C', fontWeight: '700' },
   cardDate: { fontSize: 11, color: '#6B7C97', fontWeight: '500', marginTop: 4 },
   actionsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
-  actionBtnGhost: { backgroundColor: '#22304A', paddingHorizontal: 14, paddingVertical: 9, borderRadius: 8, minWidth: 92, alignItems: 'center' },
+  actionBtnGhost: {
+    backgroundColor: '#22304A',
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 8,
+    minWidth: 92,
+    alignItems: 'center',
+  },
   actionBtnGhostText: { color: '#FFFFFF', fontSize: 12, fontWeight: '700' },
-  actionBtnPrimary: { backgroundColor: '#2E7DFF', paddingHorizontal: 14, paddingVertical: 9, borderRadius: 8 },
+  actionBtnPrimary: {
+    backgroundColor: '#2E7DFF',
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 8,
+  },
   actionBtnPrimaryText: { color: '#FFFFFF', fontSize: 12, fontWeight: '800' },
-  actionBtnWarn: { backgroundColor: '#FFC65C', paddingHorizontal: 14, paddingVertical: 9, borderRadius: 8 },
+  actionBtnWarn: {
+    backgroundColor: '#FFC65C',
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 8,
+  },
   actionBtnWarnText: { color: '#0B1220', fontSize: 12, fontWeight: '800' },
-  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80, paddingHorizontal: 20 },
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 80,
+    paddingHorizontal: 20,
+  },
   emptyText: { fontSize: 16, color: '#9FB0C9', fontWeight: '600', textAlign: 'center' },
 });

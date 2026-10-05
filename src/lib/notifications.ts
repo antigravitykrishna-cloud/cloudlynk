@@ -35,16 +35,19 @@ import type { IconName } from '../components/Icon';
 // `icon` names an entry in the app's icon set rather than holding an emoji
 // glyph: the glyph came from the system font, so the same notification looked
 // different on every phone and could not take the row's accent colour.
-export const NOTIF_META: Record<NotificationType, { icon: IconName; color: string; dimColor: string }> = {
+export const NOTIF_META: Record<
+  NotificationType,
+  { icon: IconName; color: string; dimColor: string }
+> = {
   channel_approved: { icon: 'check-circle', color: '#3fb950', dimColor: 'rgba(63,185,80,0.12)' },
-  channel_rejected: { icon: 'flag', color: '#f85149', dimColor: 'rgba(248,81,73,0.12)'  },
-  post_approved:    { icon: 'check-circle',  color: '#00d4aa', dimColor: 'rgba(0,212,170,0.12)' },
-  post_rejected:    { icon: 'flag',  color: '#f85149', dimColor: 'rgba(248,81,73,0.12)'  },
+  channel_rejected: { icon: 'flag', color: '#f85149', dimColor: 'rgba(248,81,73,0.12)' },
+  post_approved: { icon: 'check-circle', color: '#00d4aa', dimColor: 'rgba(0,212,170,0.12)' },
+  post_rejected: { icon: 'flag', color: '#f85149', dimColor: 'rgba(248,81,73,0.12)' },
   // Amber, not red: the subscription still works when this one arrives.
   subscription_expiring: { icon: 'diamond', color: '#e3b341', dimColor: 'rgba(227,179,65,0.12)' },
-  subscription_expired:  { icon: 'lock',    color: '#f85149', dimColor: 'rgba(248,81,73,0.12)' },
+  subscription_expired: { icon: 'lock', color: '#f85149', dimColor: 'rgba(248,81,73,0.12)' },
   // Sent by an admin from Admin -> Announcement (v82).
-  announcement:          { icon: 'bell',    color: '#2E7DFF', dimColor: 'rgba(46,125,255,0.12)' },
+  announcement: { icon: 'bell', color: '#2E7DFF', dimColor: 'rgba(46,125,255,0.12)' },
 };
 
 export const NotificationService = {
@@ -98,24 +101,22 @@ export const NotificationService = {
     title: string,
     body: string,
     channelId?: string,
-    postId?: string
+    postId?: string,
   ): Promise<void> {
-    const { error } = await supabase
-      .from('notifications')
-      .insert({
-        user_id: userId,
-        type,
-        title,
-        body,
-        channel_id: channelId ?? null,
-        post_id: postId ?? null,
-        read: false,
-      });
+    const { error } = await supabase.from('notifications').insert({
+      user_id: userId,
+      type,
+      title,
+      body,
+      channel_id: channelId ?? null,
+      post_id: postId ?? null,
+      read: false,
+    });
     if (error) throw error;
   },
 
   // ── Push Notifications ───────────────────────────────────────
-  
+
   async registerForPushNotificationsAsync(): Promise<string | null> {
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('default', {
@@ -136,12 +137,15 @@ export const NotificationService = {
       if (finalStatus !== 'granted') {
         return null;
       }
-      const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
+      const projectId =
+        Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
       // We wrap in try catch in case projectId is missing or network error
       try {
-        const pushTokenString = (await Notifications.getExpoPushTokenAsync({
-          projectId,
-        })).data;
+        const pushTokenString = (
+          await Notifications.getExpoPushTokenAsync({
+            projectId,
+          })
+        ).data;
         return pushTokenString;
       } catch (e: any) {
         if (__DEV__) console.warn('Failed to get push token:', e.message);
@@ -172,7 +176,7 @@ export const NotificationService = {
       'channel_approved',
       'Channel approved 🎉',
       `Your channel "${channelName}" is now live and visible to everyone.`,
-      channelId
+      channelId,
     );
   },
 
@@ -182,7 +186,7 @@ export const NotificationService = {
       'channel_rejected',
       'Channel not approved',
       `Your channel "${channelName}" did not meet our content guidelines. You can edit and resubmit.`,
-      channelId
+      channelId,
     );
   },
 
@@ -193,7 +197,7 @@ export const NotificationService = {
       'Post approved ✓',
       `Your post in "${channelName}" is now live.`,
       channelId,
-      postId
+      postId,
     );
   },
 
@@ -204,7 +208,7 @@ export const NotificationService = {
       'Post not approved',
       `Your post in "${channelName}" was not approved. Check the rejection note for details.`,
       channelId,
-      postId
+      postId,
     );
   },
 };

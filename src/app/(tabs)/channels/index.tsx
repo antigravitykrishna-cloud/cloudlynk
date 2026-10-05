@@ -1,5 +1,14 @@
 import { CloudlynkLogo } from '../../../components/CloudlynkLogo';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, RefreshControl, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  RefreshControl,
+  ActivityIndicator,
+} from 'react-native';
 import { showAlert } from '../../../components/Feedback';
 import { LoginSheet } from '../../../components/LoginSheet';
 import { promptSaveAccount } from '../../../lib/guest';
@@ -69,7 +78,10 @@ export default function ChannelsScreen() {
     // A guest has no memberships. Not an early return that leaves stale state:
     // the set is cleared, because signing out must not leave the previous
     // account's joined channels marked as joined.
-    if (!user?.id) { setJoinedChannelIds(new Set()); return; }
+    if (!user?.id) {
+      setJoinedChannelIds(new Set());
+      return;
+    }
     const { data } = await supabase
       .from('channel_members')
       .select('channel_id')
@@ -95,7 +107,10 @@ export default function ChannelsScreen() {
         //
         // The Database type is no longer the reason — `category`, `is_official`
         // and `link` were missing from it and have since been added.
-        data = (await ChannelService.getDiscoverChannels(user?.id ?? '', activeFilter)) as unknown as Channel[];
+        data = (await ChannelService.getDiscoverChannels(
+          user?.id ?? '',
+          activeFilter,
+        )) as unknown as Channel[];
       }
       setChannels(data);
       setLoadFailed(false);
@@ -109,7 +124,13 @@ export default function ChannelsScreen() {
     }
   }, [user?.id, activeTab, activeFilter]);
 
-  useFocusEffect(useCallback(() => { setLoading(true); loadChannels(); loadMemberships(); }, [loadChannels, loadMemberships]));
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      loadChannels();
+      loadMemberships();
+    }, [loadChannels, loadMemberships]),
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -120,8 +141,7 @@ export default function ChannelsScreen() {
   const sortedChannels = channels.filter(c => {
     if (searchQuery.length === 0) return true;
     const q = searchQuery.toLowerCase();
-    return c.name.toLowerCase().includes(q) ||
-      (c.description ?? '').toLowerCase().includes(q);
+    return c.name.toLowerCase().includes(q) || (c.description ?? '').toLowerCase().includes(q);
   });
 
   // Anyone can browse channels and open one. Joining needs an account --
@@ -170,14 +190,16 @@ export default function ChannelsScreen() {
     showAlert('Leave channel', `Leave "${channel.name}"?`, [
       { text: 'Cancel', style: 'cancel' },
       {
-        text: 'Leave', style: 'destructive',
+        text: 'Leave',
+        style: 'destructive',
         onPress: async () => {
           try {
             await ChannelService.leaveChannel(channel.id, user!.id);
             await loadChannels();
             await loadMemberships();
           } catch (err: unknown) {
-            const msg = err instanceof Error && err.message ? err.message : 'Could not leave channel.';
+            const msg =
+              err instanceof Error && err.message ? err.message : 'Could not leave channel.';
             showAlert('Error', msg);
           }
         },
@@ -190,25 +212,35 @@ export default function ChannelsScreen() {
       `Manage: ${channel.name}`,
       `Members: ${channel.member_count ?? 0} · Posts: ${channel.post_count ?? 0}`,
       [
-        { text: 'View Channel', onPress: () => router.push({ pathname: '/(tabs)/channels/[id]', params: { id: channel.id } }) },
         {
-          text: 'Delete Channel', style: 'destructive',
+          text: 'View Channel',
+          onPress: () =>
+            router.push({ pathname: '/(tabs)/channels/[id]', params: { id: channel.id } }),
+        },
+        {
+          text: 'Delete Channel',
+          style: 'destructive',
           onPress: () => {
-            showAlert('Confirm Delete', `Permanently delete "${channel.name}" and all its content?`, [
-              { text: 'Cancel', style: 'cancel' },
-              {
-                text: 'Delete', style: 'destructive',
-                onPress: async () => {
-                  try {
-                    await ChannelService.deleteChannel(channel.id);
-                    await loadChannels();
-                    showAlert('Deleted', `"${channel.name}" has been deleted.`);
-                  } catch (err: unknown) {
-                    showAlert('Error', err instanceof Error ? err.message : 'Delete failed');
-                  }
+            showAlert(
+              'Confirm Delete',
+              `Permanently delete "${channel.name}" and all its content?`,
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Delete',
+                  style: 'destructive',
+                  onPress: async () => {
+                    try {
+                      await ChannelService.deleteChannel(channel.id);
+                      await loadChannels();
+                      showAlert('Deleted', `"${channel.name}" has been deleted.`);
+                    } catch (err: unknown) {
+                      showAlert('Error', err instanceof Error ? err.message : 'Delete failed');
+                    }
+                  },
                 },
-              },
-            ]);
+              ],
+            );
           },
         },
         { text: 'Cancel', style: 'cancel' },
@@ -243,7 +275,10 @@ export default function ChannelsScreen() {
             onChangeText={setSearchQuery}
           />
           {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <TouchableOpacity
+              onPress={() => setSearchQuery('')}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
               <Text style={styles.searchClear}>{'✕'}</Text>
             </TouchableOpacity>
           )}
@@ -269,7 +304,11 @@ export default function ChannelsScreen() {
 
       {/* Filter pills on white bg */}
       <View style={styles.filterBar}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterRow}
+        >
           {FILTERS.map(f => (
             <TouchableOpacity
               key={f.key}
@@ -277,7 +316,12 @@ export default function ChannelsScreen() {
               onPress={() => setActiveFilter(f.key)}
               activeOpacity={0.7}
             >
-              <Text style={[styles.filterPillText, activeFilter === f.key && styles.filterPillTextActive]}>
+              <Text
+                style={[
+                  styles.filterPillText,
+                  activeFilter === f.key && styles.filterPillTextActive,
+                ]}
+              >
                 {f.label}
               </Text>
             </TouchableOpacity>
@@ -289,7 +333,16 @@ export default function ChannelsScreen() {
       {loading ? (
         <ListSkeleton rows={7} />
       ) : sortedChannels.length === 0 ? (
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.brand} />}>
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={Colors.brand}
+            />
+          }
+        >
           <View style={styles.emptyState}>
             <CloudlynkLogo size={48} />
             {loadFailed ? (
@@ -324,7 +377,13 @@ export default function ChannelsScreen() {
           style={{ flex: 1 }}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.brand} />}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={Colors.brand}
+            />
+          }
         >
           {sortedChannels.map((channel, idx) => {
             const memberCount = (channel.member_count ?? 0).toLocaleString();
@@ -353,7 +412,11 @@ export default function ChannelsScreen() {
                   onPress={() => handleRowPress(channel)}
                   activeOpacity={0.7}
                 >
-                  <Icon name={channel.is_public ? 'globe' : 'lock'} size={22} color={Colors.brandBlue} />
+                  <Icon
+                    name={channel.is_public ? 'globe' : 'lock'}
+                    size={22}
+                    color={Colors.brandBlue}
+                  />
                 </TouchableOpacity>
 
                 {/* Center info — sibling TouchableOpacity */}
@@ -362,7 +425,9 @@ export default function ChannelsScreen() {
                   onPress={() => handleRowPress(channel)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.channelName} numberOfLines={1}>{channel.name}</Text>
+                  <Text style={styles.channelName} numberOfLines={1}>
+                    {channel.name}
+                  </Text>
                   <View style={styles.channelStats}>
                     <View style={styles.channelStat}>
                       <Icon name="user" size={13} color={Colors.textMuted} />
@@ -423,31 +488,108 @@ export default function ChannelsScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
-  redHeader: { backgroundColor: Colors.surface, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  redHeader: {
+    backgroundColor: Colors.surface,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   redHeaderTitle: { color: '#ffffff', fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
-  crownBadge: { width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.gold, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#ffffff' },
+  crownBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.gold,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#ffffff',
+  },
   crownText: { fontSize: 18, color: Colors.brand, fontWeight: '900' },
   searchBarWrap: { backgroundColor: Colors.surface, paddingHorizontal: 16, paddingBottom: 16 },
-  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.surfaceElevated, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, gap: 8, borderWidth: 1, borderColor: Colors.border },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surfaceElevated,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
   searchIcon: { fontSize: 14 },
   searchInput: { flex: 1, color: Colors.text, fontSize: 14, paddingVertical: 0 },
   searchClear: { fontSize: 14, color: Colors.textMuted, padding: 4 },
-  tabBar: { backgroundColor: Colors.surface, flexDirection: 'row', paddingHorizontal: 16, paddingBottom: 12, gap: 24 },
+  tabBar: {
+    backgroundColor: Colors.surface,
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    gap: 24,
+  },
   tab: { paddingVertical: 4, alignItems: 'center' },
   tabText: { color: 'rgba(255,255,255,0.7)', fontSize: 15, fontWeight: '600' },
   tabTextActive: { color: '#ffffff', fontWeight: '800' },
-  tabUnderline: { position: 'absolute', bottom: -8, left: 0, right: 0, height: 3, backgroundColor: '#ffffff', borderRadius: 4 },
-  filterBar: { backgroundColor: Colors.bg, borderBottomWidth: 0.5, borderBottomColor: Colors.border },
+  tabUnderline: {
+    position: 'absolute',
+    bottom: -8,
+    left: 0,
+    right: 0,
+    height: 3,
+    backgroundColor: '#ffffff',
+    borderRadius: 4,
+  },
+  filterBar: {
+    backgroundColor: Colors.bg,
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.border,
+  },
   filterRow: { paddingHorizontal: 16, paddingVertical: 12, gap: 8 },
-  filterPill: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: Colors.surfaceElevated, borderWidth: 1, borderColor: Colors.border },
+  filterPill: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: Colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
   filterPillActive: { backgroundColor: Colors.brand, borderColor: Colors.brand },
   filterPillText: { fontSize: 13, fontWeight: '700', color: Colors.textSecondary },
   filterPillTextActive: { color: '#ffffff' },
   list: { paddingVertical: 8 },
-  channelRow: { position: 'relative', flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14, paddingHorizontal: 16, borderBottomWidth: 0.5, borderBottomColor: Colors.border },
-  pendingBadge: { position: 'absolute', top: 6, right: 16, backgroundColor: '#FFB347', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, zIndex: 1 },
+  channelRow: {
+    position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.border,
+  },
+  pendingBadge: {
+    position: 'absolute',
+    top: 6,
+    right: 16,
+    backgroundColor: '#FFB347',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    zIndex: 1,
+  },
   pendingBadgeText: { fontSize: 11, fontWeight: '800', color: '#ffffff', letterSpacing: 0.5 },
-  channelAvatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: Colors.surfaceHover, alignItems: 'center', justifyContent: 'center' },
+  channelAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: Colors.surfaceHover,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   channelAvatarEmoji: { fontSize: 22 },
   channelInfo: { flex: 1, minWidth: 0 },
   channelName: { fontSize: 15, fontWeight: '700', color: Colors.text, marginBottom: 2 },
@@ -455,17 +597,62 @@ const styles = StyleSheet.create({
   channelStat: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   channelStatIcon: { fontSize: 12 },
   channelStatText: { fontSize: 12, color: Colors.textSecondary, fontWeight: '600' },
-  manageBtn: { backgroundColor: Colors.brand, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
+  manageBtn: {
+    backgroundColor: Colors.brand,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
   manageBtnText: { color: '#ffffff', fontSize: 13, fontWeight: '800' },
-  joinBtn: { backgroundColor: Colors.brand, paddingHorizontal: 18, paddingVertical: 8, borderRadius: 8 },
+  joinBtn: {
+    backgroundColor: Colors.brand,
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
   joinBtnText: { color: '#ffffff', fontSize: 13, fontWeight: '800' },
-  leaveBtn: { backgroundColor: Colors.surfaceElevated, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: Colors.brand },
+  leaveBtn: {
+    backgroundColor: Colors.surfaceElevated,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.brand,
+  },
   leaveBtnText: { color: Colors.brand, fontSize: 13, fontWeight: '700' },
-  lockBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surfaceElevated, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Colors.border },
+  lockBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.surfaceElevated,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
   lockBtnIcon: { fontSize: 16 },
-  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80, paddingHorizontal: 20 },
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 80,
+    paddingHorizontal: 20,
+  },
   emptyText: { fontSize: 16, color: Colors.text, fontWeight: '600', marginTop: 16 },
-  emptyHint: { fontSize: 14, color: Colors.textSecondary, marginTop: 8, textAlign: 'center', paddingHorizontal: 40, lineHeight: 20 },
-  retryBtn: { marginTop: 18, paddingHorizontal: 24, paddingVertical: 11, borderRadius: 8, backgroundColor: Colors.brand },
+  emptyHint: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    marginTop: 8,
+    textAlign: 'center',
+    paddingHorizontal: 40,
+    lineHeight: 20,
+  },
+  retryBtn: {
+    marginTop: 18,
+    paddingHorizontal: 24,
+    paddingVertical: 11,
+    borderRadius: 8,
+    backgroundColor: Colors.brand,
+  },
   retryBtnText: { fontSize: 14, fontWeight: '700', color: '#ffffff' },
 });

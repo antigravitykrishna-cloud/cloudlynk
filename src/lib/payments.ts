@@ -46,7 +46,9 @@ async function call<T>(route: string, body: object = {}): Promise<T> {
       const ctx = (error as any)?.context;
       const json = ctx && typeof ctx.json === 'function' ? await ctx.json() : null;
       if (json?.error) message = json.error;
-    } catch { /* keep the generic message */ }
+    } catch {
+      /* keep the generic message */
+    }
     throw new Error(message);
   }
   return data as T;
@@ -59,7 +61,9 @@ export async function getGatewayMethods(): Promise<GatewayMethod[]> {
   if (cachedMethods && Date.now() - cachedMethods.at < 60_000) return cachedMethods.methods;
   try {
     const res = await call<{ methods: GatewayMethod[] }>('config');
-    const methods = (res?.methods ?? []).filter(m => m === 'upi' || m === 'razorpay' || m === 'sabpaisa');
+    const methods = (res?.methods ?? []).filter(
+      m => m === 'upi' || m === 'razorpay' || m === 'sabpaisa',
+    );
     cachedMethods = { at: Date.now(), methods };
     return methods;
   } catch {
@@ -69,7 +73,9 @@ export async function getGatewayMethods(): Promise<GatewayMethod[]> {
 }
 
 export async function createGatewayOrder(
-  planCode: string, method: GatewayMethod, externalTransactionToken?: string,
+  planCode: string,
+  method: GatewayMethod,
+  externalTransactionToken?: string,
 ): Promise<GatewayOrder> {
   // Lets the server report the confirmed purchase to Meta against this phone
   // (lib/metaAds.ts). null when ad measurement is off or not configured.
@@ -96,7 +102,9 @@ export async function waitForPayment(
   timeoutMs = 45_000,
 ): Promise<OrderStatus> {
   const deadline = Date.now() + timeoutMs;
-  let res = await verifyGatewayOrder(orderId, first).catch(() => ({ status: 'pending' as OrderStatus }));
+  let res = await verifyGatewayOrder(orderId, first).catch(() => ({
+    status: 'pending' as OrderStatus,
+  }));
   while (res.status === 'pending' && Date.now() < deadline) {
     await new Promise(r => setTimeout(r, 3000));
     res = await verifyGatewayOrder(orderId).catch(() => ({ status: 'pending' as OrderStatus }));
@@ -144,7 +152,10 @@ export async function openRazorpay(
   try {
     const data = await RazorpayCheckout.open(options);
     if (data?.razorpay_payment_id && data?.razorpay_signature) {
-      return { razorpayPaymentId: data.razorpay_payment_id, razorpaySignature: data.razorpay_signature };
+      return {
+        razorpayPaymentId: data.razorpay_payment_id,
+        razorpaySignature: data.razorpay_signature,
+      };
     }
     return null;
   } catch {

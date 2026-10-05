@@ -16,9 +16,9 @@
 // Play Console (App content > Data safety > Account deletion) and in the
 // privacy policy: `https://<project-ref>.supabase.co/functions/v1/account-deletion`.
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-const APP_NAME = Deno.env.get("APP_NAME") ?? "Cloudlynk";
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
+const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+const APP_NAME = Deno.env.get('APP_NAME') ?? 'Cloudlynk';
 const DELETE_ACCOUNT_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/delete-account`;
 
 function page(): string {
@@ -128,11 +128,14 @@ function page(): string {
 }
 
 Deno.serve((req: Request) => {
-  if (req.method !== "GET") {
-    return new Response("Method not allowed", { status: 405 });
+  if (req.method !== 'GET') {
+    return new Response('Method not allowed', { status: 405 });
   }
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    return new Response("This page is not configured yet (missing SUPABASE_URL/SUPABASE_ANON_KEY).", { status: 500 });
+    return new Response(
+      'This page is not configured yet (missing SUPABASE_URL/SUPABASE_ANON_KEY).',
+      { status: 500 },
+    );
   }
-  return new Response(page(), { headers: { "Content-Type": "text/html; charset=utf-8" } });
+  return new Response(page(), { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
 });

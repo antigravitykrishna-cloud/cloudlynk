@@ -22,7 +22,8 @@ SplashScreen.preventAutoHideAsync();
 const services = createServices();
 
 export default function RootLayout() {
-  const { session, profile, profileChecked, loading, isPaidUser, approvalStatus, isGuest } = useAuth();
+  const { session, profile, profileChecked, loading, isPaidUser, approvalStatus, isGuest } =
+    useAuth();
   const { isBlocked, country, loading: geoLoading } = useGeoCheck();
   const segments = useSegments();
   // Guards the one-shot cold-start redirect below. A ref, not state: flipping
@@ -122,12 +123,29 @@ export default function RootLayout() {
       // only show "Awaiting admin approval" on every launch. Guests are
       // 'pending' too but still get it -- saving the account is their step.
       const waitingForApproval = approvalStatus === 'pending' && !isGuest;
-      if (!didShowPlans.current && !isPaidUser && approvalStatus !== 'rejected' && !waitingForApproval) {
+      if (
+        !didShowPlans.current &&
+        !isPaidUser &&
+        approvalStatus !== 'rejected' &&
+        !waitingForApproval
+      ) {
         didShowPlans.current = true;
         if ((segments[0] as string) !== 'premium') router.push('/premium');
       }
     }
-  }, [session, profile, profileChecked, loading, geoLoading, isBlocked, segments, router, isPaidUser, approvalStatus, isGuest]);
+  }, [
+    session,
+    profile,
+    profileChecked,
+    loading,
+    geoLoading,
+    isBlocked,
+    segments,
+    router,
+    isPaidUser,
+    approvalStatus,
+    isGuest,
+  ]);
 
   if (isBlocked && !geoLoading) {
     return (
@@ -154,17 +172,34 @@ export default function RootLayout() {
         <ServiceProvider value={services}>
           <GestureHandlerRootView style={{ flex: 1, backgroundColor: Colors.bg }}>
             <StatusBar style="light" />
-            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.bg } }}>
+            <Stack
+              screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.bg } }}
+            >
               <Stack.Screen name="(auth)" />
               <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="admin" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
-              <Stack.Screen name="notifications" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
-              <Stack.Screen name="create-content" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+              <Stack.Screen
+                name="admin"
+                options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+              />
+              <Stack.Screen
+                name="notifications"
+                options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+              />
+              <Stack.Screen
+                name="create-content"
+                options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+              />
               <Stack.Screen name="edit-profile" options={{ animation: 'slide_from_right' }} />
-              <Stack.Screen name="save-account" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+              <Stack.Screen
+                name="save-account"
+                options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+              />
               <Stack.Screen name="delete-account" options={{ animation: 'slide_from_right' }} />
               <Stack.Screen name="refund-policy" options={{ animation: 'slide_from_right' }} />
-              <Stack.Screen name="community-guidelines" options={{ animation: 'slide_from_right' }} />
+              <Stack.Screen
+                name="community-guidelines"
+                options={{ animation: 'slide_from_right' }}
+              />
             </Stack>
 
             {/* v61: guests never reach signup, where the 18+ birth-year check
@@ -184,7 +219,13 @@ export default function RootLayout() {
 const geoStyles = StyleSheet.create({
   container: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 },
   icon: { fontSize: 60, marginBottom: 20 },
-  title: { fontSize: 20, fontWeight: '800', color: '#e6edf3', textAlign: 'center', marginBottom: 12 },
+  title: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#e6edf3',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
   subtitle: { fontSize: 14, color: '#8b949e', textAlign: 'center', lineHeight: 22 },
   footer: { marginTop: 40, fontSize: 11, color: '#484f58' },
 });

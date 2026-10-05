@@ -11,8 +11,15 @@
 // action a guest cannot take (uploads).
 import { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView,
-  ActivityIndicator, KeyboardAvoidingView, Platform,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -54,7 +61,10 @@ export default function SaveAccountScreen() {
   const guestName = profile?.full_name ?? 'Guest';
 
   const done = () => {
-    showAlert('Account saved', 'You can now sign in with it on any phone. Your plan and channels are kept.');
+    showAlert(
+      'Account saved',
+      'You can now sign in with it on any phone. Your plan and channels are kept.',
+    );
     if (router.canGoBack()) router.back();
     else router.replace('/(tabs)/profile');
   };
@@ -66,7 +76,11 @@ export default function SaveAccountScreen() {
         'If you uninstall the app, change phones or sign out, this guest account and the plan on it cannot be recovered.',
         [
           { text: 'Save now', style: 'cancel' },
-          { text: 'Later', style: 'destructive', onPress: () => (router.canGoBack() ? router.back() : router.replace('/(tabs)/explore')) },
+          {
+            text: 'Later',
+            style: 'destructive',
+            onPress: () => (router.canGoBack() ? router.back() : router.replace('/(tabs)/explore')),
+          },
         ],
       );
       return;
@@ -81,7 +95,8 @@ export default function SaveAccountScreen() {
       await linkGoogle();
       done();
     } catch (err: any) {
-      const cancelled = /cancel/i.test(String(err?.message ?? '')) || err?.code === '-5' || err?.code === '12501';
+      const cancelled =
+        /cancel/i.test(String(err?.message ?? '')) || err?.code === '-5' || err?.code === '12501';
       if (!cancelled) showAlert('Could not save with Google', friendly(err));
     } finally {
       setBusy(null);
@@ -127,7 +142,10 @@ export default function SaveAccountScreen() {
         <View style={styles.center}>
           <Icon name="check-circle" size={40} color={Colors.brandBlue} />
           <Text style={styles.title}>Your account is saved</Text>
-          <TouchableOpacity style={styles.primaryBtn} onPress={() => router.replace('/(tabs)/profile')}>
+          <TouchableOpacity
+            style={styles.primaryBtn}
+            onPress={() => router.replace('/(tabs)/profile')}
+          >
             <Text style={styles.primaryText}>Done</Text>
           </TouchableOpacity>
         </View>
@@ -137,9 +155,16 @@ export default function SaveAccountScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <TouchableOpacity onPress={leave} style={styles.close} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <TouchableOpacity
+            onPress={leave}
+            style={styles.close}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
             <Text style={styles.closeText}>✕</Text>
           </TouchableOpacity>
 
@@ -147,27 +172,36 @@ export default function SaveAccountScreen() {
             <Icon name="lock" size={26} color="#FFFFFF" />
           </View>
           <Text style={styles.title}>
-            {afterPurchase ? 'Payment done! Now save your account'
-              : toSubscribe ? 'Save your account to subscribe'
-              : 'Save your account'}
+            {afterPurchase
+              ? 'Payment done! Now save your account'
+              : toSubscribe
+                ? 'Save your account to subscribe'
+                : 'Save your account'}
           </Text>
           <Text style={styles.body}>
             You are using a guest ID, <Text style={styles.bold}>{guestName}</Text>.{' '}
             {afterPurchase || isPaidUser
               ? 'Your plan is on this guest account. If you uninstall the app, change phones or sign out, it cannot be recovered.'
               : toSubscribe
-              ? 'Plans are bought on a saved account, so they are never lost if you uninstall the app or change phones.'
-              : 'If you uninstall the app, change phones or sign out, a guest account cannot be recovered.'}
-            {' '}Save it now. Your plan and channels stay exactly as they are.
+                ? 'Plans are bought on a saved account, so they are never lost if you uninstall the app or change phones.'
+                : 'If you uninstall the app, change phones or sign out, a guest account cannot be recovered.'}{' '}
+            Save it now. Your plan and channels stay exactly as they are.
           </Text>
 
           {mode === 'choose' && (
             <>
               {isGoogleAuthLive() && (
-                <TouchableOpacity style={styles.primaryBtn} onPress={withGoogle} disabled={busy !== null} activeOpacity={0.85}>
-                  {busy === 'google'
-                    ? <ActivityIndicator color="#FFFFFF" />
-                    : <Text style={styles.primaryText}>Save with Google</Text>}
+                <TouchableOpacity
+                  style={styles.primaryBtn}
+                  onPress={withGoogle}
+                  disabled={busy !== null}
+                  activeOpacity={0.85}
+                >
+                  {busy === 'google' ? (
+                    <ActivityIndicator color="#FFFFFF" />
+                  ) : (
+                    <Text style={styles.primaryText}>Save with Google</Text>
+                  )}
                 </TouchableOpacity>
               )}
               <TouchableOpacity
@@ -176,7 +210,9 @@ export default function SaveAccountScreen() {
                 disabled={busy !== null}
                 activeOpacity={0.85}
               >
-                <Text style={isGoogleAuthLive() ? styles.secondaryText : styles.primaryText}>Save with email</Text>
+                <Text style={isGoogleAuthLive() ? styles.secondaryText : styles.primaryText}>
+                  Save with email
+                </Text>
               </TouchableOpacity>
             </>
           )}
@@ -194,10 +230,17 @@ export default function SaveAccountScreen() {
                 autoCorrect={false}
                 autoFocus
               />
-              <TouchableOpacity style={styles.primaryBtn} onPress={sendCode} disabled={busy !== null} activeOpacity={0.85}>
-                {busy === 'email'
-                  ? <ActivityIndicator color="#FFFFFF" />
-                  : <Text style={styles.primaryText}>Send code</Text>}
+              <TouchableOpacity
+                style={styles.primaryBtn}
+                onPress={sendCode}
+                disabled={busy !== null}
+                activeOpacity={0.85}
+              >
+                {busy === 'email' ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.primaryText}>Send code</Text>
+                )}
               </TouchableOpacity>
               <TouchableOpacity onPress={() => setMode('choose')} style={styles.link}>
                 <Text style={styles.linkText}>Back</Text>
@@ -217,12 +260,25 @@ export default function SaveAccountScreen() {
                 keyboardType="number-pad"
                 autoFocus
               />
-              <TouchableOpacity style={styles.primaryBtn} onPress={verify} disabled={busy !== null} activeOpacity={0.85}>
-                {busy === 'code'
-                  ? <ActivityIndicator color="#FFFFFF" />
-                  : <Text style={styles.primaryText}>Save account</Text>}
+              <TouchableOpacity
+                style={styles.primaryBtn}
+                onPress={verify}
+                disabled={busy !== null}
+                activeOpacity={0.85}
+              >
+                {busy === 'code' ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.primaryText}>Save account</Text>
+                )}
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => { setCode(''); setMode('email'); }} style={styles.link}>
+              <TouchableOpacity
+                onPress={() => {
+                  setCode('');
+                  setMode('email');
+                }}
+                style={styles.link}
+              >
                 <Text style={styles.linkText}>Use a different email</Text>
               </TouchableOpacity>
             </>
@@ -236,39 +292,77 @@ export default function SaveAccountScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
   content: { padding: Spacing.xl, paddingTop: Spacing.lg },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl, gap: Spacing.md },
+  center: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.xl,
+    gap: Spacing.md,
+  },
   close: { alignSelf: 'flex-end', padding: Spacing.xs },
   closeText: { color: Colors.textSecondary, fontSize: 22 },
   badge: {
-    width: 64, height: 64, borderRadius: 32, backgroundColor: Colors.brandBlue,
-    alignItems: 'center', justifyContent: 'center', alignSelf: 'center', marginTop: Spacing.lg,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: Colors.brandBlue,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    marginTop: Spacing.lg,
   },
   title: {
-    color: Colors.text, fontSize: FontSize.xxl, fontWeight: FontWeight.extrabold,
-    textAlign: 'center', marginTop: Spacing.lg,
+    color: Colors.text,
+    fontSize: FontSize.xxl,
+    fontWeight: FontWeight.extrabold,
+    textAlign: 'center',
+    marginTop: Spacing.lg,
   },
   body: {
-    color: Colors.textSecondary, fontSize: FontSize.lg, lineHeight: 23,
-    textAlign: 'center', marginTop: Spacing.md, marginBottom: Spacing.xxl,
+    color: Colors.textSecondary,
+    fontSize: FontSize.lg,
+    lineHeight: 23,
+    textAlign: 'center',
+    marginTop: Spacing.md,
+    marginBottom: Spacing.xxl,
   },
   bold: { color: Colors.text, fontWeight: FontWeight.bold },
   hint: { color: Colors.textSecondary, fontSize: FontSize.base, marginBottom: Spacing.sm },
   input: {
-    backgroundColor: Colors.surface, borderRadius: Radius.md, borderWidth: 1, borderColor: Colors.border,
-    color: Colors.text, fontSize: FontSize.lg, paddingHorizontal: Spacing.md, paddingVertical: 14,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    color: Colors.text,
+    fontSize: FontSize.lg,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 14,
     marginBottom: Spacing.md,
   },
   codeInput: { letterSpacing: 8, textAlign: 'center', fontSize: FontSize.xxl },
   primaryBtn: {
-    backgroundColor: Colors.brandBlue, borderRadius: Radius.lg, paddingVertical: 16,
-    alignItems: 'center', marginBottom: Spacing.md, alignSelf: 'stretch',
+    backgroundColor: Colors.brandBlue,
+    borderRadius: Radius.lg,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+    alignSelf: 'stretch',
   },
   primaryText: { color: '#FFFFFF', fontSize: FontSize.lg, fontWeight: FontWeight.bold },
   secondaryBtn: {
-    backgroundColor: Colors.surfaceElevated, borderRadius: Radius.lg, paddingVertical: 16,
-    alignItems: 'center', borderWidth: 1, borderColor: Colors.border, marginBottom: Spacing.md,
+    backgroundColor: Colors.surfaceElevated,
+    borderRadius: Radius.lg,
+    paddingVertical: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    marginBottom: Spacing.md,
   },
   secondaryText: { color: Colors.text, fontSize: FontSize.lg, fontWeight: FontWeight.semibold },
   link: { alignItems: 'center', paddingVertical: Spacing.sm },
-  linkText: { color: Colors.textSecondary, fontSize: FontSize.base, fontWeight: FontWeight.semibold },
+  linkText: {
+    color: Colors.textSecondary,
+    fontSize: FontSize.base,
+    fontWeight: FontWeight.semibold,
+  },
 });

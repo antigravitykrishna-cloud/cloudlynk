@@ -34,67 +34,74 @@
 // Deploy: npx supabase functions deploy stream-set-access
 // (keep JWT verification ON — admin-only, and the RPCs re-check that.)
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { corsHeaders, jsonResponse } from "../_shared/http.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { corsHeaders, jsonResponse } from '../_shared/http.ts';
 
 async function cloudflare(path: string, init: RequestInit): Promise<Response> {
-  const accountId = Deno.env.get("CLOUDFLARE_STREAM_ACCOUNT_ID");
-  const apiToken = Deno.env.get("CLOUDFLARE_STREAM_API_TOKEN");
-  if (!accountId || !apiToken) throw new Error("CF_NOT_CONFIGURED");
+  const accountId = Deno.env.get('CLOUDFLARE_STREAM_ACCOUNT_ID');
+  const apiToken = Deno.env.get('CLOUDFLARE_STREAM_API_TOKEN');
+  if (!accountId || !apiToken) throw new Error('CF_NOT_CONFIGURED');
   return fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/stream/${path}`, {
     ...init,
-    headers: { Authorization: `Bearer ${apiToken}`, "Content-Type": "application/json", ...(init.headers ?? {}) },
+    headers: {
+      Authorization: `Bearer ${apiToken}`,
+      'Content-Type': 'application/json',
+      ...(init.headers ?? {}),
+    },
   });
 }
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders() });
-  if (req.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405);
+Deno.serve(async req => {
+  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders() });
+  if (req.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return jsonResponse({ error: "Authentication required" }, 401);
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) return jsonResponse({ error: 'Authentication required' }, 401);
 
     // Caller-scoped: every read and every RPC below runs as this admin, so
     // the database re-verifies is_admin itself. This function's own check is
     // just an early exit with a clearer message.
     const supabaseUser = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       { global: { headers: { Authorization: authHeader } } },
     );
-    const { data: { user }, error: userErr } = await supabaseUser.auth.getUser();
-    if (userErr || !user) return jsonResponse({ error: "Authentication required" }, 401);
+    const {
+      data: { user },
+      error: userErr,
+    } = await supabaseUser.auth.getUser();
+    if (userErr || !user) return jsonResponse({ error: 'Authentication required' }, 401);
 
     const { data: me } = await supabaseUser
-      .from("profiles")
-      .select("is_admin")
-      .eq("id", user.id)
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', user.id)
       .maybeSingle();
-    if (!me?.is_admin) return jsonResponse({ error: "Admin access required" }, 403);
+    if (!me?.is_admin) return jsonResponse({ error: 'Admin access required' }, 403);
 
     const body = await req.json().catch(() => ({}));
-    const postId = typeof body?.postId === "string" ? body.postId : "";
-    const accessLevel = body?.accessLevel === "free" || body?.accessLevel === "premium"
-      ? body.accessLevel
-      : "";
-    if (!postId) return jsonResponse({ error: "Missing postId." }, 400);
-    if (!accessLevel) return jsonResponse({ error: "accessLevel must be 'free' or 'premium'." }, 400);
+    const postId = typeof body?.postId === 'string' ? body.postId : '';
+    const accessLevel =
+      body?.accessLevel === 'free' || body?.accessLevel === 'premium' ? body.accessLevel : '';
+    if (!postId) return jsonResponse({ error: 'Missing postId.' }, 400);
+    if (!accessLevel)
+      return jsonResponse({ error: "accessLevel must be 'free' or 'premium'." }, 400);
 
     // The admin branch of channel_posts_select_v56 lets an admin read any post.
     const { data: post, error: postErr } = await supabaseUser
-      .from("channel_posts")
-      .select("id, video_url, access_level")
-      .eq("id", postId)
+      .from('channel_posts')
+      .select('id, video_url, access_level')
+      .eq('id', postId)
       .maybeSingle();
-    if (postErr || !post) return jsonResponse({ error: "Post not found." }, 404);
+    if (postErr || !post) return jsonResponse({ error: 'Post not found.' }, 404);
 
     if (post.access_level === accessLevel) {
       return jsonResponse({ ok: true, unchanged: true, accessLevel });
     }
 
-    const goingFree = post.access_level === "premium" && accessLevel === "free";
-    const goingPremium = post.access_level === "free" && accessLevel === "premium";
+    const goingFree = post.access_level === 'premium' && accessLevel === 'free';
+    const goingPremium = post.access_level === 'free' && accessLevel === 'premium';
     const uid: string | null = post.video_url ?? null;
 
     if (goingPremium && uid) {
@@ -115,30 +122,45 @@ Deno.serve(async (req) => {
       let lockRes: Response;
       try {
         lockRes = await cloudflare(uid, {
-          method: "POST",
+          method: 'POST',
           body: JSON.stringify({ uid, requireSignedURLs: true }),
         });
       } catch (e: any) {
-        console.error("stream-set-access: Cloudflare unreachable while locking:", e?.message ?? e);
-        return jsonResponse({
-          error: "Could not lock the video on Cloudflare, so the access level was left unchanged. Try again.",
-        }, 502);
+        console.error('stream-set-access: Cloudflare unreachable while locking:', e?.message ?? e);
+        return jsonResponse(
+          {
+            error:
+              'Could not lock the video on Cloudflare, so the access level was left unchanged. Try again.',
+          },
+          502,
+        );
       }
       if (!lockRes.ok) {
-        console.error("stream-set-access: requireSignedURLs=true failed:", lockRes.status, await lockRes.text().catch(() => ""));
-        return jsonResponse({
-          error: "Could not lock the video on Cloudflare, so the access level was left unchanged. Try again.",
-        }, 502);
+        console.error(
+          'stream-set-access: requireSignedURLs=true failed:',
+          lockRes.status,
+          await lockRes.text().catch(() => ''),
+        );
+        return jsonResponse(
+          {
+            error:
+              'Could not lock the video on Cloudflare, so the access level was left unchanged. Try again.',
+          },
+          502,
+        );
       }
 
       // Cache it so stream-playback-token's fast path skips the re-assert.
       // Best-effort: a failure here costs one redundant Cloudflare call on
       // first play, not correctness.
-      const { error: markErr } = await supabaseUser.rpc("admin_set_signed_lock", {
+      const { error: markErr } = await supabaseUser.rpc('admin_set_signed_lock', {
         p_stream_uid: uid,
       });
       if (markErr) {
-        console.error("stream-set-access: admin_set_signed_lock failed (non-fatal):", markErr.message);
+        console.error(
+          'stream-set-access: admin_set_signed_lock failed (non-fatal):',
+          markErr.message,
+        );
       }
     }
 
@@ -150,13 +172,13 @@ Deno.serve(async (req) => {
     // plan, so nothing else changes for signed-in members.
 
     // 3. Only now change the access level. Writes the audit row too.
-    const { error: rpcErr } = await supabaseUser.rpc("admin_set_post_access_level", {
+    const { error: rpcErr } = await supabaseUser.rpc('admin_set_post_access_level', {
       p_post_id: postId,
       p_access_level: accessLevel,
     });
     if (rpcErr) {
-      console.error("stream-set-access: admin_set_post_access_level failed:", rpcErr.message);
-      return jsonResponse({ error: rpcErr.message ?? "Could not change the access level." }, 400);
+      console.error('stream-set-access: admin_set_post_access_level failed:', rpcErr.message);
+      return jsonResponse({ error: rpcErr.message ?? 'Could not change the access level.' }, 400);
     }
 
     return jsonResponse({
@@ -166,11 +188,11 @@ Deno.serve(async (req) => {
       lockedOnCloudflare: goingPremium && !!uid,
     });
   } catch (err: any) {
-    if (err?.message === "CF_NOT_CONFIGURED") {
-      console.error("stream-set-access: Cloudflare Stream secrets are not set");
-      return jsonResponse({ error: "Video service is not configured." }, 500);
+    if (err?.message === 'CF_NOT_CONFIGURED') {
+      console.error('stream-set-access: Cloudflare Stream secrets are not set');
+      return jsonResponse({ error: 'Video service is not configured.' }, 500);
     }
-    console.error("stream-set-access error:", err?.message ?? err);
-    return jsonResponse({ error: "Could not change the access level." }, 500);
+    console.error('stream-set-access error:', err?.message ?? err);
+    return jsonResponse({ error: 'Could not change the access level.' }, 500);
   }
 });

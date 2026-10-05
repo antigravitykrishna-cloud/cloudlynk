@@ -1,6 +1,15 @@
 import { useState, useCallback } from 'react';
 import { fireHaptic } from '../../components/Press';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Linking } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  RefreshControl,
+  Linking,
+} from 'react-native';
 import { showAlert } from '../../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -66,12 +75,16 @@ export default function PendingChannelsScreen() {
           .order('created_at', { ascending: false }),
         supabase
           .from('channel_videos')
-          .select('id, channel_id, uploaded_by, storage_path, title, file_size_bytes, duration_seconds, mime_type, created_at')
+          .select(
+            'id, channel_id, uploaded_by, storage_path, title, file_size_bytes, duration_seconds, mime_type, created_at',
+          )
           .eq('status', 'pending')
           .order('created_at', { ascending: false }),
         supabase
           .from('channel_posts')
-          .select('id, channel_id, author_id, title, content_type, thumbnail_url, video_url, created_at')
+          .select(
+            'id, channel_id, author_id, title, content_type, thumbnail_url, video_url, created_at',
+          )
           .eq('status', 'pending')
           .order('created_at', { ascending: false }),
       ]);
@@ -84,15 +97,16 @@ export default function PendingChannelsScreen() {
       const videoRows = videoResult.data ?? [];
       const postRows = postResult.data ?? [];
 
-      const userIds = [...new Set([
-        ...channelRows.map(r => r.owner_id),
-        ...videoRows.map(r => r.uploaded_by),
-        ...postRows.map(r => r.author_id),
-      ])];
-      const channelIds = [...new Set([
-        ...videoRows.map(r => r.channel_id),
-        ...postRows.map(r => r.channel_id),
-      ])];
+      const userIds = [
+        ...new Set([
+          ...channelRows.map(r => r.owner_id),
+          ...videoRows.map(r => r.uploaded_by),
+          ...postRows.map(r => r.author_id),
+        ]),
+      ];
+      const channelIds = [
+        ...new Set([...videoRows.map(r => r.channel_id), ...postRows.map(r => r.channel_id)]),
+      ];
 
       let emailMap: Record<string, string> = {};
       if (userIds.length > 0) {
@@ -116,34 +130,48 @@ export default function PendingChannelsScreen() {
         }
       }
 
-      setChannels(channelRows.map(r => ({
-        ...r,
-        owner_email: emailMap[r.owner_id] ?? null,
-      })));
+      setChannels(
+        channelRows.map(r => ({
+          ...r,
+          owner_email: emailMap[r.owner_id] ?? null,
+        })),
+      );
 
-      setVideos(videoRows.map(r => ({
-        ...r,
-        channel_name: channelNameMap[r.channel_id] ?? null,
-        owner_email: emailMap[r.uploaded_by] ?? null,
-      })));
+      setVideos(
+        videoRows.map(r => ({
+          ...r,
+          channel_name: channelNameMap[r.channel_id] ?? null,
+          owner_email: emailMap[r.uploaded_by] ?? null,
+        })),
+      );
 
-      setPosts(postRows.map(r => ({
-        ...r,
-        channel_name: channelNameMap[r.channel_id] ?? null,
-        author_email: emailMap[r.author_id] ?? null,
-      })));
+      setPosts(
+        postRows.map(r => ({
+          ...r,
+          channel_name: channelNameMap[r.channel_id] ?? null,
+          author_email: emailMap[r.author_id] ?? null,
+        })),
+      );
     } catch (err) {
       if (__DEV__) console.error('loadPending error:', err);
       // A moderation queue that renders "nothing here" after a failed
       // fetch is worse than one that errors: the admin concludes there is
       // nothing to review and stops checking, while the queue fills up.
-      showAlert('Could not load pending channels', err instanceof Error ? err.message : 'Check your connection and try again.');
+      showAlert(
+        'Could not load pending channels',
+        err instanceof Error ? err.message : 'Check your connection and try again.',
+      );
     } finally {
       setLoading(false);
     }
   }, [isAdmin]);
 
-  useFocusEffect(useCallback(() => { setLoading(true); loadPending(); }, [loadPending]));
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      loadPending();
+    }, [loadPending]),
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -151,54 +179,51 @@ export default function PendingChannelsScreen() {
     setRefreshing(false);
   }, [loadPending]);
 
-/**
- * Set a channel's status, preferring the audited v64 RPC.
- *
- * admin_set_channel_status() re-checks admin standing server-side and writes
- * an admin_audit_log row, so "who published this channel, and when" has an
- * answer. It ships in migration v64.
- *
- * Until v64 is applied, PostgREST answers PGRST202 ("Could not find the
- * function") and we fall back to the direct UPDATE this screen used before.
- * Security is unchanged either way — v60's protect_channel_privileged_fields
- * trigger reverts a status write from anyone who is not an active admin. What
- * the fallback loses is the audit row, which is why it is a fallback.
- *
- * Delete this helper's fallback branch once v64 is deployed everywhere.
- */
-async function setChannelStatus(channelId: string, status: 'active' | 'rejected') {
-  const rpc = await supabase.rpc('admin_set_channel_status', {
-    p_channel_id: channelId,
-    p_status: status,
-    p_reason: null,
-  });
+  /**
+   * Set a channel's status, preferring the audited v64 RPC.
+   *
+   * admin_set_channel_status() re-checks admin standing server-side and writes
+   * an admin_audit_log row, so "who published this channel, and when" has an
+   * answer. It ships in migration v64.
+   *
+   * Until v64 is applied, PostgREST answers PGRST202 ("Could not find the
+   * function") and we fall back to the direct UPDATE this screen used before.
+   * Security is unchanged either way — v60's protect_channel_privileged_fields
+   * trigger reverts a status write from anyone who is not an active admin. What
+   * the fallback loses is the audit row, which is why it is a fallback.
+   *
+   * Delete this helper's fallback branch once v64 is deployed everywhere.
+   */
+  async function setChannelStatus(channelId: string, status: 'active' | 'rejected') {
+    const rpc = await supabase.rpc('admin_set_channel_status', {
+      p_channel_id: channelId,
+      p_status: status,
+      p_reason: null,
+    });
 
-  const missing =
-    rpc.error &&
-    (rpc.error.code === 'PGRST202' || /could not find the function/i.test(rpc.error.message));
+    const missing =
+      rpc.error &&
+      (rpc.error.code === 'PGRST202' || /could not find the function/i.test(rpc.error.message));
 
-  if (!missing) return { error: rpc.error };
+    if (!missing) return { error: rpc.error };
 
-  const { error } = await supabase
-    .from('channels')
-    .update({ status })
-    .eq('id', channelId);
+    const { error } = await supabase.from('channels').update({ status }).eq('id', channelId);
 
-  // 23514 is the CHECK violation on channels.status. Pre-v64 the constraint
-  // is (pending, active, suspended) with no 'rejected', so rejecting cannot
-  // work at all until the migration lands. Say that, rather than surfacing a
-  // raw Postgres constraint string to an admin who cannot act on it.
-  if (error && error.code === '23514') {
-    return {
-      error: {
-        ...error,
-        message:
-          'Rejecting needs database migration v64. Run "npx supabase db push" — approving works without it.',
-      },
-    };
+    // 23514 is the CHECK violation on channels.status. Pre-v64 the constraint
+    // is (pending, active, suspended) with no 'rejected', so rejecting cannot
+    // work at all until the migration lands. Say that, rather than surfacing a
+    // raw Postgres constraint string to an admin who cannot act on it.
+    if (error && error.code === '23514') {
+      return {
+        error: {
+          ...error,
+          message:
+            'Rejecting needs database migration v64. Run "npx supabase db push" — approving works without it.',
+        },
+      };
+    }
+    return { error };
   }
-  return { error };
-}
 
   const handleApproveChannel = async (channel: PendingChannel) => {
     try {
@@ -214,28 +239,25 @@ async function setChannelStatus(channelId: string, status: 'active' | 'rejected'
   };
 
   const handleRejectChannel = (channel: PendingChannel) => {
-    showAlert(
-      'Reject Channel',
-      `Are you sure? This will mark "${channel.name}" as rejected.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Reject', style: 'destructive',
-          onPress: async () => {
-            try {
-              const { error } = await setChannelStatus(channel.id, 'rejected');
-              if (error) throw error;
-              setChannels(prev => prev.filter(c => c.id !== channel.id));
-              fireHaptic('warning');
-              showAlert('Rejected', `"${channel.name}" has been rejected.`);
-            } catch (err: unknown) {
-              fireHaptic('error');
-              showAlert('Error', err instanceof Error ? err.message : 'Reject failed');
-            }
-          },
+    showAlert('Reject Channel', `Are you sure? This will mark "${channel.name}" as rejected.`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Reject',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const { error } = await setChannelStatus(channel.id, 'rejected');
+            if (error) throw error;
+            setChannels(prev => prev.filter(c => c.id !== channel.id));
+            fireHaptic('warning');
+            showAlert('Rejected', `"${channel.name}" has been rejected.`);
+          } catch (err: unknown) {
+            fireHaptic('error');
+            showAlert('Error', err instanceof Error ? err.message : 'Reject failed');
+          }
         },
-      ],
-    );
+      },
+    ]);
   };
 
   const handlePlayVideo = async (video: PendingVideo) => {
@@ -272,35 +294,32 @@ async function setChannelStatus(channelId: string, status: 'active' | 'rejected'
   };
 
   const handleRejectVideo = (video: PendingVideo) => {
-    showAlert(
-      'Reject Video',
-      `Reject "${video.title ?? 'Untitled'}"? Enter a reason if needed.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Reject', style: 'destructive',
-          onPress: async () => {
-            try {
-              const { error } = await supabase
-                .from('channel_videos')
-                .update({
-                  status: 'rejected',
-                  rejection_reason: 'Rejected by admin',
-                  updated_at: new Date().toISOString(),
-                })
-                .eq('id', video.id);
-              if (error) throw error;
-              setVideos(prev => prev.filter(v => v.id !== video.id));
-              fireHaptic('warning');
-              showAlert('Rejected', 'Video has been rejected.');
-            } catch (err: unknown) {
-              fireHaptic('error');
-              showAlert('Error', err instanceof Error ? err.message : 'Reject failed');
-            }
-          },
+    showAlert('Reject Video', `Reject "${video.title ?? 'Untitled'}"? Enter a reason if needed.`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Reject',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const { error } = await supabase
+              .from('channel_videos')
+              .update({
+                status: 'rejected',
+                rejection_reason: 'Rejected by admin',
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', video.id);
+            if (error) throw error;
+            setVideos(prev => prev.filter(v => v.id !== video.id));
+            fireHaptic('warning');
+            showAlert('Rejected', 'Video has been rejected.');
+          } catch (err: unknown) {
+            fireHaptic('error');
+            showAlert('Error', err instanceof Error ? err.message : 'Reject failed');
+          }
         },
-      ],
-    );
+      },
+    ]);
   };
 
   const handlePlayPost = async (post: PendingPost) => {
@@ -330,41 +349,41 @@ async function setChannelStatus(channelId: string, status: 'active' | 'rejected'
   };
 
   const handleRejectPost = (post: PendingPost) => {
-    showAlert(
-      'Reject Post',
-      `Reject "${post.title ?? 'Untitled'}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Reject', style: 'destructive',
-          onPress: async () => {
-            try {
-              const { error } = await supabase.rpc('reject_post', {
-                p_post_id: post.id,
-                p_reason: 'Rejected by admin',
-              });
-              if (error) throw error;
-              setPosts(prev => prev.filter(p => p.id !== post.id));
-              fireHaptic('warning');
-              showAlert('Rejected', 'Post has been rejected.');
-            } catch (err: unknown) {
-              fireHaptic('error');
-              showAlert('Error', err instanceof Error ? err.message : 'Reject failed');
-            }
-          },
+    showAlert('Reject Post', `Reject "${post.title ?? 'Untitled'}"?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Reject',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const { error } = await supabase.rpc('reject_post', {
+              p_post_id: post.id,
+              p_reason: 'Rejected by admin',
+            });
+            if (error) throw error;
+            setPosts(prev => prev.filter(p => p.id !== post.id));
+            fireHaptic('warning');
+            showAlert('Rejected', 'Post has been rejected.');
+          } catch (err: unknown) {
+            fireHaptic('error');
+            showAlert('Error', err instanceof Error ? err.message : 'Reject failed');
+          }
         },
-      ],
-    );
+      },
+    ]);
   };
 
   if (!isAdmin) {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.replace('/(tabs)/profile')} style={styles.headerBack} activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
+          <TouchableOpacity
+            onPress={() => router.replace('/(tabs)/profile')}
+            style={styles.headerBack}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
             <Text style={styles.headerBackTxt}>{'‹'}</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Admin Queue</Text>
@@ -380,7 +399,10 @@ async function setChannelStatus(channelId: string, status: 'active' | 'rejected'
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.replace('/(tabs)/profile')} style={styles.headerBack} activeOpacity={0.7}
+        <TouchableOpacity
+          onPress={() => router.replace('/(tabs)/profile')}
+          style={styles.headerBack}
+          activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
@@ -396,7 +418,13 @@ async function setChannelStatus(channelId: string, status: 'active' | 'rejected'
         <ScrollView
           style={{ flex: 1 }}
           contentContainerStyle={styles.list}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.brand} />}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={Colors.brand}
+            />
+          }
         >
           {/* Section 1: Pending Channels */}
           <View style={styles.sectionHeader}>
@@ -414,19 +442,32 @@ async function setChannelStatus(channelId: string, status: 'active' | 'rejected'
             channels.map(channel => (
               <View key={channel.id} style={styles.row}>
                 <View style={styles.rowInfo}>
-                  <Text style={styles.rowName} numberOfLines={1}>{channel.name}</Text>
+                  <Text style={styles.rowName} numberOfLines={1}>
+                    {channel.name}
+                  </Text>
                   <Text style={styles.rowMeta} numberOfLines={1}>
-                    {channel.owner_email ?? 'Unknown'} · {new Date(channel.created_at).toLocaleDateString()}
+                    {channel.owner_email ?? 'Unknown'} ·{' '}
+                    {new Date(channel.created_at).toLocaleDateString()}
                   </Text>
                   {channel.description ? (
-                    <Text style={styles.rowDesc} numberOfLines={2}>{channel.description}</Text>
+                    <Text style={styles.rowDesc} numberOfLines={2}>
+                      {channel.description}
+                    </Text>
                   ) : null}
                 </View>
                 <View style={styles.rowActions}>
-                  <TouchableOpacity style={styles.approveBtn} onPress={() => handleApproveChannel(channel)} activeOpacity={0.7}>
+                  <TouchableOpacity
+                    style={styles.approveBtn}
+                    onPress={() => handleApproveChannel(channel)}
+                    activeOpacity={0.7}
+                  >
                     <Text style={styles.approveBtnText}>Approve</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.rejectBtn} onPress={() => handleRejectChannel(channel)} activeOpacity={0.7}>
+                  <TouchableOpacity
+                    style={styles.rejectBtn}
+                    onPress={() => handleRejectChannel(channel)}
+                    activeOpacity={0.7}
+                  >
                     <Text style={styles.rejectBtnText}>Reject</Text>
                   </TouchableOpacity>
                 </View>
@@ -450,22 +491,38 @@ async function setChannelStatus(channelId: string, status: 'active' | 'rejected'
             videos.map(video => (
               <View key={video.id} style={styles.row}>
                 <View style={styles.rowInfo}>
-                  <Text style={styles.rowName} numberOfLines={1}>{video.title ?? 'Untitled video'}</Text>
+                  <Text style={styles.rowName} numberOfLines={1}>
+                    {video.title ?? 'Untitled video'}
+                  </Text>
                   <Text style={styles.rowMeta} numberOfLines={1}>
                     {video.channel_name ?? 'Unknown channel'} · {video.owner_email ?? 'Unknown'}
                   </Text>
                   <Text style={styles.rowMeta}>
-                    {formatFileSize(video.file_size_bytes ?? 0)} · {formatDuration(video.duration_seconds)} · {new Date(video.created_at).toLocaleDateString()}
+                    {formatFileSize(video.file_size_bytes ?? 0)} ·{' '}
+                    {formatDuration(video.duration_seconds)} ·{' '}
+                    {new Date(video.created_at).toLocaleDateString()}
                   </Text>
                 </View>
                 <View style={styles.rowActions}>
-                  <TouchableOpacity style={styles.playBtn} onPress={() => handlePlayVideo(video)} activeOpacity={0.7}>
+                  <TouchableOpacity
+                    style={styles.playBtn}
+                    onPress={() => handlePlayVideo(video)}
+                    activeOpacity={0.7}
+                  >
                     <Text style={styles.playBtnText}>Play</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.approveBtn} onPress={() => handleApproveVideo(video)} activeOpacity={0.7}>
+                  <TouchableOpacity
+                    style={styles.approveBtn}
+                    onPress={() => handleApproveVideo(video)}
+                    activeOpacity={0.7}
+                  >
                     <Text style={styles.approveBtnText}>Approve</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.rejectBtn} onPress={() => handleRejectVideo(video)} activeOpacity={0.7}>
+                  <TouchableOpacity
+                    style={styles.rejectBtn}
+                    onPress={() => handleRejectVideo(video)}
+                    activeOpacity={0.7}
+                  >
                     <Text style={styles.rejectBtnText}>Reject</Text>
                   </TouchableOpacity>
                 </View>
@@ -489,8 +546,12 @@ async function setChannelStatus(channelId: string, status: 'active' | 'rejected'
             posts.map(post => (
               <View key={post.id} style={styles.row}>
                 <View style={styles.rowInfo}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                    <Text style={styles.rowName} numberOfLines={1}>{post.title ?? 'Untitled'}</Text>
+                  <View
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 }}
+                  >
+                    <Text style={styles.rowName} numberOfLines={1}>
+                      {post.title ?? 'Untitled'}
+                    </Text>
                     {post.content_type && (
                       <View style={styles.typeBadge}>
                         <Text style={styles.typeBadgeText}>{post.content_type.toUpperCase()}</Text>
@@ -506,14 +567,26 @@ async function setChannelStatus(channelId: string, status: 'active' | 'rejected'
                 </View>
                 <View style={styles.rowActions}>
                   {post.video_url && (
-                    <TouchableOpacity style={styles.playBtn} onPress={() => handlePlayPost(post)} activeOpacity={0.7}>
+                    <TouchableOpacity
+                      style={styles.playBtn}
+                      onPress={() => handlePlayPost(post)}
+                      activeOpacity={0.7}
+                    >
                       <Text style={styles.playBtnText}>Play</Text>
                     </TouchableOpacity>
                   )}
-                  <TouchableOpacity style={styles.approveBtn} onPress={() => handleApprovePost(post)} activeOpacity={0.7}>
+                  <TouchableOpacity
+                    style={styles.approveBtn}
+                    onPress={() => handleApprovePost(post)}
+                    activeOpacity={0.7}
+                  >
                     <Text style={styles.approveBtnText}>Approve</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.rejectBtn} onPress={() => handleRejectPost(post)} activeOpacity={0.7}>
+                  <TouchableOpacity
+                    style={styles.rejectBtn}
+                    onPress={() => handleRejectPost(post)}
+                    activeOpacity={0.7}
+                  >
                     <Text style={styles.rejectBtnText}>Reject</Text>
                   </TouchableOpacity>
                 </View>
@@ -530,30 +603,91 @@ async function setChannelStatus(channelId: string, status: 'active' | 'rejected'
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
-  header: { backgroundColor: Colors.surface, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14 },
+  header: {
+    backgroundColor: Colors.surface,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
   headerBack: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   headerBackTxt: { color: '#ffffff', fontSize: 28, fontWeight: '700', lineHeight: 28 },
   headerTitle: { color: '#ffffff', fontSize: 18, fontWeight: '800' },
   list: { paddingVertical: 8 },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: Colors.border },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.border,
+  },
   sectionTitle: { fontSize: 16, fontWeight: '800', color: Colors.text },
-  countBadge: { backgroundColor: '#FFB347', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 12 },
+  countBadge: {
+    backgroundColor: '#FFB347',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+  },
   countBadgeText: { fontSize: 11, fontWeight: '800', color: '#ffffff' },
-  sectionEmpty: { fontSize: 13, color: Colors.textMuted, fontWeight: '500', paddingHorizontal: 16, paddingVertical: 16 },
-  row: { paddingVertical: 14, paddingHorizontal: 16, borderBottomWidth: 0.5, borderBottomColor: Colors.border },
+  sectionEmpty: {
+    fontSize: 13,
+    color: Colors.textMuted,
+    fontWeight: '500',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+  },
+  row: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.border,
+  },
   rowInfo: { marginBottom: 10 },
   rowName: { fontSize: 15, fontWeight: '700', color: Colors.text, marginBottom: 2 },
   rowMeta: { fontSize: 12, color: Colors.textMuted, fontWeight: '500', marginBottom: 2 },
   rowDesc: { fontSize: 12, color: Colors.textSecondary, lineHeight: 16 },
   rowActions: { flexDirection: 'row', gap: 10 },
-  playBtn: { backgroundColor: '#2563eb', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
+  playBtn: {
+    backgroundColor: '#2563eb',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
   playBtnText: { color: '#ffffff', fontSize: 13, fontWeight: '800' },
-  approveBtn: { backgroundColor: '#2ED47A', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
+  approveBtn: {
+    backgroundColor: '#2ED47A',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
   approveBtnText: { color: '#ffffff', fontSize: 13, fontWeight: '800' },
-  rejectBtn: { backgroundColor: '#2A1620', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: Colors.brand },
+  rejectBtn: {
+    backgroundColor: '#2A1620',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.brand,
+  },
   rejectBtnText: { color: Colors.brand, fontSize: 13, fontWeight: '700' },
-  typeBadge: { backgroundColor: Colors.brandLight, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
+  typeBadge: {
+    backgroundColor: Colors.brandLight,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
   typeBadgeText: { fontSize: 11, fontWeight: '800', color: Colors.brand, letterSpacing: 0.3 },
-  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80, paddingHorizontal: 20 },
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 80,
+    paddingHorizontal: 20,
+  },
   emptyText: { fontSize: 16, color: Colors.text, fontWeight: '600' },
 });

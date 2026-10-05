@@ -5,14 +5,10 @@ import { AppState, Platform } from 'react-native';
 
 // ── Credentials from environment ─────────────────────────────
 const supabaseUrl =
-  Constants.expoConfig?.extra?.supabaseUrl ??
-  process.env.EXPO_PUBLIC_SUPABASE_URL ??
-  '';
+  Constants.expoConfig?.extra?.supabaseUrl ?? process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
 
 const supabaseAnonKey =
-  Constants.expoConfig?.extra?.supabaseAnonKey ??
-  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ??
-  '';
+  Constants.expoConfig?.extra?.supabaseAnonKey ?? process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
 
 // Fail loudly, at launch, if the build has no backend credentials.
 //
@@ -36,8 +32,8 @@ const supabaseAnonKey =
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error(
     'Cloudlynk is not configured: EXPO_PUBLIC_SUPABASE_URL / ' +
-    'EXPO_PUBLIC_SUPABASE_ANON_KEY were empty when this bundle was built. ' +
-    'The bundler could not see them -- see DEPLOY.md 1.2.'
+      'EXPO_PUBLIC_SUPABASE_ANON_KEY were empty when this bundle was built. ' +
+      'The bundler could not see them -- see DEPLOY.md 1.2.',
   );
 }
 
@@ -104,8 +100,14 @@ const getStorageAdapter = () => {
     const mem: Record<string, string> = {};
     return {
       getItem: (key: string) => Promise.resolve(mem[key] ?? null),
-      setItem: (key: string, value: string) => { mem[key] = value; return Promise.resolve(); },
-      removeItem: (key: string) => { delete mem[key]; return Promise.resolve(); },
+      setItem: (key: string, value: string) => {
+        mem[key] = value;
+        return Promise.resolve();
+      },
+      removeItem: (key: string) => {
+        delete mem[key];
+        return Promise.resolve();
+      },
     };
   }
 };
@@ -134,7 +136,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 // insert — hangs forever with no network request ever firing.
 // Driving start/stop from AppState is the fix Supabase mandates for RN.
 if (Platform.OS !== 'web') {
-  AppState.addEventListener('change', (state) => {
+  AppState.addEventListener('change', state => {
     if (state === 'active') {
       supabase.auth.startAutoRefresh();
     } else {
@@ -149,7 +151,6 @@ if (Platform.OS !== 'web') {
 export type Database = {
   public: {
     Tables: {
-
       profiles: {
         Row: {
           id: string;
@@ -195,7 +196,18 @@ export type Database = {
         // The omitted columns are all DB- or trigger-managed and rejected on a
         // client write by protect_profile_privileged_fields() — including the
         // v55 approval_* set, which only admin_set_user_approval() may move.
-        Insert: Omit<Database['public']['Tables']['profiles']['Row'], 'created_at' | 'updated_at' | 'role' | 'can_upload_content' | 'creator_status' | 'approval_status' | 'approval_reviewed_by' | 'approval_reviewed_at' | 'approval_note'>;
+        Insert: Omit<
+          Database['public']['Tables']['profiles']['Row'],
+          | 'created_at'
+          | 'updated_at'
+          | 'role'
+          | 'can_upload_content'
+          | 'creator_status'
+          | 'approval_status'
+          | 'approval_reviewed_by'
+          | 'approval_reviewed_at'
+          | 'approval_note'
+        >;
         Update: Partial<Database['public']['Tables']['profiles']['Insert']>;
       };
 
@@ -237,7 +249,10 @@ export type Database = {
           category: string | null;
           is_official: boolean;
         };
-        Insert: Omit<Database['public']['Tables']['channels']['Row'], 'id' | 'member_count' | 'post_count' | 'media_size' | 'created_at' | 'is_official'>;
+        Insert: Omit<
+          Database['public']['Tables']['channels']['Row'],
+          'id' | 'member_count' | 'post_count' | 'media_size' | 'created_at' | 'is_official'
+        >;
         Update: Partial<Database['public']['Tables']['channels']['Insert']>;
       };
 
@@ -347,7 +362,6 @@ export type Database = {
         Insert: Omit<Database['public']['Tables']['series']['Row'], 'id' | 'created_at'>;
         Update: Partial<Database['public']['Tables']['series']['Insert']>;
       };
-
     };
   };
 };

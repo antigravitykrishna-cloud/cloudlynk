@@ -11,7 +11,7 @@ let sharedUnread = 0;
 const unreadListeners = new Set<(n: number) => void>();
 function setSharedUnread(n: number) {
   sharedUnread = Math.max(0, n);
-  unreadListeners.forEach((l) => l(sharedUnread));
+  unreadListeners.forEach(l => l(sharedUnread));
 }
 
 export function useNotifications(userId: string | undefined) {
@@ -31,7 +31,9 @@ export function useNotifications(userId: string | undefined) {
     const listener = (n: number) => setUnreadCount(n);
     unreadListeners.add(listener);
     setUnreadCount(sharedUnread);
-    return () => { unreadListeners.delete(listener); };
+    return () => {
+      unreadListeners.delete(listener);
+    };
   }, []);
 
   const fetchAll = useCallback(async () => {
@@ -70,7 +72,7 @@ export function useNotifications(userId: string | undefined) {
         () => {
           // A new notification arrived — re-fetch the full list to stay consistent
           fetchAll();
-        }
+        },
       )
       .subscribe();
 
@@ -81,7 +83,7 @@ export function useNotifications(userId: string | undefined) {
 
   const markAsRead = useCallback(async (id: string) => {
     await NotificationService.markAsRead(id);
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    setNotifications(prev => prev.map(n => (n.id === id ? { ...n, read: true } : n)));
     setSharedUnread(sharedUnread - 1);
   }, []);
 

@@ -49,7 +49,10 @@ export function useResumePosition(
         // Threshold is duration-relative: 30s cap, or 30% of duration, whichever is smaller.
         // For 32s video: threshold = 9.6s (overlay fires at 10s+).
         // For 5min+ video: threshold = 30s (original behavior preserved).
-        const threshold = dur > 0 ? Math.min(RESUME_THRESHOLD_CAP_SECONDS, dur * 0.3) : RESUME_THRESHOLD_CAP_SECONDS;
+        const threshold =
+          dur > 0
+            ? Math.min(RESUME_THRESHOLD_CAP_SECONDS, dur * 0.3)
+            : RESUME_THRESHOLD_CAP_SECONDS;
         if (pos < threshold) return;
         if (dur > 0 && pos >= dur * 0.9) return;
         if (age > RESUME_MAX_AGE_MS) return;
@@ -62,7 +65,9 @@ export function useResumePosition(
       }
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [userId, postId]);
 
   const dismiss = useCallback(() => setShowOverlay(false), []);

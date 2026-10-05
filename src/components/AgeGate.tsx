@@ -40,11 +40,17 @@ export function AgeGate({ enabled }: { enabled: boolean }) {
   useEffect(() => {
     let cancelled = false;
     AsyncStorage.getItem(STORAGE_KEY)
-      .then(v => { if (!cancelled) setConfirmed(v === 'true'); })
+      .then(v => {
+        if (!cancelled) setConfirmed(v === 'true');
+      })
       // A storage failure must not lock anyone out of the app. Treat it as
       // "not yet confirmed" and ask again; the cost is one extra tap.
-      .catch(() => { if (!cancelled) setConfirmed(false); });
-    return () => { cancelled = true; };
+      .catch(() => {
+        if (!cancelled) setConfirmed(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const accept = async () => {
@@ -66,8 +72,8 @@ export function AgeGate({ enabled }: { enabled: boolean }) {
             <>
               <Text style={styles.title}>You need to be 18 or older</Text>
               <Text style={styles.body}>
-                Cloudlynk hosts content intended for adults, so we can&apos;t let
-                you browse. Thanks for being honest.
+                Cloudlynk hosts content intended for adults, so we can&apos;t let you browse. Thanks
+                for being honest.
               </Text>
               <TouchableOpacity
                 style={styles.ghostBtn}
@@ -81,8 +87,8 @@ export function AgeGate({ enabled }: { enabled: boolean }) {
             <>
               <Text style={styles.title}>Please confirm your age</Text>
               <Text style={styles.body}>
-                Cloudlynk is an 18+ platform and may contain content intended for
-                adults. Confirm your age to continue.
+                Cloudlynk is an 18+ platform and may contain content intended for adults. Confirm
+                your age to continue.
               </Text>
 
               <TouchableOpacity style={styles.primaryBtn} onPress={accept} activeOpacity={0.85}>
@@ -111,8 +117,8 @@ export function AgeGate({ enabled }: { enabled: boolean }) {
                   onPress={() => Linking.openURL(config.communityGuidelinesUrl).catch(() => {})}
                 >
                   Community Guidelines
-                </Text>
-                {' '}and{' '}
+                </Text>{' '}
+                and{' '}
                 <Text
                   style={styles.link}
                   onPress={() => Linking.openURL(config.privacyPolicyUrl).catch(() => {})}
@@ -131,37 +137,56 @@ export function AgeGate({ enabled }: { enabled: boolean }) {
 
 const styles = StyleSheet.create({
   backdrop: {
-    flex: 1, backgroundColor: 'rgba(4, 8, 16, 0.88)',
+    flex: 1,
+    backgroundColor: 'rgba(4, 8, 16, 0.88)',
     justifyContent: 'flex-end',
   },
   sheet: {
     backgroundColor: Colors.surface,
-    borderTopLeftRadius: Radius.xxl, borderTopRightRadius: Radius.xxl,
-    padding: Spacing.xxl, paddingBottom: Spacing.xxxl,
-    borderTopWidth: 1, borderColor: Colors.border,
+    borderTopLeftRadius: Radius.xxl,
+    borderTopRightRadius: Radius.xxl,
+    padding: Spacing.xxl,
+    paddingBottom: Spacing.xxxl,
+    borderTopWidth: 1,
+    borderColor: Colors.border,
   },
   title: {
-    color: Colors.text, fontSize: FontSize.xxl, fontWeight: FontWeight.bold,
-    textAlign: 'center', marginBottom: Spacing.md,
+    color: Colors.text,
+    fontSize: FontSize.xxl,
+    fontWeight: FontWeight.bold,
+    textAlign: 'center',
+    marginBottom: Spacing.md,
   },
   body: {
-    color: Colors.textSecondary, fontSize: FontSize.lg, lineHeight: 22,
-    textAlign: 'center', marginBottom: Spacing.xxl,
+    color: Colors.textSecondary,
+    fontSize: FontSize.lg,
+    lineHeight: 22,
+    textAlign: 'center',
+    marginBottom: Spacing.xxl,
   },
   primaryBtn: {
-    backgroundColor: Colors.brandBlue, borderRadius: Radius.full,
-    paddingVertical: Spacing.lg, alignItems: 'center', marginBottom: Spacing.md,
+    backgroundColor: Colors.brandBlue,
+    borderRadius: Radius.full,
+    paddingVertical: Spacing.lg,
+    alignItems: 'center',
+    marginBottom: Spacing.md,
   },
   primaryTxt: { color: Colors.textInverse, fontSize: FontSize.lg, fontWeight: FontWeight.bold },
   ghostBtn: {
-    backgroundColor: Colors.surfaceElevated, borderRadius: Radius.full,
-    paddingVertical: Spacing.lg, alignItems: 'center',
-    borderWidth: 1, borderColor: Colors.border,
+    backgroundColor: Colors.surfaceElevated,
+    borderRadius: Radius.full,
+    paddingVertical: Spacing.lg,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   ghostTxt: { color: Colors.textSecondary, fontSize: FontSize.lg, fontWeight: FontWeight.semibold },
   legal: {
-    color: Colors.textMuted, fontSize: FontSize.sm, lineHeight: 18,
-    textAlign: 'center', marginTop: Spacing.xl,
+    color: Colors.textMuted,
+    fontSize: FontSize.sm,
+    lineHeight: 18,
+    textAlign: 'center',
+    marginTop: Spacing.xl,
   },
   link: { color: Colors.accent, fontWeight: FontWeight.semibold },
 });

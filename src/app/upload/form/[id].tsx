@@ -6,7 +6,19 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Modal, Image } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Modal,
+  Image,
+} from 'react-native';
 import { showAlert } from '../../../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -17,10 +29,10 @@ import { PostService, ContentType, GENRES } from '../../../lib/posts';
 import { Icon, type IconName } from '../../../components/Icon';
 
 const CONTENT_TYPES: { id: ContentType; label: string; icon: IconName }[] = [
-  { id: 'movie',  label: 'Movie',      icon: 'film' },
+  { id: 'movie', label: 'Movie', icon: 'film' },
   { id: 'series', label: 'Web Series', icon: 'tv' },
-  { id: 'short',  label: 'Short Film', icon: 'video' },
-  { id: 'post',   label: 'Post',       icon: 'document' },
+  { id: 'short', label: 'Short Film', icon: 'video' },
+  { id: 'post', label: 'Post', icon: 'document' },
 ];
 
 export default function FormScreen() {
@@ -80,7 +92,20 @@ export default function FormScreen() {
     } finally {
       setSaving(false);
     }
-  }, [id, title, body, contentType, genre, durationMin, seasonNo, episodeNo, episodeTitle, releaseYear, thumbnailUri, updateItem]);
+  }, [
+    id,
+    title,
+    body,
+    contentType,
+    genre,
+    durationMin,
+    seasonNo,
+    episodeNo,
+    episodeTitle,
+    releaseYear,
+    thumbnailUri,
+    updateItem,
+  ]);
 
   const handleSaveAndNext = useCallback(async () => {
     await handleSave();
@@ -121,10 +146,12 @@ export default function FormScreen() {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
             <Text style={styles.backTxt}>{'< Back'}</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Edit Item</Text>
@@ -132,7 +159,10 @@ export default function FormScreen() {
         </View>
         <View style={styles.notFound}>
           <Text style={styles.notFoundText}>Item not found in queue.</Text>
-          <TouchableOpacity onPress={() => router.replace('/upload/queue')} style={styles.notFoundBtn}>
+          <TouchableOpacity
+            onPress={() => router.replace('/upload/queue')}
+            style={styles.notFoundBtn}
+          >
             <Text style={styles.notFoundBtnTxt}>Back to Queue</Text>
           </TouchableOpacity>
         </View>
@@ -143,28 +173,45 @@ export default function FormScreen() {
   return (
     <>
       <SafeAreaView style={styles.safe} edges={['top']}>
-        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={styles.backBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+            >
               <Text style={styles.backTxt}>{'< Back'}</Text>
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Edit Details</Text>
             <TouchableOpacity onPress={handleSaveAndNext} style={styles.saveBtn} disabled={saving}>
-              {saving ? <ActivityIndicator color="#ffffff" size="small" /> : <Text style={styles.saveBtnTxt}>Save & next</Text>}
+              {saving ? (
+                <ActivityIndicator color="#ffffff" size="small" />
+              ) : (
+                <Text style={styles.saveBtnTxt}>Save & next</Text>
+              )}
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.body} keyboardShouldPersistTaps="handled" keyboardDismissMode="none">
+          <ScrollView
+            style={styles.body}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="none"
+          >
             {/* Video info */}
             <View style={styles.videoInfo}>
               <Icon name="film" size={16} color={Colors.textMuted} />
               <View style={styles.videoMeta}>
-                <Text style={styles.videoName} numberOfLines={1}>{item.video.name}</Text>
-                <Text style={styles.videoSize}>{(item.video.size / (1024 * 1024)).toFixed(0)} MB</Text>
+                <Text style={styles.videoName} numberOfLines={1}>
+                  {item.video.name}
+                </Text>
+                <Text style={styles.videoSize}>
+                  {(item.video.size / (1024 * 1024)).toFixed(0)} MB
+                </Text>
               </View>
             </View>
 
@@ -178,16 +225,28 @@ export default function FormScreen() {
                   onPress={() => setContentType(ct.id)}
                 >
                   <Icon name={ct.icon} size={16} color={Colors.textSecondary} />
-                  <Text style={[styles.typeChipTxt, contentType === ct.id && { color: Colors.brand }]}>{ct.label}</Text>
+                  <Text
+                    style={[styles.typeChipTxt, contentType === ct.id && { color: Colors.brand }]}
+                  >
+                    {ct.label}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
 
             {/* Thumbnail */}
             <Text style={styles.label}>THUMBNAIL</Text>
-            <TouchableOpacity style={styles.thumbPicker} onPress={handlePickThumbnail} disabled={picking}>
+            <TouchableOpacity
+              style={styles.thumbPicker}
+              onPress={handlePickThumbnail}
+              disabled={picking}
+            >
               {thumbnailUri ? (
-                <Image source={{ uri: thumbnailUri }} style={styles.thumbPreview} resizeMode="cover" />
+                <Image
+                  source={{ uri: thumbnailUri }}
+                  style={styles.thumbPreview}
+                  resizeMode="cover"
+                />
               ) : (
                 <View style={styles.thumbEmpty}>
                   <Icon name="image" size={16} color={Colors.textMuted} />
@@ -221,7 +280,10 @@ export default function FormScreen() {
 
             {/* Genre */}
             <Text style={styles.label}>GENRE</Text>
-            <TouchableOpacity style={[styles.input, { justifyContent: 'center' }]} onPress={() => setShowGenrePicker(true)}>
+            <TouchableOpacity
+              style={[styles.input, { justifyContent: 'center' }]}
+              onPress={() => setShowGenrePicker(true)}
+            >
               <Text style={{ color: genre ? Colors.text : Colors.textMuted, fontSize: 14 }}>
                 {genre || 'Select genre'}
               </Text>
@@ -262,19 +324,39 @@ export default function FormScreen() {
                 <View style={styles.rowInputs}>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.label}>SEASON</Text>
-                    <TextInput style={styles.input} value={seasonNo} onChangeText={setSeasonNo}
-                      placeholder="1" placeholderTextColor={Colors.textMuted} keyboardType="numeric" blurOnSubmit={false} />
+                    <TextInput
+                      style={styles.input}
+                      value={seasonNo}
+                      onChangeText={setSeasonNo}
+                      placeholder="1"
+                      placeholderTextColor={Colors.textMuted}
+                      keyboardType="numeric"
+                      blurOnSubmit={false}
+                    />
                   </View>
                   <View style={{ width: 10 }} />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.label}>EPISODE</Text>
-                    <TextInput style={styles.input} value={episodeNo} onChangeText={setEpisodeNo}
-                      placeholder="1" placeholderTextColor={Colors.textMuted} keyboardType="numeric" blurOnSubmit={false} />
+                    <TextInput
+                      style={styles.input}
+                      value={episodeNo}
+                      onChangeText={setEpisodeNo}
+                      placeholder="1"
+                      placeholderTextColor={Colors.textMuted}
+                      keyboardType="numeric"
+                      blurOnSubmit={false}
+                    />
                   </View>
                 </View>
                 <Text style={styles.label}>EPISODE TITLE</Text>
-                <TextInput style={styles.input} value={episodeTitle} onChangeText={setEpisodeTitle}
-                  placeholder="e.g. Pilot" placeholderTextColor={Colors.textMuted} blurOnSubmit={false} />
+                <TextInput
+                  style={styles.input}
+                  value={episodeTitle}
+                  onChangeText={setEpisodeTitle}
+                  placeholder="e.g. Pilot"
+                  placeholderTextColor={Colors.textMuted}
+                  blurOnSubmit={false}
+                />
               </>
             )}
 
@@ -284,7 +366,11 @@ export default function FormScreen() {
                 <Text style={styles.skipBtnTxt}>Skip for now</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.saveFullBtn} onPress={handleSave} disabled={saving}>
-                {saving ? <ActivityIndicator color="#ffffff" size="small" /> : <Text style={styles.saveFullBtnTxt}>Save</Text>}
+                {saving ? (
+                  <ActivityIndicator color="#ffffff" size="small" />
+                ) : (
+                  <Text style={styles.saveFullBtnTxt}>Save</Text>
+                )}
               </TouchableOpacity>
             </View>
 
@@ -294,14 +380,32 @@ export default function FormScreen() {
       </SafeAreaView>
 
       {/* Genre picker */}
-      <Modal visible={showGenrePicker} transparent animationType="slide" onRequestClose={() => setShowGenrePicker(false)}>
-        <TouchableOpacity style={styles.genreOverlay} activeOpacity={1} onPress={() => setShowGenrePicker(false)}>
+      <Modal
+        visible={showGenrePicker}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowGenrePicker(false)}
+      >
+        <TouchableOpacity
+          style={styles.genreOverlay}
+          activeOpacity={1}
+          onPress={() => setShowGenrePicker(false)}
+        >
           <View style={styles.genreSheet}>
             <Text style={styles.genreTitle}>Select Genre</Text>
             <ScrollView keyboardShouldPersistTaps="handled">
               {GENRES.map(g => (
-                <TouchableOpacity key={g} style={styles.genreRow} onPress={() => { setGenre(g); setShowGenrePicker(false); }}>
-                  <Text style={[styles.genreRowTxt, genre === g && { color: Colors.brand }]}>{g}</Text>
+                <TouchableOpacity
+                  key={g}
+                  style={styles.genreRow}
+                  onPress={() => {
+                    setGenre(g);
+                    setShowGenrePicker(false);
+                  }}
+                >
+                  <Text style={[styles.genreRowTxt, genre === g && { color: Colors.brand }]}>
+                    {g}
+                  </Text>
                   {genre === g && <Text style={{ color: Colors.brand, fontSize: 16 }}>{'✓'}</Text>}
                 </TouchableOpacity>
               ))}
@@ -332,12 +436,29 @@ const styles = StyleSheet.create({
   saveBtn: { width: 90, alignItems: 'flex-end' },
   saveBtnTxt: { color: '#ffffff', fontSize: 13, fontWeight: '800' },
   body: { flex: 1, padding: 16 },
-  videoInfo: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: Colors.surface, borderRadius: Radius.md, padding: 12, marginBottom: 16, borderWidth: 1, borderColor: Colors.border },
+  videoInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.md,
+    padding: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
   videoIcon: { fontSize: 28 },
   videoMeta: { flex: 1 },
   videoName: { fontSize: FontSize.base, fontWeight: '700', color: Colors.text },
   videoSize: { fontSize: FontSize.xs, color: Colors.textMuted, fontWeight: '600', marginTop: 2 },
-  label: { fontSize: 11, fontWeight: '800', color: Colors.textMuted, letterSpacing: 1.2, marginBottom: 6, marginTop: 14 },
+  label: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: Colors.textMuted,
+    letterSpacing: 1.2,
+    marginBottom: 6,
+    marginTop: 14,
+  },
   input: {
     backgroundColor: Colors.surface,
     borderRadius: Radius.sm,
@@ -404,10 +525,35 @@ const styles = StyleSheet.create({
   },
   notFoundBtnTxt: { color: '#ffffff', fontSize: 14, fontWeight: '800' },
   genreOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
-  genreSheet: { backgroundColor: Colors.bg, borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '60%', paddingTop: 20 },
-  genreTitle: { fontSize: 16, fontWeight: '900', color: Colors.text, textAlign: 'center', marginBottom: 16 },
-  genreRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingVertical: 14, borderBottomWidth: 0.5, borderBottomColor: Colors.border },
+  genreSheet: {
+    backgroundColor: Colors.bg,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '60%',
+    paddingTop: 20,
+  },
+  genreTitle: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: Colors.text,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  genreRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.border,
+  },
   genreRowTxt: { fontSize: 15, color: Colors.text, fontWeight: '600' },
-  genreCancel: { padding: 20, alignItems: 'center', borderTopWidth: 0.5, borderTopColor: Colors.border },
+  genreCancel: {
+    padding: 20,
+    alignItems: 'center',
+    borderTopWidth: 0.5,
+    borderTopColor: Colors.border,
+  },
   genreCancelTxt: { color: Colors.textMuted, fontWeight: '600', fontSize: 15 },
 });

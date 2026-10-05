@@ -34,12 +34,14 @@ export const FeedService = {
     // Get recent approved posts from those channels
     const { data: posts, error: pErr } = await supabase
       .from('channel_posts')
-      .select(`
+      .select(
+        `
         id, channel_id, author_id, title, body,
         media_url, media_type, created_at,
         author:profiles!channel_posts_author_id_fkey(full_name),
         channel:channels(name)
-      `)
+      `,
+      )
       .in('channel_id', channelIds)
       .eq('status', 'approved')
       .order('created_at', { ascending: false })

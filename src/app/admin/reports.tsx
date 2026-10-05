@@ -1,5 +1,13 @@
 import { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  TextInput,
+} from 'react-native';
 import { showAlert } from '../../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -46,7 +54,10 @@ export default function AdminReportsScreen() {
   const [reports, setReports] = useState<EnrichedReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [actingId, setActingId] = useState<string | null>(null);
-  const [pendingAction, setPendingAction] = useState<{ id: string; action: ModerationAction } | null>(null);
+  const [pendingAction, setPendingAction] = useState<{
+    id: string;
+    action: ModerationAction;
+  } | null>(null);
   const [note, setNote] = useState('');
 
   const load = useCallback(async () => {
@@ -54,7 +65,9 @@ export default function AdminReportsScreen() {
       const rows = await AdminModerationService.listPendingReports();
 
       const reporterIds = [...new Set(rows.map(r => r.reporter_id))];
-      const reportedIds = [...new Set(rows.map(r => r.reported_user_id).filter(Boolean))] as string[];
+      const reportedIds = [
+        ...new Set(rows.map(r => r.reported_user_id).filter(Boolean)),
+      ] as string[];
       const profileIds = [...new Set([...reporterIds, ...reportedIds])];
       const postIds = [...new Set(rows.map(r => r.post_id).filter(Boolean))] as string[];
 
@@ -71,21 +84,30 @@ export default function AdminReportsScreen() {
           : Promise.resolve({ data: [] as any[] }),
       ]);
 
-      const profileMap = new Map((profiles ?? []).map(p => [p.id, p.full_name || p.username || p.email || 'Unknown']));
+      const profileMap = new Map(
+        (profiles ?? []).map(p => [p.id, p.full_name || p.username || p.email || 'Unknown']),
+      );
       const postMap = new Map((posts ?? []).map((p: any) => [p.id, p.title]));
 
-      setReports(rows.map(r => ({
-        ...r,
-        reporterName: profileMap.get(r.reporter_id) ?? 'Unknown',
-        reportedUserName: r.reported_user_id ? (profileMap.get(r.reported_user_id) ?? 'Unknown') : null,
-        postTitle: r.post_id ? (postMap.get(r.post_id) ?? null) : null,
-      })));
+      setReports(
+        rows.map(r => ({
+          ...r,
+          reporterName: profileMap.get(r.reporter_id) ?? 'Unknown',
+          reportedUserName: r.reported_user_id
+            ? (profileMap.get(r.reported_user_id) ?? 'Unknown')
+            : null,
+          postTitle: r.post_id ? (postMap.get(r.post_id) ?? null) : null,
+        })),
+      );
     } catch (err) {
       if (__DEV__) console.error('AdminReports load error:', err);
       // A moderation queue that renders "nothing here" after a failed
       // fetch is worse than one that errors: the admin concludes there is
       // nothing to review and stops checking, while the queue fills up.
-      showAlert('Could not load reports', err instanceof Error ? err.message : 'Check your connection and try again.');
+      showAlert(
+        'Could not load reports',
+        err instanceof Error ? err.message : 'Check your connection and try again.',
+      );
     } finally {
       setLoading(false);
     }
@@ -95,7 +117,7 @@ export default function AdminReportsScreen() {
     useCallback(() => {
       setLoading(true);
       load();
-    }, [load])
+    }, [load]),
   );
 
   const startAction = (report: EnrichedReport, action: ModerationAction) => {
@@ -125,7 +147,10 @@ export default function AdminReportsScreen() {
   const confirmPendingAction = () => {
     if (!pendingAction) return;
     if (!note.trim()) {
-      showAlert('Note required', 'Add a short note explaining this action (kept for audit history).');
+      showAlert(
+        'Note required',
+        'Add a short note explaining this action (kept for audit history).',
+      );
       return;
     }
     resolve(pendingAction.id, pendingAction.action, note.trim());
@@ -135,10 +160,13 @@ export default function AdminReportsScreen() {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.replace('/(tabs)/profile')} style={styles.headerBack} activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
+          <TouchableOpacity
+            onPress={() => router.replace('/(tabs)/profile')}
+            style={styles.headerBack}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
             <Text style={styles.headerBackTxt}>{'‹'}</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Reports</Text>
@@ -154,7 +182,10 @@ export default function AdminReportsScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.replace('/(tabs)/profile')} style={styles.headerBack} activeOpacity={0.7}
+        <TouchableOpacity
+          onPress={() => router.replace('/(tabs)/profile')}
+          style={styles.headerBack}
+          activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
@@ -187,7 +218,9 @@ export default function AdminReportsScreen() {
 
                 <Text style={styles.reasonText}>{REASON_LABELS[item.reason] ?? item.reason}</Text>
                 <Text style={styles.metaText}>Reported by {item.reporterName}</Text>
-                {item.reportedUserName && <Text style={styles.metaText}>Account: {item.reportedUserName}</Text>}
+                {item.reportedUserName && (
+                  <Text style={styles.metaText}>Account: {item.reportedUserName}</Text>
+                )}
                 {item.postTitle && <Text style={styles.metaText}>Content: {item.postTitle}</Text>}
 
                 {isPending ? (
@@ -201,38 +234,75 @@ export default function AdminReportsScreen() {
                       multiline
                     />
                     <View style={styles.noteFormActions}>
-                      <TouchableOpacity style={styles.cancelBtn} onPress={() => setPendingAction(null)} activeOpacity={0.7}>
+                      <TouchableOpacity
+                        style={styles.cancelBtn}
+                        onPress={() => setPendingAction(null)}
+                        activeOpacity={0.7}
+                      >
                         <Text style={styles.cancelBtnText}>Cancel</Text>
                       </TouchableOpacity>
-                      <TouchableOpacity style={styles.confirmBtn} onPress={confirmPendingAction} activeOpacity={0.7} disabled={isActing}>
-                        {isActing ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.confirmBtnText}>Confirm</Text>}
+                      <TouchableOpacity
+                        style={styles.confirmBtn}
+                        onPress={confirmPendingAction}
+                        activeOpacity={0.7}
+                        disabled={isActing}
+                      >
+                        {isActing ? (
+                          <ActivityIndicator color="#fff" size="small" />
+                        ) : (
+                          <Text style={styles.confirmBtnText}>Confirm</Text>
+                        )}
                       </TouchableOpacity>
                     </View>
                   </View>
                 ) : (
                   <View style={styles.actionsWrap}>
-                    <TouchableOpacity style={styles.actionBtnGhost} onPress={() => startAction(item, 'dismiss')} activeOpacity={0.7}>
+                    <TouchableOpacity
+                      style={styles.actionBtnGhost}
+                      onPress={() => startAction(item, 'dismiss')}
+                      activeOpacity={0.7}
+                    >
                       <Text style={styles.actionBtnGhostText}>Dismiss</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.actionBtnGhost} onPress={() => startAction(item, 'warn')} activeOpacity={0.7}>
+                    <TouchableOpacity
+                      style={styles.actionBtnGhost}
+                      onPress={() => startAction(item, 'warn')}
+                      activeOpacity={0.7}
+                    >
                       <Text style={styles.actionBtnGhostText}>Warn</Text>
                     </TouchableOpacity>
                     {item.post_id && (
-                      <TouchableOpacity style={styles.actionBtnWarn} onPress={() => startAction(item, 'remove_content')} activeOpacity={0.7}>
+                      <TouchableOpacity
+                        style={styles.actionBtnWarn}
+                        onPress={() => startAction(item, 'remove_content')}
+                        activeOpacity={0.7}
+                      >
                         <Text style={styles.actionBtnWarnText}>Remove content</Text>
                       </TouchableOpacity>
                     )}
                     {item.channel_id && (
-                      <TouchableOpacity style={styles.actionBtnWarn} onPress={() => startAction(item, 'suspend_channel')} activeOpacity={0.7}>
+                      <TouchableOpacity
+                        style={styles.actionBtnWarn}
+                        onPress={() => startAction(item, 'suspend_channel')}
+                        activeOpacity={0.7}
+                      >
                         <Text style={styles.actionBtnWarnText}>Suspend channel</Text>
                       </TouchableOpacity>
                     )}
                     {item.reported_user_id && (
                       <>
-                        <TouchableOpacity style={styles.actionBtnDanger} onPress={() => startAction(item, 'suspend_user')} activeOpacity={0.7}>
+                        <TouchableOpacity
+                          style={styles.actionBtnDanger}
+                          onPress={() => startAction(item, 'suspend_user')}
+                          activeOpacity={0.7}
+                        >
                           <Text style={styles.actionBtnDangerText}>Suspend user</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.actionBtnDanger} onPress={() => startAction(item, 'ban_user')} activeOpacity={0.7}>
+                        <TouchableOpacity
+                          style={styles.actionBtnDanger}
+                          onPress={() => startAction(item, 'ban_user')}
+                          activeOpacity={0.7}
+                        >
                           <Text style={styles.actionBtnDangerText}>Ban user</Text>
                         </TouchableOpacity>
                       </>
@@ -265,31 +335,84 @@ const styles = StyleSheet.create({
   headerBackTxt: { color: '#2E7DFF', fontSize: 28, fontWeight: '700', lineHeight: 28 },
   headerTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: '800' },
   list: { paddingVertical: 12, paddingHorizontal: 16 },
-  card: { backgroundColor: '#182437', borderRadius: 12, borderWidth: 1, borderColor: '#22304A', padding: 16, marginBottom: 12 },
-  cardTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
+  card: {
+    backgroundColor: '#182437',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#22304A',
+    padding: 16,
+    marginBottom: 12,
+  },
+  cardTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
   badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
   badgeText: { fontSize: 11, fontWeight: '900', color: '#0B1220', letterSpacing: 0.5 },
   cardDate: { fontSize: 11, color: '#6B7C97', fontWeight: '500' },
   reasonText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF', marginBottom: 6 },
   metaText: { fontSize: 13, color: '#9FB0C9', fontWeight: '500', marginBottom: 2 },
   actionsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
-  actionBtnGhost: { backgroundColor: '#22304A', paddingHorizontal: 14, paddingVertical: 9, borderRadius: 8 },
+  actionBtnGhost: {
+    backgroundColor: '#22304A',
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 8,
+  },
   actionBtnGhostText: { color: '#FFFFFF', fontSize: 12, fontWeight: '700' },
-  actionBtnWarn: { backgroundColor: '#FFC65C', paddingHorizontal: 14, paddingVertical: 9, borderRadius: 8 },
+  actionBtnWarn: {
+    backgroundColor: '#FFC65C',
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 8,
+  },
   actionBtnWarnText: { color: '#0B1220', fontSize: 12, fontWeight: '800' },
-  actionBtnDanger: { backgroundColor: '#FF4D6D', paddingHorizontal: 14, paddingVertical: 9, borderRadius: 8 },
+  actionBtnDanger: {
+    backgroundColor: '#FF4D6D',
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 8,
+  },
   actionBtnDangerText: { color: '#FFFFFF', fontSize: 12, fontWeight: '800' },
   noteForm: { marginTop: 8 },
   noteInput: {
-    backgroundColor: '#22304A', borderRadius: 8, borderWidth: 1, borderColor: '#2E7DFF',
-    color: '#FFFFFF', fontSize: 14, paddingHorizontal: 12, paddingVertical: 10, minHeight: 60,
-    textAlignVertical: 'top', marginBottom: 10,
+    backgroundColor: '#22304A',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#2E7DFF',
+    color: '#FFFFFF',
+    fontSize: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    minHeight: 60,
+    textAlignVertical: 'top',
+    marginBottom: 10,
   },
   noteFormActions: { flexDirection: 'row', gap: 10 },
-  cancelBtn: { backgroundColor: '#22304A', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 },
+  cancelBtn: {
+    backgroundColor: '#22304A',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
   cancelBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
-  confirmBtn: { backgroundColor: '#2E7DFF', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8, minWidth: 90, alignItems: 'center' },
+  confirmBtn: {
+    backgroundColor: '#2E7DFF',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    minWidth: 90,
+    alignItems: 'center',
+  },
   confirmBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
-  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80, paddingHorizontal: 20 },
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 80,
+    paddingHorizontal: 20,
+  },
   emptyText: { fontSize: 16, color: '#9FB0C9', fontWeight: '600' },
 });

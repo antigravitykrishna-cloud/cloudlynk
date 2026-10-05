@@ -7,7 +7,6 @@ export type VideoMeta = { uri: string; name: string; size: number };
 export const STREAM_MAX_MB = 180;
 
 export const StreamService = {
-
   async pickVideo(): Promise<VideoMeta | null> {
     // DocumentPicker avoids the Android MediaStore thumbnail bug that crashes
     // the system Photos picker for videos >~10s. Works for files of any size
@@ -48,7 +47,7 @@ export const StreamService = {
       return [];
     }
 
-    return result.assets.map((asset) => ({
+    return result.assets.map(asset => ({
       uri: asset.uri,
       name: asset.name ?? asset.uri.split('/').pop() ?? 'video.mp4',
       size: asset.size ?? 0,
@@ -67,7 +66,10 @@ export const StreamService = {
     if (signal?.aborted) throw new Error('Upload cancelled');
 
     // Step 1 — get a direct-upload URL + UID from the Edge Function
-    const { data: { session }, error: sessionErr } = await supabase.auth.getSession();
+    const {
+      data: { session },
+      error: sessionErr,
+    } = await supabase.auth.getSession();
     if (sessionErr || !session) throw new Error('Not authenticated');
 
     if (signal?.aborted) throw new Error('Upload cancelled');
@@ -118,12 +120,20 @@ export const StreamService = {
       const armStall = () => {
         if (stallTimer) clearTimeout(stallTimer);
         stallTimer = setTimeout(() => {
-          try { xhr.abort(); } catch {}
-          finish(() => reject(new Error('Upload stalled — no data was sent for 90 seconds. Check your connection and try again.')));
+          try {
+            xhr.abort();
+          } catch {}
+          finish(() =>
+            reject(
+              new Error(
+                'Upload stalled — no data was sent for 90 seconds. Check your connection and try again.',
+              ),
+            ),
+          );
         }, STALL_MS);
       };
 
-      xhr.upload.addEventListener('progress', (event) => {
+      xhr.upload.addEventListener('progress', event => {
         armStall(); // bytes moved — reset the watchdog
         if (event.lengthComputable && event.total > 0) {
           onProgress(0.05 + (event.loaded / event.total) * 0.94);
@@ -136,11 +146,25 @@ export const StreamService = {
           finish(() => resolve(uid));
         } else if (xhr.status === 413) {
           // Cloudflare returns an HTML 413 page — never surface that raw body.
-          finish(() => reject(new Error('Video is too large for the current Cloudflare Stream plan. Maximum upload size is 200 MB. Please pick a smaller file.')));
+          finish(() =>
+            reject(
+              new Error(
+                'Video is too large for the current Cloudflare Stream plan. Maximum upload size is 200 MB. Please pick a smaller file.',
+              ),
+            ),
+          );
         } else if (xhr.status >= 500) {
-          finish(() => reject(new Error('Cloudflare is having trouble receiving the file right now. Please try again in a moment.')));
+          finish(() =>
+            reject(
+              new Error(
+                'Cloudflare is having trouble receiving the file right now. Please try again in a moment.',
+              ),
+            ),
+          );
         } else {
-          finish(() => reject(new Error(`Video upload failed (HTTP ${xhr.status}). Please try again.`)));
+          finish(() =>
+            reject(new Error(`Video upload failed (HTTP ${xhr.status}). Please try again.`)),
+          );
         }
       };
 
@@ -155,7 +179,9 @@ export const StreamService = {
           return;
         }
         const onAbort = () => {
-          try { xhr.abort(); } catch {}
+          try {
+            xhr.abort();
+          } catch {}
           finish(() => reject(new Error('Upload cancelled')));
         };
         signal.addEventListener('abort', onAbort, { once: true });
@@ -226,7 +252,9 @@ export const StreamService = {
    * getHlsPlaybackUrl().
    */
   async getSignedPlaybackUrl(postId: string): Promise<string> {
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     if (!session) throw new Error('Please sign in to watch this video.');
 
     const fnUrl = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/stream-playback-token`;
@@ -246,9 +274,11 @@ export const StreamService = {
 
     const json = await res.json().catch(() => null);
     if (res.status === 403) {
-      throw new Error(json?.error && json.error !== "This video isn't available."
-        ? json.error
-        : 'Subscribe to Premium to watch this video.');
+      throw new Error(
+        json?.error && json.error !== "This video isn't available."
+          ? json.error
+          : 'Subscribe to Premium to watch this video.',
+      );
     }
     if (!res.ok || !json?.url) {
       throw new Error(json?.error ?? "This video isn't available right now.");

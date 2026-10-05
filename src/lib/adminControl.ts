@@ -57,9 +57,7 @@ export interface AdminPlan {
 }
 
 export type PlanAction =
-  | { action: 'add_days'; days: number }
-  | { action: 'lifetime' }
-  | { action: 'revoke' };
+  { action: 'add_days'; days: number } | { action: 'lifetime' } | { action: 'revoke' };
 
 function unwrap<T>(res: { data: T | null; error: any }): T {
   if (res.error) throw new Error(res.error.message ?? 'Request failed');
@@ -68,9 +66,14 @@ function unwrap<T>(res: { data: T | null; error: any }): T {
 
 export const AdminControl = {
   async searchUsers(query: string, limit = 50): Promise<AdminUserSummary[]> {
-    return unwrap(await supabase.rpc('admin_search_users', {
-      p_query: query.trim() || null, p_limit: limit,
-    })) ?? [];
+    return (
+      unwrap(
+        await supabase.rpc('admin_search_users', {
+          p_query: query.trim() || null,
+          p_limit: limit,
+        }),
+      ) ?? []
+    );
   },
 
   async getUser(id: string): Promise<AdminUserDetail> {
@@ -78,32 +81,53 @@ export const AdminControl = {
   },
 
   async setPlan(id: string, a: PlanAction) {
-    return unwrap(await supabase.rpc('admin_set_user_plan', {
-      p_user_id: id,
-      p_action: a.action,
-      p_days: a.action === 'add_days' ? a.days : null,
-      p_expires_at: null,
-    }));
+    return unwrap(
+      await supabase.rpc('admin_set_user_plan', {
+        p_user_id: id,
+        p_action: a.action,
+        p_days: a.action === 'add_days' ? a.days : null,
+        p_expires_at: null,
+      }),
+    );
   },
 
-  async setFlags(id: string, flags: { isAdmin?: boolean; canUpload?: boolean; accountStatus?: 'active' | 'suspended' | 'banned'; reason?: string }) {
-    return unwrap(await supabase.rpc('admin_set_user_flags', {
-      p_user_id: id,
-      p_is_admin: flags.isAdmin ?? null,
-      p_can_upload: flags.canUpload ?? null,
-      p_account_status: flags.accountStatus ?? null,
-      p_reason: flags.reason ?? null,
-    }));
+  async setFlags(
+    id: string,
+    flags: {
+      isAdmin?: boolean;
+      canUpload?: boolean;
+      accountStatus?: 'active' | 'suspended' | 'banned';
+      reason?: string;
+    },
+  ) {
+    return unwrap(
+      await supabase.rpc('admin_set_user_flags', {
+        p_user_id: id,
+        p_is_admin: flags.isAdmin ?? null,
+        p_can_upload: flags.canUpload ?? null,
+        p_account_status: flags.accountStatus ?? null,
+        p_reason: flags.reason ?? null,
+      }),
+    );
   },
 
   async setApproval(id: string, status: 'approved' | 'rejected', note?: string) {
-    return unwrap(await supabase.rpc('admin_set_user_approval', {
-      p_user_id: id, p_status: status, p_note: note ?? null,
-    }));
+    return unwrap(
+      await supabase.rpc('admin_set_user_approval', {
+        p_user_id: id,
+        p_status: status,
+        p_note: note ?? null,
+      }),
+    );
   },
 
-  async listPayments(status: 'paid' | 'created' | 'failed' | null, limit = 200): Promise<AdminPayment[]> {
-    return unwrap(await supabase.rpc('admin_list_payments', { p_status: status, p_limit: limit })) ?? [];
+  async listPayments(
+    status: 'paid' | 'created' | 'failed' | null,
+    limit = 200,
+  ): Promise<AdminPayment[]> {
+    return (
+      unwrap(await supabase.rpc('admin_list_payments', { p_status: status, p_limit: limit })) ?? []
+    );
   },
 
   async listPlans(): Promise<AdminPlan[]> {
@@ -111,27 +135,62 @@ export const AdminControl = {
   },
 
   async updatePlan(p: AdminPlan) {
-    return unwrap(await supabase.rpc('admin_update_plan', {
-      p_code: p.code, p_name: p.name, p_description: p.description,
-      p_price_inr: p.price_inr, p_duration_days: p.duration_days,
-      p_is_popular: p.is_popular, p_is_active: p.is_active,
-    }));
+    return unwrap(
+      await supabase.rpc('admin_update_plan', {
+        p_code: p.code,
+        p_name: p.name,
+        p_description: p.description,
+        p_price_inr: p.price_inr,
+        p_duration_days: p.duration_days,
+        p_is_popular: p.is_popular,
+        p_is_active: p.is_active,
+      }),
+    );
   },
 
-  async updateChannel(c: { id: string; name: string; description: string | null; category: string | null; is_public: boolean; is_official: boolean }) {
-    return unwrap(await supabase.rpc('admin_update_channel', {
-      p_channel_id: c.id, p_name: c.name, p_description: c.description ?? '',
-      p_category: c.category ?? '', p_is_public: c.is_public, p_is_official: c.is_official,
-    }));
+  async updateChannel(c: {
+    id: string;
+    name: string;
+    description: string | null;
+    category: string | null;
+    is_public: boolean;
+    is_official: boolean;
+  }) {
+    return unwrap(
+      await supabase.rpc('admin_update_channel', {
+        p_channel_id: c.id,
+        p_name: c.name,
+        p_description: c.description ?? '',
+        p_category: c.category ?? '',
+        p_is_public: c.is_public,
+        p_is_official: c.is_official,
+      }),
+    );
   },
 
   async setChannelStatus(id: string, status: 'active' | 'suspended', reason?: string) {
-    return unwrap(await supabase.rpc('admin_set_channel_status', {
-      p_channel_id: id, p_status: status, p_reason: reason ?? null,
-    }));
+    return unwrap(
+      await supabase.rpc('admin_set_channel_status', {
+        p_channel_id: id,
+        p_status: status,
+        p_reason: reason ?? null,
+      }),
+    );
   },
 
-  async broadcast(title: string, body: string, audience: 'all' | 'premium' | 'free'): Promise<number> {
-    return unwrap(await supabase.rpc('admin_broadcast', { p_title: title, p_body: body, p_audience: audience })) ?? 0;
+  async broadcast(
+    title: string,
+    body: string,
+    audience: 'all' | 'premium' | 'free',
+  ): Promise<number> {
+    return (
+      unwrap(
+        await supabase.rpc('admin_broadcast', {
+          p_title: title,
+          p_body: body,
+          p_audience: audience,
+        }),
+      ) ?? 0
+    );
   },
 };

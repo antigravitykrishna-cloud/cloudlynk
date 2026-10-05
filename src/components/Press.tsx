@@ -25,19 +25,34 @@ import * as Haptics from 'expo-haptics';
  *   these onto its own effects, and any failure is swallowed because a device
  *   without a motor must not break the button.
  */
-export type HapticStyle = 'light' | 'medium' | 'heavy' | 'selection' | 'success' | 'warning' | 'error';
+export type HapticStyle =
+  'light' | 'medium' | 'heavy' | 'selection' | 'success' | 'warning' | 'error';
 
 export function fireHaptic(style: HapticStyle) {
   // Never let feedback break the action it is decorating.
   try {
     switch (style) {
-      case 'selection': Haptics.selectionAsync(); break;
-      case 'success':   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); break;
-      case 'warning':   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); break;
-      case 'error':     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); break;
-      case 'heavy':     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); break;
-      case 'medium':    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); break;
-      default:          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); break;
+      case 'selection':
+        Haptics.selectionAsync();
+        break;
+      case 'success':
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        break;
+      case 'warning':
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        break;
+      case 'error':
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        break;
+      case 'heavy':
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+        break;
+      case 'medium':
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        break;
+      default:
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        break;
     }
   } catch {
     // No haptic motor, or permission denied. Not worth surfacing.
@@ -56,7 +71,10 @@ type Props = Omit<PressableProps, 'style'> & {
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export const PressScale = forwardRef<React.ComponentRef<typeof Pressable>, Props>(
-  function PressScale({ style, scaleTo = 0.97, haptic, onPress, disabled, children, ...rest }, ref) {
+  function PressScale(
+    { style, scaleTo = 0.97, haptic, onPress, disabled, children, ...rest },
+    ref,
+  ) {
     const scale = useSharedValue(1);
     const animated = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
@@ -65,12 +83,16 @@ export const PressScale = forwardRef<React.ComponentRef<typeof Pressable>, Props
         ref={ref}
         disabled={disabled}
         onPressIn={() => {
-          scale.value = withSpring(disabled ? 1 : scaleTo, { damping: 15, stiffness: 400, mass: 0.4 });
+          scale.value = withSpring(disabled ? 1 : scaleTo, {
+            damping: 15,
+            stiffness: 400,
+            mass: 0.4,
+          });
         }}
         onPressOut={() => {
           scale.value = withSpring(1, { damping: 15, stiffness: 400, mass: 0.4 });
         }}
-        onPress={(e) => {
+        onPress={e => {
           if (disabled) return;
           if (haptic) fireHaptic(haptic);
           onPress?.(e);

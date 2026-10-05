@@ -1,6 +1,14 @@
 import { useState, useCallback } from 'react';
 import { showAlert } from '../../components/Feedback';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  TextInput,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
@@ -42,24 +50,30 @@ type Counts = {
 };
 
 const COHORTS: { key: Cohort; label: string; countKey?: keyof Counts }[] = [
-  { key: 'expired',   label: 'Expired',   countKey: 'expired_count' },
-  { key: 'expiring',  label: 'Ending',    countKey: 'expiring_count' },
-  { key: 'active',    label: 'Active',    countKey: 'active_count' },
+  { key: 'expired', label: 'Expired', countKey: 'expired_count' },
+  { key: 'expiring', label: 'Ending', countKey: 'expiring_count' },
+  { key: 'active', label: 'Active', countKey: 'active_count' },
   { key: 'cancelled', label: 'Cancelled', countKey: 'cancelled_count' },
-  { key: 'free',      label: 'Free' },
+  { key: 'free', label: 'Free' },
 ];
 
 const BLURB: Record<Cohort, string> = {
-  expired:   'Subscriptions whose term has run out. Premium access is already gone — the gate reads the date, not this status.',
-  expiring:  'Active subscriptions ending within 7 days. Each was sent a reminder 3 days out.',
-  active:    'Live subscriptions, including lifetime.',
-  cancelled: 'Cancelled but still inside the paid term. Access ends on the date shown, then they move to Expired.',
-  free:      'No subscription on record.',
+  expired:
+    'Subscriptions whose term has run out. Premium access is already gone — the gate reads the date, not this status.',
+  expiring: 'Active subscriptions ending within 7 days. Each was sent a reminder 3 days out.',
+  active: 'Live subscriptions, including lifetime.',
+  cancelled:
+    'Cancelled but still inside the paid term. Access ends on the date shown, then they move to Expired.',
+  free: 'No subscription on record.',
 };
 
 function formatDate(iso: string | null): string {
   if (!iso) return '—';
-  return new Date(iso).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
+  return new Date(iso).toLocaleDateString(undefined, {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
 }
 
 // Days until (positive) or since (negative) the date, for the relative label.
@@ -95,7 +109,10 @@ export default function AdminSubscribersScreen() {
       if (!countRes.error) setCounts(((countRes.data ?? [])[0] ?? null) as Counts | null);
     } catch (err) {
       if (__DEV__) console.error('AdminSubscribers load error:', err);
-      showAlert('Could not load subscribers', err instanceof Error ? err.message : 'Check your connection and try again.');
+      showAlert(
+        'Could not load subscribers',
+        err instanceof Error ? err.message : 'Check your connection and try again.',
+      );
       setRows([]);
     } finally {
       setLoading(false);
@@ -109,7 +126,7 @@ export default function AdminSubscribersScreen() {
       // `query` is deliberately not a dependency: refetching on every
       // keystroke would fire an RPC per character. Search runs on submit.
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [load, cohort])
+    }, [load, cohort]),
   );
 
   const selectCohort = (next: Cohort) => {
@@ -149,7 +166,12 @@ export default function AdminSubscribersScreen() {
         <View style={{ width: 32 }} />
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={styles.filterRow}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.filterScroll}
+        contentContainerStyle={styles.filterRow}
+      >
         {COHORTS.map(c => {
           const n = c.countKey && counts ? counts[c.countKey] : null;
           const active = cohort === c.key;
@@ -161,7 +183,8 @@ export default function AdminSubscribersScreen() {
               activeOpacity={0.7}
             >
               <Text style={[styles.filterTabText, active && styles.filterTabTextActive]}>
-                {c.label}{n !== null ? ` (${n})` : ''}
+                {c.label}
+                {n !== null ? ` (${n})` : ''}
               </Text>
             </TouchableOpacity>
           );
@@ -207,7 +230,8 @@ export default function AdminSubscribersScreen() {
             let dateLabel = '—';
             if (row.plan_expires_at) {
               if (delta === null) dateLabel = formatDate(row.plan_expires_at);
-              else if (delta > 0) dateLabel = `Ends ${formatDate(row.plan_expires_at)} · in ${delta}d`;
+              else if (delta > 0)
+                dateLabel = `Ends ${formatDate(row.plan_expires_at)} · in ${delta}d`;
               else if (delta === 0) dateLabel = `Ends today · ${formatDate(row.plan_expires_at)}`;
               else dateLabel = `Ended ${formatDate(row.plan_expires_at)} · ${Math.abs(delta)}d ago`;
             } else if (row.plan_status === 'lifetime') {
@@ -215,8 +239,12 @@ export default function AdminSubscribersScreen() {
             }
 
             return (
-              <TouchableOpacity key={row.id} style={styles.card} activeOpacity={0.75}
-                onPress={() => router.push(`/admin/user/${row.id}` as never)}>
+              <TouchableOpacity
+                key={row.id}
+                style={styles.card}
+                activeOpacity={0.75}
+                onPress={() => router.push(`/admin/user/${row.id}` as never)}
+              >
                 <View style={styles.cardTopRow}>
                   <Text style={styles.nameText} numberOfLines={1}>
                     {row.full_name?.trim() || row.email}
@@ -225,7 +253,9 @@ export default function AdminSubscribersScreen() {
                 </View>
 
                 {!!row.full_name?.trim() && (
-                  <Text style={styles.metaText} numberOfLines={1}>{row.email}</Text>
+                  <Text style={styles.metaText} numberOfLines={1}>
+                    {row.email}
+                  </Text>
                 )}
 
                 <Text style={styles.metaText}>{dateLabel}</Text>
@@ -236,7 +266,8 @@ export default function AdminSubscribersScreen() {
 
                 {lapsedButUnswept && (
                   <Text style={styles.warnText}>
-                    Term has ended — access already revoked. Status updates on the next hourly sweep.
+                    Term has ended — access already revoked. Status updates on the next hourly
+                    sweep.
                   </Text>
                 )}
 
@@ -271,29 +302,71 @@ const styles = StyleSheet.create({
   headerBackTxt: { color: '#2E7DFF', fontSize: 28, fontWeight: '700', lineHeight: 28 },
   headerTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: '800' },
   blurb: {
-    color: '#9FB0C9', fontSize: 12, fontWeight: '500', lineHeight: 18,
-    paddingHorizontal: 16, paddingBottom: 4,
+    color: '#9FB0C9',
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 18,
+    paddingHorizontal: 16,
+    paddingBottom: 4,
   },
   filterScroll: { flexGrow: 0 },
   filterRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 12 },
-  filterTab: { backgroundColor: '#182437', borderWidth: 1, borderColor: '#22304A', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
+  filterTab: {
+    backgroundColor: '#182437',
+    borderWidth: 1,
+    borderColor: '#22304A',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
   filterTabActive: { backgroundColor: '#2E7DFF', borderColor: '#2E7DFF' },
   filterTabText: { color: '#9FB0C9', fontSize: 12, fontWeight: '700' },
   filterTabTextActive: { color: '#FFFFFF' },
   searchWrap: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 12 },
   searchInput: {
-    flex: 1, backgroundColor: '#182437', borderRadius: 8, borderWidth: 1, borderColor: '#22304A',
-    color: '#FFFFFF', fontSize: 14, paddingHorizontal: 12, paddingVertical: 10,
+    flex: 1,
+    backgroundColor: '#182437',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#22304A',
+    color: '#FFFFFF',
+    fontSize: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
-  searchBtn: { backgroundColor: '#22304A', paddingHorizontal: 16, justifyContent: 'center', borderRadius: 8 },
+  searchBtn: {
+    backgroundColor: '#22304A',
+    paddingHorizontal: 16,
+    justifyContent: 'center',
+    borderRadius: 8,
+  },
   searchBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
   list: { paddingBottom: 12, paddingHorizontal: 16 },
-  card: { backgroundColor: '#182437', borderRadius: 12, borderWidth: 1, borderColor: '#22304A', padding: 16, marginBottom: 12 },
-  cardTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, gap: 10 },
+  card: {
+    backgroundColor: '#182437',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#22304A',
+    padding: 16,
+    marginBottom: 12,
+  },
+  cardTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+    gap: 10,
+  },
   nameText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF', flex: 1 },
   cardDate: { fontSize: 11, color: '#6B7C97', fontWeight: '700', textTransform: 'uppercase' },
   metaText: { fontSize: 13, color: '#9FB0C9', fontWeight: '500', marginBottom: 2 },
   warnText: { fontSize: 12, color: '#FFC65C', fontWeight: '600', marginTop: 6, lineHeight: 17 },
-  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80, paddingHorizontal: 20 },
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 80,
+    paddingHorizontal: 20,
+  },
   emptyText: { fontSize: 16, color: '#9FB0C9', fontWeight: '600', textAlign: 'center' },
 });

@@ -2,7 +2,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { View, Text, FlatList, TextInput, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { AdminHeader, Card, Chip, adminStyles, formatDate, planChip } from '../../components/AdminUI';
+import {
+  AdminHeader,
+  Card,
+  Chip,
+  adminStyles,
+  formatDate,
+  planChip,
+} from '../../components/AdminUI';
 import { PressScale } from '../../components/Press';
 import { Colors } from '../../constants/theme';
 import { AdminControl, type AdminUserSummary } from '../../lib/adminControl';
@@ -56,13 +63,27 @@ export default function AdminUsersScreen() {
         data={rows}
         keyExtractor={u => u.id}
         contentContainerStyle={adminStyles.list}
-        refreshControl={<RefreshControl refreshing={loading && rows.length > 0} onRefresh={() => load(query)} tintColor={Colors.brandBlue} />}
-        ListEmptyComponent={!loading ? <Text style={adminStyles.empty}>{error ?? 'No users match.'}</Text> : null}
+        refreshControl={
+          <RefreshControl
+            refreshing={loading && rows.length > 0}
+            onRefresh={() => load(query)}
+            tintColor={Colors.brandBlue}
+          />
+        }
+        ListEmptyComponent={
+          !loading ? <Text style={adminStyles.empty}>{error ?? 'No users match.'}</Text> : null
+        }
         renderItem={({ item: u }) => (
           <PressScale onPress={() => router.push(`/admin/user/${u.id}` as never)}>
             <Card>
-              <Text style={adminStyles.name} numberOfLines={1}>{u.full_name?.trim() || u.email}</Text>
-              {!!u.full_name?.trim() && <Text style={adminStyles.muted} numberOfLines={1}>{u.email}</Text>}
+              <Text style={adminStyles.name} numberOfLines={1}>
+                {u.full_name?.trim() || u.email}
+              </Text>
+              {!!u.full_name?.trim() && (
+                <Text style={adminStyles.muted} numberOfLines={1}>
+                  {u.email}
+                </Text>
+              )}
               <View style={[adminStyles.row, { marginTop: 8, flexWrap: 'wrap' }]}>
                 {planChip(u)}
                 {u.account_status && u.account_status !== 'active' && (
@@ -71,7 +92,9 @@ export default function AdminUsersScreen() {
                 {u.approval_status && u.approval_status !== 'approved' && (
                   <Chip label={`APPROVAL ${u.approval_status.toUpperCase()}`} tone="warn" />
                 )}
-                <Text style={[adminStyles.muted, { marginLeft: 'auto' }]}>Joined {formatDate(u.created_at)}</Text>
+                <Text style={[adminStyles.muted, { marginLeft: 'auto' }]}>
+                  Joined {formatDate(u.created_at)}
+                </Text>
               </View>
             </Card>
           </PressScale>

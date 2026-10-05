@@ -1,7 +1,14 @@
 import { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
-  KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
@@ -51,12 +58,12 @@ export default function ForgotPasswordScreen() {
           <Text style={styles.tick}>✓</Text>
           <Text style={styles.title}>Check your email</Text>
           <Text style={styles.body}>
-            If <Text style={styles.strong}>{email.trim()}</Text> has a Cloudlynk
-            account, a password reset link is on its way. It expires in one hour.
+            If <Text style={styles.strong}>{email.trim()}</Text> has a Cloudlynk account, a password
+            reset link is on its way. It expires in one hour.
           </Text>
           <Text style={styles.hint}>
-            Nothing after a few minutes? Check spam, and make sure you typed the
-            address you signed up with.
+            Nothing after a few minutes? Check spam, and make sure you typed the address you signed
+            up with.
           </Text>
           <TouchableOpacity
             style={styles.primaryBtn}
@@ -86,7 +93,10 @@ export default function ForgotPasswordScreen() {
           <TextInput
             style={styles.input}
             value={email}
-            onChangeText={(v) => { setEmail(v); setError(null); }}
+            onChangeText={v => {
+              setEmail(v);
+              setError(null);
+            }}
             placeholder="you@example.com"
             placeholderTextColor={Colors.textMuted}
             autoCapitalize="none"
@@ -105,9 +115,11 @@ export default function ForgotPasswordScreen() {
             disabled={busy}
             activeOpacity={0.85}
           >
-            {busy
-              ? <ActivityIndicator color={Colors.textInverse} size="small" />
-              : <Text style={styles.primaryTxt}>Send reset link</Text>}
+            {busy ? (
+              <ActivityIndicator color={Colors.textInverse} size="small" />
+            ) : (
+              <Text style={styles.primaryTxt}>Send reset link</Text>
+            )}
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7}>
@@ -123,40 +135,71 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg, justifyContent: 'center' },
   scroll: { flexGrow: 1, justifyContent: 'center', padding: Spacing.xl },
   card: {
-    backgroundColor: Colors.surface, borderRadius: Radius.xl,
-    padding: Spacing.xxl, margin: Spacing.xl,
-    borderWidth: 1, borderColor: Colors.border,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.xl,
+    padding: Spacing.xxl,
+    margin: Spacing.xl,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   tick: {
-    color: Colors.success, fontSize: 44, textAlign: 'center',
-    marginBottom: Spacing.md, fontWeight: FontWeight.bold,
+    color: Colors.success,
+    fontSize: 44,
+    textAlign: 'center',
+    marginBottom: Spacing.md,
+    fontWeight: FontWeight.bold,
   },
   title: {
-    color: Colors.text, fontSize: FontSize.xxl,
-    fontWeight: FontWeight.bold, marginBottom: Spacing.sm,
+    color: Colors.text,
+    fontSize: FontSize.xxl,
+    fontWeight: FontWeight.bold,
+    marginBottom: Spacing.sm,
   },
-  body: { color: Colors.textSecondary, fontSize: FontSize.lg, lineHeight: 22, marginBottom: Spacing.xl },
+  body: {
+    color: Colors.textSecondary,
+    fontSize: FontSize.lg,
+    lineHeight: 22,
+    marginBottom: Spacing.xl,
+  },
   strong: { color: Colors.text, fontWeight: FontWeight.semibold },
-  hint: { color: Colors.textMuted, fontSize: FontSize.md, lineHeight: 19, marginBottom: Spacing.xl },
+  hint: {
+    color: Colors.textMuted,
+    fontSize: FontSize.md,
+    lineHeight: 19,
+    marginBottom: Spacing.xl,
+  },
   label: {
-    color: Colors.textSecondary, fontSize: FontSize.sm,
-    fontWeight: FontWeight.semibold, letterSpacing: 1, marginBottom: Spacing.xs,
+    color: Colors.textSecondary,
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+    letterSpacing: 1,
+    marginBottom: Spacing.xs,
   },
   input: {
-    backgroundColor: Colors.surfaceElevated, borderRadius: Radius.md,
-    borderWidth: 1, borderColor: Colors.border,
-    paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
-    color: Colors.text, fontSize: FontSize.lg, marginBottom: Spacing.lg,
+    backgroundColor: Colors.surfaceElevated,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    color: Colors.text,
+    fontSize: FontSize.lg,
+    marginBottom: Spacing.lg,
   },
   error: { color: Colors.danger, fontSize: FontSize.md, marginBottom: Spacing.md },
   primaryBtn: {
-    backgroundColor: Colors.brandBlue, borderRadius: Radius.full,
-    paddingVertical: Spacing.lg, alignItems: 'center', marginTop: Spacing.sm,
+    backgroundColor: Colors.brandBlue,
+    borderRadius: Radius.full,
+    paddingVertical: Spacing.lg,
+    alignItems: 'center',
+    marginTop: Spacing.sm,
   },
   primaryTxt: { color: Colors.textInverse, fontSize: FontSize.lg, fontWeight: FontWeight.bold },
   btnDisabled: { opacity: 0.6 },
   backLink: {
-    color: Colors.textSecondary, fontSize: FontSize.md,
-    textAlign: 'center', marginTop: Spacing.xl,
+    color: Colors.textSecondary,
+    fontSize: FontSize.md,
+    textAlign: 'center',
+    marginTop: Spacing.xl,
   },
 });

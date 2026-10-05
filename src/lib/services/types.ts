@@ -59,5 +59,7 @@ export interface IErrorService {
 export interface IPushService {
   requestPermission(): Promise<boolean>;
   getToken(): Promise<string | null>;
-  onMessage(handler: (message: { title: string; body: string; data?: Record<string, unknown> }) => void): () => void;
+  onMessage(
+    handler: (message: { title: string; body: string; data?: Record<string, unknown> }) => void,
+  ): () => void;
 }

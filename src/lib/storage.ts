@@ -23,7 +23,8 @@ export function getMimeCategory(mimeType: string): FileCategory {
     mimeType.includes('document') ||
     mimeType.includes('spreadsheet') ||
     mimeType.includes('text')
-  ) return 'document';
+  )
+    return 'document';
   return 'other';
 }
 
@@ -77,7 +78,7 @@ export const StorageService = {
     mimeType: string,
     fileSize: number,
     channelId?: string,
-    onProgress?: (progress: UploadProgress) => void
+    onProgress?: (progress: UploadProgress) => void,
   ): Promise<{ storagePath: string; category: FileCategory }> {
     if (typeof document !== 'undefined') {
       throw new Error('File upload is only supported on Android and iOS.');
@@ -97,7 +98,7 @@ export const StorageService = {
     await new Promise<void>((resolve, reject) => {
       const xhr = new XMLHttpRequest();
 
-      xhr.upload.addEventListener('progress', (event) => {
+      xhr.upload.addEventListener('progress', event => {
         if (event.lengthComputable && event.total > 0) {
           const pct = Math.floor((event.loaded / event.total) * 100);
           onProgress?.({
@@ -165,25 +166,16 @@ export const StorageService = {
     const signedUrl = await this.getSignedUrl(storagePath);
     // Use document directory from the new Paths API
     const downloadDest = `${FileSystem.Paths.document.uri}/${fileName}`;
-    const downloadResumable = LegacyFileSystem.createDownloadResumable(
-      signedUrl,
-      downloadDest,
-      {}
-    );
+    const downloadResumable = LegacyFileSystem.createDownloadResumable(signedUrl, downloadDest, {});
     const result = await downloadResumable.downloadAsync();
     return result?.uri;
   },
 
   async deleteFile(fileId: string, storagePath: string, userId: string, fileSize: number) {
-    const { error: storageError } = await supabase.storage
-      .from('user-files')
-      .remove([storagePath]);
+    const { error: storageError } = await supabase.storage.from('user-files').remove([storagePath]);
     if (storageError) throw storageError;
 
-    const { error: dbError } = await supabase
-      .from('files')
-      .delete()
-      .eq('id', fileId);
+    const { error: dbError } = await supabase.from('files').delete().eq('id', fileId);
     if (dbError) throw dbError;
 
     await supabase.rpc('decrement_storage_used', {
@@ -219,10 +211,14 @@ export const StorageService = {
     if (error) throw error;
 
     const breakdown: Record<string, number> = {
-      photo: 0, video: 0, document: 0, audio: 0, other: 0,
+      photo: 0,
+      video: 0,
+      document: 0,
+      audio: 0,
+      other: 0,
     };
 
-    (data ?? []).forEach((f) => {
+    (data ?? []).forEach(f => {
       breakdown[f.category] = (breakdown[f.category] ?? 0) + f.size;
     });
 

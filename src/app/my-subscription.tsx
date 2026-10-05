@@ -1,6 +1,10 @@
 import { useState, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -33,20 +37,29 @@ function formatDate(iso: string | null): string {
 
 function getStatusColor(status: string | null): string {
   switch (status) {
-    case 'active': return '#2ED47A';
-    case 'pending': return '#FFB347';
-    case 'expired': return Colors.brand;
-    case 'cancelled': return Colors.brand;
-    default: return Colors.textMuted;
+    case 'active':
+      return '#2ED47A';
+    case 'pending':
+      return '#FFB347';
+    case 'expired':
+      return Colors.brand;
+    case 'cancelled':
+      return Colors.brand;
+    default:
+      return Colors.textMuted;
   }
 }
 
 function getRequestStatusColor(status: string | null): string {
   switch (status) {
-    case 'approved': return '#2ED47A';
-    case 'pending': return '#FFB347';
-    case 'rejected': return Colors.brand;
-    default: return Colors.textMuted;
+    case 'approved':
+      return '#2ED47A';
+    case 'pending':
+      return '#FFB347';
+    case 'rejected':
+      return Colors.brand;
+    default:
+      return Colors.textMuted;
   }
 }
 
@@ -74,10 +87,12 @@ export default function MySubscriptionScreen() {
     }
   }, [user]);
 
-  useFocusEffect(useCallback(() => {
-    setLoading(true);
-    fetchStatus();
-  }, [fetchStatus]));
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      fetchStatus();
+    }, [fetchStatus]),
+  );
 
   const planStatus = status?.plan_status ?? 'free';
 
@@ -108,7 +123,10 @@ export default function MySubscriptionScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backBtn}
+          activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
@@ -121,24 +139,26 @@ export default function MySubscriptionScreen() {
       {loading ? (
         <ActivityIndicator color={Colors.brand} size="large" style={{ marginTop: 60 }} />
       ) : (
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
           {/* Current Plan Card */}
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Current Plan</Text>
-            <View style={[styles.badge, { backgroundColor: getStatusColor(effectiveStatus) + '18' }]}>
+            <View
+              style={[styles.badge, { backgroundColor: getStatusColor(effectiveStatus) + '18' }]}
+            >
               <Text style={[styles.badgeText, { color: getStatusColor(effectiveStatus) }]}>
                 {planLabel}
               </Text>
             </View>
             {isActive && status?.plan_expires_at && (
-              <Text style={styles.cardMeta}>
-                Active until {formatDate(status.plan_expires_at)}
-              </Text>
+              <Text style={styles.cardMeta}>Active until {formatDate(status.plan_expires_at)}</Text>
             )}
             {isActive && status?.plan_started_at && (
-              <Text style={styles.cardSub}>
-                Started {formatDate(status.plan_started_at)}
-              </Text>
+              <Text style={styles.cardSub}>Started {formatDate(status.plan_started_at)}</Text>
             )}
             {planStatus === 'lifetime' && (
               <Text style={styles.cardMeta}>Lifetime access. Nothing to renew.</Text>
@@ -159,10 +179,24 @@ export default function MySubscriptionScreen() {
                 <View style={styles.requestRow}>
                   <Text style={styles.requestPlan}>
                     {(status.latest_request_plan_code ?? '').toUpperCase()}
-                    {status.latest_request_amount_inr ? ` · ₹${status.latest_request_amount_inr}` : ''}
+                    {status.latest_request_amount_inr
+                      ? ` · ₹${status.latest_request_amount_inr}`
+                      : ''}
                   </Text>
-                  <View style={[styles.badge, { backgroundColor: getRequestStatusColor(status.latest_request_status) + '18' }]}>
-                    <Text style={[styles.badgeText, { color: getRequestStatusColor(status.latest_request_status) }]}>
+                  <View
+                    style={[
+                      styles.badge,
+                      {
+                        backgroundColor: getRequestStatusColor(status.latest_request_status) + '18',
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.badgeText,
+                        { color: getRequestStatusColor(status.latest_request_status) },
+                      ]}
+                    >
                       {(status.latest_request_status ?? '').toUpperCase()}
                     </Text>
                   </View>
@@ -172,11 +206,12 @@ export default function MySubscriptionScreen() {
                   Submitted {formatDate(status.latest_request_created_at)}
                 </Text>
 
-                {status.latest_request_status === 'approved' && status.latest_request_reviewed_at && (
-                  <Text style={[styles.cardSub, { color: '#2ED47A' }]}>
-                    Approved on {formatDate(status.latest_request_reviewed_at)}
-                  </Text>
-                )}
+                {status.latest_request_status === 'approved' &&
+                  status.latest_request_reviewed_at && (
+                    <Text style={[styles.cardSub, { color: '#2ED47A' }]}>
+                      Approved on {formatDate(status.latest_request_reviewed_at)}
+                    </Text>
+                  )}
 
                 {status.latest_request_status === 'rejected' && (
                   <Text style={[styles.cardSub, { color: Colors.brand }]}>
@@ -199,9 +234,7 @@ export default function MySubscriptionScreen() {
             disabled={isActive}
             activeOpacity={0.8}
           >
-            <Text style={styles.upgradeBtnText}>
-              {isActive ? 'Plan Active' : 'Upgrade'}
-            </Text>
+            <Text style={styles.upgradeBtnText}>{isActive ? 'Plan Active' : 'Upgrade'}</Text>
           </TouchableOpacity>
 
           <View style={{ height: 40 }} />
@@ -213,22 +246,51 @@ export default function MySubscriptionScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
-  header: { backgroundColor: Colors.surface, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14 },
+  header: {
+    backgroundColor: Colors.surface,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
   backBtn: { width: 80 },
   backTxt: { color: '#ffffff', fontSize: 14, fontWeight: '600' },
   headerTitle: { color: '#ffffff', fontSize: 18, fontWeight: '800', flex: 1, textAlign: 'center' },
   content: { paddingVertical: 16 },
-  card: { marginHorizontal: 16, marginBottom: 16, backgroundColor: Colors.surface, borderRadius: 16, padding: 20, borderWidth: 1, borderColor: Colors.border },
+  card: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
   cardTitle: { fontSize: 14, fontWeight: '800', color: Colors.text, marginBottom: 12 },
   cardMeta: { fontSize: 13, color: Colors.text, fontWeight: '500', marginTop: 8 },
   cardSub: { fontSize: 12, color: Colors.textMuted, fontWeight: '500', marginTop: 4 },
   badge: { alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8 },
   badgeText: { fontSize: 12, fontWeight: '900', letterSpacing: 0.5 },
-  requestRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  requestRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   requestPlan: { fontSize: 15, fontWeight: '700', color: Colors.text },
   emptyRequest: { alignItems: 'center', paddingVertical: 20 },
   emptyText: { fontSize: 14, fontWeight: '600', color: Colors.text },
   emptySubText: { fontSize: 12, color: Colors.textMuted, marginTop: 4 },
-  upgradeBtn: { marginHorizontal: 16, marginTop: 8, backgroundColor: Colors.brand, borderRadius: 12, paddingVertical: 16, alignItems: 'center' },
+  upgradeBtn: {
+    marginHorizontal: 16,
+    marginTop: 8,
+    backgroundColor: Colors.brand,
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
   upgradeBtnText: { color: '#ffffff', fontSize: 16, fontWeight: '800' },
 });

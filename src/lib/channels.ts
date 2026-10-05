@@ -69,17 +69,17 @@ export const ChannelService = {
   async getMyChannels(userId: string) {
     const { data, error } = await supabase
       .from('channel_members')
-      .select(`
+      .select(
+        `
         role,
         channels(*)
-      `)
+      `,
+      )
       .eq('user_id', userId)
       .order('created_at', { ascending: false, referencedTable: 'channels' });
 
     if (error) throw error;
-    return (data ?? [])
-      .map((row: any) => ({ ...row.channels, myRole: row.role }))
-      .filter(Boolean);
+    return (data ?? []).map((row: any) => ({ ...row.channels, myRole: row.role })).filter(Boolean);
   },
 
   async getMyOwnedChannels(userId: string) {
@@ -101,9 +101,13 @@ export const ChannelService = {
       .in('status', ['active', 'pending']);
 
     if (filter === 'top_rated') {
-      query = query.order('member_count', { ascending: false }).order('post_count', { ascending: false });
+      query = query
+        .order('member_count', { ascending: false })
+        .order('post_count', { ascending: false });
     } else if (filter === 'trending') {
-      query = query.order('post_count', { ascending: false }).order('member_count', { ascending: false });
+      query = query
+        .order('post_count', { ascending: false })
+        .order('member_count', { ascending: false });
     } else {
       query = query.order('created_at', { ascending: false });
     }

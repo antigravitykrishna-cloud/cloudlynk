@@ -35,8 +35,8 @@
 //      should already be set.)
 //   Full checklist: BACKEND_REFERENCE.md "Payments — Google Play Billing".
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { getSubscriptionStatus, planStatusFor } from "../_shared/play-billing.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { getSubscriptionStatus, planStatusFor } from '../_shared/play-billing.ts';
 
 interface PubSubPushBody {
   message?: { data?: string; messageId?: string; attributes?: Record<string, string> };
@@ -48,21 +48,26 @@ interface DeveloperNotification {
   eventTimeMillis?: string;
   subscriptionNotification?: { version: string; notificationType: number; purchaseToken: string };
   testNotification?: { version: string };
-  voidedPurchaseNotification?: { purchaseToken: string; orderId: string; productType: number; refundType: number };
+  voidedPurchaseNotification?: {
+    purchaseToken: string;
+    orderId: string;
+    productType: number;
+    refundType: number;
+  };
 }
 
-Deno.serve(async (req) => {
-  if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
+Deno.serve(async req => {
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 });
 
   // Pub/Sub push requests can't carry a Supabase JWT — authenticate with a
   // shared secret in the query string instead (set on the push subscription
   // URL in step 2 above, never logged or echoed back).
   const url = new URL(req.url);
-  const secret = url.searchParams.get("secret");
-  const expectedSecret = Deno.env.get("RTDN_SHARED_SECRET");
+  const secret = url.searchParams.get('secret');
+  const expectedSecret = Deno.env.get('RTDN_SHARED_SECRET');
   if (!expectedSecret || secret !== expectedSecret) {
     // Wrong/missing secret: refuse, but don't tell a prober anything useful.
-    return new Response("Forbidden", { status: 403 });
+    return new Response('Forbidden', { status: 403 });
   }
 
   try {
@@ -71,7 +76,7 @@ Deno.serve(async (req) => {
     if (!dataB64) {
       // Malformed push — ack it anyway so Pub/Sub doesn't retry forever on a
       // message it will never be able to parse.
-      return new Response("OK (no data)", { status: 200 });
+      return new Response('OK (no data)', { status: 200 });
     }
 
     const decoded = atob(dataB64);
@@ -80,29 +85,33 @@ Deno.serve(async (req) => {
     if (notification.testNotification) {
       // Sent when you click "Send test notification" in Play Console — just
       // confirms the pipe works.
-      console.log("play-rtdn-webhook: received test notification");
-      return new Response("OK (test)", { status: 200 });
+      console.log('play-rtdn-webhook: received test notification');
+      return new Response('OK (test)', { status: 200 });
     }
 
-    const purchaseToken = notification.subscriptionNotification?.purchaseToken
-      ?? notification.voidedPurchaseNotification?.purchaseToken;
+    const purchaseToken =
+      notification.subscriptionNotification?.purchaseToken ??
+      notification.voidedPurchaseNotification?.purchaseToken;
     const notificationTypeLabel = notification.subscriptionNotification
       ? `subscriptionNotification:${notification.subscriptionNotification.notificationType}`
       : notification.voidedPurchaseNotification
-      ? "voidedPurchaseNotification"
-      : "unknown";
+        ? 'voidedPurchaseNotification'
+        : 'unknown';
 
     if (!purchaseToken) {
-      console.log("play-rtdn-webhook: notification carried no purchase token, nothing to do:", notificationTypeLabel);
-      return new Response("OK (no token)", { status: 200 });
+      console.log(
+        'play-rtdn-webhook: notification carried no purchase token, nothing to do:',
+        notificationTypeLabel,
+      );
+      return new Response('OK (no token)', { status: 200 });
     }
 
-    const packageName = notification.packageName || Deno.env.get("GOOGLE_PLAY_PACKAGE_NAME") || "";
-    if (!packageName) throw new Error("MISSING_PACKAGE_NAME");
+    const packageName = notification.packageName || Deno.env.get('GOOGLE_PLAY_PACKAGE_NAME') || '';
+    if (!packageName) throw new Error('MISSING_PACKAGE_NAME');
 
     const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
       { auth: { autoRefreshToken: false, persistSession: false } },
     );
 
@@ -112,26 +121,30 @@ Deno.serve(async (req) => {
     // voided purchase may already be gone from that endpoint.
     if (notification.voidedPurchaseNotification) {
       const { data: existing } = await supabaseAdmin
-        .from("iap_purchases")
-        .select("user_id")
-        .eq("purchase_token", purchaseToken)
+        .from('iap_purchases')
+        .select('user_id')
+        .eq('purchase_token', purchaseToken)
         .maybeSingle();
       if (existing?.user_id) {
-        await supabaseAdmin.from("iap_purchases").update({
-          status: "revoked",
-          last_notification_type: "VOIDED_PURCHASE",
-        }).eq("purchase_token", purchaseToken);
+        await supabaseAdmin
+          .from('iap_purchases')
+          .update({
+            status: 'revoked',
+            last_notification_type: 'VOIDED_PURCHASE',
+          })
+          .eq('purchase_token', purchaseToken);
         // v58: via the RPC, not a direct UPDATE — see the comment in
         // verify-play-receipt. A direct write here was silently reverted, so
         // voided purchases never actually lost their entitlement.
-        const { error: voidErr } = await supabaseAdmin.rpc("apply_play_entitlement", {
+        const { error: voidErr } = await supabaseAdmin.rpc('apply_play_entitlement', {
           p_user_id: existing.user_id,
-          p_plan_status: "cancelled",
+          p_plan_status: 'cancelled',
           p_expires_at: null,
         });
-        if (voidErr) console.error("play-rtdn-webhook: void entitlement write failed:", voidErr.message);
+        if (voidErr)
+          console.error('play-rtdn-webhook: void entitlement write failed:', voidErr.message);
       }
-      return new Response("OK (voided)", { status: 200 });
+      return new Response('OK (voided)', { status: 200 });
     }
 
     // Look up which user this purchase token belongs to. If we don't have a
@@ -140,9 +153,9 @@ Deno.serve(async (req) => {
     // we can, but there's no user to attach it to until the app links it, so
     // just fetch status for logging and stop.
     const { data: existing, error: lookupErr } = await supabaseAdmin
-      .from("iap_purchases")
-      .select("user_id, plan_code")
-      .eq("purchase_token", purchaseToken)
+      .from('iap_purchases')
+      .select('user_id, plan_code')
+      .eq('purchase_token', purchaseToken)
       .maybeSingle();
     if (lookupErr) throw lookupErr;
 
@@ -150,21 +163,26 @@ Deno.serve(async (req) => {
     const { planStatus, expiresAtIso } = planStatusFor(status);
 
     if (!existing) {
-      console.log(`play-rtdn-webhook: unrecognized purchase token (${notificationTypeLabel}), no user to update yet.`);
-      return new Response("OK (unrecognized token)", { status: 200 });
+      console.log(
+        `play-rtdn-webhook: unrecognized purchase token (${notificationTypeLabel}), no user to update yet.`,
+      );
+      return new Response('OK (unrecognized token)', { status: 200 });
     }
 
-    await supabaseAdmin.from("iap_purchases").update({
-      status: planStatus === "active" ? "active" : planStatus,
-      expires_at: expiresAtIso,
-      base_plan_id: status.basePlanId,
-      last_notification_type: notificationTypeLabel,
-      raw_response: status.raw,
-    }).eq("purchase_token", purchaseToken);
+    await supabaseAdmin
+      .from('iap_purchases')
+      .update({
+        status: planStatus === 'active' ? 'active' : planStatus,
+        expires_at: expiresAtIso,
+        base_plan_id: status.basePlanId,
+        last_notification_type: notificationTypeLabel,
+        raw_response: status.raw,
+      })
+      .eq('purchase_token', purchaseToken);
 
     // v58: via the RPC. Renewals, expiries and cancellations all landed here
     // and all silently reverted before this change.
-    const { error: entErr } = await supabaseAdmin.rpc("apply_play_entitlement", {
+    const { error: entErr } = await supabaseAdmin.rpc('apply_play_entitlement', {
       p_user_id: existing.user_id,
       p_plan_status: planStatus,
       p_expires_at: expiresAtIso,
@@ -172,16 +190,18 @@ Deno.serve(async (req) => {
     if (entErr) {
       // Returning non-2xx makes Google retry the notification, which is what
       // we want: the alternative is dropping a state change on the floor.
-      console.error("play-rtdn-webhook: apply_play_entitlement failed:", entErr.message);
-      return new Response("Entitlement write failed", { status: 500 });
+      console.error('play-rtdn-webhook: apply_play_entitlement failed:', entErr.message);
+      return new Response('Entitlement write failed', { status: 500 });
     }
 
-    console.log(`play-rtdn-webhook: updated user ${existing.user_id} -> ${planStatus} (${notificationTypeLabel})`);
-    return new Response("OK", { status: 200 });
+    console.log(
+      `play-rtdn-webhook: updated user ${existing.user_id} -> ${planStatus} (${notificationTypeLabel})`,
+    );
+    return new Response('OK', { status: 200 });
   } catch (err: any) {
-    console.error("play-rtdn-webhook error:", err?.message ?? err);
+    console.error('play-rtdn-webhook error:', err?.message ?? err);
     // Return 500 so Pub/Sub retries — this is a transient/config error, not
     // a "notification we understand but choose to ignore" case.
-    return new Response("Internal error", { status: 500 });
+    return new Response('Internal error', { status: 500 });
   }
 });

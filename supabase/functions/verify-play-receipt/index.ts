@@ -20,9 +20,13 @@
 // have to be done by whoever owns the developer account. See
 // BACKEND_REFERENCE.md "Payments — Google Play Billing" for the full checklist.
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { corsHeaders, jsonResponse } from "../_shared/http.ts";
-import { getSubscriptionStatus, acknowledgeSubscription, planStatusFor } from "../_shared/play-billing.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { corsHeaders, jsonResponse } from '../_shared/http.ts';
+import {
+  getSubscriptionStatus,
+  acknowledgeSubscription,
+  planStatusFor,
+} from '../_shared/play-billing.ts';
 
 // All four Cloudlynk plans are base plans under ONE Play Console subscription
 // product. Checking the product id alone proves nothing now — every purchase
@@ -30,78 +34,102 @@ import { getSubscriptionStatus, acknowledgeSubscription, planStatusFor } from ".
 // is: (1) the token must be for this product, and (2) the granted plan is
 // whatever Google says the token's *base plan* is, never what the client
 // claims. `_shared/play-billing.ts` already surfaces `basePlanId` for this.
-const EXPECTED_PRODUCT_ID = "cloudlynk_premium";
+const EXPECTED_PRODUCT_ID = 'cloudlynk_premium';
 
 // basePlanId (from Google) -> this app's plan code. Identical strings today
 // (see DEFAULT_PLANS in lib/services/iap.ts), but kept as an explicit map so
 // a future rename of one side doesn't silently mis-grant.
 const BASE_PLAN_ID_TO_PLAN_CODE: Record<string, string> = {
-  "trial-3d": "trial",
-  "silver-7d": "silver-7d",
-  "gold-1m": "gold-1m",
-  "platinum-6m": "platinum-6m",
-  "diamond-1y": "diamond-1y",
+  'trial-3d': 'trial',
+  'silver-7d': 'silver-7d',
+  'gold-1m': 'gold-1m',
+  'platinum-6m': 'platinum-6m',
+  'diamond-1y': 'diamond-1y',
 };
 
 function verifiedProductId(raw: unknown): string | null {
-  if (!raw || typeof raw !== "object") return null;
+  if (!raw || typeof raw !== 'object') return null;
   const lineItems = (raw as Record<string, unknown>).lineItems;
   if (!Array.isArray(lineItems) || lineItems.length === 0) return null;
   const productId = (lineItems[0] as Record<string, unknown>)?.productId;
-  return typeof productId === "string" ? productId : null;
+  return typeof productId === 'string' ? productId : null;
 }
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders() });
-  if (req.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405);
+Deno.serve(async req => {
+  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders() });
+  if (req.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("MISSING_AUTH");
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) throw new Error('MISSING_AUTH');
 
     const supabaseUser = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       { global: { headers: { Authorization: authHeader } } },
     );
-    const { data: { user }, error: userErr } = await supabaseUser.auth.getUser();
-    if (userErr || !user) throw new Error("UNAUTHORIZED");
+    const {
+      data: { user },
+      error: userErr,
+    } = await supabaseUser.auth.getUser();
+    if (userErr || !user) throw new Error('UNAUTHORIZED');
 
     // `planCode` is advisory only — the server derives the real plan below.
     const { purchaseToken, planCode: claimedPlanCode, packageName } = await req.json();
     if (!purchaseToken || !packageName) {
-      return jsonResponse({ valid: false, error: "Missing purchaseToken or packageName." }, 400);
+      return jsonResponse({ valid: false, error: 'Missing purchaseToken or packageName.' }, 400);
     }
 
     const status = await getSubscriptionStatus(packageName, purchaseToken);
     if (!status.valid) {
-      return jsonResponse({ valid: false, error: "Purchase is not active according to Google Play." });
+      return jsonResponse({
+        valid: false,
+        error: 'Purchase is not active according to Google Play.',
+      });
     }
 
     // Trust boundary. Do NOT grant what the client claimed — grant what
     // Google says this purchase token is actually for.
     const actualProductId = verifiedProductId(status.raw);
     if (actualProductId !== EXPECTED_PRODUCT_ID) {
-      console.error(`verify-play-receipt: wrong product — token is for "${actualProductId}", expected "${EXPECTED_PRODUCT_ID}"`);
-      return jsonResponse({ valid: false, error: "Purchase does not match this app's subscription product." }, 400);
+      console.error(
+        `verify-play-receipt: wrong product — token is for "${actualProductId}", expected "${EXPECTED_PRODUCT_ID}"`,
+      );
+      return jsonResponse(
+        { valid: false, error: "Purchase does not match this app's subscription product." },
+        400,
+      );
     }
 
-    const derivedPlanCode = status.basePlanId ? BASE_PLAN_ID_TO_PLAN_CODE[status.basePlanId] : undefined;
+    const derivedPlanCode = status.basePlanId
+      ? BASE_PLAN_ID_TO_PLAN_CODE[status.basePlanId]
+      : undefined;
     if (!derivedPlanCode) {
-      console.error(`verify-play-receipt: unmapped basePlanId "${status.basePlanId}" — Play Console base plans not configured, or not a subscription purchase`);
-      return jsonResponse({ valid: false, error: "This purchase's plan could not be identified. If you just subscribed, try again shortly." }, 400);
+      console.error(
+        `verify-play-receipt: unmapped basePlanId "${status.basePlanId}" — Play Console base plans not configured, or not a subscription purchase`,
+      );
+      return jsonResponse(
+        {
+          valid: false,
+          error:
+            "This purchase's plan could not be identified. If you just subscribed, try again shortly.",
+        },
+        400,
+      );
     }
     if (claimedPlanCode && claimedPlanCode !== derivedPlanCode) {
       // Not fatal — grant what they actually paid for. Could be a stale UI or a manipulated client.
-      console.warn(`verify-play-receipt: client claimed "${claimedPlanCode}" but Google says "${derivedPlanCode}" — granting the derived plan`);
+      console.warn(
+        `verify-play-receipt: client claimed "${claimedPlanCode}" but Google says "${derivedPlanCode}" — granting the derived plan`,
+      );
     }
     const planCode = derivedPlanCode;
 
     const { planStatus, expiresAtIso } = planStatusFor(status);
 
     const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
       { auth: { autoRefreshToken: false, persistSession: false } },
     );
 
@@ -111,9 +139,9 @@ Deno.serve(async (req) => {
     // Premium (the upsert below would even move the token to the newest
     // caller). The first account to verify a token owns it.
     const { data: existing } = await supabaseAdmin
-      .from("iap_purchases")
-      .select("user_id")
-      .eq("purchase_token", purchaseToken)
+      .from('iap_purchases')
+      .select('user_id')
+      .eq('purchase_token', purchaseToken)
       .maybeSingle();
     if (existing?.user_id && existing.user_id !== user.id) {
       // Exception: the purchase was made on a GUEST account (v89). A guest
@@ -123,55 +151,67 @@ Deno.serve(async (req) => {
       // account can hand us this token, and the purchase MOVES (the old
       // guest loses it), so it is still one purchase, one account.
       const { data: owner } = await supabaseAdmin
-        .from("profiles")
-        .select("is_guest")
-        .eq("id", existing.user_id)
+        .from('profiles')
+        .select('is_guest')
+        .eq('id', existing.user_id)
         .maybeSingle();
       if (!owner?.is_guest) {
-        console.warn(`verify-play-receipt: token already belongs to another account (caller ${user.id})`);
-        return jsonResponse({
-          valid: false,
-          error: "This purchase is linked to a different Cloudlynk account. Sign in with the account you bought it on.",
-        }, 409);
+        console.warn(
+          `verify-play-receipt: token already belongs to another account (caller ${user.id})`,
+        );
+        return jsonResponse(
+          {
+            valid: false,
+            error:
+              'This purchase is linked to a different Cloudlynk account. Sign in with the account you bought it on.',
+          },
+          409,
+        );
       }
-      console.log(`verify-play-receipt: moving purchase from guest ${existing.user_id} to ${user.id}`);
-      const { error: revokeErr } = await supabaseAdmin.rpc("apply_play_entitlement", {
+      console.log(
+        `verify-play-receipt: moving purchase from guest ${existing.user_id} to ${user.id}`,
+      );
+      const { error: revokeErr } = await supabaseAdmin.rpc('apply_play_entitlement', {
         p_user_id: existing.user_id,
-        p_plan_status: "free",
+        p_plan_status: 'free',
         p_expires_at: null,
       });
       if (revokeErr) {
-        console.error("verify-play-receipt: could not revoke the old guest:", revokeErr.message);
-        return jsonResponse({ valid: false, error: "Could not move this purchase. Please try again." }, 500);
+        console.error('verify-play-receipt: could not revoke the old guest:', revokeErr.message);
+        return jsonResponse(
+          { valid: false, error: 'Could not move this purchase. Please try again.' },
+          500,
+        );
       }
     }
 
     // Acknowledge BEFORE granting access is not required, but must happen
     // within 3 days of purchase regardless — do it here, at the one moment
     // we're guaranteed to see this purchase token for the first time.
-    let acknowledged = status.acknowledgementState === "ACKNOWLEDGEMENT_STATE_ACKNOWLEDGED";
+    let acknowledged = status.acknowledgementState === 'ACKNOWLEDGEMENT_STATE_ACKNOWLEDGED';
     if (!acknowledged) {
       acknowledged = await acknowledgeSubscription(packageName, actualProductId, purchaseToken);
     }
 
-    const { error: upsertErr } = await supabaseAdmin
-      .from("iap_purchases")
-      .upsert({
+    const { error: upsertErr } = await supabaseAdmin.from('iap_purchases').upsert(
+      {
         user_id: user.id,
         purchase_token: purchaseToken,
         product_id: actualProductId,
         plan_code: planCode,
         base_plan_id: status.basePlanId,
         package_name: packageName,
-        platform: "android",
-        status: planStatus === "active" ? "active" : planStatus,
+        platform: 'android',
+        status: planStatus === 'active' ? 'active' : planStatus,
         expires_at: expiresAtIso,
         acknowledged,
-        last_notification_type: "INITIAL_PURCHASE",
+        last_notification_type: 'INITIAL_PURCHASE',
         raw_response: status.raw,
-      }, { onConflict: "purchase_token" });
+      },
+      { onConflict: 'purchase_token' },
+    );
     if (upsertErr) {
-      console.error("verify-play-receipt: failed to record purchase:", upsertErr.message);
+      console.error('verify-play-receipt: failed to record purchase:', upsertErr.message);
     }
 
     // v58: this MUST go through apply_play_entitlement, not a direct UPDATE.
@@ -187,7 +227,7 @@ Deno.serve(async (req) => {
     // 'free'. Every Play purchase took the customer's money and granted
     // nothing, with no error anywhere — which is why this is now a hard
     // failure rather than a logged warning.
-    const { error: updateErr } = await supabaseAdmin.rpc("apply_play_entitlement", {
+    const { error: updateErr } = await supabaseAdmin.rpc('apply_play_entitlement', {
       p_user_id: user.id,
       p_plan_status: planStatus,
       p_expires_at: expiresAtIso,
@@ -198,20 +238,26 @@ Deno.serve(async (req) => {
       // they have access they do not have, and would consume the receipt.
       // Fail loudly so the client can retry — verifyReceipt is idempotent and
       // restorePurchases replays it.
-      console.error("verify-play-receipt: apply_play_entitlement failed:", updateErr.message);
-      return jsonResponse({
-        error: "Your purchase went through, but we could not activate it. Reopen the app to retry — you will not be charged twice.",
-      }, 500);
+      console.error('verify-play-receipt: apply_play_entitlement failed:', updateErr.message);
+      return jsonResponse(
+        {
+          error:
+            'Your purchase went through, but we could not activate it. Reopen the app to retry — you will not be charged twice.',
+        },
+        500,
+      );
     }
 
     return jsonResponse({ valid: true, planCode, expiresAt: expiresAtIso });
   } catch (err: any) {
-    console.error("verify-play-receipt error:", err.message);
+    console.error('verify-play-receipt error:', err.message);
     const clientMessage =
-      err.message === "MISSING_AUTH" || err.message === "UNAUTHORIZED" ? "Authentication required" :
-      err.message === "MISSING_SERVICE_ACCOUNT" ? "Receipt verifier is not configured (GOOGLE_SERVICE_ACCOUNT_JSON missing)." :
-      "Verification failed.";
-    const status = err.message === "MISSING_AUTH" || err.message === "UNAUTHORIZED" ? 401 : 500;
+      err.message === 'MISSING_AUTH' || err.message === 'UNAUTHORIZED'
+        ? 'Authentication required'
+        : err.message === 'MISSING_SERVICE_ACCOUNT'
+          ? 'Receipt verifier is not configured (GOOGLE_SERVICE_ACCOUNT_JSON missing).'
+          : 'Verification failed.';
+    const status = err.message === 'MISSING_AUTH' || err.message === 'UNAUTHORIZED' ? 401 : 500;
     return jsonResponse({ valid: false, error: clientMessage }, status);
   }
 });

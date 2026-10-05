@@ -1,7 +1,12 @@
 import { useState, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  ActivityIndicator, Linking,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -44,10 +49,14 @@ function formatDate(iso: string | null): string {
 
 function getStatusColor(status: string): string {
   switch (status) {
-    case 'approved': return '#2ED47A';
-    case 'pending': return '#FFB347';
-    case 'rejected': return Colors.brand;
-    default: return Colors.textMuted;
+    case 'approved':
+      return '#2ED47A';
+    case 'pending':
+      return '#FFB347';
+    case 'rejected':
+      return Colors.brand;
+    default:
+      return Colors.textMuted;
   }
 }
 
@@ -75,10 +84,12 @@ export default function MyVideosScreen() {
     }
   }, [user, activeTab]);
 
-  useFocusEffect(useCallback(() => {
-    setLoading(true);
-    fetchPosts();
-  }, [fetchPosts]));
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      fetchPosts();
+    }, [fetchPosts]),
+  );
 
   const handleTapPost = async (post: MyPost) => {
     if (!post.video_url) return;
@@ -92,7 +103,10 @@ export default function MyVideosScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backBtn}
+          activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
@@ -108,7 +122,10 @@ export default function MyVideosScreen() {
           <TouchableOpacity
             key={tab.key}
             style={[styles.tab, activeTab === tab.key && styles.tabActive]}
-            onPress={() => { setActiveTab(tab.key); setLoading(true); }}
+            onPress={() => {
+              setActiveTab(tab.key);
+              setLoading(true);
+            }}
             activeOpacity={0.7}
           >
             <Text style={[styles.tabText, activeTab === tab.key && styles.tabTextActive]}>
@@ -123,13 +140,15 @@ export default function MyVideosScreen() {
       ) : posts.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>
-            {activeTab === 'all'
-              ? 'No video submissions yet.'
-              : `No ${activeTab} submissions.`}
+            {activeTab === 'all' ? 'No video submissions yet.' : `No ${activeTab} submissions.`}
           </Text>
         </View>
       ) : (
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
+        >
           {posts.map(post => (
             <TouchableOpacity
               key={post.id}
@@ -139,15 +158,26 @@ export default function MyVideosScreen() {
               disabled={!post.video_url}
             >
               <View style={styles.thumb}>
-                <Icon name={post.thumbnail_url ? 'film' : 'video'} size={26} color={Colors.textMuted} />
+                <Icon
+                  name={post.thumbnail_url ? 'film' : 'video'}
+                  size={26}
+                  color={Colors.textMuted}
+                />
               </View>
               <View style={styles.cardBody}>
-                <Text style={styles.cardTitle} numberOfLines={2}>{post.title ?? 'Untitled'}</Text>
+                <Text style={styles.cardTitle} numberOfLines={2}>
+                  {post.title ?? 'Untitled'}
+                </Text>
                 <Text style={styles.cardMeta} numberOfLines={1}>
                   {post.channel_name ?? 'Unknown channel'}
                   {post.content_type ? ` · ${post.content_type}` : ''}
                 </Text>
-                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(post.status) + '18' }]}>
+                <View
+                  style={[
+                    styles.statusBadge,
+                    { backgroundColor: getStatusColor(post.status) + '18' },
+                  ]}
+                >
                   <Text style={[styles.statusBadgeText, { color: getStatusColor(post.status) }]}>
                     {post.status.toUpperCase()}
                   </Text>
@@ -175,24 +205,64 @@ export default function MyVideosScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
-  header: { backgroundColor: Colors.surface, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14 },
+  header: {
+    backgroundColor: Colors.surface,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
   backBtn: { width: 80 },
   backTxt: { color: '#ffffff', fontSize: 14, fontWeight: '600' },
   headerTitle: { color: '#ffffff', fontSize: 18, fontWeight: '800', flex: 1, textAlign: 'center' },
-  tabStrip: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: Colors.border, paddingHorizontal: 16 },
+  tabStrip: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+    paddingHorizontal: 16,
+  },
   tab: { paddingVertical: 12, paddingHorizontal: 14, marginRight: 4 },
   tabActive: { borderBottomWidth: 2, borderBottomColor: Colors.brand },
   tabText: { fontSize: 13, fontWeight: '600', color: Colors.textMuted },
   tabTextActive: { color: Colors.brand, fontWeight: '800' },
   list: { paddingVertical: 8 },
-  card: { flexDirection: 'row', paddingVertical: 12, paddingHorizontal: 16, borderBottomWidth: 0.5, borderBottomColor: Colors.border, gap: 12 },
-  thumb: { width: 80, height: 110, borderRadius: 8, backgroundColor: Colors.surfaceHover, alignItems: 'center', justifyContent: 'center' },
+  card: {
+    flexDirection: 'row',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.border,
+    gap: 12,
+  },
+  thumb: {
+    width: 80,
+    height: 110,
+    borderRadius: 8,
+    backgroundColor: Colors.surfaceHover,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   cardBody: { flex: 1, justifyContent: 'center' },
   cardTitle: { fontSize: 14, fontWeight: '700', color: Colors.text, marginBottom: 4 },
   cardMeta: { fontSize: 12, color: Colors.textMuted, fontWeight: '500', marginBottom: 6 },
-  statusBadge: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, marginBottom: 4 },
+  statusBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    marginBottom: 4,
+  },
   statusBadgeText: { fontSize: 11, fontWeight: '900', letterSpacing: 0.3 },
   cardDate: { fontSize: 11, color: Colors.textMuted, fontWeight: '500' },
-  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80, paddingHorizontal: 20 },
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 80,
+    paddingHorizontal: 20,
+  },
   emptyText: { fontSize: 14, fontWeight: '600', color: Colors.textMuted },
 });
