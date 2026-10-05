@@ -16,7 +16,7 @@ import {
   AdminPost,
   AdminPostStatus,
 } from '@/features/admin/api/adminContentApi';
-import { AccessLevel } from '@/features/content/api/postsApi';
+import type { AccessLevel } from '@/features/content/model';
 import { Colors } from '@/theme';
 
 // Admin content list: everything published, filterable by status and access level. Access level can

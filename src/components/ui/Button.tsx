@@ -8,14 +8,15 @@ import {
 } from 'react-native';
 import { PressScale, type HapticStyle } from '@/components/ui/Press';
 import { Icon, type IconName } from '@/components/ui/Icon';
-import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/theme';
+import { Colors, FontSize, FontWeight, Radius, Spacing, withAlpha } from '@/theme';
 
 /**
  * The app's button. `primary` is the one main action on a screen; `secondary` sits beside it;
  * `danger`, `warning` and `success` are tinted for destructive, cautionary and approving actions;
- * `outline` is a quiet alternative to primary.
+ * `outline` is a quiet alternative to primary. `inverse` and `overlay` sit on top of artwork.
  */
-export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'warning' | 'success' | 'outline';
+export type ButtonVariant =
+  'primary' | 'secondary' | 'danger' | 'warning' | 'success' | 'outline' | 'inverse' | 'overlay';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 type Props = {
@@ -47,6 +48,8 @@ const VARIANTS: Record<ButtonVariant, { background: string; foreground: string; 
     warning: { background: Colors.warningDim, foreground: Colors.warning },
     success: { background: Colors.successDim, foreground: Colors.success },
     outline: { background: 'transparent', foreground: Colors.brandBlue, border: Colors.brandBlue },
+    inverse: { background: Colors.white, foreground: Colors.textInverse },
+    overlay: { background: withAlpha(Colors.white, 0.2), foreground: Colors.text },
   };
 
 export function Button({

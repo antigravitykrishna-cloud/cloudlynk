@@ -12,7 +12,7 @@ import { showAlert } from '@/components/ui/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { ChannelService } from '@/features/channels/api/channelsApi';
+import { channelsApi } from '@/features/channels/api/channelsApi';
 import { GuestPlans, PlanList, useDefaultPlan } from '@/features/premium/components/GuestPlans';
 import { useSubscriptionPlans } from '@/features/premium/hooks/useSubscriptionPlans';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -61,7 +61,7 @@ export default function ProfileScreen() {
   const loadMyChannels = useCallback(async () => {
     if (!user?.id) return;
     try {
-      const data = await ChannelService.getMyOwnedChannels(user.id);
+      const data = await channelsApi.listOwned(user.id);
       setMyChannels(data ?? []);
     } catch (err) {
       if (__DEV__) console.error('loadMyChannels:', err);

@@ -1,119 +1,36 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
   ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { showAlert } from '@/components/ui/Feedback';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { Chip } from '@/components/ui/Chip';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { showAlert } from '@/components/ui/Feedback';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
+import { Colors, FontSize, FontWeight, Spacing } from '@/theme';
+import { formatDate } from '@/utils/format';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { ChannelService } from '@/features/channels/api/channelsApi';
-import { PostService, ChannelPost } from '@/features/content/api/postsApi';
-import { supabase } from '@/lib/supabase';
-import { Colors, withAlpha } from '@/theme';
+import { ChannelDetailsCard } from '@/features/channels/components/ChannelDetailsCard';
+import { useManagedChannel } from '@/features/channels/hooks/useManagedChannel';
+import type { ChannelPost } from '@/features/content/model';
 
-// guards-allow-select-star
-// Channel management is owner-only; anon never reaches this query.
-// See scripts/guards.mjs check 2 for why select('*') is unsafe on a
-// guest-reachable path.
+// An owner's (or admin's) view of one channel: its details, every post with a delete button, and
+// deleting the channel itself.
 
 export default function ManageChannelScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { user, profile, isAdmin } = useAuth();
+  const { isAdmin } = useAuth();
+  const { channel, posts, loading, saveDetails, deleteChannel, deletePost } = useManagedChannel(id);
 
-  const [channel, setChannel] = useState<any>(null);
-  const [posts, setPosts] = useState<ChannelPost[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState(false);
-  const [editName, setEditName] = useState('');
-  const [editDesc, setEditDesc] = useState('');
-  const [saving, setSaving] = useState(false);
-
-  const loadChannel = useCallback(async () => {
-    const { data, error } = await supabase.from('channels').select('*').eq('id', id).single();
-
-    if (error) {
-      showAlert('Error', 'Failed to load channel');
-      router.replace('/(tabs)/channels');
-      return;
-    }
-
-    setChannel(data);
-    setEditName(data.name || '');
-    setEditDesc(data.description || '');
-  }, [id, router]);
-
-  const loadPosts = useCallback(async () => {
-    if (!user) return;
-    try {
-      const data = await PostService.getChannelPosts(id as string, user.id);
-      setPosts(data);
-    } catch (err) {
-      if (__DEV__) console.error('Failed to load posts:', err);
-    }
-  }, [id, user]);
-
-  useEffect(() => {
-    if (!user) return;
-
-    const init = async () => {
-      setLoading(true);
-      await loadChannel();
-      await loadPosts();
-      setLoading(false);
-    };
-
-    init();
-  }, [user, loadChannel, loadPosts]);
-
-  const prevUserIdRef = useRef<string | undefined>(undefined);
-  useEffect(() => {
-    if (prevUserIdRef.current !== undefined && prevUserIdRef.current !== user?.id) {
-      setChannel(null);
-      setPosts([]);
-      setLoading(true);
-    }
-    prevUserIdRef.current = user?.id;
-  }, [user?.id]);
-
-  useEffect(() => {
-    if (profile === null) return;
-    if (channel && user && channel.owner_id !== user.id && !isAdmin) {
-      showAlert('Access Denied', 'You can only manage your own channels.');
-      router.replace('/(tabs)/channels');
-    }
-  }, [channel, user, isAdmin, profile, router]);
-
-  const handleSave = async () => {
-    if (!editName.trim()) {
-      showAlert('Error', 'Channel name cannot be empty');
-      return;
-    }
-
-    setSaving(true);
-    try {
-      const updated = await ChannelService.updateChannel(
-        id as string,
-        editName.trim(),
-        editDesc.trim(),
-      );
-      setChannel(updated);
-      setEditing(false);
-      showAlert('Success', 'Channel updated successfully');
-    } catch (err: any) {
-      showAlert('Error', err.message || 'Failed to update channel');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDelete = () => {
+  const confirmDeleteChannel = () =>
     showAlert(
       'Delete Channel',
       'Are you sure you want to delete this channel? This action cannot be undone.',
@@ -122,466 +39,131 @@ export default function ManageChannelScreen() {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: async () => {
-            try {
-              await ChannelService.deleteChannel(id as string);
-              showAlert('Deleted', 'Channel has been deleted.');
-              router.replace('/(tabs)/channels');
-            } catch (err: any) {
-              showAlert('Error', err.message || 'Failed to delete channel');
-            }
-          },
+          onPress: () =>
+            deleteChannel()
+              .then(() => showAlert('Deleted', 'Channel has been deleted.'))
+              .catch(err => showAlert('Error', err?.message || 'Failed to delete channel')),
         },
       ],
     );
-  };
 
-  const handleDeletePost = (postId: string, postTitle: string | null) => {
-    showAlert('Delete Post', `Are you sure you want to delete "${postTitle || 'Untitled'}"?`, [
+  const confirmDeletePost = (post: ChannelPost) =>
+    showAlert('Delete Post', `Are you sure you want to delete "${post.title || 'Untitled'}"?`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
         style: 'destructive',
-        onPress: async () => {
-          try {
-            const { error } = await supabase.from('channel_posts').delete().eq('id', postId);
-
-            if (error) throw error;
-            setPosts(prev => prev.filter(p => p.id !== postId));
-          } catch (err: any) {
-            showAlert('Error', err.message || 'Failed to delete post');
-          }
-        },
+        onPress: () =>
+          deletePost(post.id).catch(err =>
+            showAlert('Error', err?.message || 'Failed to delete post'),
+          ),
       },
     ]);
-  };
-
-  if (loading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <ActivityIndicator size="large" color={Colors.brandBlue} style={{ marginTop: 40 }} />
-      </SafeAreaView>
-    );
-  }
-
-  if (!channel) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <Text style={styles.errorText}>Channel not found</Text>
-      </SafeAreaView>
-    );
-  }
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.replace('/(tabs)/channels')}
-          style={styles.backButton}
-        >
-          <Text style={styles.backButtonText}>{'←'}</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Manage Channel</Text>
-        <View style={{ width: 40 }} />
-      </View>
+    <SafeAreaView style={styles.page}>
+      <ScreenHeader title="Manage Channel" onBack={() => router.replace('/(tabs)/channels')} />
 
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        {/* Channel Info Card */}
-        <View style={styles.card}>
-          <Text style={styles.channelName}>{channel.name}</Text>
-
-          <View style={styles.badgeRow}>
-            <View
-              style={[
-                styles.badge,
-                {
-                  backgroundColor:
-                    channel.status === 'active' ? Colors.successDim : Colors.warningDim,
-                },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.badgeText,
-                  {
-                    color: channel.status === 'active' ? Colors.success : Colors.warning,
-                  },
-                ]}
-              >
-                {channel.status}
-              </Text>
+      {loading ? (
+        <ActivityIndicator size="large" color={Colors.brandBlue} style={styles.spinner} />
+      ) : !channel ? (
+        <EmptyState icon="broadcast" title="Channel not found" />
+      ) : (
+        <ScrollView contentContainerStyle={styles.content}>
+          <Card>
+            <Text style={styles.channelName}>{channel.name}</Text>
+            <View style={styles.chips}>
+              <Chip label={channel.status} tone={channel.status === 'active' ? 'good' : 'warn'} />
+              <Chip label={channel.is_public ? 'Public' : 'Private'} />
+              <Chip label={`${channel.member_count ?? 0} members`} />
             </View>
+          </Card>
 
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{channel.is_public ? 'Public' : 'Private'}</Text>
-            </View>
-
-            {channel.member_count !== undefined && (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{channel.member_count} members</Text>
-              </View>
-            )}
-          </View>
-        </View>
-
-        {isAdmin && (
-          <TouchableOpacity
-            style={styles.addContentBtn}
-            onPress={() =>
-              router.push({ pathname: '/upload/add-content', params: { channelId: id as string } })
-            }
-            activeOpacity={0.7}
-          >
-            <Text style={styles.addContentBtnText}>+ Add Content</Text>
-          </TouchableOpacity>
-        )}
-
-        {/* Edit Form */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>Channel Details</Text>
-            {!editing && (
-              <TouchableOpacity onPress={() => setEditing(true)}>
-                <Text style={styles.editButton}>Edit</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {editing ? (
-            <View>
-              <Text style={styles.label}>Name</Text>
-              <TextInput
-                style={styles.input}
-                value={editName}
-                onChangeText={setEditName}
-                placeholder="Channel name"
-                placeholderTextColor={Colors.textMuted}
-              />
-
-              <Text style={styles.label}>Description</Text>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                value={editDesc}
-                onChangeText={setEditDesc}
-                placeholder="Channel description"
-                placeholderTextColor={Colors.textMuted}
-                multiline
-                numberOfLines={4}
-              />
-
-              <View style={styles.editActions}>
-                <TouchableOpacity
-                  style={styles.cancelButton}
-                  onPress={() => {
-                    setEditing(false);
-                    setEditName(channel.name || '');
-                    setEditDesc(channel.description || '');
-                  }}
-                >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.saveButton, saving && styles.disabledButton]}
-                  onPress={handleSave}
-                  disabled={saving}
-                >
-                  {saving ? (
-                    <ActivityIndicator size="small" color={Colors.text} />
-                  ) : (
-                    <Text style={styles.saveButtonText}>Save</Text>
-                  )}
-                </TouchableOpacity>
-              </View>
-            </View>
-          ) : (
-            <View>
-              <Text style={styles.detailLabel}>Name</Text>
-              <Text style={styles.detailValue}>{channel.name}</Text>
-              <Text style={styles.detailLabel}>Description</Text>
-              <Text style={styles.detailValue}>{channel.description || 'No description'}</Text>
-            </View>
+          {isAdmin && (
+            <Button
+              label="+ Add Content"
+              variant="outline"
+              onPress={() =>
+                router.push({ pathname: '/upload/add-content', params: { channelId: id } })
+              }
+              style={styles.addContent}
+            />
           )}
-        </View>
 
-        {/* Content List */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>
-            Content ({posts.length} {posts.length === 1 ? 'item' : 'items'})
-          </Text>
+          <ChannelDetailsCard key={channel.id} channel={channel} onSave={saveDetails} />
 
-          {posts.length === 0 ? (
-            <Text style={styles.emptyText}>No content yet</Text>
-          ) : (
-            posts.map(post => (
-              <View key={post.id} style={styles.postItem}>
-                <View style={styles.postInfo}>
-                  <Text style={styles.postTitle} numberOfLines={1}>
-                    {post.title || 'Untitled'}
-                  </Text>
-                  <View style={styles.postMeta}>
-                    <Text style={styles.postType}>{post.content_type}</Text>
-                    <Text style={styles.postStatus}>{post.status}</Text>
-                    <Text style={styles.postDate}>
-                      {new Date(post.created_at).toLocaleDateString()}
+          <Card>
+            <Text style={styles.sectionTitle}>
+              Content ({posts.length} {posts.length === 1 ? 'item' : 'items'})
+            </Text>
+            {posts.length === 0 ? (
+              <Text style={styles.muted}>No content yet</Text>
+            ) : (
+              posts.map(post => (
+                <View key={post.id} style={styles.postRow}>
+                  <View style={styles.postInfo}>
+                    <Text style={styles.postTitle} numberOfLines={1}>
+                      {post.title || 'Untitled'}
+                    </Text>
+                    <Text style={styles.muted}>
+                      {post.content_type} · {post.status} · {formatDate(post.created_at)}
                     </Text>
                   </View>
+                  <TouchableOpacity
+                    onPress={() => confirmDeletePost(post)}
+                    style={styles.deletePost}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Delete ${post.title || 'post'}`}
+                  >
+                    <Text style={styles.deletePostText}>✕</Text>
+                  </TouchableOpacity>
                 </View>
-                <TouchableOpacity
-                  onPress={() => handleDeletePost(post.id, post.title)}
-                  style={styles.deletePostButton}
-                >
-                  <Text style={styles.deletePostButtonText}>X</Text>
-                </TouchableOpacity>
-              </View>
-            ))
-          )}
-        </View>
+              ))
+            )}
+          </Card>
 
-        {/* Delete Channel Button */}
-        <TouchableOpacity style={styles.deleteChannelButton} onPress={handleDelete}>
-          <Text style={styles.deleteChannelButtonText}>Delete Channel</Text>
-        </TouchableOpacity>
-      </ScrollView>
+          <Button label="Delete Channel" variant="danger" onPress={confirmDeleteChannel} />
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.bg,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  backButtonText: {
-    color: Colors.text,
-    fontSize: 24,
-  },
-  headerTitle: {
-    color: Colors.text,
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 40,
-  },
-  addContentBtn: {
-    borderWidth: 1.5,
-    borderColor: Colors.brandBlue,
-    borderStyle: 'dashed',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  addContentBtnText: {
-    color: Colors.brandBlue,
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  card: {
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
+  page: { flex: 1, backgroundColor: Colors.bg },
+  spinner: { marginTop: 40 },
+  content: { padding: Spacing.lg, paddingBottom: 40 },
   channelName: {
     color: Colors.text,
-    fontSize: 20,
-    fontWeight: '700',
-    marginBottom: 12,
+    fontSize: FontSize.title,
+    fontWeight: FontWeight.bold,
+    marginBottom: Spacing.md,
   },
-  badgeRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-    backgroundColor: withAlpha(Colors.white, 0.08),
-  },
-  badgeText: {
-    color: Colors.textSecondary,
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'capitalize',
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  cardTitle: {
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
+  addContent: { marginBottom: Spacing.lg, borderStyle: 'dashed' },
+  sectionTitle: {
     color: Colors.text,
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 12,
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+    marginBottom: Spacing.md,
   },
-  editButton: {
-    color: Colors.brandBlue,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  label: {
-    color: Colors.textSecondary,
-    fontSize: 13,
-    fontWeight: '500',
-    marginBottom: 6,
-    marginTop: 12,
-  },
-  input: {
-    backgroundColor: Colors.bg,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    color: Colors.text,
-    fontSize: 15,
-  },
-  textArea: {
-    minHeight: 80,
-    textAlignVertical: 'top',
-  },
-  editActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 12,
-    marginTop: 16,
-  },
-  cancelButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  cancelButtonText: {
-    color: Colors.textSecondary,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  saveButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: Colors.brandBlue,
-  },
-  saveButtonText: {
-    color: Colors.text,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  disabledButton: {
-    opacity: 0.6,
-  },
-  detailLabel: {
-    color: Colors.textMuted,
-    fontSize: 12,
-    fontWeight: '500',
-    marginTop: 10,
-    marginBottom: 2,
-  },
-  detailValue: {
-    color: Colors.text,
-    fontSize: 15,
-  },
-  emptyText: {
-    color: Colors.textMuted,
-    fontSize: 14,
-    textAlign: 'center',
-    paddingVertical: 20,
-  },
-  postItem: {
+  muted: { color: Colors.textMuted, fontSize: FontSize.sm },
+  postRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    paddingVertical: Spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.border,
   },
-  postInfo: {
-    flex: 1,
-    marginRight: 12,
-  },
-  postTitle: {
-    color: Colors.text,
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  postMeta: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  postType: {
-    color: Colors.brandBlue,
-    fontSize: 12,
-    fontWeight: '500',
-    textTransform: 'capitalize',
-  },
-  postStatus: {
-    color: Colors.textSecondary,
-    fontSize: 12,
-    textTransform: 'capitalize',
-  },
-  postDate: {
-    color: Colors.textMuted,
-    fontSize: 12,
-  },
-  deletePostButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 8,
+  postInfo: { flex: 1, marginRight: Spacing.md },
+  postTitle: { color: Colors.text, fontSize: FontSize.base, fontWeight: FontWeight.semibold },
+  deletePost: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: Colors.dangerDim,
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
   },
-  deletePostButtonText: {
-    color: Colors.danger,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  deleteChannelButton: {
-    backgroundColor: Colors.danger,
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  deleteChannelButtonText: {
-    color: Colors.text,
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  errorText: {
-    color: Colors.danger,
-    fontSize: 16,
-    textAlign: 'center',
-    marginTop: 40,
-  },
+  deletePostText: { color: Colors.danger, fontSize: FontSize.base, fontWeight: FontWeight.bold },
 });

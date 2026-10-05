@@ -1,474 +1,180 @@
+import { useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { CloudlynkLogo } from '@/components/ui/CloudlynkLogo';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
-  RefreshControl,
-} from 'react-native';
+import { EmptyState, LoadFailedState } from '@/components/ui/EmptyState';
 import { showAlert } from '@/components/ui/Feedback';
+import { fireHaptic } from '@/components/ui/Press';
+import { SearchBar } from '@/components/ui/SearchBar';
+import { ListSkeleton } from '@/components/ui/Skeleton';
+import { TabHeader } from '@/components/ui/TabHeader';
+import { PillTabs, UnderlineTabs } from '@/components/ui/Tabs';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { Colors, Spacing } from '@/theme';
 import { LoginSheet } from '@/features/auth/components/LoginSheet';
 import { promptSaveAccount } from '@/features/auth/guestPrompts';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState, useCallback, useEffect, useRef } from 'react';
-import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { ChannelService } from '@/features/channels/api/channelsApi';
-import { supabase, Database } from '@/lib/supabase';
-import { Colors, withAlpha } from '@/theme';
-import { ListSkeleton } from '@/components/ui/Skeleton';
-import { Icon } from '@/components/ui/Icon';
-import Animated, { FadeInDown } from 'react-native-reanimated';
-import { fireHaptic } from '@/components/ui/Press';
+import { channelsApi, type Channel, type DiscoverSort } from '@/features/channels/api/channelsApi';
+import { ChannelRow, type ChannelRowAction } from '@/features/channels/components/ChannelRow';
+import { useChannelList, type ChannelListTab } from '@/features/channels/hooks/useChannelList';
 
-type Channel = Database['public']['Tables']['channels']['Row'];
-type TabKey = 'discover' | 'feed' | 'joined';
-type FilterKey = 'top_rated' | 'trending' | 'latest';
+// The Channels tab. Anyone can browse and open a channel. Joining needs a saved account; a public
+// channel needs no plan to join (the plan is asked for on watching), a hidden one does.
 
-const TABS: { key: TabKey; label: string }[] = [
+const TABS: { key: ChannelListTab; label: string }[] = [
   { key: 'discover', label: 'Discover' },
   { key: 'feed', label: 'Feed' },
   { key: 'joined', label: 'Joined' },
 ];
 
-const FILTERS: { key: FilterKey; label: string }[] = [
+const SORTS: { key: DiscoverSort; label: string }[] = [
   { key: 'top_rated', label: 'Top Rated' },
   { key: 'trending', label: 'Trending' },
   { key: 'latest', label: 'Latest' },
 ];
 
+function matches(channel: Channel, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  return (
+    !q ||
+    channel.name.toLowerCase().includes(q) ||
+    (channel.description ?? '').toLowerCase().includes(q)
+  );
+}
+
 export default function ChannelsScreen() {
-  const { user, isAdmin, isPaidUser, isGuest } = useAuth();
   const router = useRouter();
+  const { user, isAdmin, isPaidUser, isGuest } = useAuth();
+  const [tab, setTab] = useState<ChannelListTab>('discover');
+  const [sort, setSort] = useState<DiscoverSort>('top_rated');
+  const [query, setQuery] = useState('');
+  const [signInSheetOpen, setSignInSheetOpen] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<TabKey>('discover');
-  const [activeFilter, setActiveFilter] = useState<FilterKey>('top_rated');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [channels, setChannels] = useState<Channel[]>([]);
-  const [joinedChannelIds, setJoinedChannelIds] = useState<Set<string>>(new Set());
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  // Same distinction Explore and Feed make: an empty Discover list and a
-  // failed request are different facts, and only one of them is the user's
-  // to act on.
-  const [loadFailed, setLoadFailed] = useState(false);
-  const [signInSheet, setSignInSheet] = useState(false);
+  const { channels, joinedIds, loading, loadFailed, reload, refresh } = useChannelList(tab, sort);
+  const refreshControl = usePullToRefresh(refresh);
+  const visible = channels.filter(channel => matches(channel, query));
 
-  // isPaidUser comes from useAuth, which reads plan_status and honours
-  // plan_expires_at. This screen used to compute it from `profile.plan` — a
-  // legacy column superseded by plan_status in v48 and written by nothing
-  // since, so it sat at 'free' for people who had actually paid and this gate
-  // locked them out of the channels they were paying for.
+  const open = (channel: Channel) =>
+    router.push({ pathname: '/(tabs)/channels/[id]', params: { id: channel.id } });
 
-  const prevUserIdRef = useRef<string | undefined>(undefined);
-  useEffect(() => {
-    if (prevUserIdRef.current !== undefined && prevUserIdRef.current !== user?.id) {
-      setChannels([]);
-      setJoinedChannelIds(new Set());
-      setLoading(true);
-    }
-    prevUserIdRef.current = user?.id;
-  }, [user?.id]);
-
-  const loadMemberships = useCallback(async () => {
-    // A guest has no memberships. Not an early return that leaves stale state:
-    // the set is cleared, because signing out must not leave the previous
-    // account's joined channels marked as joined.
-    if (!user?.id) {
-      setJoinedChannelIds(new Set());
+  const join = async (channel: Channel) => {
+    if (!user) {
+      setSignInSheetOpen(true);
       return;
     }
-    const { data } = await supabase
-      .from('channel_members')
-      .select('channel_id')
-      .eq('user_id', user.id);
-    setJoinedChannelIds(new Set((data ?? []).map((r: any) => r.channel_id)));
-  }, [user?.id]);
-
-  const loadChannels = useCallback(async () => {
-    try {
-      let data: Channel[] = [];
-      if (activeTab === 'joined') {
-        // Nothing to fetch for a guest, and getMyChannels needs a user id.
-        data = user?.id ? ((await ChannelService.getMyChannels(user.id)) as Channel[]) : [];
-      } else {
-        // Discover also works for guests (public, active channels are readable without an account).
-        // The cast is needed because getDiscoverChannels selects named columns, a narrower type
-        // than Channel; every field this list renders is included.
-        data = (await ChannelService.getDiscoverChannels(
-          user?.id ?? '',
-          activeFilter,
-        )) as unknown as Channel[];
-      }
-      setChannels(data);
-      setLoadFailed(false);
-    } catch (err) {
-      if (__DEV__) console.error('loadChannels error:', err);
-      // Leave `channels` alone — a failed refresh should not blank a list
-      // that was working, it should say the refresh failed.
-      setLoadFailed(true);
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.id, activeTab, activeFilter]);
-
-  useFocusEffect(
-    useCallback(() => {
-      setLoading(true);
-      loadChannels();
-      loadMemberships();
-    }, [loadChannels, loadMemberships]),
-  );
-
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await loadChannels();
-    setRefreshing(false);
-  }, [loadChannels]);
-
-  const sortedChannels = channels.filter(c => {
-    if (searchQuery.length === 0) return true;
-    const q = searchQuery.toLowerCase();
-    return c.name.toLowerCase().includes(q) || (c.description ?? '').toLowerCase().includes(q);
-  });
-
-  // Anyone can browse channels and open one. Joining needs an account --
-  // a guest gets the "Please sign in" sheet. It does not need a plan for a
-  // public channel (v81): the plan is asked for when they try to watch.
-  // A hidden (non-public) channel still needs a plan to join.
-  const requireAccount = (channel: Channel): boolean => {
-    if (!user?.id) {
-      setSignInSheet(true);
-      return false;
-    }
-    // Guests cannot join channels.
     if (isGuest) {
       promptSaveAccount(router, 'join channels');
-      return false;
+      return;
     }
     if (!channel.is_public && !isPaidUser && !isAdmin) {
       router.push('/premium');
-      return false;
+      return;
     }
-    return true;
-  };
-
-  const handleJoinPress = (channel: Channel) => {
-    if (!requireAccount(channel)) return;
-    handleJoin(channel);
-  };
-
-  const handleJoin = async (channel: Channel) => {
-    if (!user?.id) return;
     try {
-      await ChannelService.joinChannel(channel.id, user.id);
+      await channelsApi.join(channel.id);
       fireHaptic('success');
-      await loadChannels();
-      await loadMemberships();
-      router.push({ pathname: '/(tabs)/channels/[id]', params: { id: channel.id } });
-    } catch (err: unknown) {
-      const msg = err instanceof Error && err.message ? err.message : 'Could not join channel.';
+      await reload();
+      open(channel);
+    } catch (err) {
       fireHaptic('error');
-      showAlert('Cannot join channel', msg);
+      showAlert('Cannot join channel', (err as Error)?.message || 'Could not join channel.');
     }
   };
 
-  const handleLeave = (channel: Channel) => {
-    if (!user?.id) return;
+  const leave = (channel: Channel) =>
     showAlert('Leave channel', `Leave "${channel.name}"?`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Leave',
         style: 'destructive',
-        onPress: async () => {
-          try {
-            await ChannelService.leaveChannel(channel.id, user!.id);
-            await loadChannels();
-            await loadMemberships();
-          } catch (err: unknown) {
-            const msg =
-              err instanceof Error && err.message ? err.message : 'Could not leave channel.';
-            showAlert('Error', msg);
-          }
-        },
+        onPress: () =>
+          channelsApi
+            .leave(channel.id)
+            .then(reload)
+            .catch(err => showAlert('Error', err?.message || 'Could not leave channel.')),
       },
     ]);
-  };
 
-  const handleManage = (channel: Channel) => {
+  const confirmDelete = (channel: Channel) =>
+    showAlert('Confirm Delete', `Permanently delete "${channel.name}" and all its content?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () =>
+          channelsApi
+            .remove(channel.id)
+            .then(reload)
+            .then(() => showAlert('Deleted', `"${channel.name}" has been deleted.`))
+            .catch(err => showAlert('Error', err?.message ?? 'Delete failed')),
+      },
+    ]);
+
+  const manage = (channel: Channel) =>
     showAlert(
       `Manage: ${channel.name}`,
       `Members: ${channel.member_count ?? 0} · Posts: ${channel.post_count ?? 0}`,
       [
-        {
-          text: 'View Channel',
-          onPress: () =>
-            router.push({ pathname: '/(tabs)/channels/[id]', params: { id: channel.id } }),
-        },
-        {
-          text: 'Delete Channel',
-          style: 'destructive',
-          onPress: () => {
-            showAlert(
-              'Confirm Delete',
-              `Permanently delete "${channel.name}" and all its content?`,
-              [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                  text: 'Delete',
-                  style: 'destructive',
-                  onPress: async () => {
-                    try {
-                      await ChannelService.deleteChannel(channel.id);
-                      await loadChannels();
-                      showAlert('Deleted', `"${channel.name}" has been deleted.`);
-                    } catch (err: unknown) {
-                      showAlert('Error', err instanceof Error ? err.message : 'Delete failed');
-                    }
-                  },
-                },
-              ],
-            );
-          },
-        },
+        { text: 'View Channel', onPress: () => open(channel) },
+        { text: 'Delete Channel', style: 'destructive', onPress: () => confirmDelete(channel) },
         { text: 'Cancel', style: 'cancel' },
       ],
     );
-  };
 
-  // Opening a channel is never gated: guests and people without a plan can
-  // look inside and see what it has. What is gated is joining it and
-  // watching its content -- see app/(tabs)/channels/[id].tsx.
-  const handleRowPress = (channel: Channel) => {
-    router.push({ pathname: '/(tabs)/channels/[id]', params: { id: channel.id } });
+  const actionFor = (channel: Channel): ChannelRowAction =>
+    isAdmin || channel.owner_id === user?.id
+      ? 'manage'
+      : joinedIds.has(channel.id)
+        ? 'leave'
+        : 'join';
+
+  const runAction = (channel: Channel) => {
+    const action = actionFor(channel);
+    if (action === 'manage') manage(channel);
+    else if (action === 'leave') leave(channel);
+    else join(channel);
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      {/* Red Header */}
-      <View style={styles.redHeader}>
-        <Text style={styles.redHeaderTitle}>Channels</Text>
-        <CloudlynkLogo size={28} />
-      </View>
-
-      {/* Search bar (white pill on red bg) */}
-      <View style={styles.searchBarWrap}>
-        <View style={styles.searchBar}>
-          <Icon name="search" size={16} color={Colors.textMuted} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search"
-            placeholderTextColor={Colors.textMuted}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity
-              onPress={() => setSearchQuery('')}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Text style={styles.searchClear}>{'✕'}</Text>
-            </TouchableOpacity>
-          )}
+    <SafeAreaView style={styles.page} edges={['top']}>
+      <TabHeader title="Channels">
+        <View style={styles.search}>
+          <SearchBar value={query} onChange={setQuery} />
         </View>
-      </View>
+        <UnderlineTabs tabs={TABS} selected={tab} onSelect={setTab} />
+      </TabHeader>
+      <PillTabs tabs={SORTS} selected={sort} onSelect={setSort} />
 
-      {/* Tabs */}
-      <View style={styles.tabBar}>
-        {TABS.map(t => (
-          <TouchableOpacity
-            key={t.key}
-            style={styles.tab}
-            onPress={() => setActiveTab(t.key)}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.tabText, activeTab === t.key && styles.tabTextActive]}>
-              {t.label}
-            </Text>
-            {activeTab === t.key && <View style={styles.tabUnderline} />}
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Filter pills on white bg */}
-      <View style={styles.filterBar}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filterRow}
-        >
-          {FILTERS.map(f => (
-            <TouchableOpacity
-              key={f.key}
-              style={[styles.filterPill, activeFilter === f.key && styles.filterPillActive]}
-              onPress={() => setActiveFilter(f.key)}
-              activeOpacity={0.7}
-            >
-              <Text
-                style={[
-                  styles.filterPillText,
-                  activeFilter === f.key && styles.filterPillTextActive,
-                ]}
-              >
-                {f.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-
-      {/* Channel list */}
       {loading ? (
         <ListSkeleton rows={7} />
-      ) : sortedChannels.length === 0 ? (
-        <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor={Colors.brandBlue}
-            />
-          }
-        >
-          <View style={styles.emptyState}>
-            <CloudlynkLogo size={48} />
-            {loadFailed ? (
-              <>
-                <Text style={styles.emptyText}>Couldn&apos;t load channels</Text>
-                <Text style={styles.emptyHint}>Check your connection and try again.</Text>
-                <TouchableOpacity style={styles.retryBtn} onPress={onRefresh} activeOpacity={0.85}>
-                  <Text style={styles.retryBtnText}>Try again</Text>
-                </TouchableOpacity>
-              </>
-            ) : activeTab === 'joined' && !user?.id ? (
-              <>
-                <Text style={styles.emptyText}>Not signed in</Text>
-                <Text style={styles.emptyHint}>
-                  Browse every channel in Discover. Sign in to join one and keep it here.
-                </Text>
-              </>
-            ) : (
-              <>
-                <Text style={styles.emptyText}>No channels yet</Text>
-                <Text style={styles.emptyHint}>
-                  {activeTab === 'joined'
-                    ? 'Channels you join will appear here.'
-                    : 'Join a public channel from Explore, or create your own.'}
-                </Text>
-              </>
-            )}
-          </View>
+      ) : visible.length === 0 ? (
+        <ScrollView contentContainerStyle={styles.grow} refreshControl={refreshControl}>
+          <ChannelListEmpty loadFailed={loadFailed} onRetry={refresh} tab={tab} signedIn={!!user} />
         </ScrollView>
       ) : (
         <ScrollView
-          style={{ flex: 1 }}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor={Colors.brandBlue}
-            />
-          }
+          refreshControl={refreshControl}
         >
-          {sortedChannels.map((channel, idx) => {
-            const memberCount = (channel.member_count ?? 0).toLocaleString();
-            const contentCount = (channel.post_count ?? 0).toLocaleString();
-            const isMember = joinedChannelIds.has(channel.id);
-            const isPending = channel.status === 'pending';
-            return (
-              // Same staggered entrance as Feed, same 8-row cap, so the two
-              // list screens feel like one app rather than two.
-              // The row stays a plain View: its avatar, body and Join button
-              // are deliberately SIBLING touchables, not nested, and wrapping
-              // the row in a pressable would swallow the Join tap.
-              <Animated.View
-                key={channel.id}
-                entering={FadeInDown.delay(Math.min(idx, 8) * 45).duration(260)}
-                style={styles.channelRow}
-              >
-                {isPending && (
-                  <View style={styles.pendingBadge}>
-                    <Text style={styles.pendingBadgeText}>PENDING</Text>
-                  </View>
-                )}
-                {/* Avatar — sibling TouchableOpacity, NOT nested */}
-                <TouchableOpacity
-                  style={styles.channelAvatar}
-                  onPress={() => handleRowPress(channel)}
-                  activeOpacity={0.7}
-                >
-                  <Icon
-                    name={channel.is_public ? 'globe' : 'lock'}
-                    size={22}
-                    color={Colors.brandBlue}
-                  />
-                </TouchableOpacity>
-
-                {/* Center info — sibling TouchableOpacity */}
-                <TouchableOpacity
-                  style={styles.channelInfo}
-                  onPress={() => handleRowPress(channel)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.channelName} numberOfLines={1}>
-                    {channel.name}
-                  </Text>
-                  <View style={styles.channelStats}>
-                    <View style={styles.channelStat}>
-                      <Icon name="user" size={13} color={Colors.textMuted} />
-                      <Text style={styles.channelStatText}>{memberCount}</Text>
-                    </View>
-                    <View style={styles.channelStat}>
-                      <Icon name="folder" size={13} color={Colors.textMuted} />
-                      <Text style={styles.channelStatText}>{contentCount}</Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-
-                {/* Right action — sibling TouchableOpacity, NO nesting */}
-                {isAdmin || channel.owner_id === user?.id ? (
-                  <TouchableOpacity
-                    style={styles.manageBtn}
-                    onPress={() => handleManage(channel)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.manageBtnText}>Manage</Text>
-                  </TouchableOpacity>
-                ) : isMember ? (
-                  <TouchableOpacity
-                    style={styles.leaveBtn}
-                    onPress={() => handleLeave(channel)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.leaveBtnText}>Leave</Text>
-                  </TouchableOpacity>
-                ) : (
-                  // Join for everyone, as in the client's reference. What
-                  // happens on the tap depends on who is asking -- see
-                  // requireAccount above.
-                  <TouchableOpacity
-                    style={styles.joinBtn}
-                    onPress={() => handleJoinPress(channel)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.joinBtnText}>Join</Text>
-                  </TouchableOpacity>
-                )}
-              </Animated.View>
-            );
-          })}
-          <View style={{ height: 24 }} />
+          {visible.map((channel, index) => (
+            <ChannelRow
+              key={channel.id}
+              channel={channel}
+              index={index}
+              action={actionFor(channel)}
+              onOpen={() => open(channel)}
+              onAction={() => runAction(channel)}
+            />
+          ))}
         </ScrollView>
       )}
+
       <LoginSheet
         allowGuest={false}
-        visible={signInSheet}
-        onClose={() => setSignInSheet(false)}
+        visible={signInSheetOpen}
+        onClose={() => setSignInSheetOpen(false)}
         message="Sign in to join channels. It only takes a moment."
         returnTo="/(tabs)/channels"
       />
@@ -476,148 +182,44 @@ export default function ChannelsScreen() {
   );
 }
 
+function ChannelListEmpty({
+  loadFailed,
+  onRetry,
+  tab,
+  signedIn,
+}: {
+  loadFailed: boolean;
+  onRetry: () => void;
+  tab: ChannelListTab;
+  signedIn: boolean;
+}) {
+  if (loadFailed) return <LoadFailedState what="channels" onRetry={onRetry} />;
+  const logo = <CloudlynkLogo size={48} />;
+  if (tab === 'joined' && !signedIn) {
+    return (
+      <EmptyState
+        artwork={logo}
+        title="Not signed in"
+        message="Browse every channel in Discover. Sign in to join one and keep it here."
+      />
+    );
+  }
+  return (
+    <EmptyState
+      artwork={logo}
+      title="No channels yet"
+      message={
+        tab === 'joined'
+          ? 'Channels you join will appear here.'
+          : 'Join a public channel from Explore, or create your own.'
+      }
+    />
+  );
+}
+
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.bg },
-  redHeader: {
-    backgroundColor: Colors.surface,
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  redHeaderTitle: { color: Colors.text, fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
-  searchBarWrap: { backgroundColor: Colors.surface, paddingHorizontal: 16, paddingBottom: 16 },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    gap: 8,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  searchInput: { flex: 1, color: Colors.text, fontSize: 14, paddingVertical: 0 },
-  searchClear: { fontSize: 14, color: Colors.textMuted, padding: 4 },
-  tabBar: {
-    backgroundColor: Colors.surface,
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-    gap: 24,
-  },
-  tab: { paddingVertical: 4, alignItems: 'center' },
-  tabText: { color: withAlpha(Colors.white, 0.7), fontSize: 15, fontWeight: '600' },
-  tabTextActive: { color: Colors.text, fontWeight: '800' },
-  tabUnderline: {
-    position: 'absolute',
-    bottom: -8,
-    left: 0,
-    right: 0,
-    height: 3,
-    backgroundColor: Colors.white,
-    borderRadius: 4,
-  },
-  filterBar: {
-    backgroundColor: Colors.bg,
-    borderBottomWidth: 0.5,
-    borderBottomColor: Colors.border,
-  },
-  filterRow: { paddingHorizontal: 16, paddingVertical: 12, gap: 8 },
-  filterPill: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: Colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  filterPillActive: { backgroundColor: Colors.brandBlue, borderColor: Colors.brandBlue },
-  filterPillText: { fontSize: 13, fontWeight: '700', color: Colors.textSecondary },
-  filterPillTextActive: { color: Colors.text },
-  list: { paddingVertical: 8 },
-  channelRow: {
-    position: 'relative',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderBottomWidth: 0.5,
-    borderBottomColor: Colors.border,
-  },
-  pendingBadge: {
-    position: 'absolute',
-    top: 6,
-    right: 16,
-    backgroundColor: Colors.warning,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    zIndex: 1,
-  },
-  pendingBadgeText: { fontSize: 11, fontWeight: '800', color: Colors.text, letterSpacing: 0.5 },
-  channelAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: Colors.surfaceHover,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  channelInfo: { flex: 1, minWidth: 0 },
-  channelName: { fontSize: 15, fontWeight: '700', color: Colors.text, marginBottom: 2 },
-  channelStats: { flexDirection: 'row', gap: 14 },
-  channelStat: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  channelStatText: { fontSize: 12, color: Colors.textSecondary, fontWeight: '600' },
-  manageBtn: {
-    backgroundColor: Colors.brandBlue,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  manageBtnText: { color: Colors.text, fontSize: 13, fontWeight: '800' },
-  joinBtn: {
-    backgroundColor: Colors.brandBlue,
-    paddingHorizontal: 18,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  joinBtnText: { color: Colors.text, fontSize: 13, fontWeight: '800' },
-  leaveBtn: {
-    backgroundColor: Colors.surfaceElevated,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.brandBlue,
-  },
-  leaveBtnText: { color: Colors.brandBlue, fontSize: 13, fontWeight: '700' },
-  emptyState: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 80,
-    paddingHorizontal: 20,
-  },
-  emptyText: { fontSize: 16, color: Colors.text, fontWeight: '600', marginTop: 16 },
-  emptyHint: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    marginTop: 8,
-    textAlign: 'center',
-    paddingHorizontal: 40,
-    lineHeight: 20,
-  },
-  retryBtn: {
-    marginTop: 18,
-    paddingHorizontal: 24,
-    paddingVertical: 11,
-    borderRadius: 8,
-    backgroundColor: Colors.brandBlue,
-  },
-  retryBtnText: { fontSize: 14, fontWeight: '700', color: Colors.text },
+  page: { flex: 1, backgroundColor: Colors.bg },
+  search: { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.md },
+  grow: { flexGrow: 1 },
+  list: { paddingVertical: Spacing.sm, paddingBottom: Spacing.xxl },
 });

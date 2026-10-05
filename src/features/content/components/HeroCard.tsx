@@ -4,7 +4,8 @@ import { memo } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Icon } from '@/components/ui/Icon';
 import { PressScale } from '@/components/ui/Press';
-import { PostService, ChannelPost } from '@/features/content/api/postsApi';
+import { publicMedia } from '@/lib/publicMedia';
+import type { ChannelPost } from '@/features/content/model';
 import { Colors, FontWeight, Radius, withAlpha } from '@/theme';
 
 /**
@@ -12,7 +13,7 @@ import { Colors, FontWeight, Radius, withAlpha } from '@/theme';
  * any poster.
  */
 export const HeroCard = memo(({ item, onPress }: { item: ChannelPost; onPress: () => void }) => {
-  const thumb = item.thumbnail_url ? PostService.getMediaPublicUrl(item.thumbnail_url) : null;
+  const thumb = item.thumbnail_url ? publicMedia.url(item.thumbnail_url) : null;
   return (
     <PressScale style={styles.hero} onPress={onPress} scaleTo={0.985}>
       {thumb ? (

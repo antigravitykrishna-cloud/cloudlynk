@@ -2,13 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { View, Text, FlatList, TextInput, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import {
-  AdminHeader,
-  Card,
-  Chip,
-  adminStyles,
-  planChip,
-} from '@/features/admin/components/AdminUI';
+import { AdminHeader, adminStyles, planChip } from '@/features/admin/components/AdminUI';
+import { Card } from '@/components/ui/Card';
+import { Chip } from '@/components/ui/Chip';
 import { formatDate } from '@/utils/format';
 import { PressScale } from '@/components/ui/Press';
 import { Colors } from '@/theme';

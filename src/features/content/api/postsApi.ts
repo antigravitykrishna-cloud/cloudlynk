@@ -1,612 +1,325 @@
-import * as FileSystem from 'expo-file-system/legacy';
-import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '@/lib/supabase';
+import { publicMedia } from '@/lib/publicMedia';
+import { withTimeout } from '@/utils/async';
+import {
+  defaultAccessLevel,
+  type AccessLevel,
+  type ChannelPost,
+  type ContentType,
+  type ListedPost,
+  type PostStatus,
+} from '@/features/content/model';
 
 // guards-allow-select-star
-// getExplorePosts and getChannelPosts take a userId and run authenticated. The guest paths
-// (getGuestExplorePosts, getGuestChannelPosts) name their columns via GUEST_POST_COLUMNS.
-// See scripts/guards.mjs check 2 for why select('*') is unsafe on a
-// guest-reachable path.
+// The guest-reachable reads name their columns (LISTED_POST_COLUMNS); `anon` may read only some
+// columns, and asking for one it cannot read fails the whole request. The select('*') reads below
+// run only for signed-in callers. See scripts/guards.mjs check 2.
 
-export type PostStatus = 'draft' | 'pending' | 'approved' | 'rejected';
-export type ContentType = 'post' | 'movie' | 'series' | 'short';
-
-/**
- * Exactly the channel_posts columns guests may read (v61). Asking a guest query for any other
- * column fails the whole request. video_url / media_url / trailer_url are excluded on purpose.
- */
-export const GUEST_POST_COLUMNS =
+/** Exactly the channel_posts columns guests may read (v61). No video or moderation columns. */
+const LISTED_POST_COLUMNS =
   'id, channel_id, author_id, title, body, content_type, access_level, genre, ' +
   'duration_min, release_year, season_number, episode_number, episode_title, ' +
   'series_id, tags, media_type, thumbnail_url, is_short, view_count, status, created_at';
-export type AccessLevel = 'free' | 'premium';
 
-/**
- * Default access level: movies and series are premium, shorts and posts free, unless the uploader
- * chooses otherwise. Enforced server-side.
- */
-export function defaultAccessLevel(contentType: ContentType): AccessLevel {
-  return contentType === 'movie' || contentType === 'series' ? 'premium' : 'free';
-}
+const AUTHOR = 'author:profiles!channel_posts_author_id_fkey(id, full_name, avatar_url)';
 
-export type ChannelPost = {
+/** How the Explore tab orders titles. */
+export type ExploreSort = 'all' | 'popular' | 'most_watched' | 'latest' | 'most_searched';
+
+/** A post as the uploader sees it in My Videos (get_my_channel_posts). */
+export type MyPost = {
   id: string;
   channel_id: string;
-  author_id: string;
+  channel_name: string | null;
   title: string | null;
-  body: string | null;
-  media_url: string | null;
-  media_type: 'image' | 'video' | null;
+  content_type: string | null;
   thumbnail_url: string | null;
-  content_type: ContentType;
-  genre: string | null;
-  duration_min: number | null;
-  season_number: number | null;
-  episode_number: number | null;
-  episode_title: string | null;
-  release_year: number | null;
-  tags: string[] | null;
-  status: PostStatus;
-  access_level: AccessLevel;
   video_url: string | null;
-  submitted_at: string | null;
-  series_id: string | null;
-  approved_by: string | null;
-  approved_at: string | null;
+  status: PostStatus;
   rejection_note: string | null;
   created_at: string;
-  author?: { id: string; full_name: string | null; avatar_url: string | null };
-  channel?: { name: string };
+  approved_at: string | null;
 };
 
-/**
- * A post as a guest sees it: no video or moderation fields. Typed this way so the compiler stops
- * code from trying to play a guest's post.
- */
-export type GuestChannelPost = Omit<
-  ChannelPost,
-  'video_url' | 'media_url' | 'submitted_at' | 'approved_by' | 'approved_at' | 'rejection_note'
->;
+/** Everything needed to publish a post whose video is already on Cloudflare Stream. */
+export type NewPost = {
+  channelId: string;
+  authorId: string;
+  title: string;
+  body?: string;
+  contentType: ContentType;
+  /** Defaults to defaultAccessLevel(contentType). */
+  accessLevel?: AccessLevel;
+  genre?: string;
+  durationMin?: number;
+  seasonNumber?: number;
+  episodeNumber?: number;
+  episodeTitle?: string;
+  /** Defaults to the current year. */
+  releaseYear?: number;
+  /** A local image, uploaded to public media before the post is created. */
+  thumbnailUri?: string;
+  /** The Cloudflare Stream uid. Only a plain post may have no video. */
+  streamVideoUid?: string;
+  seriesId?: string;
+  /** Saved but not submitted for review. */
+  saveAsDraft?: boolean;
+};
 
-export const GENRES = [
-  'Action',
-  'Adventure',
-  'Comedy',
-  'Drama',
-  'Horror',
-  'Romance',
-  'Sci-Fi',
-  'Thriller',
-  'Documentary',
-  'Animation',
-  'Fantasy',
-  'Crime',
-  'Mystery',
-  'Biography',
-  'Other',
-];
+function sortColumn(sort: ExploreSort | undefined) {
+  return sort === 'popular' || sort === 'most_watched' ? 'view_count' : 'created_at';
+}
 
-export const PostService = {
-  // ── Read ────────────────────────────────────────────────────
+/** Merges two lists by id, keeping the first copy of each post, newest first. */
+function mergeNewestFirst<T extends { id: string; created_at: string }>(first: T[], second: T[]) {
+  const seen = new Set(first.map(p => p.id));
+  return [...first, ...second.filter(p => !seen.has(p.id))].sort((a, b) =>
+    a.created_at < b.created_at ? 1 : -1,
+  );
+}
 
-  /**
-   * A channel's approved posts for a guest, named columns only (guests cannot read video_url).
-   * Limited to public, active channels by RLS. For listing only.
-   */
-  async getGuestChannelPosts(channelId: string): Promise<GuestChannelPost[]> {
+export const postsApi = {
+  // ── Listings anyone can see ──────────────────────────────────────────────
+
+  /** A channel's approved posts, as listings. RLS limits guests to public, active channels. */
+  async listChannelPostsForGuest(channelId: string): Promise<ListedPost[]> {
     const { data, error } = await supabase
       .from('channel_posts')
-      .select(GUEST_POST_COLUMNS)
+      .select(LISTED_POST_COLUMNS)
       .eq('channel_id', channelId)
       .eq('status', 'approved')
       .order('created_at', { ascending: false });
     if (error) throw error;
-    return (data ?? []) as unknown as GuestChannelPost[];
+    return (data ?? []) as unknown as ListedPost[];
   },
 
   /**
-   * A channel's premium titles as metadata only (premium_preview view, no video column), so people
-   * without a plan can see what the channel has.
+   * A channel's premium titles as metadata only (the premium_preview view has no video column), so
+   * people without a plan can see what the channel offers.
    */
-  async getChannelPremiumPreviews(channelId: string): Promise<GuestChannelPost[]> {
+  async listPremiumPreviews(channelId: string): Promise<ListedPost[]> {
     const { data, error } = await supabase
       .from('premium_preview')
-      .select(GUEST_POST_COLUMNS)
+      .select(LISTED_POST_COLUMNS)
       .eq('channel_id', channelId)
       .order('created_at', { ascending: false });
     if (error) throw error;
-    return (data ?? []) as unknown as GuestChannelPost[];
+    return (data ?? []) as unknown as ListedPost[];
   },
 
   /**
-   * Feed: newest approved posts from the channels this user joined ([] if none). Listing only, no
-   * video_url. Premium titles come from premium_preview for people without a plan, so the Feed
-   * shows everything and locked titles lead to the plans.
+   * Explore for a signed-out visitor. RLS (channel_posts_select_anon) already limits this to
+   * approved posts in public, active channels.
    */
-  async getJoinedFeedPosts(userId: string, limit = 60): Promise<GuestChannelPost[]> {
-    const { data: memberships, error: mErr } = await supabase
-      .from('channel_members')
-      .select('channel_id')
-      .eq('user_id', userId);
-    if (mErr) throw mErr;
-    const channelIds = (memberships ?? []).map(m => m.channel_id);
+  async listExploreForGuest(sort?: ExploreSort): Promise<ListedPost[]> {
+    const { data, error } = await supabase
+      .from('channel_posts')
+      .select(`${LISTED_POST_COLUMNS}, ${AUTHOR}`)
+      .eq('status', 'approved')
+      .order(sortColumn(sort), { ascending: false })
+      .limit(300);
+    if (error) throw error;
+    const posts = (data ?? []) as unknown as ListedPost[];
+    // A text-only post has nothing to show on a poster shelf.
+    return posts.filter(p => p.content_type !== 'post' || p.thumbnail_url);
+  },
+
+  // ── Signed-in listings ───────────────────────────────────────────────────
+
+  /**
+   * Feed: the newest approved posts from the channels this person joined ([] if none). Premium
+   * titles come from premium_preview for people without a plan, so the Feed shows everything and a
+   * locked title leads to the plans.
+   */
+  async listFeed(userId: string, limit = 60): Promise<ListedPost[]> {
+    const channelIds = await joinedChannelIds(userId);
     if (channelIds.length === 0) return [];
 
     const [posts, previews] = await Promise.all([
       supabase
         .from('channel_posts')
-        .select(GUEST_POST_COLUMNS)
+        .select(LISTED_POST_COLUMNS)
         .in('channel_id', channelIds)
         .eq('status', 'approved')
         .order('created_at', { ascending: false })
         .limit(limit),
       supabase
         .from('premium_preview')
-        .select(GUEST_POST_COLUMNS)
+        .select(LISTED_POST_COLUMNS)
         .in('channel_id', channelIds)
         .order('created_at', { ascending: false })
         .limit(limit),
     ]);
     if (posts.error) throw posts.error;
-    const rows = (posts.data ?? []) as unknown as GuestChannelPost[];
-    // A missing preview list only costs the locked titles; do not fail the Feed.
-    const seen = new Set(rows.map(r => r.id));
-    for (const p of (previews.data ?? []) as unknown as GuestChannelPost[]) {
-      if (!seen.has(p.id)) rows.push(p);
-    }
-    rows.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
-    return rows.slice(0, limit);
+    // A failed preview read only costs the locked titles; do not fail the Feed for it.
+    return mergeNewestFirst(
+      (posts.data ?? []) as unknown as ListedPost[],
+      (previews.data ?? []) as unknown as ListedPost[],
+    ).slice(0, limit);
   },
 
-  async getChannelPosts(channelId: string, userId: string): Promise<ChannelPost[]> {
-    const { data: approved, error: e1 } = await supabase
-      .from('channel_posts')
-      .select('*, author:profiles!channel_posts_author_id_fkey(id, full_name, avatar_url)')
-      .eq('channel_id', channelId)
-      .eq('status', 'approved')
-      .order('created_at', { ascending: false })
-      // Newest 300 -- a channel page is rows of recent titles, and an
-      // unbounded read grows with the channel forever.
-      .limit(300);
-    if (e1) throw e1;
-
-    const { data: mine, error: e2 } = await supabase
-      .from('channel_posts')
-      .select('*, author:profiles!channel_posts_author_id_fkey(id, full_name, avatar_url)')
-      .eq('channel_id', channelId)
-      .eq('author_id', userId)
-      .in('status', ['pending', 'rejected'])
-      .order('created_at', { ascending: false });
-    if (e2) throw e2;
-
-    return [...(mine ?? []), ...(approved ?? [])] as ChannelPost[];
+  /**
+   * A channel's approved posts (newest 300) plus the caller's own pending and rejected ones, so an
+   * uploader sees what is waiting for review.
+   */
+  async listChannelPosts(channelId: string, userId: string): Promise<ChannelPost[]> {
+    const [approved, mine] = await Promise.all([
+      supabase
+        .from('channel_posts')
+        .select(`*, ${AUTHOR}`)
+        .eq('channel_id', channelId)
+        .eq('status', 'approved')
+        .order('created_at', { ascending: false })
+        .limit(300),
+      supabase
+        .from('channel_posts')
+        .select(`*, ${AUTHOR}`)
+        .eq('channel_id', channelId)
+        .eq('author_id', userId)
+        .in('status', ['pending', 'rejected'])
+        .order('created_at', { ascending: false }),
+    ]);
+    if (approved.error) throw approved.error;
+    if (mine.error) throw mine.error;
+    return [...(mine.data ?? []), ...(approved.data ?? [])] as ChannelPost[];
   },
 
-  async getGuestExplorePosts(
-    filter?: 'all' | 'popular' | 'most_watched' | 'latest' | 'most_searched',
-  ): Promise<GuestChannelPost[]> {
-    const orderCol =
-      filter === 'popular' || filter === 'most_watched' ? 'view_count' : 'created_at';
+  /**
+   * Explore for a signed-in person: posts from joined channels, then from other public channels,
+   * then locked premium previews. RLS decides what is playable: a premium post comes back only for
+   * an active plan, so people without one simply get fewer playable rows.
+   */
+  async listExplore(userId: string, sort?: ExploreSort): Promise<ChannelPost[]> {
+    const order = sortColumn(sort);
+    const [joinedIds, publicIds] = await Promise.all([
+      joinedChannelIds(userId),
+      activePublicChannelIds(),
+    ]);
+    const joined = new Set(joinedIds);
+    const otherPublicIds = publicIds.filter(id => !joined.has(id));
 
-    // No channel filter needed: channel_posts_select_anon already restricts to
-    // approved posts in public, active channels, so RLS is doing the work the
-    // authenticated path does with an explicit .in() list.
-    const { data, error } = await supabase
-      .from('channel_posts')
-      .select(
-        `${GUEST_POST_COLUMNS}, author:profiles!channel_posts_author_id_fkey(id, full_name, avatar_url)`,
-      )
-      .eq('status', 'approved')
-      .order(orderCol, { ascending: false })
-      .limit(300);
-    if (error) throw error;
-
-    return (data ?? []).filter(
-      (p: any) => p.content_type !== 'post' || p.thumbnail_url,
-    ) as unknown as GuestChannelPost[];
-  },
-
-  async getExplorePosts(
-    userId: string,
-    filter?: 'all' | 'popular' | 'most_watched' | 'latest' | 'most_searched',
-  ): Promise<ChannelPost[]> {
-    // RLS decides what comes back (each post's access level against the caller's plan), so this
-    // asks for everything reachable.
-
-    // Channels the user has explicitly joined — always full access regardless of plan
-    const { data: memberships, error: mErr } = await supabase
-      .from('channel_members')
-      .select('channel_id')
-      .eq('user_id', userId);
-    if (mErr) throw mErr;
-    const myChannelIds = (memberships ?? []).map((m: any) => m.channel_id as string);
-
-    // All active public channels
-    const { data: publicChannels, error: cErr } = await supabase
-      .from('channels')
-      .select('id')
-      .eq('is_public', true)
-      .eq('status', 'active');
-    if (cErr) throw cErr;
-    const publicChannelIds = (publicChannels ?? []).map((c: any) => c.id as string);
-
-    // Public channels the user has NOT joined
-    const myChannelSet = new Set(myChannelIds);
-    const publicOnlyIds = publicChannelIds.filter(id => !myChannelSet.has(id));
-
-    const orderCol =
-      filter === 'popular' || filter === 'most_watched' ? 'view_count' : 'created_at';
-
-    const results: any[] = [];
-
-    // 1. Content from subscribed channels
-    if (myChannelIds.length > 0) {
+    const postsIn = async (channelIds: string[], limit: number) => {
+      if (channelIds.length === 0) return [];
       const { data, error } = await supabase
         .from('channel_posts')
-        .select('*, author:profiles!channel_posts_author_id_fkey(id, full_name, avatar_url)')
-        .in('channel_id', myChannelIds)
+        .select(`*, ${AUTHOR}`)
+        .in('channel_id', channelIds)
         .eq('status', 'approved')
-        .order(orderCol, { ascending: false })
-        .limit(150);
+        .order(order, { ascending: false })
+        .limit(limit);
       if (error) throw error;
-      results.push(...(data ?? []));
-    }
+      return (data ?? []) as ChannelPost[];
+    };
 
-    // 2. Content from public channels the user hasn't joined — RLS silently
-    //    filters out any post whose access_level='premium' unless this
-    //    user's plan_status is active/lifetime. Free users simply get back
-    //    fewer rows; no client-side branching needed.
-    if (publicOnlyIds.length > 0) {
-      const { data, error } = await supabase
-        .from('channel_posts')
-        .select('*, author:profiles!channel_posts_author_id_fkey(id, full_name, avatar_url)')
-        .in('channel_id', publicOnlyIds)
-        .eq('status', 'approved')
-        .order(orderCol, { ascending: false })
-        .limit(100);
-      if (error) throw error;
-      results.push(...(data ?? []));
-    }
+    const fromJoined = await postsIn(joinedIds, 150);
+    const fromPublic = await postsIn(otherPublicIds, 100);
 
-    // 3. Locked premium titles for browsing (premium_preview has no video columns). Added last so a
-    // post the viewer can actually play (from steps 1-2) wins the dedup below. Non-fatal: without
-    // previews the viewer still gets their playable content.
+    // Added last, so a post the viewer can actually play (above) wins the de-duplication. Not
+    // fatal: without previews the viewer still gets everything playable.
+    let previews: ChannelPost[] = [];
     try {
-      const { data: previews } = await supabase
+      const { data } = await supabase
         .from('premium_preview')
         .select('*')
-        .order(orderCol, { ascending: false })
+        .order(order, { ascending: false })
         .limit(100);
-      results.push(...(previews ?? []));
+      previews = (data ?? []) as unknown as ChannelPost[];
     } catch (err) {
       if (__DEV__) console.warn('premium_preview unavailable:', err);
     }
 
-    // Deduplicate by id (a joined channel might also be public)
     const seen = new Set<string>();
-    const unique = results.filter(p => {
-      if (seen.has(p.id)) return false;
-      seen.add(p.id);
-      return true;
+    return [...fromJoined, ...fromPublic, ...previews].filter(post => {
+      if (seen.has(post.id)) return false;
+      seen.add(post.id);
+      // A text-only post with no media has nothing to show on a poster shelf.
+      return (
+        post.content_type !== 'post' || !!(post.video_url || post.thumbnail_url || post.media_url)
+      );
     });
-
-    return unique.filter(
-      p => p.content_type !== 'post' || p.video_url || p.thumbnail_url || p.media_url,
-    ) as ChannelPost[];
   },
 
-  async recordView(postId: string) {
+  /** The caller's own submissions for My Videos, optionally one status only. */
+  async listMine(status?: PostStatus): Promise<MyPost[]> {
+    const { data, error } = await supabase.rpc('get_my_channel_posts', { p_status: status });
+    if (error) throw error;
+    return (data ?? []) as MyPost[];
+  },
+
+  // ── Writes ───────────────────────────────────────────────────────────────
+
+  /** Counts a view (record_post_view). Best effort: a lost view is not worth an error. */
+  async recordView(postId: string): Promise<void> {
     try {
       await supabase.rpc('record_post_view', { p_post_id: postId });
-    } catch {}
-  },
-
-  /**
-   * Groups approved content into rows: Featured (one per type), Movies, each series, Shorts, then
-   * genre rows (movies and shorts only).
-   */
-  groupByGenre(posts: ChannelPost[]): Record<string, ChannelPost[]> {
-    const groups: Record<string, ChannelPost[]> = {};
-    const approved = posts.filter(p => p.status === 'approved');
-
-    const movies = approved.filter(p => p.content_type === 'movie');
-    const seriesPosts = approved.filter(p => p.content_type === 'series');
-    const shorts = approved.filter(p => p.content_type === 'short');
-
-    // Featured: one representative per type, max 5 total
-    const featured: ChannelPost[] = [];
-    if (movies[0]) featured.push(movies[0]);
-    const seenSeriesIds = new Set<string>();
-    for (const p of seriesPosts) {
-      const key = p.series_id ?? p.id;
-      if (!seenSeriesIds.has(key)) {
-        seenSeriesIds.add(key);
-        featured.push(p);
-      }
-      if (featured.length >= 5) break;
+    } catch {
+      // ignored
     }
-    if (featured.length < 5 && shorts[0]) featured.push(shorts[0]);
-    if (featured.length > 0) groups['Featured'] = featured;
-
-    // Movies row — strictly movies only
-    if (movies.length > 0) groups['Movies'] = movies;
-
-    // Series rows — each unique series_id gets its own named row
-    const bySeriesId: Record<string, ChannelPost[]> = {};
-    const ungroupedSeries: ChannelPost[] = [];
-    seriesPosts.forEach(p => {
-      if (p.series_id) {
-        if (!bySeriesId[p.series_id]) bySeriesId[p.series_id] = [];
-        bySeriesId[p.series_id].push(p);
-      } else {
-        ungroupedSeries.push(p);
-      }
-    });
-    Object.values(bySeriesId).forEach(episodes => {
-      const sorted = [...episodes].sort((a, b) => {
-        const s = (a.season_number ?? 0) - (b.season_number ?? 0);
-        return s !== 0 ? s : (a.episode_number ?? 0) - (b.episode_number ?? 0);
-      });
-      const rawTitle = sorted[0]?.title ?? 'Series';
-      const seriesLabel =
-        rawTitle
-          .replace(/\s*[-:]\s*[Ss]\d+.*$/, '')
-          .replace(/\s*[-:]\s*[Ee]p.*$/i, '')
-          .trim() || rawTitle;
-      groups[`Series: ${seriesLabel}`] = sorted;
-    });
-    if (ungroupedSeries.length > 0) groups['Web Series'] = ungroupedSeries;
-
-    // Shorts row — strictly shorts only
-    if (shorts.length > 0) groups['Shorts'] = shorts;
-
-    // Genre rows — movies and shorts only, not series episodes
-    [...movies, ...shorts].forEach(p => {
-      if (p.genre) {
-        if (!groups[p.genre]) groups[p.genre] = [];
-        if (!groups[p.genre].includes(p)) groups[p.genre].push(p);
-      }
-    });
-
-    // New This Week — all types, last 7 days
-    const recent = approved.filter(p => {
-      const daysAgo = (Date.now() - new Date(p.created_at).getTime()) / 86400000;
-      return daysAgo <= 7;
-    });
-    if (recent.length > 0) groups['New This Week'] = recent;
-
-    return groups;
   },
 
-  async getPendingPosts(): Promise<ChannelPost[]> {
-    const { data, error } = await supabase
-      .from('channel_posts')
-      .select(
-        '*, author:profiles!channel_posts_author_id_fkey(id, full_name, avatar_url), channel:channels(name)',
-      )
-      .eq('status', 'pending')
-      .order('created_at', { ascending: true });
+  /** Deletes a post. Row-level security allows only its author, the channel owner or an admin. */
+  async remove(postId: string): Promise<void> {
+    const { error } = await supabase.from('channel_posts').delete().eq('id', postId);
     if (error) throw error;
-    return (data ?? []) as ChannelPost[];
   },
 
-  async getPendingChannels() {
-    const { data, error } = await supabase
-      .from('channels')
-      // !channels_owner_id_fkey is required: PostgREST sees two channels→profiles
-      // paths (the owner_id FK and the channel_members m2m junction) and errors
-      // PGRST201 without an explicit hint.
-      .select('*, owner:profiles!channels_owner_id_fkey(id, full_name, email)')
-      .eq('status', 'pending')
-      .order('created_at', { ascending: true });
-    if (error) throw error;
-    return data ?? [];
-  },
+  /** Creates a post: pending review, or a draft. */
+  async create(post: NewPost): Promise<ChannelPost> {
+    const thumbnailPath = post.thumbnailUri
+      ? await publicMedia.upload(post.authorId, post.thumbnailUri, 'image')
+      : null;
 
-  // ── Create ──────────────────────────────────────────────────
-
-  async createPost(
-    channelId: string,
-    authorId: string,
-    body: string,
-    options?: {
-      title?: string;
-      mediaUri?: string;
-      mediaType?: 'image' | 'video';
-      thumbnailUri?: string;
-      contentType?: ContentType;
-      genre?: string;
-      durationMin?: number;
-      seasonNumber?: number;
-      episodeNumber?: number;
-      episodeTitle?: string;
-      releaseYear?: number;
-      /** Cloudflare Stream UID — stored directly in video_url */
-      streamVideoUid?: string;
-      saveAsDraft?: boolean;
-      seriesId?: string;
-      /** Defaults via defaultAccessLevel(contentType) if not given — see there. */
-      accessLevel?: AccessLevel;
-    },
-  ): Promise<ChannelPost> {
-    let mediaUrl: string | null = null;
-    let thumbnailUrl: string | null = null;
-
-    if (options?.mediaUri && options?.mediaType) {
-      try {
-        mediaUrl = await PostService.uploadMedia(authorId, options.mediaUri, options.mediaType);
-      } catch {
-        mediaUrl = null;
-      }
-    }
-    if (options?.thumbnailUri) {
-      thumbnailUrl = await PostService.uploadMedia(authorId, options.thumbnailUri, 'image');
-    }
-
-    const videoUrl: string | null = options?.streamVideoUid ?? null;
-
-    // Keep the write on the simplest PostgREST path: plain columns, no FK embed.
-    // The author profile isn't needed in the response — the caller refetches via
-    // getChannelPosts() right after — and avoiding the embed keeps the insert off
-    // any fragile code path. withTimeout() guarantees the UI can never spin
-    // forever: a stalled request surfaces as a clear error instead of a hang.
+    // Plain columns and no embedded author: the caller refetches the list afterwards anyway, and
+    // the timeout means a stalled request ends in a clear error rather than a spinner.
     const { data, error } = await withTimeout(
       supabase
         .from('channel_posts')
         .insert({
-          channel_id: channelId,
-          author_id: authorId,
-          title: options?.title?.trim() || null,
-          body: body.trim(),
-          media_url: mediaUrl,
-          media_type: mediaUrl ? (options?.mediaType ?? 'image') : null,
-          thumbnail_url: thumbnailUrl,
-          content_type: options?.contentType ?? 'post',
-          genre: options?.genre || null,
-          duration_min: options?.durationMin || null,
-          season_number: options?.seasonNumber || null,
-          episode_number: options?.episodeNumber || null,
-          episode_title: options?.episodeTitle || null,
-          release_year: options?.releaseYear || new Date().getFullYear(),
-          video_url: videoUrl,
-          submitted_at: options?.saveAsDraft ? null : new Date().toISOString(),
-          series_id: options?.seriesId ?? null,
-          access_level: options?.accessLevel ?? defaultAccessLevel(options?.contentType ?? 'post'),
-          status: options?.saveAsDraft ? 'draft' : 'pending',
+          channel_id: post.channelId,
+          author_id: post.authorId,
+          title: post.title.trim() || null,
+          body: (post.body ?? '').trim(),
+          media_url: null,
+          media_type: null,
+          thumbnail_url: thumbnailPath,
+          content_type: post.contentType,
+          genre: post.genre || null,
+          duration_min: post.durationMin || null,
+          season_number: post.seasonNumber || null,
+          episode_number: post.episodeNumber || null,
+          episode_title: post.episodeTitle || null,
+          release_year: post.releaseYear || new Date().getFullYear(),
+          video_url: post.streamVideoUid ?? null,
+          submitted_at: post.saveAsDraft ? null : new Date().toISOString(),
+          series_id: post.seriesId ?? null,
+          access_level: post.accessLevel ?? defaultAccessLevel(post.contentType),
+          status: post.saveAsDraft ? 'draft' : 'pending',
         })
         .select('*')
         .single(),
       30_000,
       'Saving your content timed out. Please check your connection and try again.',
     );
-
     if (error) throw error;
     return data as ChannelPost;
   },
-
-  async uploadMedia(userId: string, uri: string, type: 'image' | 'video'): Promise<string> {
-    if (typeof document !== 'undefined') {
-      throw new Error('File upload is only supported on Android and iOS.');
-    }
-    const ext = type === 'video' ? 'mp4' : 'jpg';
-    const storagePath = `${userId}/${Date.now()}.${ext}`;
-    const mimeType = type === 'video' ? 'video/mp4' : 'image/jpeg';
-
-    const base64 = await FileSystem.readAsStringAsync(uri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
-
-    const { error } = await supabase.storage
-      .from('channel-media')
-      .upload(storagePath, decode(base64), { contentType: mimeType });
-
-    if (error) throw error;
-    return storagePath;
-  },
-
-  getMediaPublicUrl(storagePath: string): string {
-    if (storagePath.startsWith('http://') || storagePath.startsWith('https://')) {
-      return storagePath;
-    }
-    const { data } = supabase.storage.from('channel-media').getPublicUrl(storagePath);
-    return data.publicUrl;
-  },
-
-  // ── Admin ───────────────────────────────────────────────────
-
-  async approveChannel(channelId: string) {
-    const { error } = await supabase
-      .from('channels')
-      .update({ status: 'active' })
-      .eq('id', channelId);
-    if (error) throw error;
-  },
-
-  async rejectChannel(channelId: string) {
-    const { error } = await supabase
-      .from('channels')
-      .update({ status: 'suspended' })
-      .eq('id', channelId);
-    if (error) throw error;
-  },
-
-  async approvePost(postId: string, adminId: string) {
-    const { error } = await supabase
-      .from('channel_posts')
-      .update({
-        status: 'approved',
-        approved_by: adminId,
-        approved_at: new Date().toISOString(),
-        rejection_note: null,
-      })
-      .eq('id', postId);
-    if (error) throw error;
-  },
-
-  async rejectPost(postId: string, adminId: string, note?: string) {
-    const { error } = await supabase
-      .from('channel_posts')
-      .update({
-        status: 'rejected',
-        approved_by: adminId,
-        approved_at: new Date().toISOString(),
-        rejection_note: note ?? null,
-      })
-      .eq('id', postId);
-    if (error) throw error;
-  },
-
-  async pickImage(): Promise<{ uri: string; type: 'image' | 'video' } | null> {
-    // System photo picker: no media permission needed.
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 0.85,
-      allowsEditing: true,
-    });
-    if (result.canceled) return null;
-    const asset = result.assets[0];
-    return { uri: asset.uri, type: asset.type === 'video' ? 'video' : 'image' };
-  },
 };
 
-/**
- * Races a thenable against a timeout so a stalled network/auth call can never
- * hang the UI indefinitely. Rejects with `message` if `ms` elapses first.
- */
-function withTimeout<T>(thenable: PromiseLike<T>, ms: number, message: string): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(message)), ms);
-    Promise.resolve(thenable).then(
-      value => {
-        clearTimeout(timer);
-        resolve(value);
-      },
-      err => {
-        clearTimeout(timer);
-        reject(err);
-      },
-    );
-  });
+async function joinedChannelIds(userId: string): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('channel_members')
+    .select('channel_id')
+    .eq('user_id', userId);
+  if (error) throw error;
+  return (data ?? []).map(row => row.channel_id);
 }
 
-function decode(base64: string): Uint8Array {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-  const lookup = new Uint8Array(256);
-  for (let i = 0; i < chars.length; i++) lookup[chars.charCodeAt(i)] = i;
-  const len = base64.length;
-  let bufferLength = Math.floor(len * 0.75);
-  if (base64[len - 1] === '=') bufferLength--;
-  if (base64[len - 2] === '=') bufferLength--;
-  const buffer = new Uint8Array(bufferLength);
-  let p = 0;
-  for (let i = 0; i < len; i += 4) {
-    const e1 = lookup[base64.charCodeAt(i)],
-      e2 = lookup[base64.charCodeAt(i + 1)];
-    const e3 = lookup[base64.charCodeAt(i + 2)],
-      e4 = lookup[base64.charCodeAt(i + 3)];
-    buffer[p++] = (e1 << 2) | (e2 >> 4);
-    if (p < bufferLength) buffer[p++] = ((e2 & 15) << 4) | (e3 >> 2);
-    if (p < bufferLength) buffer[p++] = ((e3 & 3) << 6) | (e4 & 63);
-  }
-  return buffer;
+async function activePublicChannelIds(): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('channels')
+    .select('id')
+    .eq('is_public', true)
+    .eq('status', 'active');
+  if (error) throw error;
+  return (data ?? []).map(row => row.id);
 }

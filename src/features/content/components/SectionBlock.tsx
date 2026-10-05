@@ -1,20 +1,15 @@
 import { View, Text, StyleSheet, FlatList } from 'react-native';
 import { memo } from 'react';
-import { ChannelPost } from '@/features/content/api/postsApi';
+import type { ChannelPost } from '@/features/content/model';
+import type { Shelf } from '@/features/content/shelves';
 import { Colors, Radius } from '@/theme';
 import { HeroCard } from '@/features/content/components/HeroCard';
 import { SectionCard } from '@/features/content/components/SectionCard';
 
+/** One Explore shelf. "Featured" opens with a full-width hero; every other shelf is a carousel. */
 export const SectionBlock = memo(
-  ({
-    sectionKey,
-    items,
-    onSelect,
-  }: {
-    sectionKey: string;
-    items: ChannelPost[];
-    onSelect: (item: ChannelPost) => void;
-  }) => {
+  ({ shelf, onSelect }: { shelf: Shelf; onSelect: (item: ChannelPost) => void }) => {
+    const { title: sectionKey, items } = shelf;
     const isShorts = sectionKey === 'Shorts';
 
     // Featured is the hero, not a row. Its first item gets the full-width

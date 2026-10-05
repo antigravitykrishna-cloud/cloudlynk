@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { AccessLevel, ContentType } from '@/features/content/api/postsApi';
+import type { AccessLevel, ContentType } from '@/features/content/model';
 
 // Client wrappers for the admin content and access panel. Every write is a SECURITY DEFINER RPC
 // that re-checks is_admin; neither the screens nor this module are the security boundary. Two kinds

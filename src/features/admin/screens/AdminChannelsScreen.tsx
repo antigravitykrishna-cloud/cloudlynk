@@ -2,18 +2,14 @@ import { useCallback, useState } from 'react';
 import { View, Text, FlatList, TextInput, Switch, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
-import {
-  AdminHeader,
-  ActionButton,
-  Card,
-  Chip,
-  adminStyles,
-} from '@/features/admin/components/AdminUI';
+import { AdminHeader, ActionButton, adminStyles } from '@/features/admin/components/AdminUI';
+import { Card } from '@/components/ui/Card';
+import { Chip } from '@/components/ui/Chip';
 import { showAlert } from '@/components/ui/Feedback';
 import { fireHaptic, PressScale } from '@/components/ui/Press';
 import { Colors } from '@/theme';
 import { supabase } from '@/lib/supabase';
-import { ChannelService } from '@/features/channels/api/channelsApi';
+import { channelsApi } from '@/features/channels/api/channelsApi';
 import { AdminControl } from '@/features/admin/api/adminControlApi';
 
 // Every channel, including hidden, pending and suspended ones (admins read
@@ -266,7 +262,7 @@ export default function AdminChannelsScreen() {
                             onPress: () =>
                               run(
                                 `del-${r.id}`,
-                                () => ChannelService.deleteChannel(r.id),
+                                () => channelsApi.remove(r.id),
                                 'Channel deleted.',
                               ),
                           },

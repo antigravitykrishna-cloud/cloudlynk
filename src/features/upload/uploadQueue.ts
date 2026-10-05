@@ -1,34 +1,25 @@
-/**
- * Foreground upload manager: each item goes StreamService.uploadVideo() ->
- * PostService.createPost(). Callers subscribe for state updates. The queue is saved to
- * AsyncStorage, so it survives an app restart.
- */
-
-import { StreamService, VideoMeta, STREAM_MAX_MB } from '@/features/player/api/streamApi';
-import { PostService, defaultAccessLevel, AccessLevel } from '@/features/content/api/postsApi';
 import {
-  loadQueue,
-  saveQueue,
-  clearQueue as clearPersistedQueue,
-} from '@/features/upload/uploadQueueStorage';
+  STREAM_MAX_BYTES,
+  STREAM_MAX_MB,
+  streamUploadApi,
+  type VideoMeta,
+} from '@/features/upload/api/streamUploadApi';
+import { postsApi } from '@/features/content/api/postsApi';
+import { defaultAccessLevel, type AccessLevel, type ContentType } from '@/features/content/model';
+import { toNewPost } from '@/features/upload/toNewPost';
+import { clearQueue, loadQueue, saveQueue } from '@/features/upload/uploadQueueStorage';
 
-// ── Types ──────────────────────────────────────────────────────
+// The upload queue: videos picked on the phone, uploaded one at a time while the app is open.
+// Each item goes to Cloudflare Stream (streamUploadApi), then becomes a post (postsApi.create).
+// Screens follow it through subscribe(); the list is saved on the device and survives a restart.
 
-export type QueueItemStatus = 'queued' | 'uploading' | 'done' | 'failed' | 'paused' | 'over_limit';
+export type QueueItemStatus = 'queued' | 'uploading' | 'done' | 'failed' | 'over_limit';
 
-export type QueueItem = {
-  /** Stable id generated client-side, survives restarts */
-  id: string;
-  /** The authenticated user uploading this item */
-  userId: string;
-  /** The video file on the device (content:// URI) */
-  video: VideoMeta;
-  /** Form fields — populated by user, empty until edited */
-  channelId: string;
+/** The details typed in for a video. Numbers stay strings while they are being edited. */
+export type VideoDetails = {
   title: string;
   body: string;
-  contentType: string;
-  /** Whether this content requires an active premium plan to view — see lib/posts.ts defaultAccessLevel() */
+  contentType: ContentType;
   accessLevel: AccessLevel;
   genre: string;
   durationMin: string;
@@ -37,79 +28,176 @@ export type QueueItem = {
   episodeTitle: string;
   releaseYear: string;
   thumbnailUri: string | null;
-  /** Series grouping — deterministic ID derived from (channelId, seriesName) */
+  /** Episodes with the same series name are grouped on the channel page (see seriesId). */
   seriesName: string;
   seriesId: string | null;
-  /** Lifecycle */
+};
+
+export type QueueItem = VideoDetails & {
+  /** Made on the phone; stays the same across restarts. */
+  id: string;
+  /** The account that queued it. */
+  userId: string;
+  channelId: string;
+  /** The file on the phone (a content:// URI). */
+  video: VideoMeta;
   status: QueueItemStatus;
-  /** Upload progress 0–1, only meaningful when status === 'uploading' */
+  /** 0..1 while uploading. */
   progress: number;
-  /** Error message if status === 'failed' */
   error: string | null;
-  /** Cloudflare Stream UID assigned after successful upload */
+  /** The Cloudflare Stream uid, once uploaded. */
   streamUid: string | null;
-  /** Timestamps */
   createdAt: string;
   updatedAt: string;
 };
 
 export type QueueState = {
   items: QueueItem[];
-  /** true while any item is actively uploading */
   isUploading: boolean;
-  /** index of the currently uploading item, -1 if idle */
+  /** Index of the item uploading now, or -1. */
   currentIndex: number;
 };
 
-type StateListener = (state: QueueState) => void;
+/** The details a caller may change on a queued item. */
+export type EditableDetails = Partial<
+  Omit<VideoDetails, 'seriesName' | 'seriesId'> & { channelId: string }
+>;
 
-// ── Internals ──────────────────────────────────────────────────
+/** Free accounts may queue this many files at once; Premium has no limit. */
+export const FREE_QUEUE_LIMIT = 5;
 
-const MAX_FREE_ITEMS = 5;
+type Listener = (state: QueueState) => void;
 
 let state: QueueState = { items: [], isUploading: false, currentIndex: -1 };
-let listeners = new Set<StateListener>();
+const listeners = new Set<Listener>();
 let abortController: AbortController | null = null;
 
-function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-}
+const now = () => new Date().toISOString();
+const newId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
 function notify() {
   const snapshot = { ...state, items: [...state.items] };
-  listeners.forEach(fn => fn(snapshot));
+  listeners.forEach(listener => listener(snapshot));
 }
 
-function isOverSizeLimit(size: number): boolean {
-  return size > STREAM_MAX_MB * 1024 * 1024;
+async function persistAndNotify() {
+  await saveQueue(state);
+  notify();
 }
 
-// ── Public API ─────────────────────────────────────────────────
+function updateAt(index: number, patch: Partial<QueueItem>) {
+  state.items[index] = { ...state.items[index], ...patch, updatedAt: now() };
+}
+
+function newItem(
+  entry: Partial<VideoDetails> & { video: VideoMeta },
+  channelId: string,
+  userId: string,
+): QueueItem {
+  const contentType = entry.contentType ?? 'movie';
+  const tooLarge = entry.video.size > STREAM_MAX_BYTES;
+  return {
+    id: newId(),
+    userId,
+    channelId,
+    video: entry.video,
+    title: entry.title ?? '',
+    body: entry.body ?? '',
+    contentType,
+    accessLevel: entry.accessLevel ?? defaultAccessLevel(contentType),
+    genre: entry.genre ?? '',
+    durationMin: entry.durationMin ?? '',
+    seasonNo: entry.seasonNo ?? '',
+    episodeNo: entry.episodeNo ?? '',
+    episodeTitle: entry.episodeTitle ?? '',
+    releaseYear: entry.releaseYear ?? String(new Date().getFullYear()),
+    thumbnailUri: entry.thumbnailUri ?? null,
+    seriesName: entry.seriesName ?? '',
+    seriesId: entry.seriesId ?? null,
+    status: tooLarge ? 'over_limit' : 'queued',
+    progress: 0,
+    error: tooLarge
+      ? `File exceeds ${STREAM_MAX_MB}MB upload limit (${(entry.video.size / 1024 / 1024).toFixed(0)}MB)`
+      : null,
+    streamUid: null,
+    createdAt: now(),
+    updatedAt: now(),
+  };
+}
+
+/** Uploads one item and creates its post. Throws on failure. */
+async function uploadItem(index: number, signal: AbortSignal): Promise<string> {
+  const item = state.items[index];
+  const streamUid = await streamUploadApi.upload(
+    item.video,
+    progress => {
+      state.items[index] = { ...state.items[index], progress };
+      notify();
+    },
+    { channelId: item.channelId || undefined, signal },
+  );
+
+  await postsApi.create(
+    toNewPost(item, {
+      channelId: item.channelId,
+      authorId: item.userId,
+      streamVideoUid: streamUid,
+      fallbackTitle: item.video.name,
+    }),
+  );
+  return streamUid;
+}
+
+/** Uploads queued items one after another until none are left or the queue is paused. */
+async function processQueue(): Promise<void> {
+  while (state.isUploading) {
+    const index = state.items.findIndex(item => item.status === 'queued');
+    if (index === -1) {
+      state.isUploading = false;
+      state.currentIndex = -1;
+      notify();
+      return;
+    }
+
+    state.currentIndex = index;
+    updateAt(index, { status: 'uploading', progress: 0, error: null });
+    await persistAndNotify();
+
+    abortController = new AbortController();
+    try {
+      const streamUid = await uploadItem(index, abortController.signal);
+      updateAt(index, { status: 'done', progress: 1, streamUid });
+    } catch (err) {
+      // Pausing aborts the upload in flight, so it also ends up here ("Upload cancelled").
+      updateAt(index, { status: 'failed', error: (err as Error)?.message ?? 'Upload failed' });
+    }
+    abortController = null;
+    state.currentIndex = -1;
+    await persistAndNotify();
+  }
+}
 
 export const UploadQueue = {
-  /** Load persisted queue from AsyncStorage (call once on app start) */
+  /** Loads the saved queue. Items that were mid-upload when the app closed go back to queued. */
   async init(): Promise<QueueState> {
-    const persisted = await loadQueue();
-    if (persisted && Array.isArray(persisted.items)) {
-      state = { ...persisted, isUploading: false, currentIndex: -1 };
-      // Reset any items stuck in 'uploading' back to 'queued' (app was killed mid-upload)
-      state.items = state.items.map(item =>
-        item.status === 'uploading'
-          ? {
-              ...item,
-              status: 'queued' as const,
-              progress: 0,
-              error: null,
-              updatedAt: new Date().toISOString(),
-            }
-          : item,
-      );
+    const saved = await loadQueue();
+    if (saved) {
+      state = {
+        isUploading: false,
+        currentIndex: -1,
+        items: saved.items.map(item =>
+          item.status === 'uploading'
+            ? { ...item, status: 'queued', progress: 0, error: null, updatedAt: now() }
+            : item,
+        ),
+      };
     }
     notify();
     return state;
   },
 
-  subscribe(listener: StateListener): () => void {
+  /** Calls `listener` now and on every change. Returns the unsubscribe. */
+  subscribe(listener: Listener): () => void {
     listeners.add(listener);
     listener(state);
     return () => {
@@ -122,286 +210,95 @@ export const UploadQueue = {
   },
 
   /**
-   * Add video(s) to the queue with pre-filled metadata.
-   * Items over the 180MB limit are marked 'over_limit' immediately.
-   * Returns the number of items actually added.
+   * Adds videos with whatever details are known. Files over the size limit are added as
+   * `over_limit` (shown, never uploaded). A free account's queue is capped at FREE_QUEUE_LIMIT
+   * uploadable items. Resolves with the items added.
    */
-  async addToQueue(
-    entries: {
-      video: VideoMeta;
-      title?: string;
-      body?: string;
-      contentType?: string;
-      accessLevel?: AccessLevel;
-      genre?: string;
-      durationMin?: string;
-      seasonNo?: string;
-      episodeNo?: string;
-      episodeTitle?: string;
-      releaseYear?: string;
-      thumbnailUri?: string | null;
-      seriesName?: string;
-      seriesId?: string | null;
-    }[],
+  async add(
+    entries: (Partial<VideoDetails> & { video: VideoMeta })[],
     channelId: string,
     userId: string,
-    isPremium: boolean,
-  ): Promise<number> {
-    const maxItems = isPremium ? Infinity : MAX_FREE_ITEMS;
-    const uploadableCount = state.items.filter(i => i.status !== 'over_limit').length;
-    const availableSlots = maxItems - uploadableCount;
+    hasPlan: boolean,
+  ): Promise<QueueItem[]> {
+    const limit = hasPlan ? Infinity : FREE_QUEUE_LIMIT;
+    let freeSlots = limit - state.items.filter(i => i.status !== 'over_limit').length;
 
-    const newItems: QueueItem[] = [];
+    const added: QueueItem[] = [];
     for (const entry of entries) {
-      const oversized = isOverSizeLimit(entry.video.size);
-      if (!oversized && newItems.filter(i => i.status !== 'over_limit').length >= availableSlots)
-        break;
-
-      newItems.push({
-        id: generateId(),
-        userId,
-        video: entry.video,
-        channelId,
-        title: entry.title ?? '',
-        body: entry.body ?? '',
-        contentType: entry.contentType ?? 'movie',
-        accessLevel: entry.accessLevel ?? defaultAccessLevel((entry.contentType as any) ?? 'movie'),
-        genre: entry.genre ?? '',
-        durationMin: entry.durationMin ?? '',
-        seasonNo: entry.seasonNo ?? '',
-        episodeNo: entry.episodeNo ?? '',
-        episodeTitle: entry.episodeTitle ?? '',
-        releaseYear: entry.releaseYear ?? String(new Date().getFullYear()),
-        thumbnailUri: entry.thumbnailUri ?? null,
-        seriesName: entry.seriesName ?? '',
-        seriesId: entry.seriesId ?? null,
-        status: oversized ? 'over_limit' : 'queued',
-        progress: 0,
-        error: oversized
-          ? `File exceeds ${STREAM_MAX_MB}MB upload limit (${(entry.video.size / 1024 / 1024).toFixed(0)}MB)`
-          : null,
-        streamUid: null,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      });
+      const item = newItem(entry, channelId, userId);
+      if (item.status !== 'over_limit') {
+        if (freeSlots <= 0) break;
+        freeSlots -= 1;
+      }
+      added.push(item);
     }
-
-    if (newItems.length === 0) return 0;
-
-    state.items = [...state.items, ...newItems];
-    await this._persist();
-    notify();
-    return newItems.length;
+    if (added.length > 0) {
+      state.items = [...state.items, ...added];
+      await persistAndNotify();
+    }
+    return added;
   },
 
-  /** Remove an item from the queue (any status). Cannot remove while uploading. */
-  async removeItem(itemId: string): Promise<boolean> {
-    const idx = state.items.findIndex(i => i.id === itemId);
-    if (idx === -1) return false;
-    if (state.currentIndex === idx) return false; // can't remove currently uploading item
-    state.items = state.items.filter((_, i) => i !== idx);
-    if (state.currentIndex > idx) state.currentIndex--;
-    await this._persist();
-    notify();
+  /** Removes an item. The one uploading right now cannot be removed. */
+  async remove(itemId: string): Promise<boolean> {
+    const index = state.items.findIndex(i => i.id === itemId);
+    if (index === -1 || index === state.currentIndex) return false;
+    state.items = state.items.filter((_, i) => i !== index);
+    if (state.currentIndex > index) state.currentIndex -= 1;
+    await persistAndNotify();
     return true;
   },
 
-  /** Update form fields for a queued item */
-  async updateItem(
-    itemId: string,
-    updates: Partial<
-      Pick<
-        QueueItem,
-        | 'title'
-        | 'body'
-        | 'contentType'
-        | 'accessLevel'
-        | 'genre'
-        | 'durationMin'
-        | 'seasonNo'
-        | 'episodeNo'
-        | 'episodeTitle'
-        | 'releaseYear'
-        | 'thumbnailUri'
-        | 'channelId'
-      >
-    >,
-  ): Promise<boolean> {
-    const idx = state.items.findIndex(i => i.id === itemId);
-    if (idx === -1) return false;
-    state.items[idx] = { ...state.items[idx], ...updates, updatedAt: new Date().toISOString() };
-    await this._persist();
-    notify();
+  async update(itemId: string, details: EditableDetails): Promise<boolean> {
+    const index = state.items.findIndex(i => i.id === itemId);
+    if (index === -1) return false;
+    updateAt(index, details);
+    await persistAndNotify();
     return true;
   },
 
-  /** Start processing the queue sequentially (one at a time) */
-  async startUpload(): Promise<void> {
+  /** Starts (or resumes) uploading. Does nothing if already running. */
+  async start(): Promise<void> {
     if (state.isUploading) return;
     state.isUploading = true;
     notify();
-    await this._processNext();
+    await processQueue();
   },
 
-  /** Pause after the current upload finishes */
-  async pauseUpload(): Promise<void> {
-    if (abortController) {
-      abortController.abort();
-      abortController = null;
-    }
+  /** Stops after aborting the upload in flight; that item is marked failed and can be retried. */
+  async pause(): Promise<void> {
+    abortController?.abort();
+    abortController = null;
     state.isUploading = false;
     notify();
   },
 
-  /** Resume paused queue */
-  async resumeUpload(): Promise<void> {
-    if (state.isUploading) return;
-    state.isUploading = true;
-    notify();
-    await this._processNext();
-  },
-
-  /** Retry a failed item (re-queues it and starts upload if idle) */
-  async retryItem(itemId: string): Promise<boolean> {
-    const idx = state.items.findIndex(i => i.id === itemId);
-    if (idx === -1 || state.items[idx].status !== 'failed') return false;
-    state.items[idx] = {
-      ...state.items[idx],
-      status: 'queued',
-      progress: 0,
-      error: null,
-      updatedAt: new Date().toISOString(),
-    };
-    await this._persist();
-    notify();
-    if (!state.isUploading) {
-      state.isUploading = true;
-      notify();
-      await this._processNext();
-    }
+  /** Puts a failed item back in the queue and starts uploading if idle. */
+  async retry(itemId: string): Promise<boolean> {
+    const index = state.items.findIndex(i => i.id === itemId);
+    if (index === -1 || state.items[index].status !== 'failed') return false;
+    updateAt(index, { status: 'queued', progress: 0, error: null });
+    await persistAndNotify();
+    await UploadQueue.start();
     return true;
   },
 
-  /** Remove all completed/failed items */
-  async clearCompleted(): Promise<void> {
+  /** Removes finished, failed and too-large items. */
+  async clearFinished(): Promise<void> {
+    const currentId = state.items[state.currentIndex]?.id ?? null;
     state.items = state.items.filter(
       i => i.status !== 'done' && i.status !== 'failed' && i.status !== 'over_limit',
     );
-    // Recalculate currentIndex
-    const currentId =
-      state.currentIndex >= 0 && state.currentIndex < state.items.length
-        ? state.items[state.currentIndex]?.id
-        : null;
     state.currentIndex = currentId ? state.items.findIndex(i => i.id === currentId) : -1;
-    await this._persist();
-    notify();
+    await persistAndNotify();
   },
 
-  /** Wipe the entire queue (used on signOut) */
+  /** Empties the queue and forgets it on this device. Called on sign-out. */
   async destroy(): Promise<void> {
-    if (abortController) {
-      abortController.abort();
-      abortController = null;
-    }
-    state = { items: [], isUploading: false, currentIndex: -1 };
-    await clearPersistedQueue();
-    notify();
-  },
-
-  // ── Internal ──────────────────────────────────────────────
-
-  async _persist(): Promise<void> {
-    await saveQueue(state);
-  },
-
-  async _processNext(): Promise<void> {
-    if (!state.isUploading) return;
-
-    const nextIdx = state.items.findIndex(i => i.status === 'queued');
-    if (nextIdx === -1) {
-      state.isUploading = false;
-      state.currentIndex = -1;
-      notify();
-      return;
-    }
-
-    state.currentIndex = nextIdx;
-    const item = state.items[nextIdx];
-
-    // Skip over-limit items (can only be removed, not uploaded)
-    if (item.status === 'over_limit') {
-      state.items[nextIdx] = { ...item, updatedAt: new Date().toISOString() };
-      await this._persist();
-      notify();
-      // Find next uploadable item
-      state.currentIndex = -1;
-      await this._processNext();
-      return;
-    }
-
-    state.items[nextIdx] = {
-      ...item,
-      status: 'uploading',
-      progress: 0,
-      error: null,
-      updatedAt: new Date().toISOString(),
-    };
-    await this._persist();
-    notify();
-
-    try {
-      abortController = new AbortController();
-
-      const streamUid = await StreamService.uploadVideo(
-        item.video,
-        pct => {
-          state.items[nextIdx] = { ...state.items[nextIdx], progress: pct };
-          notify();
-        },
-        item.channelId || undefined,
-        abortController!.signal,
-      );
-
-      // Upload succeeded — create the channel_posts row using item.userId
-      await PostService.createPost(item.channelId, item.userId, item.body || '', {
-        title: item.title || item.video.name,
-        contentType: (item.contentType as any) || 'movie',
-        accessLevel: item.accessLevel,
-        genre: item.genre || undefined,
-        durationMin: item.durationMin ? parseInt(item.durationMin) : undefined,
-        seasonNumber: item.seasonNo ? parseInt(item.seasonNo) : undefined,
-        episodeNumber: item.episodeNo ? parseInt(item.episodeNo) : undefined,
-        episodeTitle: item.episodeTitle || undefined,
-        releaseYear: item.releaseYear ? parseInt(item.releaseYear) : undefined,
-        thumbnailUri: item.thumbnailUri ?? undefined,
-        streamVideoUid: streamUid,
-        seriesId: item.seriesId ?? undefined,
-      });
-
-      state.items[nextIdx] = {
-        ...state.items[nextIdx],
-        status: 'done',
-        progress: 1,
-        streamUid,
-        updatedAt: new Date().toISOString(),
-      };
-    } catch (err: any) {
-      state.items[nextIdx] = {
-        ...state.items[nextIdx],
-        status: 'failed',
-        error: err.message ?? 'Upload failed',
-        updatedAt: new Date().toISOString(),
-      };
-    }
-
+    abortController?.abort();
     abortController = null;
-    state.currentIndex = -1;
-    await this._persist();
+    state = { items: [], isUploading: false, currentIndex: -1 };
+    await clearQueue();
     notify();
-
-    // Continue to next item
-    if (state.isUploading) {
-      await this._processNext();
-    }
   },
 };

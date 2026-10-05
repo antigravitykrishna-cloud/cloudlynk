@@ -1,122 +1,64 @@
-/**
- * Full-screen video player with our own controls (native controls are off): close, settings
- * (quality/speed), play/pause, seek bar, and double-tap on the left/right edges to skip 10 seconds.
- */
-
+import { useCallback, useEffect, useState } from 'react';
 import {
-  View,
-  TouchableOpacity,
-  Text,
-  StyleSheet,
   StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
   useWindowDimensions,
-  PanResponder,
 } from 'react-native';
-import { VideoView } from 'expo-video';
 import { useEvent } from 'expo';
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { VideoView, type VideoPlayer } from 'expo-video';
 import * as ScreenOrientation from 'expo-screen-orientation';
-import { Colors, FontSize, Radius, withAlpha } from '@/theme';
-import { useResumePosition } from '@/features/player/hooks/useResumePosition';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Colors, FontSize, FontWeight, Radius, Spacing, withAlpha } from '@/theme';
 import { formatClock } from '@/utils/format';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { PlayerPrefsService } from '@/features/player/api/playerPrefsApi';
+import { PlayerSettingsPanel } from '@/features/player/components/PlayerSettingsPanel';
+import { ResumePrompt } from '@/features/player/components/ResumePrompt';
+import { SeekBar } from '@/features/player/components/SeekBar';
+import { useDoubleTapSkip } from '@/features/player/hooks/useDoubleTapSkip';
+import { usePlayerPreferences } from '@/features/player/hooks/usePlayerPreferences';
+import { useResumePosition } from '@/features/player/hooks/useResumePosition';
 
-type Props = {
-  player: any;
-  onClose: () => void;
-  postId?: string;
-  postTitle?: string;
-  isPremium?: boolean;
-  nextPostId?: string;
-  prevPostId?: string;
-  onNavigateToPost?: (postId: string) => void;
-};
-
-const QUALITY_OPTIONS = ['480p', '720p', '1080p'];
-const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
-const DOUBLE_TAP_MS = 300;
-
+/**
+ * Full-screen player with the app's own controls (native controls are off): close, settings
+ * (quality and speed), play/pause, a seek bar, and double-tap on either edge to skip 10 seconds.
+ * Rotation is unlocked while it is open.
+ */
 export function VideoPlayerOverlay({
   player,
   onClose,
   postId,
   postTitle,
-  isPremium,
-  nextPostId,
-  prevPostId,
-  onNavigateToPost,
-}: Props) {
+}: {
+  player: VideoPlayer;
+  onClose: () => void;
+  postId: string;
+  postTitle?: string;
+}) {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const userId = user?.id;
-
-  // Re-render on rotation so the overlay re-lays out for landscape.
+  // Re-render on rotation so the overlay lays out again for landscape.
   useWindowDimensions();
+
   const [showSettings, setShowSettings] = useState(false);
-  const [showResume, setShowResume] = useState(true);
+  const resume = useResumePosition(user?.id, postId);
+  const preferences = usePlayerPreferences(user?.id, player);
+  const skip = useDoubleTapSkip(player);
 
-  const {
-    positionSeconds,
-    showOverlay: shouldShowResume,
-    dismiss: dismissResume,
-  } = useResumePosition(userId, postId);
-
-  const [quality, setQuality] = useState('720p');
-  const [speed, setSpeed] = useState(1);
-
-  const lastTapRef = useRef<{ time: number } | null>(null);
-  const skipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [skipFeedback, setSkipFeedback] = useState<{ side: 'left' | 'right' } | null>(null);
-
-  useEffect(() => {
-    if (!userId) return;
-    PlayerPrefsService.get(userId)
-      .then(prefs => {
-        if (prefs) {
-          const savedQ = prefs.default_quality ?? '720p';
-          setQuality(QUALITY_OPTIONS.includes(savedQ) ? savedQ : '720p');
-          setSpeed(prefs.default_speed ?? 1);
-        }
-      })
-      .catch(() => {});
-  }, [userId]);
-
-  useEffect(() => {
-    if (player && player.playbackRate !== undefined) player.playbackRate = speed;
-  }, [player, speed]);
-
-  // Faster time updates so the custom progress bar moves smoothly (default interval is coarse).
-  useEffect(() => {
-    if (player) player.timeUpdateEventInterval = 0.25;
-  }, [player]);
-
-  const timeUpdate = useEvent(player, 'timeUpdate', {
+  const { currentTime } = useEvent(player, 'timeUpdate', {
     currentTime: 0,
     currentLiveTimestamp: null,
     currentOffsetFromLive: null,
     bufferedPosition: 0,
   });
-  const playingChange = useEvent(player, 'playingChange', { isPlaying: player?.playing ?? false });
-  const currentTime = timeUpdate.currentTime;
-  const duration = player?.duration ?? 0;
-  const isPlaying = playingChange.isPlaying;
+  const { isPlaying } = useEvent(player, 'playingChange', { isPlaying: player.playing });
+  const duration = player.duration ?? 0;
 
-  const togglePlayPause = useCallback(() => {
-    if (!player) return;
-    if (player.playing) {
-      player.pause();
-    } else {
-      // If at end of video (within 0.5s tolerance for timeUpdate drift), restart from 0.
-      // expo-video's player.play() has no effect when currentTime is already at duration.
-      const dur = player.duration ?? 0;
-      const cur = player.currentTime ?? 0;
-      if (dur > 0 && cur >= dur - 0.5) {
-        player.currentTime = 0;
-      }
-      player.play();
-    }
+  // Frequent time updates so the seek bar moves smoothly (the default interval is coarse).
+  useEffect(() => {
+    player.timeUpdateEventInterval = 0.25;
   }, [player]);
 
   useEffect(() => {
@@ -127,121 +69,32 @@ export function VideoPlayerOverlay({
     };
   }, []);
 
-  const handleClose = useCallback(async () => {
+  const close = useCallback(async () => {
     await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
     StatusBar.setHidden(false);
     onClose();
   }, [onClose]);
 
-  const handleResume = useCallback(() => {
-    if (player && positionSeconds > 0) player.currentTime = positionSeconds;
-    dismissResume();
-    setShowResume(false);
-  }, [player, positionSeconds, dismissResume]);
-
-  const handleRestart = useCallback(() => {
-    if (player) {
-      player.currentTime = 0;
-      player.play();
+  const togglePlayback = useCallback(() => {
+    if (player.playing) {
+      player.pause();
+      return;
     }
-    dismissResume();
-    setShowResume(false);
-  }, [player, dismissResume]);
+    // play() does nothing at the very end of a video, so start again from the top.
+    const end = player.duration ?? 0;
+    if (end > 0 && (player.currentTime ?? 0) >= end - 0.5) player.currentTime = 0;
+    player.play();
+  }, [player]);
 
-  const handleQualityChange = useCallback(
-    async (q: string) => {
-      setQuality(q);
-      if (userId) await PlayerPrefsService.upsert(userId, { default_quality: q });
+  const seek = useCallback(
+    (seconds: number) => {
+      player.currentTime = seconds;
     },
-    [userId],
-  );
-
-  const handleSpeedChange = useCallback(
-    async (s: number) => {
-      setSpeed(s);
-      if (userId) await PlayerPrefsService.upsert(userId, { default_speed: s });
-    },
-    [userId],
-  );
-
-  // Left edge strip — double-tap = -10s
-  const leftPan = useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponder: () => false,
-        onPanResponderGrant: () => {
-          const now = Date.now();
-          const last = lastTapRef.current;
-          if (last && now - last.time < DOUBLE_TAP_MS) {
-            lastTapRef.current = null;
-            if (player) player.currentTime = Math.max(0, (player.currentTime ?? 0) - 10);
-            if (skipTimerRef.current) clearTimeout(skipTimerRef.current);
-            setSkipFeedback({ side: 'left' });
-            skipTimerRef.current = setTimeout(() => setSkipFeedback(null), 700);
-          } else {
-            lastTapRef.current = { time: now };
-          }
-        },
-      }),
     [player],
   );
-
-  // Right edge strip — double-tap = +10s
-  const rightPan = useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponder: () => false,
-        onPanResponderGrant: () => {
-          const now = Date.now();
-          const last = lastTapRef.current;
-          if (last && now - last.time < DOUBLE_TAP_MS) {
-            lastTapRef.current = null;
-            if (player) player.currentTime = (player.currentTime ?? 0) + 10;
-            if (skipTimerRef.current) clearTimeout(skipTimerRef.current);
-            setSkipFeedback({ side: 'right' });
-            skipTimerRef.current = setTimeout(() => setSkipFeedback(null), 700);
-          } else {
-            lastTapRef.current = { time: now };
-          }
-        },
-      }),
-    [player],
-  );
-
-  // Custom progress bar — tap or drag anywhere on the track to seek
-  const trackWidthRef = useRef(0);
-  const [scrubRatio, setScrubRatio] = useState<number | null>(null);
-  const progressPan = useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponder: () => true,
-        onPanResponderGrant: e => {
-          const width = trackWidthRef.current || 1;
-          setScrubRatio(Math.max(0, Math.min(1, e.nativeEvent.locationX / width)));
-        },
-        onPanResponderMove: e => {
-          const width = trackWidthRef.current || 1;
-          setScrubRatio(Math.max(0, Math.min(1, e.nativeEvent.locationX / width)));
-        },
-        onPanResponderRelease: e => {
-          const width = trackWidthRef.current || 1;
-          const ratio = Math.max(0, Math.min(1, e.nativeEvent.locationX / width));
-          if (player && duration > 0) player.currentTime = ratio * duration;
-          setScrubRatio(null);
-        },
-        onPanResponderTerminate: () => setScrubRatio(null),
-      }),
-    [player, duration],
-  );
-
-  const showResumeOverlay = shouldShowResume && showResume;
 
   return (
     <View style={[StyleSheet.absoluteFill, styles.container]}>
-      {/* Video fills everything — native controls disabled, custom bottom row owns playback UI */}
       <VideoView
         player={player}
         style={styles.video}
@@ -249,172 +102,91 @@ export function VideoPlayerOverlay({
         allowsPictureInPicture
       />
 
-      {/* Left/right edge strips for double-tap skip only — 80px wide, don't cover center */}
-      {!showResumeOverlay && <View style={styles.leftStrip} {...leftPan.panHandlers} />}
-      {!showResumeOverlay && <View style={styles.rightStrip} {...rightPan.panHandlers} />}
+      {resume.showPrompt ? (
+        <ResumePrompt
+          title={postTitle}
+          positionSeconds={resume.positionSeconds}
+          onResume={() => {
+            seek(resume.positionSeconds);
+            resume.dismiss();
+          }}
+          onRestart={() => {
+            seek(0);
+            player.play();
+            resume.dismiss();
+          }}
+        />
+      ) : (
+        <>
+          {/* Narrow edge strips for double-tap skip; the centre stays free for the controls. */}
+          <View style={[styles.edge, styles.edgeLeft]} {...skip.handlers.back} />
+          <View style={[styles.edge, styles.edgeRight]} {...skip.handlers.forward} />
 
-      {/* Resume overlay */}
-      {showResumeOverlay && (
-        <View style={styles.resumeOverlay} pointerEvents="box-none">
-          <View style={styles.resumeCard}>
-            {postTitle && (
-              <Text style={styles.resumeTitle} numberOfLines={1}>
-                {postTitle}
-              </Text>
-            )}
-            <Text style={styles.resumePosition}>Resume from {formatClock(positionSeconds)}</Text>
-            <View style={styles.resumeActions}>
-              <TouchableOpacity style={styles.resumeBtn} onPress={handleResume} activeOpacity={0.8}>
-                <Text style={styles.resumeBtnTxt}>▶ Resume</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.restartBtn}
-                onPress={handleRestart}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.restartBtnTxt}>Restart</Text>
-              </TouchableOpacity>
-            </View>
+          <View style={[styles.topBar, { top: insets.top + Spacing.md }]}>
+            <OverlayButton label="✕" accessibilityLabel="Close player" onPress={close} />
+            <OverlayButton
+              label="⚙"
+              accessibilityLabel="Playback settings"
+              onPress={() => setShowSettings(shown => !shown)}
+            />
           </View>
-        </View>
-      )}
 
-      {/* Top bar — always visible, high zIndex so always above video */}
-      {!showResumeOverlay && (
-        <View style={[styles.topBar, { top: insets.top + 12 }]}>
-          <TouchableOpacity
-            style={styles.btn}
-            onPress={handleClose}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-          >
-            <Text style={styles.btnText}>✕</Text>
-          </TouchableOpacity>
-          <View style={styles.topRight}>
-            {postId && (
-              <TouchableOpacity
-                style={styles.btn}
-                onPress={() => setShowSettings(s => !s)}
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-              >
-                <Text style={styles.btnText}>⚙</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-      )}
-
-      {/* Episode navigation */}
-      {!showResumeOverlay && !showSettings && (nextPostId || prevPostId) && onNavigateToPost && (
-        <View style={styles.episodeNav}>
-          {prevPostId ? (
-            <TouchableOpacity
-              style={styles.episodeBtn}
-              onPress={() => onNavigateToPost(prevPostId)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.episodeBtnTxt}>← Prev</Text>
-            </TouchableOpacity>
-          ) : (
-            <View style={{ flex: 1 }} />
+          {showSettings && (
+            <PlayerSettingsPanel
+              quality={preferences.quality}
+              speed={preferences.speed}
+              onQualityChange={preferences.changeQuality}
+              onSpeedChange={preferences.changeSpeed}
+            />
           )}
-          {nextPostId ? (
+
+          <View style={[styles.controls, { bottom: insets.bottom + Spacing.xl }]}>
             <TouchableOpacity
-              style={styles.episodeBtn}
-              onPress={() => onNavigateToPost(nextPostId)}
-              activeOpacity={0.7}
+              onPress={togglePlayback}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel={isPlaying ? 'Pause' : 'Play'}
             >
-              <Text style={styles.episodeBtnTxt}>Next →</Text>
+              <Text style={styles.playIcon}>{isPlaying ? '⏸' : '▶'}</Text>
             </TouchableOpacity>
-          ) : (
-            <View style={{ flex: 1 }} />
-          )}
-        </View>
+            <Text style={styles.time}>{formatClock(Math.min(currentTime, duration))}</Text>
+            <SeekBar currentTime={currentTime} duration={duration} onSeek={seek} />
+            <Text style={styles.time}>{formatClock(duration)}</Text>
+          </View>
+        </>
       )}
 
-      {/* Settings panel */}
-      {showSettings && !showResumeOverlay && (
-        <View style={styles.settingsPanel}>
-          <View style={styles.compactRow}>
-            <Text style={styles.compactLabel}>Quality</Text>
-            {QUALITY_OPTIONS.map(q => (
-              <TouchableOpacity
-                key={q}
-                style={[styles.compactChip, quality === q && styles.compactChipActive]}
-                onPress={() => handleQualityChange(q)}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.compactChipTxt, quality === q && styles.compactChipTxtActive]}>
-                  {q}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-          <View style={styles.compactRow}>
-            <Text style={styles.compactLabel}>Speed</Text>
-            {SPEED_OPTIONS.map(s => (
-              <TouchableOpacity
-                key={s}
-                style={[styles.compactChip, speed === s && styles.compactChipActive]}
-                onPress={() => handleSpeedChange(s)}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.compactChipTxt, speed === s && styles.compactChipTxtActive]}>
-                  {s === 1 ? '1×' : `${s}×`}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-      )}
-
-      {/* Custom bottom row — play/pause, time, draggable progress bar (native row removed) */}
-      {!showResumeOverlay && (
-        <View style={[styles.bottomRow, { bottom: insets.bottom + 20 }]}>
-          <TouchableOpacity
-            onPress={togglePlayPause}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-          >
-            <Text style={styles.playIcon}>{isPlaying ? '⏸' : '▶'}</Text>
-          </TouchableOpacity>
-
-          <Text style={styles.timeText}>{formatClock(Math.min(currentTime, duration))}</Text>
-
-          <View
-            style={styles.progressTrack}
-            onLayout={e => {
-              trackWidthRef.current = e.nativeEvent.layout.width;
-            }}
-            {...progressPan.panHandlers}
-          >
-            <View style={styles.progressBg}>
-              <View
-                style={[
-                  styles.progressFill,
-                  {
-                    width: `${Math.min(100, Math.max(0, duration > 0 ? (scrubRatio ?? currentTime / duration) * 100 : 0))}%`,
-                  },
-                ]}
-              />
-            </View>
-          </View>
-
-          <Text style={styles.timeText}>{formatClock(duration)}</Text>
-        </View>
-      )}
-
-      {/* Skip feedback */}
-      {skipFeedback && (
+      {skip.lastSkip && (
         <View
-          style={[
-            styles.skipFeedback,
-            skipFeedback.side === 'left' ? styles.skipLeft : styles.skipRight,
-          ]}
+          style={[styles.skipHint, skip.lastSkip === 'back' ? styles.hintLeft : styles.hintRight]}
           pointerEvents="none"
         >
-          <Text style={styles.skipTxt}>{skipFeedback.side === 'left' ? '⏪ 10s' : '10s ⏩'}</Text>
+          <Text style={styles.skipHintText}>{skip.lastSkip === 'back' ? '⏪ 10s' : '10s ⏩'}</Text>
         </View>
       )}
     </View>
+  );
+}
+
+function OverlayButton({
+  label,
+  accessibilityLabel,
+  onPress,
+}: {
+  label: string;
+  accessibilityLabel: string;
+  onPress: () => void;
+}) {
+  return (
+    <TouchableOpacity
+      style={styles.overlayButton}
+      onPress={onPress}
+      hitSlop={12}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+    >
+      <Text style={styles.overlayButtonText}>{label}</Text>
+    </TouchableOpacity>
   );
 }
 
@@ -422,169 +194,55 @@ const styles = StyleSheet.create({
   container: { backgroundColor: Colors.black, zIndex: 100 },
   video: { flex: 1, width: '100%', height: '100%' },
 
-  // 80px edge strips — only for double-tap skip, don't block center or native controls
-  leftStrip: { position: 'absolute', top: 60, left: 0, width: 80, bottom: 120, zIndex: 5 },
-  rightStrip: { position: 'absolute', top: 60, right: 0, width: 80, bottom: 120, zIndex: 5 },
+  edge: { position: 'absolute', top: 60, bottom: 120, width: 80, zIndex: 5 },
+  edgeLeft: { left: 0 },
+  edgeRight: { right: 0 },
 
   topBar: {
     position: 'absolute',
-    left: 16,
-    right: 16,
+    left: Spacing.lg,
+    right: Spacing.lg,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     zIndex: 20,
   },
-  topRight: { flexDirection: 'row', gap: 8 },
-  btn: {
+  overlayButton: {
     backgroundColor: withAlpha(Colors.black, 0.7),
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  btnText: { color: Colors.text, fontSize: 14, fontWeight: '700' },
-
-  resumeOverlay: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: withAlpha(Colors.black, 0.85),
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    paddingBottom: 80,
-    zIndex: 30,
-  },
-  resumeCard: {
-    width: '85%',
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.lg,
-    padding: 24,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  resumeTitle: {
-    fontSize: FontSize.lg,
-    fontWeight: '800',
-    color: Colors.text,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  resumePosition: {
-    fontSize: FontSize.xl,
-    fontWeight: '700',
-    color: Colors.brandBlue,
-    marginBottom: 20,
-  },
-  resumeActions: { flexDirection: 'row', gap: 12, width: '100%' },
-  resumeBtn: {
-    flex: 1,
-    backgroundColor: Colors.brandBlue,
     borderRadius: Radius.sm,
-    paddingVertical: 12,
-    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
   },
-  resumeBtnTxt: { color: Colors.text, fontSize: 15, fontWeight: '800' },
-  restartBtn: {
-    flex: 1,
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: Radius.sm,
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  restartBtnTxt: { color: Colors.textSecondary, fontSize: 15, fontWeight: '700' },
+  overlayButtonText: { color: Colors.text, fontSize: FontSize.base, fontWeight: FontWeight.bold },
 
-  episodeNav: {
+  controls: {
     position: 'absolute',
-    bottom: 110,
-    left: 16,
-    right: 16,
-    flexDirection: 'row',
-    zIndex: 20,
-  },
-  episodeBtn: {
-    flex: 1,
-    backgroundColor: withAlpha(Colors.black, 0.7),
-    borderRadius: 8,
-    paddingVertical: 10,
-    alignItems: 'center',
-    marginHorizontal: 4,
-  },
-  episodeBtnTxt: { color: Colors.text, fontSize: 13, fontWeight: '700' },
-
-  settingsPanel: {
-    position: 'absolute',
-    bottom: 130,
-    left: 0,
-    right: 0,
-    backgroundColor: withAlpha(Colors.black, 0.92),
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    zIndex: 35,
-  },
-  compactRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginBottom: 6,
-  },
-  compactLabel: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: Colors.textMuted,
-    letterSpacing: 1,
-    marginRight: 4,
-    minWidth: 44,
-  },
-  compactChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  compactChipActive: { backgroundColor: Colors.brandBlue, borderColor: Colors.brandBlue },
-  compactChipTxt: { fontSize: 12, fontWeight: '700', color: Colors.textSecondary },
-  compactChipTxtActive: { color: Colors.text },
-
-  bottomRow: {
-    position: 'absolute',
-    left: 16,
-    right: 16,
+    left: Spacing.lg,
+    right: Spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     zIndex: 20,
   },
-  playIcon: { color: Colors.text, fontSize: 20, width: 28, textAlign: 'center' },
-  timeText: {
+  playIcon: { color: Colors.text, fontSize: FontSize.title, width: 28, textAlign: 'center' },
+  time: {
     color: Colors.text,
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
     minWidth: 40,
     textAlign: 'center',
   },
-  progressTrack: { flex: 1, height: 28, justifyContent: 'center' },
-  progressBg: {
-    height: 4,
-    borderRadius: 4,
-    backgroundColor: withAlpha(Colors.white, 0.3),
-    overflow: 'hidden',
-  },
-  progressFill: { height: 4, borderRadius: 4, backgroundColor: Colors.brandBlue },
 
-  skipFeedback: {
+  skipHint: {
     position: 'absolute',
     top: '40%',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.md,
     backgroundColor: withAlpha(Colors.black, 0.65),
-    borderRadius: 24,
+    borderRadius: Radius.xxl,
     zIndex: 50,
   },
-  skipLeft: { left: 20 },
-  skipRight: { right: 20 },
-  skipTxt: { color: Colors.text, fontSize: 16, fontWeight: '800' },
+  hintLeft: { left: Spacing.xl },
+  hintRight: { right: Spacing.xl },
+  skipHintText: { color: Colors.text, fontSize: FontSize.lg, fontWeight: FontWeight.extrabold },
 });

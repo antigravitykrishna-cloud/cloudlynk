@@ -1,359 +1,160 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-  ActivityIndicator,
-  RefreshControl,
-  Dimensions,
-  StatusBar,
-} from 'react-native';
-import { showAlert } from '@/components/ui/Feedback';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState } from 'react';
+import { ActivityIndicator, ScrollView, StatusBar, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useAuth } from '@/features/auth/hooks/useAuth';
-import {
-  ChannelService,
-  BlockService,
-  CHANNEL_LIST_COLUMNS,
-} from '@/features/channels/api/channelsApi';
+import { Button } from '@/components/ui/Button';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { showAlert } from '@/components/ui/Feedback';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { Colors, Spacing } from '@/theme';
 import { LoginSheet } from '@/features/auth/components/LoginSheet';
-import { promptSaveAccount, guestTappedTitle } from '@/features/auth/guestPrompts';
-import { PostService, ChannelPost } from '@/features/content/api/postsApi';
-import { Database, supabase } from '@/lib/supabase';
-import { Colors, withAlpha } from '@/theme';
-import { Icon } from '@/components/ui/Icon';
-import { H } from '@/features/channels/components/contentTypeColors';
-import { formatMinutes } from '@/utils/format';
-import { DetailModal } from '@/features/channels/components/ChannelPostModal';
-import { GenreRow } from '@/features/channels/components/GenreRow';
+import { promptSaveAccount } from '@/features/auth/guestPrompts';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { channelsApi } from '@/features/channels/api/channelsApi';
+import { ChannelHero } from '@/features/channels/components/ChannelHero';
+import { PendingReviewList } from '@/features/channels/components/PendingReviewList';
+import { PostShelf } from '@/features/channels/components/PostShelf';
+import { useChannelDetail } from '@/features/channels/hooks/useChannelDetail';
+import { showPostSafetyMenu } from '@/features/channels/postSafetyMenu';
+import { PostDetailModal } from '@/features/content/components/PostDetailModal';
+import { useWatchGate } from '@/features/content/hooks/useWatchGate';
+import type { ChannelPost } from '@/features/content/model';
 
-// guards-allow-select-star
-//
-// Guests reach this screen; their path in load() names its columns (CHANNEL_LIST_COLUMNS,
-// getGuestChannelPosts). Only the signed-in path uses select('*') -- see scripts/guards.mjs check
-// 2.
+// A channel's page. Anyone can open it and see what it has; joining needs an account, and watching
+// needs the right to the title (see watchAccess.ts).
 
-const W = Dimensions.get('window').width;
-
-const HERO_H = H * 0.52;
-
-type Channel = Database['public']['Tables']['channels']['Row'];
-
-// ── Main screen
 export default function ChannelDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { user, isAdmin, isPaidUser, isGuest } = useAuth();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const [signInSheet, setSignInSheet] = useState(false);
+  const { user, isAdmin, isPaidUser, isGuest } = useAuth();
+  const mayWatch = useWatchGate();
+  const { channel, shelves, awaitingReview, isMember, loading, reload, markJoined } =
+    useChannelDetail(id);
+  const refreshControl = usePullToRefresh(reload);
 
-  const [channel, setChannel] = useState<Channel | null>(null);
-  const [posts, setPosts] = useState<ChannelPost[]>([]);
-  const [grouped, setGrouped] = useState<Record<string, ChannelPost[]>>({});
-  const [isMember, setIsMember] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [joining, setJoining] = useState(false);
   const [selected, setSelected] = useState<ChannelPost | null>(null);
+  const [joining, setJoining] = useState(false);
+  const [signInSheetOpen, setSignInSheetOpen] = useState(false);
 
-  const prevUserIdRef = useRef<string | undefined>(undefined);
-  useEffect(() => {
-    if (prevUserIdRef.current !== undefined && prevUserIdRef.current !== user?.id) {
-      setChannel(null);
-      setPosts([]);
-      setGrouped({});
-      setIsMember(false);
-      setSelected(null);
-      setLoading(true);
-    }
-    prevUserIdRef.current = user?.id;
-  }, [user?.id]);
+  const isOwner = !!user && channel?.owner_id === user.id;
+  const featured = shelves.find(shelf => shelf.title === 'Featured')?.items[0] ?? null;
 
-  const load = useCallback(async () => {
+  const openPost = (post: ChannelPost) => {
+    if (mayWatch(post, { isOwner })) setSelected(post);
+  };
+
+  // A signed-out visitor gets the sign-in sheet and a guest account the "save your account" prompt.
+  // A public channel needs no plan to join (the plan is asked for on watching); a hidden one does.
+  const join = async () => {
     if (!id) return;
-    try {
-      if (!user?.id) {
-        // Guest: look, but not play. Named columns throughout -- anon is not
-        // granted every column, and one it cannot read fails the whole
-        // request rather than coming back null.
-        const [{ data: ch, error: chErr }, guestPosts] = await Promise.all([
-          supabase.from('channels').select(CHANNEL_LIST_COLUMNS).eq('id', id).maybeSingle(),
-          PostService.getGuestChannelPosts(id),
-        ]);
-        if (chErr) throw chErr;
-        setChannel(ch as unknown as Channel);
-        setIsMember(false);
-        const list = guestPosts as unknown as ChannelPost[];
-        setPosts(list);
-        setGrouped(PostService.groupByGenre(list));
-        return;
-      }
-
-      const { data: ch } = await supabase.from('channels').select('*').eq('id', id).single();
-      setChannel(ch as Channel);
-
-      const { data: mem } = await supabase
-        .from('channel_members')
-        .select('role')
-        .eq('channel_id', id)
-        .eq('user_id', user.id)
-        .maybeSingle();
-      // Owners are implicitly members even without a channel_members row
-      setIsMember(!!mem || (ch as Channel)?.owner_id === user.id);
-
-      const entitled = isPaidUser || isAdmin;
-      const [allPosts, blockedIds, previews] = await Promise.all([
-        PostService.getChannelPosts(id, user.id),
-        BlockService.getBlockedUserIds(user.id).catch(() => [] as string[]),
-        // Without a plan, RLS returns this channel's free rows only. The
-        // premium titles come from premium_preview (metadata, no video) so
-        // the person can see what they would be paying for.
-        entitled
-          ? Promise.resolve([] as ChannelPost[])
-          : PostService.getChannelPremiumPreviews(id)
-              .then(r => r as unknown as ChannelPost[])
-              .catch(() => [] as ChannelPost[]),
-      ]);
-      const seen = new Set(allPosts.map(p => p.id));
-      const merged = [...allPosts, ...previews.filter(p => !seen.has(p.id))];
-      const visiblePosts = blockedIds.length
-        ? merged.filter(p => !blockedIds.includes(p.author_id))
-        : merged;
-      setPosts(visiblePosts);
-      setGrouped(PostService.groupByGenre(visiblePosts));
-    } catch (err: any) {
-      showAlert('Error', err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [id, user?.id, isPaidUser, isAdmin]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await load();
-    setRefreshing(false);
-  }, [load]);
-
-  // Same rule as the Join button on the Channels tab: a guest gets the
-  // sign-in sheet; a signed-in account joins a public channel without a plan
-  // (v81) and is asked for one only when it tries to watch. A hidden channel
-  // still needs a plan to join.
-  const handleJoin = async () => {
-    if (!id) return;
-    if (!user?.id) {
-      setSignInSheet(true);
+    if (!user) {
+      setSignInSheetOpen(true);
       return;
     }
-    // Guests cannot join channels.
     if (isGuest) {
       promptSaveAccount(router, 'join channels');
       return;
     }
-    if (channel && !channel.is_public && !isPaidUser && !isAdmin && channel.owner_id !== user.id) {
+    if (channel && !channel.is_public && !isPaidUser && !isAdmin && !isOwner) {
       router.push('/premium');
       return;
     }
     setJoining(true);
     try {
-      await ChannelService.joinChannel(id, user.id);
-      setIsMember(true);
-      await load();
-    } catch (err: any) {
-      showAlert('Error', err.message);
+      await channelsApi.join(id);
+      markJoined();
+      await reload();
+    } catch (err) {
+      showAlert('Error', (err as Error)?.message ?? 'Could not join this channel.');
     } finally {
       setJoining(false);
     }
   };
 
-  // Tapping a title. Anyone can see what a channel has; watching needs the
-  // right to. Everyone else goes straight to the plans, no dialog first, per
-  // the client's reference flow. Free titles still play for a signed-in
-  // user; a guest is asked to pick a plan (and sign in) for any title.
-  const openPost = (item: ChannelPost) => {
-    // Guests (signed out or guest account) see previews only.
-    const canWatch =
-      !isGuest &&
-      (isPaidUser ||
-        isAdmin ||
-        channel?.owner_id === user?.id ||
-        (!!user?.id && item.access_level !== 'premium'));
-    if (!canWatch) {
-      if (isGuest) guestTappedTitle(router, isPaidUser);
-      else router.push('/premium');
-      return;
-    }
-    setSelected(item);
-  };
-
-  const hero = grouped['Featured']?.[0] ?? null;
-  const heroThumb = hero?.thumbnail_url ? PostService.getMediaPublicUrl(hero.thumbnail_url) : null;
-  const groupKeys = Object.keys(grouped);
-  const hasContent = posts.filter(p => p.status === 'approved').length > 0;
-  const hasPendingContent =
-    posts.filter(p => p.status === 'pending' || p.status === 'draft').length > 0;
-  const pendingPosts = posts.filter(p => p.status === 'pending' || p.status === 'draft');
+  const openUpload = (pathname: '/upload/add-content' | '/upload/queue') =>
+    router.push({ pathname, params: { channelId: id } });
 
   if (loading) {
     return (
-      <View style={[styles.safe, { justifyContent: 'center', alignItems: 'center' }]}>
+      <View style={[styles.page, styles.centered]}>
         <ActivityIndicator color={Colors.brandBlue} size="large" />
       </View>
     );
   }
 
+  const hasApprovedContent = shelves.length > 0;
+
   return (
-    <View style={styles.safe}>
+    <View style={styles.page}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
       <ScrollView
-        style={{ flex: 1 }}
+        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={Colors.brandBlue}
-          />
-        }
+        refreshControl={refreshControl}
       >
-        <View style={[styles.hero, { height: HERO_H }]}>
-          {heroThumb ? (
-            <Image source={{ uri: heroThumb }} style={StyleSheet.absoluteFill} resizeMode="cover" />
-          ) : (
-            <View style={[StyleSheet.absoluteFill, styles.heroPlaceholder]} />
-          )}
-          <LinearGradient
-            colors={[withAlpha(Colors.black, 0.15), withAlpha(Colors.black, 0.5), Colors.black]}
-            style={StyleSheet.absoluteFill}
-          />
-
-          <TouchableOpacity
-            style={[styles.heroBack, { top: insets.top + 8 }]}
-            onPress={() => router.replace('/(tabs)/channels')}
-          >
-            <Text style={styles.heroBackTxt}>{'‹'}</Text>
-          </TouchableOpacity>
-
-          <View style={styles.heroBottom}>
-            <Text style={styles.channelLabel}>{channel?.name ?? ''}</Text>
-            {hero ? (
-              <>
-                <Text style={styles.heroTitle}>{hero.title}</Text>
-                {!!hero.genre && (
-                  <Text style={styles.heroGenre}>
-                    {hero.genre}
-                    {hero.release_year ? ` · ${hero.release_year}` : ''}
-                    {hero.duration_min ? ` · ${formatMinutes(hero.duration_min)}` : ''}
-                  </Text>
-                )}
-                <View style={styles.heroActions}>
-                  <TouchableOpacity style={styles.heroPlayBtn} onPress={() => openPost(hero)}>
-                    <Text style={styles.heroPlayTxt}>{'▶  Play'}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.heroInfoBtn} onPress={() => openPost(hero)}>
-                    <Text style={styles.heroInfoTxt}>{'ⓘ  More Info'}</Text>
-                  </TouchableOpacity>
-                </View>
-              </>
-            ) : (
-              <>
-                <Text style={styles.heroTitle}>{channel?.name}</Text>
-                {!!channel?.description && channel.description !== channel?.name && (
-                  <Text style={styles.heroGenre}>{channel.description}</Text>
-                )}
-              </>
-            )}
-            {!isMember && channel?.status === 'active' && (
-              <TouchableOpacity style={styles.joinBtn} onPress={handleJoin} disabled={joining}>
-                {joining ? (
-                  <ActivityIndicator color={Colors.text} size="small" />
-                ) : (
-                  <Text style={styles.joinTxt}>+ Join Channel</Text>
-                )}
-              </TouchableOpacity>
-            )}
-            {isMember && (
-              <View style={styles.memberBadge}>
-                <Text style={styles.memberTxt}>{'✓ Subscribed'}</Text>
-              </View>
-            )}
-          </View>
-        </View>
+        <ChannelHero
+          channel={channel}
+          featured={featured}
+          isMember={isMember}
+          joining={joining}
+          onBack={() => router.replace('/(tabs)/channels')}
+          onJoin={join}
+          onOpen={openPost}
+        />
 
         {isAdmin && (
-          <View style={styles.addBtnGroup}>
-            <TouchableOpacity
-              style={styles.addBtn}
-              onPress={() =>
-                router.push({ pathname: '/upload/add-content', params: { channelId: id } })
-              }
-            >
-              <Text style={styles.addBtnTxt}>+ Add Content</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.queueBtn}
-              onPress={() => router.push({ pathname: '/upload/queue', params: { channelId: id } })}
-            >
-              <Text style={styles.queueBtnTxt}>Upload Queue</Text>
-            </TouchableOpacity>
+          <View style={styles.adminActions}>
+            <Button
+              label="+ Add Content"
+              variant="outline"
+              onPress={() => openUpload('/upload/add-content')}
+            />
+            <Button
+              label="Upload Queue"
+              variant="secondary"
+              onPress={() => openUpload('/upload/queue')}
+            />
           </View>
         )}
 
-        {(isAdmin || channel?.owner_id === user?.id) && hasPendingContent && (
-          <View style={styles.pendingSection}>
-            <Text style={styles.pendingSectionTitle}>⏳ Pending Review</Text>
-            {pendingPosts.map(post => (
-              <View key={post.id} style={styles.pendingCard}>
-                <Text style={styles.pendingCardTitle}>{post.title ?? 'Untitled'}</Text>
-                <Text style={styles.pendingCardMeta}>
-                  {post.content_type?.toUpperCase()} · Submitted for review
-                </Text>
-              </View>
-            ))}
-          </View>
-        )}
+        {(isAdmin || isOwner) && <PendingReviewList posts={awaitingReview} />}
 
-        {!hasContent ? (
-          <View style={styles.emptyState}>
-            <Icon name="film" size={52} color={Colors.textMuted} />
-            <Text style={styles.emptyTitle}>No content yet</Text>
-            <Text style={styles.emptyDesc}>New movies and series will appear here.</Text>
-            {isAdmin && (
-              <TouchableOpacity
-                style={styles.emptyAddBtn}
-                onPress={() =>
-                  router.push({ pathname: '/upload/add-content', params: { channelId: id } })
-                }
-              >
-                <Text style={styles.emptyAddTxt}>Add First Content</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+        {hasApprovedContent ? (
+          shelves.map(shelf => <PostShelf key={shelf.title} shelf={shelf} onSelect={openPost} />)
         ) : (
-          groupKeys.map(g => <GenreRow key={g} genre={g} items={grouped[g]} onSelect={openPost} />)
+          <EmptyState
+            icon="film"
+            title="No content yet"
+            message="New movies and series will appear here."
+            action={
+              isAdmin
+                ? { label: 'Add First Content', onPress: () => openUpload('/upload/add-content') }
+                : undefined
+            }
+          />
         )}
-
-        <View style={{ height: 40 }} />
       </ScrollView>
 
-      <DetailModal
-        selected={selected}
+      <PostDetailModal
+        post={selected}
         onClose={() => setSelected(null)}
         userId={user?.id}
-        channelId={id}
+        showAuthor
+        onMore={
+          selected && user && id
+            ? () =>
+                showPostSafetyMenu({
+                  post: selected,
+                  userId: user.id,
+                  channelId: id,
+                  onBlocked: () => setSelected(null),
+                })
+            : undefined
+        }
       />
       <LoginSheet
         allowGuest={false}
-        visible={signInSheet}
-        onClose={() => setSignInSheet(false)}
+        visible={signInSheetOpen}
+        onClose={() => setSignInSheetOpen(false)}
         message="Sign in to join this channel. It only takes a moment."
         returnTo={id ? { pathname: '/(tabs)/channels/[id]', params: { id } } : null}
       />
@@ -362,123 +163,8 @@ export default function ChannelDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.bg },
-  hero: { width: W, position: 'relative', backgroundColor: Colors.brandBlue },
-  heroPlaceholder: { backgroundColor: Colors.brandBlueDim },
-  heroBack: {
-    position: 'absolute',
-    left: 16,
-    zIndex: 10,
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: withAlpha(Colors.black, 0.5),
-    borderRadius: 22,
-  },
-  heroBackTxt: { fontSize: 26, color: Colors.text, fontWeight: '700' },
-  heroBottom: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 20,
-    paddingBottom: 24,
-  },
-  channelLabel: {
-    fontSize: 12,
-    color: Colors.brandBlue,
-    fontWeight: '800',
-    letterSpacing: 1.5,
-    marginBottom: 6,
-    textTransform: 'uppercase',
-  },
-  heroTitle: {
-    fontSize: 28,
-    fontWeight: '900',
-    color: Colors.text,
-    marginBottom: 6,
-    letterSpacing: -0.5,
-    lineHeight: 32,
-  },
-  heroGenre: {
-    fontSize: 13,
-    color: withAlpha(Colors.white, 0.7),
-    fontWeight: '600',
-    marginBottom: 16,
-  },
-  heroActions: { flexDirection: 'row', gap: 10, marginBottom: 12 },
-  heroPlayBtn: {
-    flex: 1,
-    backgroundColor: Colors.white,
-    borderRadius: 8,
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  heroPlayTxt: { color: Colors.black, fontSize: 15, fontWeight: '800' },
-  heroInfoBtn: {
-    flex: 1,
-    backgroundColor: withAlpha(Colors.white, 0.2),
-    borderRadius: 8,
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  heroInfoTxt: { color: Colors.text, fontSize: 15, fontWeight: '700' },
-  joinBtn: {
-    backgroundColor: Colors.brandBlue,
-    borderRadius: 8,
-    paddingVertical: 10,
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  joinTxt: { color: Colors.text, fontSize: 14, fontWeight: '800' },
-  memberBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
-  memberTxt: { fontSize: 13, color: withAlpha(Colors.white, 0.6), fontWeight: '700' },
-  addBtnGroup: { marginHorizontal: 16, marginTop: 20, gap: 8 },
-  addBtn: {
-    borderWidth: 1.5,
-    borderColor: Colors.brandBlue,
-    borderRadius: 8,
-    paddingVertical: 10,
-    alignItems: 'center',
-    borderStyle: 'dashed',
-  },
-  addBtnTxt: { color: Colors.brandBlue, fontSize: 14, fontWeight: '800' },
-  queueBtn: {
-    borderWidth: 1,
-    borderColor: Colors.brandBlue,
-    borderRadius: 8,
-    paddingVertical: 10,
-    alignItems: 'center',
-    backgroundColor: Colors.brandBlueDim,
-  },
-  queueBtnTxt: { color: Colors.brandBlue, fontSize: 14, fontWeight: '700' },
-  emptyState: { alignItems: 'center', paddingTop: 60, paddingHorizontal: 40 },
-  emptyTitle: { fontSize: 22, fontWeight: '900', color: Colors.text, marginBottom: 8 },
-  emptyDesc: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 28,
-  },
-  emptyAddBtn: {
-    backgroundColor: Colors.brandBlue,
-    borderRadius: 8,
-    paddingHorizontal: 28,
-    paddingVertical: 14,
-  },
-  emptyAddTxt: { color: Colors.text, fontSize: 15, fontWeight: '900' },
-  pendingSection: { marginHorizontal: 16, marginTop: 20 },
-  pendingSectionTitle: { fontSize: 14, fontWeight: '700', color: Colors.gold, marginBottom: 10 },
-  pendingCard: {
-    backgroundColor: Colors.warningDim,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.warningBorder,
-    padding: 12,
-    marginBottom: 8,
-  },
-  pendingCardTitle: { fontSize: 14, fontWeight: '700', color: Colors.text, marginBottom: 4 },
-  pendingCardMeta: { fontSize: 12, color: Colors.gold, fontWeight: '600' },
+  page: { flex: 1, backgroundColor: Colors.bg },
+  centered: { justifyContent: 'center', alignItems: 'center' },
+  content: { paddingBottom: 40 },
+  adminActions: { marginHorizontal: Spacing.lg, marginTop: Spacing.xl, gap: Spacing.sm },
 });

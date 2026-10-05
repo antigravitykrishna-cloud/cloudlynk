@@ -1,130 +1,89 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
   ActivityIndicator,
-  TextInput,
-  Image,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
-import { showAlert } from '@/components/ui/Feedback';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { showAlert } from '@/components/ui/Feedback';
+import { pickVideoFiles } from '@/lib/mediaPicker';
+import { Colors, Radius, Spacing } from '@/theme';
+import { formatBytes } from '@/utils/format';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { StreamService, VideoMeta } from '@/features/player/api/streamApi';
-import {
-  PostService,
-  ContentType,
-  AccessLevel,
-  GENRES,
-  defaultAccessLevel,
-} from '@/features/content/api/postsApi';
 import { AdminContentService } from '@/features/admin/api/adminContentApi';
-import { Colors } from '@/theme';
+import { AdminScreen, adminStyles } from '@/features/admin/components/AdminUI';
+import { postsApi } from '@/features/content/api/postsApi';
+import { streamUploadApi, type VideoMeta } from '@/features/upload/api/streamUploadApi';
+import { VideoDetailsFields } from '@/features/upload/components/VideoDetailsFields';
+import { blankDetails, finalizeDetails } from '@/features/upload/newUploads';
+import { toNewPost } from '@/features/upload/toNewPost';
 
-// Admin video upload into the official channel. Uses the same pipeline as everything else:
-// StreamService.uploadVideo -> generate-stream-upload -> PostService.createPost.
+// An admin upload into the official channel, through the same pipeline as every upload:
+// Cloudflare Stream (streamUploadApi), then the post (postsApi.create).
 
-const CONTENT_TYPES: { id: ContentType; label: string }[] = [
-  { id: 'movie', label: 'Movie' },
-  { id: 'series', label: 'Series' },
-  { id: 'short', label: 'Short' },
-  { id: 'post', label: 'Post' },
-];
+type Channel = { id: string; name: string };
 
 export default function AdminUploadScreen() {
   const router = useRouter();
-  const { isAdmin, profile } = useAuth();
-
-  const [channel, setChannel] = useState<{ id: string; name: string } | null>(null);
+  const { profile } = useAuth();
+  const [channel, setChannel] = useState<Channel | null>(null);
   const [channelLoading, setChannelLoading] = useState(true);
-
   const [video, setVideo] = useState<VideoMeta | null>(null);
-  const [thumbnailUri, setThumbnailUri] = useState<string | null>(null);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [contentType, setContentType] = useState<ContentType>('movie');
-  const [genre, setGenre] = useState('');
-  const [durationMin, setDurationMin] = useState('');
-  const [accessLevel, setAccessLevel] = useState<AccessLevel>(defaultAccessLevel('movie'));
-  const [genrePickerOpen, setGenrePickerOpen] = useState(false);
-
+  const [details, setDetails] = useState(blankDetails);
   const [progress, setProgress] = useState(0);
   const [submitting, setSubmitting] = useState(false);
 
-  const loadChannel = useCallback(async () => {
-    try {
-      setChannel(await AdminContentService.getOfficialChannel());
-    } catch (err) {
-      if (__DEV__) console.error('AdminUpload channel error:', err);
-    } finally {
-      setChannelLoading(false);
-    }
+  useEffect(() => {
+    AdminContentService.getOfficialChannel()
+      .then(setChannel)
+      .catch(err => __DEV__ && console.error('AdminUpload channel error:', err))
+      .finally(() => setChannelLoading(false));
   }, []);
 
-  useEffect(() => {
-    loadChannel();
-  }, [loadChannel]);
-
-  const pickVideo = async () => {
+  async function chooseVideo() {
     try {
-      const picked = await StreamService.pickVideo();
+      const [picked] = await pickVideoFiles({ multiple: false });
       if (picked) setVideo(picked);
-    } catch (err: any) {
-      showAlert('Could not pick video', err?.message ?? 'Please try again.');
+    } catch (err) {
+      showAlert('Could not pick video', (err as Error)?.message ?? 'Please try again.');
     }
-  };
+  }
 
-  const pickThumbnail = async () => {
-    try {
-      const picked = await PostService.pickImage();
-      if (picked) setThumbnailUri(picked.uri);
-    } catch (err: any) {
-      showAlert('Could not pick image', err?.message ?? 'Please try again.');
-    }
-  };
+  function problem(): [string, string] | null {
+    if (!channel)
+      return ['No official channel', 'The Cloudlynk Official channel does not exist yet.'];
+    if (!profile) return ['Not signed in', 'Please sign in again.'];
+    if (!details.title.trim()) return ['Title required', 'Give this content a title.'];
+    if (!video && details.contentType !== 'post')
+      return ['Video required', 'Pick a video file to upload.'];
+    return null;
+  }
 
-  const submit = async (saveAsDraft: boolean) => {
-    if (!channel) {
-      showAlert('No official channel', 'The Cloudlynk Official channel does not exist yet.');
+  async function submit(saveAsDraft: boolean) {
+    const issue = problem();
+    if (issue) {
+      showAlert(...issue);
       return;
     }
-    if (!profile?.id) {
-      showAlert('Not signed in', 'Please sign in again.');
-      return;
-    }
-    if (!title.trim()) {
-      showAlert('Title required', 'Give this content a title.');
-      return;
-    }
-    if (!video && contentType !== 'post') {
-      showAlert('Video required', 'Pick a video file to upload.');
-      return;
-    }
-
     setSubmitting(true);
     setProgress(0);
     try {
-      let streamVideoUid: string | undefined;
-      if (video) {
-        streamVideoUid = await StreamService.uploadVideo(video, setProgress, channel.id);
-      }
-
-      await PostService.createPost(channel.id, profile.id, description.trim(), {
-        title: title.trim(),
-        thumbnailUri: thumbnailUri ?? undefined,
-        contentType,
-        genre: genre || undefined,
-        durationMin: durationMin ? Number(durationMin) : undefined,
-        streamVideoUid,
-        accessLevel,
-        saveAsDraft,
-      });
-
+      const streamVideoUid = video
+        ? await streamUploadApi.upload(video, setProgress, { channelId: channel!.id })
+        : undefined;
+      await postsApi.create(
+        toNewPost(
+          finalizeDetails(details, channel!.id),
+          { channelId: channel!.id, authorId: profile!.id, streamVideoUid },
+          { saveAsDraft },
+        ),
+      );
       showAlert(
         saveAsDraft ? 'Saved as draft' : 'Published',
         saveAsDraft
@@ -132,345 +91,99 @@ export default function AdminUploadScreen() {
           : 'It is live now.',
         [{ text: 'OK', onPress: () => router.replace('/admin/content') }],
       );
-    } catch (err: any) {
-      showAlert('Upload failed', err?.message ?? 'Something went wrong.');
+    } catch (err) {
+      showAlert('Upload failed', (err as Error)?.message ?? 'Something went wrong.');
     } finally {
       setSubmitting(false);
     }
-  };
-
-  if (!isAdmin) {
-    return (
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.replace('/(tabs)/profile')}
-            style={styles.headerBack}
-            activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-          >
-            <Text style={styles.headerBackTxt}>{'‹'}</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Upload</Text>
-          <View style={{ width: 32 }} />
-        </View>
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>Access denied</Text>
-        </View>
-      </SafeAreaView>
-    );
   }
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.headerBack}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <Text style={styles.headerBackTxt}>{'‹'}</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Upload</Text>
-        <View style={{ width: 32 }} />
-      </View>
-
+    <AdminScreen title="Upload">
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
+        style={styles.page}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView contentContainerStyle={styles.list} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={adminStyles.list} keyboardShouldPersistTaps="handled">
           {channelLoading ? (
-            <ActivityIndicator color={Colors.brandBlue} style={{ marginTop: 30 }} />
+            <ActivityIndicator color={Colors.brandBlue} style={styles.spinner} />
           ) : !channel ? (
-            <View style={styles.card}>
-              <Text style={styles.emptyText}>
+            <Card>
+              <Text style={adminStyles.muted}>
                 The Cloudlynk Official channel does not exist yet. It is created by the v56
                 migration once an admin profile exists.
               </Text>
-            </View>
+            </Card>
           ) : (
             <>
-              <Text style={styles.blurb}>Publishing to {channel.name}.</Text>
+              <Text style={adminStyles.muted}>Publishing to {channel.name}.</Text>
 
-              <View style={styles.card}>
-                <TouchableOpacity
-                  style={styles.pickBtn}
-                  onPress={pickVideo}
-                  activeOpacity={0.7}
+              <Card style={styles.section}>
+                <Button
+                  label={video ? `${video.name} (${formatBytes(video.size)})` : 'Pick video file'}
+                  variant="secondary"
+                  onPress={chooseVideo}
                   disabled={submitting}
-                >
-                  <Text style={styles.pickBtnText}>
-                    {video
-                      ? `${video.name} (${(video.size / 1048576).toFixed(1)} MB)`
-                      : 'Pick video file'}
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.pickBtn}
-                  onPress={pickThumbnail}
-                  activeOpacity={0.7}
-                  disabled={submitting}
-                >
-                  <Text style={styles.pickBtnText}>
-                    {thumbnailUri ? 'Change thumbnail' : 'Pick thumbnail'}
-                  </Text>
-                </TouchableOpacity>
-                {!!thumbnailUri && (
-                  <Image source={{ uri: thumbnailUri }} style={styles.thumb} resizeMode="cover" />
-                )}
-              </View>
-
-              <View style={styles.card}>
-                <Text style={styles.label}>Title</Text>
-                <TextInput
-                  style={styles.input}
-                  value={title}
-                  onChangeText={setTitle}
-                  placeholder="Title"
-                  placeholderTextColor={Colors.textMuted}
-                  editable={!submitting}
                 />
+              </Card>
 
-                <Text style={styles.label}>Description</Text>
-                <TextInput
-                  style={[styles.input, styles.multiline]}
-                  value={description}
-                  onChangeText={setDescription}
-                  placeholder="Description"
-                  placeholderTextColor={Colors.textMuted}
-                  multiline
-                  editable={!submitting}
+              <Card>
+                <VideoDetailsFields
+                  details={details}
+                  onChange={patch => setDetails(current => ({ ...current, ...patch }))}
+                  fileName={video?.name ?? 'Title'}
                 />
+                <Text style={adminStyles.muted}>
+                  You can change the access level later from the Content screen.
+                </Text>
+              </Card>
 
-                <Text style={styles.label}>Content type</Text>
-                <View style={styles.chipRow}>
-                  {CONTENT_TYPES.map(ct => (
-                    <TouchableOpacity
-                      key={ct.id}
-                      style={[styles.chip, contentType === ct.id && styles.chipActive]}
-                      onPress={() => {
-                        setContentType(ct.id);
-                        setAccessLevel(defaultAccessLevel(ct.id));
-                      }}
-                      activeOpacity={0.7}
-                      disabled={submitting}
-                    >
-                      <Text
-                        style={[styles.chipText, contentType === ct.id && styles.chipTextActive]}
-                      >
-                        {ct.label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-
-                <Text style={styles.label}>Genre</Text>
-                <TouchableOpacity
-                  style={styles.input}
-                  onPress={() => setGenrePickerOpen(!genrePickerOpen)}
-                  activeOpacity={0.7}
-                  disabled={submitting}
-                >
-                  <Text style={{ color: genre ? Colors.white : Colors.textMuted, fontSize: 14 }}>
-                    {genre || 'Select a genre'}
-                  </Text>
-                </TouchableOpacity>
-                {genrePickerOpen && (
-                  <View style={styles.chipRow}>
-                    {GENRES.map(g => (
-                      <TouchableOpacity
-                        key={g}
-                        style={[styles.chip, genre === g && styles.chipActive]}
-                        onPress={() => {
-                          setGenre(g);
-                          setGenrePickerOpen(false);
-                        }}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={[styles.chipText, genre === g && styles.chipTextActive]}>
-                          {g}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
-
-                <Text style={styles.label}>Duration (minutes)</Text>
-                <TextInput
-                  style={styles.input}
-                  value={durationMin}
-                  onChangeText={setDurationMin}
-                  placeholder="e.g. 118"
-                  placeholderTextColor={Colors.textMuted}
-                  keyboardType="number-pad"
-                  editable={!submitting}
-                />
-
-                <Text style={styles.label}>Access level</Text>
-                <View style={styles.chipRow}>
-                  {(['free', 'premium'] as AccessLevel[]).map(al => (
-                    <TouchableOpacity
-                      key={al}
-                      style={[styles.chip, accessLevel === al && styles.chipActive]}
-                      onPress={() => setAccessLevel(al)}
-                      activeOpacity={0.7}
-                      disabled={submitting}
-                    >
-                      <Text style={[styles.chipText, accessLevel === al && styles.chipTextActive]}>
-                        {al === 'free' ? 'Free' : 'Premium'}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-                <Text style={styles.hint}>You can change this later from the Content screen.</Text>
-              </View>
-
-              {submitting && video && (
-                <View style={styles.card}>
-                  <Text style={styles.metaText}>Uploading… {Math.round(progress * 100)}%</Text>
+              {submitting && video ? (
+                <Card>
+                  <Text style={adminStyles.muted}>Uploading… {Math.round(progress * 100)}%</Text>
                   <View style={styles.progressTrack}>
                     <View
                       style={[styles.progressFill, { width: `${Math.round(progress * 100)}%` }]}
                     />
                   </View>
-                </View>
-              )}
+                </Card>
+              ) : null}
 
-              <View style={styles.formActions}>
-                <TouchableOpacity
-                  style={styles.cancelBtn}
+              <View style={styles.actions}>
+                <Button
+                  label="Save as draft"
+                  variant="secondary"
                   onPress={() => submit(true)}
-                  activeOpacity={0.7}
                   disabled={submitting}
-                >
-                  <Text style={styles.cancelBtnText}>Save as draft</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.confirmBtn}
+                  style={styles.action}
+                />
+                <Button
+                  label="Publish"
                   onPress={() => submit(false)}
-                  activeOpacity={0.7}
-                  disabled={submitting}
-                >
-                  {submitting ? (
-                    <ActivityIndicator color={Colors.text} size="small" />
-                  ) : (
-                    <Text style={styles.confirmBtnText}>Publish</Text>
-                  )}
-                </TouchableOpacity>
+                  busy={submitting}
+                  style={styles.action}
+                />
               </View>
             </>
           )}
-          <View style={{ height: 40 }} />
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </AdminScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.bg },
-  header: {
-    backgroundColor: Colors.bg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  headerBack: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  headerBackTxt: { color: Colors.brandBlue, fontSize: 28, fontWeight: '700', lineHeight: 28 },
-  headerTitle: { color: Colors.text, fontSize: 18, fontWeight: '800' },
-  list: { paddingHorizontal: 16, paddingTop: 12 },
-  blurb: { color: Colors.textSecondary, fontSize: 12, fontWeight: '500', marginBottom: 12 },
-  card: {
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 16,
-    marginBottom: 12,
-  },
-  pickBtn: {
-    backgroundColor: Colors.border,
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  pickBtnText: { color: Colors.text, fontSize: 13, fontWeight: '700' },
-  thumb: { width: '100%', height: 160, borderRadius: 8 },
-  label: {
-    color: Colors.textSecondary,
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-    marginBottom: 6,
-    marginTop: 10,
-  },
-  input: {
-    backgroundColor: Colors.border,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    color: Colors.text,
-    fontSize: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  multiline: { minHeight: 70, textAlignVertical: 'top' },
-  hint: { color: Colors.textMuted, fontSize: 11, fontWeight: '500', marginTop: 8 },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
-  chip: {
-    backgroundColor: Colors.border,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  chipActive: { backgroundColor: Colors.brandBlue, borderColor: Colors.brandBlue },
-  chipText: { color: Colors.textSecondary, fontSize: 12, fontWeight: '700' },
-  chipTextActive: { color: Colors.text },
-  metaText: { fontSize: 13, color: Colors.textSecondary, fontWeight: '600' },
+  page: { flex: 1 },
+  spinner: { marginTop: 30 },
+  section: { marginTop: Spacing.md },
   progressTrack: {
     height: 6,
-    backgroundColor: Colors.border,
-    borderRadius: 4,
-    marginTop: 8,
+    borderRadius: Radius.xs,
+    backgroundColor: Colors.surface,
     overflow: 'hidden',
+    marginTop: Spacing.sm,
   },
   progressFill: { height: 6, backgroundColor: Colors.brandBlue },
-  formActions: { flexDirection: 'row', gap: 10, marginBottom: 12 },
-  cancelBtn: {
-    flex: 1,
-    backgroundColor: Colors.border,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  cancelBtnText: { color: Colors.text, fontSize: 13, fontWeight: '700' },
-  confirmBtn: {
-    flex: 1,
-    backgroundColor: Colors.brandBlue,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  confirmBtnText: { color: Colors.text, fontSize: 13, fontWeight: '800' },
-  emptyState: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 80,
-    paddingHorizontal: 20,
-  },
-  emptyText: { fontSize: 14, color: Colors.textSecondary, fontWeight: '600', textAlign: 'center' },
+  actions: { flexDirection: 'row', gap: Spacing.md, marginTop: Spacing.md },
+  action: { flex: 1 },
 });

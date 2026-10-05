@@ -1,571 +1,155 @@
-/**
- * Edit the details of a queued video before it uploads: type, title, description, genre, duration,
- * season/episode, thumbnail.
- */
-
-import { useState, useCallback, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Modal,
-  Image,
-} from 'react-native';
-import { showAlert } from '@/components/ui/Feedback';
+import { useState } from 'react';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Colors, FontSize, Radius, withAlpha } from '@/theme';
-import { useUploadQueue } from '@/features/upload/hooks/useUploadQueue';
-import { QueueItem } from '@/features/upload/uploadQueue';
-import { PostService, ContentType, GENRES } from '@/features/content/api/postsApi';
-import { Icon, type IconName } from '@/components/ui/Icon';
+import { Button, TextButton } from '@/components/ui/Button';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { showAlert } from '@/components/ui/Feedback';
+import { Icon } from '@/components/ui/Icon';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
+import { Colors, FontSize, FontWeight, Spacing } from '@/theme';
+import { formatBytes } from '@/utils/format';
+import { VideoDetailsFields } from '@/features/upload/components/VideoDetailsFields';
+import { useUploadQueue, type QueueItem } from '@/features/upload/hooks/useUploadQueue';
+import type { VideoDetails } from '@/features/upload/uploadQueue';
 
-const CONTENT_TYPES: { id: ContentType; label: string; icon: IconName }[] = [
-  { id: 'movie', label: 'Movie', icon: 'film' },
-  { id: 'series', label: 'Web Series', icon: 'tv' },
-  { id: 'short', label: 'Short Film', icon: 'video' },
-  { id: 'post', label: 'Post', icon: 'document' },
-];
+// Edit a queued video's details before it uploads. "Save & next" moves on to the next video still
+// waiting, so a batch can be filled in one after another.
 
-export default function FormScreen() {
+export default function UploadFormScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { items, updateItem } = useUploadQueue(undefined);
-
-  const item = items.find((i: QueueItem) => i.id === id);
-
-  const [title, setTitle] = useState('');
-  const [body, setBody] = useState('');
-  const [contentType, setContentType] = useState<ContentType>('movie');
-  const [genre, setGenre] = useState('');
-  const [durationMin, setDurationMin] = useState('');
-  const [seasonNo, setSeasonNo] = useState('');
-  const [episodeNo, setEpisodeNo] = useState('');
-  const [episodeTitle, setEpisodeTitle] = useState('');
-  const [releaseYear, setReleaseYear] = useState(String(new Date().getFullYear()));
-  const [thumbnailUri, setThumbnailUri] = useState<string | null>(null);
-  const [showGenrePicker, setShowGenrePicker] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [picking, setPicking] = useState(false);
-
-  // Load current values from queue item
-  useEffect(() => {
-    if (!item) return;
-    setTitle(item.title || item.video.name || '');
-    setBody(item.body || '');
-    setContentType((item.contentType as ContentType) || 'movie');
-    setGenre(item.genre || '');
-    setDurationMin(item.durationMin || '');
-    setSeasonNo(item.seasonNo || '');
-    setEpisodeNo(item.episodeNo || '');
-    setEpisodeTitle(item.episodeTitle || '');
-    setReleaseYear(item.releaseYear || String(new Date().getFullYear()));
-    setThumbnailUri(item.thumbnailUri || null);
-  }, [item]);
-
-  const handleSave = useCallback(async () => {
-    if (!id) return;
-    setSaving(true);
-    try {
-      await updateItem(id, {
-        title: title.trim(),
-        body: body.trim(),
-        contentType,
-        genre,
-        durationMin,
-        seasonNo,
-        episodeNo,
-        episodeTitle,
-        releaseYear,
-        thumbnailUri,
-      });
-    } catch (err: any) {
-      showAlert('Error', err.message ?? 'Failed to save');
-    } finally {
-      setSaving(false);
-    }
-  }, [
-    id,
-    title,
-    body,
-    contentType,
-    genre,
-    durationMin,
-    seasonNo,
-    episodeNo,
-    episodeTitle,
-    releaseYear,
-    thumbnailUri,
-    updateItem,
-  ]);
-
-  const handleSaveAndNext = useCallback(async () => {
-    await handleSave();
-    // Find next queued item
-    const currentIdx = items.findIndex((i: QueueItem) => i.id === id);
-    const nextQueued = items.slice(currentIdx + 1).find((i: QueueItem) => i.status === 'queued');
-    if (nextQueued) {
-      router.replace({ pathname: '/upload/form/[id]', params: { id: nextQueued.id } });
-    } else {
-      router.replace({ pathname: '/upload/queue', params: {} });
-    }
-  }, [handleSave, items, id, router]);
-
-  const handleSkip = useCallback(() => {
-    const currentIdx = items.findIndex((i: QueueItem) => i.id === id);
-    const nextQueued = items.slice(currentIdx + 1).find((i: QueueItem) => i.status === 'queued');
-    if (nextQueued) {
-      router.replace({ pathname: '/upload/form/[id]', params: { id: nextQueued.id } });
-    } else {
-      router.replace({ pathname: '/upload/queue', params: {} });
-    }
-  }, [items, id, router]);
-
-  const handlePickThumbnail = async () => {
-    if (picking) return;
-    setPicking(true);
-    try {
-      const result = await PostService.pickImage();
-      if (result) setThumbnailUri(result.uri);
-    } catch (err: any) {
-      showAlert('Permission required', err.message);
-    } finally {
-      setPicking(false);
-    }
-  };
+  const queue = useUploadQueue(undefined);
+  const item = queue.items.find(i => i.id === id);
 
   if (!item) {
     return (
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backBtn}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-          >
-            <Text style={styles.backTxt}>{'< Back'}</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Edit Item</Text>
-          <View style={{ width: 70 }} />
-        </View>
-        <View style={styles.notFound}>
-          <Text style={styles.notFoundText}>Item not found in queue.</Text>
-          <TouchableOpacity
-            onPress={() => router.replace('/upload/queue')}
-            style={styles.notFoundBtn}
-          >
-            <Text style={styles.notFoundBtnTxt}>Back to Queue</Text>
-          </TouchableOpacity>
-        </View>
+      <SafeAreaView style={styles.page} edges={['top']}>
+        <ScreenHeader title="Edit Item" />
+        <EmptyState
+          icon="folder"
+          title="Item not found in queue."
+          action={{ label: 'Back to Queue', onPress: () => router.replace('/upload/queue') }}
+        />
       </SafeAreaView>
     );
   }
 
+  // Keyed by item, so moving on to the next video starts a fresh form even if the screen is reused.
+  return <QueuedItemForm key={item.id} item={item} queue={queue} />;
+}
+
+function QueuedItemForm({
+  item,
+  queue,
+}: {
+  item: QueueItem;
+  queue: ReturnType<typeof useUploadQueue>;
+}) {
+  const router = useRouter();
+  const [details, setDetails] = useState<VideoDetails>(() => ({
+    ...item,
+    title: item.title || item.video.name,
+  }));
+  const [saving, setSaving] = useState(false);
+
+  const goToNextQueued = () => {
+    const index = queue.items.findIndex(i => i.id === item.id);
+    const next = queue.items.slice(index + 1).find(i => i.status === 'queued');
+    if (next) router.replace({ pathname: '/upload/form/[id]', params: { id: next.id } });
+    else router.replace('/upload/queue');
+  };
+
+  async function save() {
+    setSaving(true);
+    try {
+      await queue.update(item.id, {
+        title: details.title.trim(),
+        body: details.body.trim(),
+        contentType: details.contentType,
+        accessLevel: details.accessLevel,
+        genre: details.genre,
+        durationMin: details.durationMin,
+        seasonNo: details.seasonNo,
+        episodeNo: details.episodeNo,
+        episodeTitle: details.episodeTitle,
+        releaseYear: details.releaseYear,
+        thumbnailUri: details.thumbnailUri,
+      });
+    } catch (err) {
+      showAlert('Error', (err as Error)?.message ?? 'Failed to save');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const saveAndNext = async () => {
+    await save();
+    goToNextQueued();
+  };
+
   return (
-    <>
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-          {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity
-              onPress={() => router.back()}
-              style={styles.backBtn}
-              accessibilityRole="button"
-              accessibilityLabel="Go back"
-            >
-              <Text style={styles.backTxt}>{'< Back'}</Text>
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Edit Details</Text>
-            <TouchableOpacity onPress={handleSaveAndNext} style={styles.saveBtn} disabled={saving}>
-              {saving ? (
-                <ActivityIndicator color={Colors.text} size="small" />
-              ) : (
-                <Text style={styles.saveBtnTxt}>Save & next</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView
-            style={styles.body}
-            keyboardShouldPersistTaps="handled"
-            keyboardDismissMode="none"
-          >
-            {/* Video info */}
-            <View style={styles.videoInfo}>
-              <Icon name="film" size={16} color={Colors.textMuted} />
-              <View style={styles.videoMeta}>
-                <Text style={styles.videoName} numberOfLines={1}>
-                  {item.video.name}
-                </Text>
-                <Text style={styles.videoSize}>
-                  {(item.video.size / (1024 * 1024)).toFixed(0)} MB
-                </Text>
-              </View>
-            </View>
-
-            {/* Content type */}
-            <Text style={styles.label}>TYPE</Text>
-            <View style={styles.typeRow}>
-              {CONTENT_TYPES.map(ct => (
-                <TouchableOpacity
-                  key={ct.id}
-                  style={[styles.typeChip, contentType === ct.id && styles.typeChipActive]}
-                  onPress={() => setContentType(ct.id)}
-                >
-                  <Icon name={ct.icon} size={16} color={Colors.textSecondary} />
-                  <Text
-                    style={[
-                      styles.typeChipTxt,
-                      contentType === ct.id && { color: Colors.brandBlue },
-                    ]}
-                  >
-                    {ct.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* Thumbnail */}
-            <Text style={styles.label}>THUMBNAIL</Text>
-            <TouchableOpacity
-              style={styles.thumbPicker}
-              onPress={handlePickThumbnail}
-              disabled={picking}
-            >
-              {thumbnailUri ? (
-                <Image
-                  source={{ uri: thumbnailUri }}
-                  style={styles.thumbPreview}
-                  resizeMode="cover"
-                />
-              ) : (
-                <View style={styles.thumbEmpty}>
-                  <Icon name="image" size={16} color={Colors.textMuted} />
-                  <Text style={styles.thumbEmptyTxt}>Add Thumbnail</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-
-            {/* Title */}
-            <Text style={styles.label}>TITLE</Text>
-            <TextInput
-              style={styles.input}
-              value={title}
-              onChangeText={setTitle}
-              placeholder={item.video.name}
-              placeholderTextColor={Colors.textMuted}
-              blurOnSubmit={false}
-            />
-
-            {/* Description */}
-            <Text style={styles.label}>DESCRIPTION</Text>
-            <TextInput
-              style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
-              value={body}
-              onChangeText={setBody}
-              placeholder="What is this about?"
-              placeholderTextColor={Colors.textMuted}
-              multiline
-              blurOnSubmit={false}
-            />
-
-            {/* Genre */}
-            <Text style={styles.label}>GENRE</Text>
-            <TouchableOpacity
-              style={[styles.input, { justifyContent: 'center' }]}
-              onPress={() => setShowGenrePicker(true)}
-            >
-              <Text style={{ color: genre ? Colors.text : Colors.textMuted, fontSize: 14 }}>
-                {genre || 'Select genre'}
-              </Text>
-            </TouchableOpacity>
-
-            {/* Release year */}
-            <Text style={styles.label}>RELEASE YEAR</Text>
-            <TextInput
-              style={styles.input}
-              value={releaseYear}
-              onChangeText={setReleaseYear}
-              placeholder={String(new Date().getFullYear())}
-              placeholderTextColor={Colors.textMuted}
-              keyboardType="numeric"
-              maxLength={4}
-              blurOnSubmit={false}
-            />
-
-            {/* Duration (movie/short) */}
-            {(contentType === 'movie' || contentType === 'short') && (
-              <>
-                <Text style={styles.label}>DURATION (minutes)</Text>
-                <TextInput
-                  style={styles.input}
-                  value={durationMin}
-                  onChangeText={setDurationMin}
-                  placeholder="e.g. 120"
-                  placeholderTextColor={Colors.textMuted}
-                  keyboardType="numeric"
-                  blurOnSubmit={false}
-                />
-              </>
-            )}
-
-            {/* Series fields */}
-            {contentType === 'series' && (
-              <>
-                <View style={styles.rowInputs}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.label}>SEASON</Text>
-                    <TextInput
-                      style={styles.input}
-                      value={seasonNo}
-                      onChangeText={setSeasonNo}
-                      placeholder="1"
-                      placeholderTextColor={Colors.textMuted}
-                      keyboardType="numeric"
-                      blurOnSubmit={false}
-                    />
-                  </View>
-                  <View style={{ width: 10 }} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.label}>EPISODE</Text>
-                    <TextInput
-                      style={styles.input}
-                      value={episodeNo}
-                      onChangeText={setEpisodeNo}
-                      placeholder="1"
-                      placeholderTextColor={Colors.textMuted}
-                      keyboardType="numeric"
-                      blurOnSubmit={false}
-                    />
-                  </View>
-                </View>
-                <Text style={styles.label}>EPISODE TITLE</Text>
-                <TextInput
-                  style={styles.input}
-                  value={episodeTitle}
-                  onChangeText={setEpisodeTitle}
-                  placeholder="e.g. Pilot"
-                  placeholderTextColor={Colors.textMuted}
-                  blurOnSubmit={false}
-                />
-              </>
-            )}
-
-            {/* Action buttons */}
-            <View style={styles.formActions}>
-              <TouchableOpacity style={styles.skipBtn} onPress={handleSkip}>
-                <Text style={styles.skipBtnTxt}>Skip for now</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.saveFullBtn} onPress={handleSave} disabled={saving}>
-                {saving ? (
-                  <ActivityIndicator color={Colors.text} size="small" />
-                ) : (
-                  <Text style={styles.saveFullBtnTxt}>Save</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-
-            <View style={{ height: 40 }} />
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-
-      {/* Genre picker */}
-      <Modal
-        visible={showGenrePicker}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowGenrePicker(false)}
+    <SafeAreaView style={styles.page} edges={['top']}>
+      <ScreenHeader
+        title="Edit Details"
+        right={<TextButton label="Save & next" onPress={saveAndNext} disabled={saving} />}
+      />
+      <KeyboardAvoidingView
+        style={styles.page}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <TouchableOpacity
-          style={styles.genreOverlay}
-          activeOpacity={1}
-          onPress={() => setShowGenrePicker(false)}
-        >
-          <View style={styles.genreSheet}>
-            <Text style={styles.genreTitle}>Select Genre</Text>
-            <ScrollView keyboardShouldPersistTaps="handled">
-              {GENRES.map(g => (
-                <TouchableOpacity
-                  key={g}
-                  style={styles.genreRow}
-                  onPress={() => {
-                    setGenre(g);
-                    setShowGenrePicker(false);
-                  }}
-                >
-                  <Text style={[styles.genreRowTxt, genre === g && { color: Colors.brandBlue }]}>
-                    {g}
-                  </Text>
-                  {genre === g && (
-                    <Text style={{ color: Colors.brandBlue, fontSize: 16 }}>{'✓'}</Text>
-                  )}
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-            <TouchableOpacity style={styles.genreCancel} onPress={() => setShowGenrePicker(false)}>
-              <Text style={styles.genreCancelTxt}>Cancel</Text>
-            </TouchableOpacity>
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          <FileSummary item={item} />
+          <VideoDetailsFields
+            details={details}
+            onChange={patch => setDetails(current => ({ ...current, ...patch }))}
+            fileName={item.video.name}
+            showSeriesName={false}
+          />
+          <View style={styles.actions}>
+            <Button
+              label="Skip for now"
+              variant="secondary"
+              onPress={goToNextQueued}
+              style={styles.action}
+            />
+            <Button label="Save" onPress={save} busy={saving} style={styles.action} />
           </View>
-        </TouchableOpacity>
-      </Modal>
-    </>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}
+
+function FileSummary({ item }: { item: QueueItem }) {
+  return (
+    <View style={styles.file}>
+      <Icon name="film" size={16} color={Colors.textMuted} />
+      <View style={styles.fileInfo}>
+        <Text style={styles.fileName} numberOfLines={1}>
+          {item.video.name}
+        </Text>
+        <Text style={styles.fileSize}>{formatBytes(item.video.size)}</Text>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.bg },
-  header: {
-    backgroundColor: Colors.brandBlue,
+  page: { flex: 1, backgroundColor: Colors.bg },
+  content: { padding: Spacing.lg, paddingBottom: 40 },
+  file: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  backBtn: { width: 70 },
-  backTxt: { color: Colors.text, fontSize: 14, fontWeight: '600' },
-  headerTitle: {
-    color: Colors.text,
-    fontSize: 17,
-    fontWeight: '800',
-    flex: 1,
-    textAlign: 'center',
-  },
-  saveBtn: { width: 90, alignItems: 'flex-end' },
-  saveBtnTxt: { color: Colors.text, fontSize: 13, fontWeight: '800' },
-  body: { flex: 1, padding: 16 },
-  videoInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+    gap: 10,
+    padding: Spacing.md,
+    marginBottom: Spacing.lg,
+    borderRadius: 10,
     backgroundColor: Colors.surface,
-    borderRadius: Radius.md,
-    padding: 12,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
   },
-  videoMeta: { flex: 1 },
-  videoName: { fontSize: FontSize.base, fontWeight: '700', color: Colors.text },
-  videoSize: { fontSize: FontSize.xs, color: Colors.textMuted, fontWeight: '600', marginTop: 2 },
-  label: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: Colors.textMuted,
-    letterSpacing: 1.2,
-    marginBottom: 6,
-    marginTop: 14,
-  },
-  input: {
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.sm,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    color: Colors.text,
-    fontSize: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 4,
-  },
-  typeRow: { flexDirection: 'row', gap: 8 },
-  typeChip: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 3,
-    paddingVertical: 10,
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.sm,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  typeChipActive: { borderColor: Colors.brandBlue, backgroundColor: Colors.brandBlueDim },
-  typeChipTxt: { fontSize: 11, color: Colors.textMuted, fontWeight: '700' },
-  thumbPicker: {
-    height: 160,
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    overflow: 'hidden',
-    marginBottom: 4,
-  },
-  thumbPreview: { width: '100%', height: '100%' },
-  thumbEmpty: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  thumbEmptyTxt: { color: Colors.textMuted, fontSize: 13, fontWeight: '700' },
-  rowInputs: { flexDirection: 'row' },
-  formActions: { flexDirection: 'row', gap: 10, marginTop: 24 },
-  skipBtn: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: Radius.sm,
-    alignItems: 'center',
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  skipBtnTxt: { fontSize: 14, fontWeight: '700', color: Colors.textMuted },
-  saveFullBtn: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: Radius.sm,
-    alignItems: 'center',
-    backgroundColor: Colors.brandBlue,
-  },
-  saveFullBtnTxt: { fontSize: 14, fontWeight: '800', color: Colors.text },
-  notFound: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 },
-  notFoundText: { fontSize: 15, color: Colors.textMuted, fontWeight: '600', marginBottom: 16 },
-  notFoundBtn: {
-    backgroundColor: Colors.brandBlue,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: Radius.sm,
-  },
-  notFoundBtnTxt: { color: Colors.text, fontSize: 14, fontWeight: '800' },
-  genreOverlay: {
-    flex: 1,
-    backgroundColor: withAlpha(Colors.black, 0.7),
-    justifyContent: 'flex-end',
-  },
-  genreSheet: {
-    backgroundColor: Colors.bg,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '60%',
-    paddingTop: 20,
-  },
-  genreTitle: {
-    fontSize: 16,
-    fontWeight: '900',
-    color: Colors.text,
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  genreRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderBottomWidth: 0.5,
-    borderBottomColor: Colors.border,
-  },
-  genreRowTxt: { fontSize: 15, color: Colors.text, fontWeight: '600' },
-  genreCancel: {
-    padding: 20,
-    alignItems: 'center',
-    borderTopWidth: 0.5,
-    borderTopColor: Colors.border,
-  },
-  genreCancelTxt: { color: Colors.textMuted, fontWeight: '600', fontSize: 15 },
+  fileInfo: { flex: 1 },
+  fileName: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.text },
+  fileSize: { fontSize: FontSize.xs, color: Colors.textMuted, marginTop: 2 },
+  actions: { flexDirection: 'row', gap: Spacing.md, marginTop: Spacing.sm },
+  action: { flex: 1 },
 });

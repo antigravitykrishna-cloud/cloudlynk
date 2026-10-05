@@ -3,13 +3,14 @@ import { Image } from 'expo-image';
 import { memo } from 'react';
 import { Icon } from '@/components/ui/Icon';
 import { PressScale } from '@/components/ui/Press';
-import { PostService, ChannelPost } from '@/features/content/api/postsApi';
+import { publicMedia } from '@/lib/publicMedia';
+import type { ChannelPost } from '@/features/content/model';
 import { Colors, FontWeight, Radius, withAlpha } from '@/theme';
-import { contentIcon } from '@/features/content/components/contentIcon';
+import { contentTypeIcon } from '@/features/content/contentTypes';
 
 export const SectionCard = memo(
   ({ item, isShorts, onPress }: { item: ChannelPost; isShorts: boolean; onPress: () => void }) => {
-    const thumb = item.thumbnail_url ? PostService.getMediaPublicUrl(item.thumbnail_url) : null;
+    const thumb = item.thumbnail_url ? publicMedia.url(item.thumbnail_url) : null;
     return (
       <PressScale
         style={isShorts ? styles.shortCard : styles.sectionCard}
@@ -28,7 +29,7 @@ export const SectionCard = memo(
             style={[isShorts ? styles.shortImg : styles.sectionCardImg, styles.shortPlaceholder]}
           >
             <Icon
-              name={contentIcon(item.content_type)}
+              name={contentTypeIcon(item.content_type)}
               size={isShorts ? 24 : 28}
               color={Colors.textMuted}
             />

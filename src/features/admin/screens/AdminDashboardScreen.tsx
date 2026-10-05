@@ -13,7 +13,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { PostService, ChannelPost } from '@/features/content/api/postsApi';
+import { adminModerationApi } from '@/features/admin/api/adminModerationApi';
+import { publicMedia } from '@/lib/publicMedia';
+import type { ChannelPost } from '@/features/content/model';
 import { NotificationService } from '@/features/notifications/api/notificationsApi';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/theme';
 import { formatTimeAgo } from '@/utils/format';
@@ -153,8 +155,8 @@ export default function AdminScreen() {
   const load = useCallback(async () => {
     try {
       const [channels, posts] = await Promise.all([
-        PostService.getPendingChannels(),
-        PostService.getPendingPosts(),
+        adminModerationApi.listPendingChannels(),
+        adminModerationApi.listPendingPosts(),
       ]);
       setPendingChannels(channels as PendingChannel[]);
       setPendingPosts(posts);
@@ -177,7 +179,7 @@ export default function AdminScreen() {
   const approveChannel = async (ch: PendingChannel) => {
     setReviewing(ch.id);
     try {
-      await PostService.approveChannel(ch.id);
+      await adminModerationApi.approveChannel(ch.id);
       await NotificationService.channelApproved(ch.owner?.id ?? ch.owner_id, ch.name, ch.id);
       setPendingChannels(prev => prev.filter(c => c.id !== ch.id));
       showAlert('✓ Approved', `"${ch.name}" is live. Owner notified.`);
@@ -197,7 +199,7 @@ export default function AdminScreen() {
         onPress: async () => {
           setReviewing(ch.id);
           try {
-            await PostService.rejectChannel(ch.id);
+            await adminModerationApi.rejectChannel(ch.id);
             await NotificationService.channelRejected(ch.owner?.id ?? ch.owner_id, ch.name, ch.id);
             setPendingChannels(prev => prev.filter(c => c.id !== ch.id));
           } catch (err: any) {
@@ -214,7 +216,7 @@ export default function AdminScreen() {
     if (!profile?.id) return;
     setReviewing(post.id);
     try {
-      await PostService.approvePost(post.id, profile.id);
+      await adminModerationApi.approvePost(post.id, profile.id);
       await NotificationService.postApproved(
         post.author_id,
         (post.channel as any)?.name ?? 'your channel',
@@ -240,7 +242,11 @@ export default function AdminScreen() {
         onPress: async () => {
           setReviewing(post.id);
           try {
-            await PostService.rejectPost(post.id, profile.id, 'Does not meet content guidelines.');
+            await adminModerationApi.rejectPost(
+              post.id,
+              profile.id,
+              'Does not meet content guidelines.',
+            );
             await NotificationService.postRejected(
               post.author_id,
               (post.channel as any)?.name ?? 'your channel',
@@ -298,7 +304,7 @@ export default function AdminScreen() {
 
   const PostCard = ({ post }: { post: ChannelPost }) => {
     const thumbPath = post.thumbnail_url ?? post.media_url;
-    const mediaUrl = thumbPath ? PostService.getMediaPublicUrl(thumbPath) : null;
+    const mediaUrl = thumbPath ? publicMedia.url(thumbPath) : null;
     return (
       <View style={styles.card}>
         <View style={styles.cardHeader}>

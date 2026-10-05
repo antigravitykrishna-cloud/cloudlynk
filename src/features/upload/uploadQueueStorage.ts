@@ -1,20 +1,16 @@
-/**
- * Saves the upload queue to AsyncStorage as JSON. On load, drops items whose content:// file is no
- * longer accessible.
- */
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { QueueState } from '@/features/upload/uploadQueue';
+import type { QueueState } from '@/features/upload/uploadQueue';
 
-const QUEUE_KEY = 'upload_queue';
+// The upload queue saved on the device (AsyncStorage), so a list of picked videos survives an app
+// restart. Only the items are kept: nothing is mid-upload after a restart.
+
+const STORAGE_KEY = 'upload_queue';
 
 export async function loadQueue(): Promise<QueueState | null> {
   try {
-    const raw = await AsyncStorage.getItem(QUEUE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as QueueState;
-    if (!parsed || !Array.isArray(parsed.items)) return null;
-    return parsed;
+    const raw = await AsyncStorage.getItem(STORAGE_KEY);
+    const parsed = raw ? (JSON.parse(raw) as QueueState) : null;
+    return parsed && Array.isArray(parsed.items) ? parsed : null;
   } catch {
     return null;
   }
@@ -22,21 +18,17 @@ export async function loadQueue(): Promise<QueueState | null> {
 
 export async function saveQueue(state: QueueState): Promise<void> {
   try {
-    const serializable = {
-      items: state.items,
-      isUploading: false, // never persist active upload state
-      currentIndex: -1,
-    };
-    await AsyncStorage.setItem(QUEUE_KEY, JSON.stringify(serializable));
+    const idle: QueueState = { items: state.items, isUploading: false, currentIndex: -1 };
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(idle));
   } catch (err) {
-    if (__DEV__) console.error('[uploadQueue.persistence] Failed to save queue:', err);
+    if (__DEV__) console.error('[uploadQueueStorage] save failed:', err);
   }
 }
 
 export async function clearQueue(): Promise<void> {
   try {
-    await AsyncStorage.removeItem(QUEUE_KEY);
+    await AsyncStorage.removeItem(STORAGE_KEY);
   } catch (err) {
-    if (__DEV__) console.error('[uploadQueue.persistence] Failed to clear queue:', err);
+    if (__DEV__) console.error('[uploadQueueStorage] clear failed:', err);
   }
 }

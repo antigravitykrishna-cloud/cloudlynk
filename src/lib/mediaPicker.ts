@@ -21,6 +21,20 @@ export async function pickImage(): Promise<string | null> {
   return result.canceled ? null : result.assets[0].uri;
 }
 
+/**
+ * A square-cropped profile picture. Lower quality than other images: avatars show at 96 px at most,
+ * and a full-size original would cost data and storage for nothing.
+ */
+export async function pickAvatar(): Promise<string | null> {
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ['images'],
+    allowsEditing: true,
+    aspect: [1, 1],
+    quality: 0.7,
+  });
+  return result.canceled ? null : result.assets[0].uri;
+}
+
 /** Photos and videos from the gallery, several at once: the Cloud tab's upload. */
 export async function pickPhotosAndVideos(): Promise<PickedFile[]> {
   const result = await ImagePicker.launchImageLibraryAsync({

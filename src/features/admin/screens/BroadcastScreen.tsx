@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AdminHeader, ActionButton, Card, adminStyles } from '@/features/admin/components/AdminUI';
+import { AdminHeader, ActionButton, adminStyles } from '@/features/admin/components/AdminUI';
+import { Card } from '@/components/ui/Card';
 import { showAlert } from '@/components/ui/Feedback';
 import { fireHaptic } from '@/components/ui/Press';
 import { Colors, FontSize, FontWeight, Radius } from '@/theme';

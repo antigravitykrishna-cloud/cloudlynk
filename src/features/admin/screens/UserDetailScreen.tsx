@@ -5,12 +5,12 @@ import { useLocalSearchParams } from 'expo-router';
 import {
   AdminHeader,
   ActionButton,
-  Card,
-  Chip,
   SectionLabel,
   adminStyles,
   planChip,
 } from '@/features/admin/components/AdminUI';
+import { Card } from '@/components/ui/Card';
+import { Chip } from '@/components/ui/Chip';
 import { formatDate } from '@/utils/format';
 import { showAlert } from '@/components/ui/Feedback';
 import { fireHaptic } from '@/components/ui/Press';

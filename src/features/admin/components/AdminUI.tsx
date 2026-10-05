@@ -5,6 +5,7 @@ import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/theme';
 import { PressScale } from '@/components/ui/Press';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Chip } from '@/components/ui/Chip';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { formatDate } from '@/utils/format';
@@ -62,35 +63,6 @@ export function AdminHeader({ title, right }: { title: string; right?: ReactNode
 export function SectionLabel({ children }: { children: string }) {
   return <Text style={s.section}>{children.toUpperCase()}</Text>;
 }
-
-export function Card({ children, style }: { children: ReactNode; style?: object }) {
-  return <View style={[s.card, style]}>{children}</View>;
-}
-
-export function Chip({
-  label,
-  tone = 'neutral',
-}: {
-  label: string;
-  tone?: 'neutral' | 'good' | 'warn' | 'bad' | 'brand';
-}) {
-  const t = TONES[tone];
-  return (
-    <View style={[s.chip, { backgroundColor: t.bg }]}>
-      <Text style={[s.chipTxt, { color: t.fg }]} numberOfLines={1}>
-        {label}
-      </Text>
-    </View>
-  );
-}
-
-const TONES = {
-  neutral: { bg: Colors.neutralDim, fg: Colors.textSecondary },
-  good: { bg: Colors.successDim, fg: Colors.success },
-  warn: { bg: Colors.warningDim, fg: Colors.warning },
-  bad: { bg: Colors.dangerDim, fg: Colors.danger },
-  brand: { bg: Colors.brandBlueDim, fg: Colors.brandBlue },
-};
 
 export function ActionButton({
   label,
@@ -253,21 +225,6 @@ const s = StyleSheet.create({
     marginBottom: Spacing.sm,
     marginLeft: Spacing.xs,
   },
-  card: {
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: Radius.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Colors.border,
-    padding: Spacing.lg,
-    marginBottom: 10,
-  },
-  chip: {
-    borderRadius: Radius.xs,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    alignSelf: 'flex-start',
-  },
-  chipTxt: { fontSize: FontSize.xs, fontWeight: FontWeight.bold },
   btn: {
     borderRadius: Radius.md,
     paddingVertical: 11,

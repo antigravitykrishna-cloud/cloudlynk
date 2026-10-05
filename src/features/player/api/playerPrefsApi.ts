@@ -1,10 +1,6 @@
-/**
- * v0.7.0 Player preferences CRUD.
- * Reads/writes user_preferences table (quality, speed, subtitle language, auto-play).
- */
-
 import { supabase } from '@/lib/supabase';
 
+/** A viewer's saved player settings (`user_preferences`). */
 export type PlayerPrefs = {
   user_id: string;
   default_quality: string;
@@ -13,7 +9,7 @@ export type PlayerPrefs = {
   auto_play_next_episode: boolean;
 };
 
-export const PlayerPrefsService = {
+export const playerPrefsApi = {
   async get(userId: string): Promise<PlayerPrefs | null> {
     const { data } = await supabase
       .from('user_preferences')
@@ -23,10 +19,10 @@ export const PlayerPrefsService = {
     return data as PlayerPrefs | null;
   },
 
-  async upsert(userId: string, prefs: Partial<Omit<PlayerPrefs, 'user_id'>>): Promise<void> {
+  async save(userId: string, prefs: Partial<Omit<PlayerPrefs, 'user_id'>>): Promise<void> {
     const { error } = await supabase
       .from('user_preferences')
       .upsert({ user_id: userId, ...prefs }, { onConflict: 'user_id' });
-    if (error && __DEV__) console.error('[playerPrefs] upsert error:', error.message);
+    if (error && __DEV__) console.error('[playerPrefs] save error:', error.message);
   },
 };

@@ -10,7 +10,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
-import { AdminHeader, Card, Chip, adminStyles } from '@/features/admin/components/AdminUI';
+import { AdminHeader, adminStyles } from '@/features/admin/components/AdminUI';
+import { Card } from '@/components/ui/Card';
+import { Chip } from '@/components/ui/Chip';
 import { formatDateTime } from '@/utils/format';
 import { Colors, FontSize, FontWeight, Radius } from '@/theme';
 import { AdminControl, type AdminPayment } from '@/features/admin/api/adminControlApi';

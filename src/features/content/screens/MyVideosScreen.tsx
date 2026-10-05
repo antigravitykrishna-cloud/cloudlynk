@@ -1,266 +1,153 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
   ActivityIndicator,
   Linking,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, useFocusEffect } from 'expo-router';
-import { Colors } from '@/theme';
-import { useAuth } from '@/features/auth/hooks/useAuth';
-import { supabase } from '@/lib/supabase';
+import { Chip, type ChipTone } from '@/components/ui/Chip';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { Icon } from '@/components/ui/Icon';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
+import { UnderlineTabs } from '@/components/ui/Tabs';
+import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/theme';
 import { formatDate } from '@/utils/format';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { postsApi, type MyPost } from '@/features/content/api/postsApi';
+import type { PostStatus } from '@/features/content/model';
 
-interface MyPost {
-  id: string;
-  channel_id: string;
-  channel_name: string | null;
-  title: string | null;
-  content_type: string | null;
-  thumbnail_url: string | null;
-  video_url: string | null;
-  status: string;
-  rejection_note: string | null;
-  created_at: string;
-  approved_at: string | null;
-}
+// Everything the person has submitted, with where each one is in review.
 
-type FilterTab = 'all' | 'pending' | 'approved' | 'rejected';
+type Filter = 'all' | 'pending' | 'approved' | 'rejected';
 
-const TABS: { key: FilterTab; label: string }[] = [
+const FILTERS: { key: Filter; label: string }[] = [
   { key: 'all', label: 'All' },
   { key: 'pending', label: 'Pending' },
   { key: 'approved', label: 'Approved' },
   { key: 'rejected', label: 'Rejected' },
 ];
 
-function getStatusColor(status: string): string {
-  switch (status) {
-    case 'approved':
-      return Colors.success;
-    case 'pending':
-      return Colors.warning;
-    case 'rejected':
-      return Colors.brandBlue;
-    default:
-      return Colors.textMuted;
-  }
-}
+const STATUS_TONE: Record<PostStatus, ChipTone> = {
+  approved: 'good',
+  pending: 'warn',
+  rejected: 'bad',
+  draft: 'neutral',
+};
 
-/** User-facing page showing all their own channel_posts submissions with status filter tabs. */
 export default function MyVideosScreen() {
-  const router = useRouter();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<FilterTab>('pending');
+  const [filter, setFilter] = useState<Filter>('pending');
   const [posts, setPosts] = useState<MyPost[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchPosts = useCallback(async () => {
+  const load = useCallback(async () => {
     if (!user) return;
     try {
-      const statusParam = activeTab === 'all' ? undefined : activeTab;
-      const { data, error } = await supabase.rpc('get_my_channel_posts', {
-        p_status: statusParam,
-      });
-      if (error) throw error;
-      setPosts((data ?? []) as MyPost[]);
+      setPosts(await postsApi.listMine(filter === 'all' ? undefined : filter));
     } catch (err) {
-      if (__DEV__) console.error('fetchPosts error:', err);
+      if (__DEV__) console.error('My videos load error:', err);
     } finally {
       setLoading(false);
     }
-  }, [user, activeTab]);
+  }, [user, filter]);
 
   useFocusEffect(
     useCallback(() => {
       setLoading(true);
-      fetchPosts();
-    }, [fetchPosts]),
+      load();
+    }, [load]),
   );
 
-  const handleTapPost = async (post: MyPost) => {
-    if (!post.video_url) return;
-    try {
-      await Linking.openURL(post.video_url);
-    } catch {
-      // ignore
-    }
-  };
-
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backBtn}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <Text style={styles.backTxt}>{'< Back'}</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>My Videos</Text>
-        <View style={{ width: 80 }} />
-      </View>
-
-      {/* Tab strip */}
-      <View style={styles.tabStrip}>
-        {TABS.map(tab => (
-          <TouchableOpacity
-            key={tab.key}
-            style={[styles.tab, activeTab === tab.key && styles.tabActive]}
-            onPress={() => {
-              setActiveTab(tab.key);
-              setLoading(true);
-            }}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.tabText, activeTab === tab.key && styles.tabTextActive]}>
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+    <SafeAreaView style={styles.page} edges={['top']}>
+      <ScreenHeader title="My Videos" />
+      <UnderlineTabs tabs={FILTERS} selected={filter} onSelect={setFilter} />
 
       {loading ? (
-        <ActivityIndicator color={Colors.brandBlue} size="large" style={{ marginTop: 60 }} />
+        <ActivityIndicator color={Colors.brandBlue} size="large" style={styles.spinner} />
       ) : posts.length === 0 ? (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>
-            {activeTab === 'all' ? 'No video submissions yet.' : `No ${activeTab} submissions.`}
-          </Text>
-        </View>
+        <EmptyState
+          icon="video"
+          title={filter === 'all' ? 'No video submissions yet.' : `No ${filter} submissions.`}
+        />
       ) : (
-        <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={styles.list}
-          showsVerticalScrollIndicator={false}
-        >
+        <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
           {posts.map(post => (
-            <TouchableOpacity
-              key={post.id}
-              style={styles.card}
-              onPress={() => handleTapPost(post)}
-              activeOpacity={post.video_url ? 0.7 : 1}
-              disabled={!post.video_url}
-            >
-              <View style={styles.thumb}>
-                <Icon
-                  name={post.thumbnail_url ? 'film' : 'video'}
-                  size={26}
-                  color={Colors.textMuted}
-                />
-              </View>
-              <View style={styles.cardBody}>
-                <Text style={styles.cardTitle} numberOfLines={2}>
-                  {post.title ?? 'Untitled'}
-                </Text>
-                <Text style={styles.cardMeta} numberOfLines={1}>
-                  {post.channel_name ?? 'Unknown channel'}
-                  {post.content_type ? ` · ${post.content_type}` : ''}
-                </Text>
-                <View
-                  style={[
-                    styles.statusBadge,
-                    { backgroundColor: getStatusColor(post.status) + '18' },
-                  ]}
-                >
-                  <Text style={[styles.statusBadgeText, { color: getStatusColor(post.status) }]}>
-                    {post.status.toUpperCase()}
-                  </Text>
-                </View>
-                <Text style={styles.cardDate}>Submitted {formatDate(post.created_at)}</Text>
-                {post.status === 'approved' && post.approved_at && (
-                  <Text style={[styles.cardDate, { color: Colors.success }]}>
-                    Approved on {formatDate(post.approved_at)}
-                  </Text>
-                )}
-                {post.status === 'rejected' && post.rejection_note && (
-                  <Text style={[styles.cardDate, { color: Colors.brandBlue }]}>
-                    {post.rejection_note}
-                  </Text>
-                )}
-              </View>
-            </TouchableOpacity>
+            <SubmissionRow key={post.id} post={post} />
           ))}
-          <View style={{ height: 40 }} />
         </ScrollView>
       )}
     </SafeAreaView>
   );
 }
 
+function SubmissionRow({ post }: { post: MyPost }) {
+  const openVideo = () => {
+    if (post.video_url) Linking.openURL(post.video_url).catch(() => {});
+  };
+
+  return (
+    <TouchableOpacity
+      style={styles.row}
+      onPress={openVideo}
+      activeOpacity={post.video_url ? 0.7 : 1}
+      disabled={!post.video_url}
+    >
+      <View style={styles.thumbnail}>
+        <Icon name={post.thumbnail_url ? 'film' : 'video'} size={26} color={Colors.textMuted} />
+      </View>
+      <View style={styles.body}>
+        <Text style={styles.title} numberOfLines={2}>
+          {post.title ?? 'Untitled'}
+        </Text>
+        <Text style={styles.meta} numberOfLines={1}>
+          {post.channel_name ?? 'Unknown channel'}
+          {post.content_type ? ` · ${post.content_type}` : ''}
+        </Text>
+        <Chip label={post.status.toUpperCase()} tone={STATUS_TONE[post.status] ?? 'neutral'} />
+        <Text style={styles.date}>Submitted {formatDate(post.created_at)}</Text>
+        {post.status === 'approved' && post.approved_at ? (
+          <Text style={[styles.date, styles.approved]}>
+            Approved on {formatDate(post.approved_at)}
+          </Text>
+        ) : null}
+        {post.status === 'rejected' && post.rejection_note ? (
+          <Text style={[styles.date, styles.rejected]}>{post.rejection_note}</Text>
+        ) : null}
+      </View>
+    </TouchableOpacity>
+  );
+}
+
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.bg },
-  header: {
-    backgroundColor: Colors.surface,
+  page: { flex: 1, backgroundColor: Colors.bg },
+  spinner: { marginTop: 60 },
+  list: { paddingVertical: Spacing.sm, paddingBottom: 40 },
+  row: {
+    flexDirection: 'row',
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: Colors.border,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    gap: Spacing.md,
   },
-  backBtn: { width: 80 },
-  backTxt: { color: Colors.text, fontSize: 14, fontWeight: '600' },
-  headerTitle: {
-    color: Colors.text,
-    fontSize: 18,
-    fontWeight: '800',
-    flex: 1,
-    textAlign: 'center',
-  },
-  tabStrip: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-    paddingHorizontal: 16,
-  },
-  tab: { paddingVertical: 12, paddingHorizontal: 14, marginRight: 4 },
-  tabActive: { borderBottomWidth: 2, borderBottomColor: Colors.brandBlue },
-  tabText: { fontSize: 13, fontWeight: '600', color: Colors.textMuted },
-  tabTextActive: { color: Colors.brandBlue, fontWeight: '800' },
-  list: { paddingVertical: 8 },
-  card: {
-    flexDirection: 'row',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderBottomWidth: 0.5,
-    borderBottomColor: Colors.border,
-    gap: 12,
-  },
-  thumb: {
+  thumbnail: {
     width: 80,
     height: 110,
-    borderRadius: 8,
+    borderRadius: Radius.sm,
     backgroundColor: Colors.surfaceHover,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cardBody: { flex: 1, justifyContent: 'center' },
-  cardTitle: { fontSize: 14, fontWeight: '700', color: Colors.text, marginBottom: 4 },
-  cardMeta: { fontSize: 12, color: Colors.textMuted, fontWeight: '500', marginBottom: 6 },
-  statusBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-    marginBottom: 4,
-  },
-  statusBadgeText: { fontSize: 11, fontWeight: '900', letterSpacing: 0.3 },
-  cardDate: { fontSize: 11, color: Colors.textMuted, fontWeight: '500' },
-  emptyState: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 80,
-    paddingHorizontal: 20,
-  },
-  emptyText: { fontSize: 14, fontWeight: '600', color: Colors.textMuted },
+  body: { flex: 1, justifyContent: 'center', gap: Spacing.xs },
+  title: { fontSize: FontSize.base, fontWeight: FontWeight.bold, color: Colors.text },
+  meta: { fontSize: FontSize.sm, color: Colors.textMuted },
+  date: { fontSize: FontSize.xs, color: Colors.textMuted },
+  approved: { color: Colors.success },
+  rejected: { color: Colors.danger },
 });

@@ -5,7 +5,8 @@ import { showAlert } from '@/components/ui/Feedback';
 import { TextField } from '@/components/ui/TextField';
 import { Colors, FontSize, FontWeight, Spacing } from '@/theme';
 import { formatDateTime } from '@/utils/format';
-import { Card, Chip } from '@/features/admin/components/AdminUI';
+import { Card } from '@/components/ui/Card';
+import { Chip } from '@/components/ui/Chip';
 import type {
   ModerationAction,
   PendingReport,

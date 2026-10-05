@@ -3,13 +3,9 @@ import { View, Text, ScrollView, TextInput, Switch, RefreshControl } from 'react
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
-import {
-  AdminHeader,
-  ActionButton,
-  Card,
-  Chip,
-  adminStyles,
-} from '@/features/admin/components/AdminUI';
+import { AdminHeader, ActionButton, adminStyles } from '@/features/admin/components/AdminUI';
+import { Card } from '@/components/ui/Card';
+import { Chip } from '@/components/ui/Chip';
 import { showAlert } from '@/components/ui/Feedback';
 import { fireHaptic } from '@/components/ui/Press';
 import { Colors } from '@/theme';

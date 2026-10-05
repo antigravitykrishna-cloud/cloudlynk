@@ -7,19 +7,22 @@ type Props = TextInputProps & {
   /** Small print under the field. Replaced by `error` while there is one. */
   hint?: string;
   error?: string | null;
-  /** Something beside the input inside the same row, e.g. a show-password toggle. */
+  /** Something before the input in the same row, e.g. an "@" before a username. */
+  leading?: ReactNode;
+  /** Something after the input in the same row, e.g. a show-password toggle. */
   trailing?: ReactNode;
 };
 
 /** A labelled text input: the one form field used across the app. */
 export const TextField = forwardRef<TextInput, Props>(function TextField(
-  { label, hint, error, trailing, style, multiline, ...inputProps },
+  { label, hint, error, leading, trailing, style, multiline, ...inputProps },
   ref,
 ) {
   return (
     <View style={styles.field}>
       {label ? <Text style={styles.label}>{label}</Text> : null}
       <View style={styles.row}>
+        {leading}
         <TextInput
           ref={ref}
           placeholderTextColor={Colors.textMuted}
