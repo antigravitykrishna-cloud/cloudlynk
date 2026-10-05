@@ -224,7 +224,10 @@ export default function FormScreen() {
                 >
                   <Icon name={ct.icon} size={16} color={Colors.textSecondary} />
                   <Text
-                    style={[styles.typeChipTxt, contentType === ct.id && { color: Colors.brand }]}
+                    style={[
+                      styles.typeChipTxt,
+                      contentType === ct.id && { color: Colors.brandBlue },
+                    ]}
                   >
                     {ct.label}
                   </Text>
@@ -401,10 +404,12 @@ export default function FormScreen() {
                     setShowGenrePicker(false);
                   }}
                 >
-                  <Text style={[styles.genreRowTxt, genre === g && { color: Colors.brand }]}>
+                  <Text style={[styles.genreRowTxt, genre === g && { color: Colors.brandBlue }]}>
                     {g}
                   </Text>
-                  {genre === g && <Text style={{ color: Colors.brand, fontSize: 16 }}>{'✓'}</Text>}
+                  {genre === g && (
+                    <Text style={{ color: Colors.brandBlue, fontSize: 16 }}>{'✓'}</Text>
+                  )}
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -421,7 +426,7 @@ export default function FormScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
   header: {
-    backgroundColor: Colors.brand,
+    backgroundColor: Colors.brandBlue,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -479,7 +484,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
   },
-  typeChipActive: { borderColor: Colors.brand, backgroundColor: Colors.accentOrangeDim },
+  typeChipActive: { borderColor: Colors.brandBlue, backgroundColor: Colors.brandBlueDim },
   typeChipTxt: { fontSize: 11, color: Colors.textMuted, fontWeight: '700' },
   thumbPicker: {
     height: 160,
@@ -510,13 +515,13 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: Radius.sm,
     alignItems: 'center',
-    backgroundColor: Colors.brand,
+    backgroundColor: Colors.brandBlue,
   },
   saveFullBtnTxt: { fontSize: 14, fontWeight: '800', color: '#ffffff' },
   notFound: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 },
   notFoundText: { fontSize: 15, color: Colors.textMuted, fontWeight: '600', marginBottom: 16 },
   notFoundBtn: {
-    backgroundColor: Colors.brand,
+    backgroundColor: Colors.brandBlue,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: Radius.sm,

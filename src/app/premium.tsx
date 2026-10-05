@@ -353,7 +353,7 @@ export default function PremiumScreen() {
         <Text style={styles.planSectionTitle}>Select Your Plan</Text>
 
         {plansLoading ? (
-          <ActivityIndicator size="large" color={Colors.brand} style={{ marginVertical: 40 }} />
+          <ActivityIndicator size="large" color={Colors.brandBlue} style={{ marginVertical: 40 }} />
         ) : (
           // One row per plan, radio style -- the same list the signed-out
           // Profile shows (components/GuestPlans.tsx), so choosing a plan looks
@@ -521,9 +521,9 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 16,
     padding: 16,
-    backgroundColor: Colors.accentOrangeDim,
+    backgroundColor: Colors.brandBlueDim,
     borderWidth: 1,
-    borderColor: Colors.accentBorder,
+    borderColor: Colors.brandBlueBorder,
     borderRadius: Radius.lg,
   },
   gateBannerMuted: {
@@ -572,11 +572,11 @@ const styles = StyleSheet.create({
   backBtn: { width: 80 },
   backTxt: { color: '#ffffff', fontSize: 14, fontWeight: '600' },
   headerTitle: { color: '#ffffff', fontSize: 18, fontWeight: '800', flex: 1, textAlign: 'center' },
-  badgeCard: { margin: 16, backgroundColor: Colors.accentOrangeDim, borderRadius: 16, padding: 18 },
+  badgeCard: { margin: 16, backgroundColor: Colors.brandBlueDim, borderRadius: 16, padding: 18 },
   badgeHeader: { marginBottom: 14 },
   badgePill: {
     alignSelf: 'flex-start',
-    backgroundColor: Colors.brand,
+    backgroundColor: Colors.brandBlue,
     paddingHorizontal: 14,
     paddingVertical: 4,
     borderRadius: 12,
@@ -587,7 +587,7 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: Colors.brand,
+    backgroundColor: Colors.brandBlue,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -610,14 +610,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-    backgroundColor: Colors.card,
+    backgroundColor: Colors.surfaceElevated,
     borderRadius: Radius.lg,
     borderWidth: 1.5,
     borderColor: Colors.border,
     paddingVertical: 16,
     paddingHorizontal: 16,
   },
-  planRowItemSelected: { borderColor: Colors.brand, backgroundColor: Colors.accentOrangeDim },
+  planRowItemSelected: { borderColor: Colors.brandBlue, backgroundColor: Colors.brandBlueDim },
   planRow: { flexDirection: 'row', paddingHorizontal: 16, gap: 8 },
   planTile: {
     flex: 1,
@@ -632,8 +632,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   planTileSelected: {
-    borderColor: Colors.brand,
-    backgroundColor: Colors.accentOrangeDim,
+    borderColor: Colors.brandBlue,
+    backgroundColor: Colors.brandBlueDim,
     borderWidth: 2,
   },
   // Sits on the border rather than inside the tile, so it does not steal
@@ -642,7 +642,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -9,
     alignSelf: 'center',
-    backgroundColor: Colors.brand,
+    backgroundColor: Colors.brandBlue,
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: Radius.xs,
@@ -669,7 +669,7 @@ const styles = StyleSheet.create({
     padding: 14,
     gap: 12,
   },
-  planCardSelected: { borderColor: Colors.brand, backgroundColor: Colors.accentOrangeDim },
+  planCardSelected: { borderColor: Colors.brandBlue, backgroundColor: Colors.brandBlueDim },
   radio: {
     width: 22,
     height: 22,
@@ -679,14 +679,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  radioSelected: { borderColor: Colors.brand },
-  radioInner: { width: 12, height: 12, borderRadius: 6, backgroundColor: Colors.brand },
+  radioSelected: { borderColor: Colors.brandBlue },
+  radioInner: { width: 12, height: 12, borderRadius: 6, backgroundColor: Colors.brandBlue },
   planInfo: { flex: 1 },
   planName: { fontSize: 16, fontWeight: '700', color: Colors.text },
   planDuration: { fontSize: 14, color: Colors.textSecondary, marginTop: 3 },
   planDescription: { fontSize: 11, color: Colors.textSecondary, marginTop: 2, fontWeight: '500' },
   popularBadge: {
-    backgroundColor: Colors.brand,
+    backgroundColor: Colors.brandBlue,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: Radius.xs,
@@ -698,7 +698,7 @@ const styles = StyleSheet.create({
   proceedBtn: {
     marginHorizontal: 16,
     marginTop: 20,
-    backgroundColor: Colors.brand,
+    backgroundColor: Colors.brandBlue,
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',

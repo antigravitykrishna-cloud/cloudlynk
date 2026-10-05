@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: Colors.card,
+    backgroundColor: Colors.surfaceElevated,
     borderRadius: 12,
     borderWidth: 0.5,
     borderColor: Colors.border,

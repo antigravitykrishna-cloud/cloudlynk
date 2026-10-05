@@ -245,7 +245,7 @@ export default function ProfileScreen() {
           <View style={styles.card}>
             <View style={styles.cardHeader}>
               <Text style={styles.cardTitle}>Storage</Text>
-              <Text style={[styles.cardMeta, { color: Colors.brand }]}>
+              <Text style={[styles.cardMeta, { color: Colors.brandBlue }]}>
                 {profile
                   ? `${Math.min((profile.storage_used / profile.storage_limit) * 100, 100).toFixed(1)}%`
                   : '0.0%'}
@@ -282,7 +282,7 @@ export default function ProfileScreen() {
               )}
             </View>
             {channelsLoading ? (
-              <ActivityIndicator color={Colors.brand} style={{ paddingVertical: 20 }} />
+              <ActivityIndicator color={Colors.brandBlue} style={{ paddingVertical: 20 }} />
             ) : myChannels.length === 0 ? (
               <View style={styles.emptyState}>
                 <CloudlynkLogo size={40} />
@@ -353,7 +353,7 @@ export default function ProfileScreen() {
               {isAdmin && (
                 <SettingsRow
                   icon="shield"
-                  iconBg={Colors.brandLight}
+                  iconBg={Colors.brandBlueDim}
                   label="Admin Panel"
                   onPress={() => router.push('/admin')}
                 />
@@ -432,7 +432,7 @@ export default function ProfileScreen() {
               )}
               <SettingsRow
                 icon="bell"
-                iconBg={Colors.brandLight}
+                iconBg={Colors.brandBlueDim}
                 label="Notifications"
                 value={unreadCount > 0 ? `${unreadCount} new` : undefined}
                 onPress={() => router.push('/notifications')}
@@ -469,14 +469,14 @@ export default function ProfileScreen() {
               />
               <SettingsRow
                 icon="diamond"
-                iconBg={Colors.brandLight}
+                iconBg={Colors.brandBlueDim}
                 label={isPaidUser ? 'Manage Plan' : 'Upgrade to Premium'}
                 value={isPaidUser ? planName : undefined}
                 onPress={() => router.push('/premium')}
               />
               <SettingsRow
                 icon="cloud"
-                iconBg={Colors.brandLight}
+                iconBg={Colors.brandBlueDim}
                 label="Auto Backup"
                 toggle
                 toggleValue={profile?.auto_backup ?? true}
@@ -484,7 +484,7 @@ export default function ProfileScreen() {
               />
               <SettingsRow
                 icon="wifi"
-                iconBg={Colors.brandLight}
+                iconBg={Colors.brandBlueDim}
                 label="Wi-Fi Only Uploads"
                 toggle
                 toggleValue={profile?.wifi_only ?? false}
@@ -492,7 +492,7 @@ export default function ProfileScreen() {
               />
               <SettingsRow
                 icon="settings"
-                iconBg={Colors.brandLight}
+                iconBg={Colors.brandBlueDim}
                 label="App Setting"
                 onPress={() => router.push('/app-setting')}
               />
@@ -595,15 +595,15 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.brandLight,
+    backgroundColor: Colors.brandBlueDim,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: Colors.brand,
+    borderColor: Colors.brandBlue,
     marginBottom: 16,
   },
-  planBadgeText: { fontSize: 13, fontWeight: '900', color: Colors.brand, letterSpacing: 0.5 },
+  planBadgeText: { fontSize: 13, fontWeight: '900', color: Colors.brandBlue, letterSpacing: 0.5 },
   planUpgradeText: { fontSize: 12, color: Colors.textMuted, fontWeight: '600' },
   card: {
     marginHorizontal: 16,
@@ -624,7 +624,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: 8,
   },
-  barFill: { height: '100%', backgroundColor: Colors.brand, borderRadius: 4 },
+  barFill: { height: '100%', backgroundColor: Colors.brandBlue, borderRadius: 4 },
   cardSub: { fontSize: 12, color: Colors.textMuted, fontWeight: '500' },
   section: { marginBottom: 16 },
   sectionHeader: {
@@ -643,7 +643,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 8,
   },
-  addChannelText: { fontSize: 13, fontWeight: '700', color: Colors.brand },
+  addChannelText: { fontSize: 13, fontWeight: '700', color: Colors.brandBlue },
   menuGroup: {
     marginHorizontal: 16,
     backgroundColor: Colors.bg,
@@ -678,7 +678,7 @@ const styles = StyleSheet.create({
   manageBtnText: { color: '#FFFFFF', fontSize: 12, fontWeight: '700' },
   bottomButtons: { paddingHorizontal: 16, marginTop: 16, marginBottom: 16, gap: 12 },
   logoutBtn: {
-    backgroundColor: Colors.brand,
+    backgroundColor: Colors.brandBlue,
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',

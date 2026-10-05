@@ -132,7 +132,7 @@ export default function NewChannelScreen() {
             activeOpacity={0.7}
           >
             {submitting ? (
-              <ActivityIndicator color={Colors.brand} size="small" />
+              <ActivityIndicator color={Colors.brandBlue} size="small" />
             ) : (
               <Text style={styles.submitBtnText}>Submit</Text>
             )}
@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
   },
-  submitBtnText: { color: Colors.brand, fontSize: 13, fontWeight: '900' },
+  submitBtnText: { color: Colors.brandBlue, fontSize: 13, fontWeight: '900' },
   body: { flex: 1 },
   contentWrap: { paddingBottom: 40 },
   avatarBlock: { alignItems: 'center', paddingVertical: 24 },
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { color: Colors.brand, fontSize: 28, fontWeight: '900' },
+  avatarText: { color: Colors.brandBlue, fontSize: 28, fontWeight: '900' },
   field: { marginHorizontal: 16, marginBottom: 16 },
   fieldHeader: {
     flexDirection: 'row',
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.border,
   },
   pickerItemText: { fontSize: 14, color: Colors.text },
-  pickerCheck: { fontSize: 14, color: Colors.brand, fontWeight: '900' },
+  pickerCheck: { fontSize: 14, color: Colors.brandBlue, fontWeight: '900' },
   radioRow: { flexDirection: 'row', gap: 32, marginHorizontal: 16, marginBottom: 16 },
   radioOption: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   radio: {
@@ -378,8 +378,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  radioSelected: { borderColor: Colors.brand },
-  radioInner: { width: 12, height: 12, borderRadius: 6, backgroundColor: Colors.brand },
+  radioSelected: { borderColor: Colors.brandBlue },
+  radioInner: { width: 12, height: 12, borderRadius: 6, backgroundColor: Colors.brandBlue },
   radioLabel: { fontSize: 14, color: Colors.text, fontWeight: '600' },
   divider: { height: 1, backgroundColor: Colors.border, marginHorizontal: 16, marginBottom: 16 },
   videoHint: {
@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 2,
   },
-  checkboxChecked: { backgroundColor: Colors.brand, borderColor: Colors.brand },
+  checkboxChecked: { backgroundColor: Colors.brandBlue, borderColor: Colors.brandBlue },
   checkmark: { color: '#ffffff', fontSize: 14, fontWeight: '900' },
   termsText: { flex: 1, fontSize: 12, color: Colors.text, lineHeight: 18 },
 });

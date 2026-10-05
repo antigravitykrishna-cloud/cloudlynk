@@ -93,7 +93,7 @@ function deriveSeriesId(channelId: string, seriesName: string): string {
 
 function ProgressBar({ progress, status }: { progress: number; status: string }) {
   const pct = Math.round(progress * 100);
-  const color = status === 'done' ? '#00d4aa' : status === 'failed' ? Colors.brand : '#2E7DFF';
+  const color = status === 'done' ? '#00d4aa' : status === 'failed' ? Colors.brandBlue : '#2E7DFF';
   return (
     <View style={pb.wrap}>
       <View style={[pb.bar, { width: `${pct}%` as any, backgroundColor: color }]} />
@@ -383,7 +383,7 @@ export default function AddContentScreen() {
                   activeOpacity={0.75}
                 >
                   {picking ? (
-                    <ActivityIndicator color={Colors.brand} size="small" />
+                    <ActivityIndicator color={Colors.brandBlue} size="small" />
                   ) : (
                     <Text style={styles.addVideoBtnTxt}>{'+ Add Videos'}</Text>
                   )}
@@ -438,7 +438,7 @@ export default function AddContentScreen() {
                           <Text
                             style={[
                               styles.typeChipTxt,
-                              entry.contentType === ct.id && { color: Colors.brand },
+                              entry.contentType === ct.id && { color: Colors.brandBlue },
                             ]}
                           >
                             {ct.label}
@@ -460,7 +460,7 @@ export default function AddContentScreen() {
                         <Text
                           style={[
                             styles.typeChipTxt,
-                            entry.accessLevel === 'free' && { color: Colors.brand },
+                            entry.accessLevel === 'free' && { color: Colors.brandBlue },
                           ]}
                         >
                           Free
@@ -477,7 +477,7 @@ export default function AddContentScreen() {
                         <Text
                           style={[
                             styles.typeChipTxt,
-                            entry.accessLevel === 'premium' && { color: Colors.brand },
+                            entry.accessLevel === 'premium' && { color: Colors.brandBlue },
                           ]}
                         >
                           Premium
@@ -524,7 +524,7 @@ export default function AddContentScreen() {
                       ) : (
                         <View style={styles.thumbEmpty}>
                           {thumbPickingFor === idx ? (
-                            <ActivityIndicator color={Colors.brand} />
+                            <ActivityIndicator color={Colors.brandBlue} />
                           ) : (
                             <>
                               <Icon name="image" size={24} color={Colors.textMuted} />
@@ -686,10 +686,12 @@ export default function AddContentScreen() {
                       setGenrePickerFor(null);
                     }}
                   >
-                    <Text style={[styles.genreRowTxt, selected && { color: Colors.brand }]}>
+                    <Text style={[styles.genreRowTxt, selected && { color: Colors.brandBlue }]}>
                       {g}
                     </Text>
-                    {selected && <Text style={{ color: Colors.brand, fontSize: 16 }}>{'✓'}</Text>}
+                    {selected && (
+                      <Text style={{ color: Colors.brandBlue, fontSize: 16 }}>{'✓'}</Text>
+                    )}
                   </TouchableOpacity>
                 );
               })}
@@ -727,7 +729,7 @@ const styles = StyleSheet.create({
     minWidth: 80,
     alignItems: 'center',
   },
-  submitBtnTxt: { color: Colors.brand, fontSize: 13, fontWeight: '900' },
+  submitBtnTxt: { color: Colors.brandBlue, fontSize: 13, fontWeight: '900' },
   body: { flex: 1, paddingHorizontal: 16 },
   progressPanel: {
     marginTop: 16,
@@ -740,17 +742,17 @@ const styles = StyleSheet.create({
   progressTitle: { fontSize: 14, fontWeight: '800', color: Colors.text, marginBottom: 12 },
   progressRow: { marginBottom: 12 },
   progressName: { fontSize: 13, fontWeight: '600', color: Colors.text },
-  progressError: { fontSize: 11, color: Colors.brand, marginTop: 4, fontWeight: '600' },
+  progressError: { fontSize: 11, color: Colors.brandBlue, marginTop: 4, fontWeight: '600' },
   addVideoBtn: {
     marginTop: 16,
     borderWidth: 2,
-    borderColor: Colors.brand,
+    borderColor: Colors.brandBlue,
     borderStyle: 'dashed',
     borderRadius: Radius.md,
     paddingVertical: 18,
     alignItems: 'center',
   },
-  addVideoBtnTxt: { color: Colors.brand, fontSize: 15, fontWeight: '800' },
+  addVideoBtnTxt: { color: Colors.brandBlue, fontSize: 15, fontWeight: '800' },
   empty: { alignItems: 'center', paddingTop: 48, paddingBottom: 32 },
   emptyIcon: { fontSize: 48, marginBottom: 12 },
   emptyTxt: { fontSize: 16, fontWeight: '800', color: Colors.text, marginBottom: 6 },
@@ -763,7 +765,7 @@ const styles = StyleSheet.create({
   },
   entryCard: { marginTop: 20 },
   entryHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 },
-  entryNum: { fontSize: FontSize.sm, fontWeight: '900', color: Colors.brand, width: 24 },
+  entryNum: { fontSize: FontSize.sm, fontWeight: '900', color: Colors.brandBlue, width: 24 },
   entryVideoMeta: { flex: 1 },
   entryFileName: { fontSize: FontSize.sm, fontWeight: '700', color: Colors.text },
   entryFileSize: { fontSize: FontSize.xs, color: Colors.textMuted, marginTop: 2 },
@@ -801,7 +803,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
   },
-  typeChipActive: { borderColor: Colors.brand, backgroundColor: Colors.accentOrangeDim },
+  typeChipActive: { borderColor: Colors.brandBlue, backgroundColor: Colors.brandBlueDim },
   typeChipTxt: { fontSize: 8, color: Colors.textMuted, fontWeight: '700' },
   thumbPicker: {
     height: 130,

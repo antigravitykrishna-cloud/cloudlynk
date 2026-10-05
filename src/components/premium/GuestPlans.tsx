@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
   },
   content: { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.xl },
   benefitsCard: {
-    backgroundColor: Colors.accentOrangeDim,
+    backgroundColor: Colors.brandBlueDim,
     borderRadius: Radius.xl,
     padding: Spacing.lg,
     marginBottom: Spacing.xl,
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-    backgroundColor: Colors.card,
+    backgroundColor: Colors.surfaceElevated,
     borderRadius: Radius.lg,
     borderWidth: 1.5,
     borderColor: Colors.border,
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     marginBottom: 12,
   },
-  planRowSelected: { borderColor: Colors.brandBlue, backgroundColor: Colors.accentOrangeDim },
+  planRowSelected: { borderColor: Colors.brandBlue, backgroundColor: Colors.brandBlueDim },
   radio: {
     width: 24,
     height: 24,

@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     height: CARD_H,
     borderRadius: 8,
     overflow: 'hidden',
-    backgroundColor: Colors.card,
+    backgroundColor: Colors.surfaceElevated,
     marginBottom: 6,
     position: 'relative',
     borderWidth: 0.5,

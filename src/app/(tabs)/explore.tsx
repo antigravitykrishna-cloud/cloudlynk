@@ -196,7 +196,7 @@ export default function ExploreScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor={Colors.brand}
+              tintColor={Colors.brandBlue}
             />
           }
         >
@@ -229,7 +229,7 @@ export default function ExploreScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor={Colors.brand}
+              tintColor={Colors.brandBlue}
             />
           }
           renderItem={({ item: s }) => (
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 11,
     borderRadius: Radius.md,
-    backgroundColor: Colors.accent,
+    backgroundColor: Colors.brandBlue,
   },
   retryBtnText: { fontSize: 14, fontWeight: FontWeight.bold, color: Colors.textInverse },
 });

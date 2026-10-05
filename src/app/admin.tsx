@@ -302,8 +302,8 @@ export default function AdminScreen() {
     return (
       <View style={styles.card}>
         <View style={styles.cardHeader}>
-          <View style={[styles.cardIcon, { backgroundColor: Colors.purpleDim }]}>
-            <Icon name="edit" size={18} color={Colors.purple} />
+          <View style={[styles.cardIcon, { backgroundColor: Colors.lavenderDim }]}>
+            <Icon name="edit" size={18} color={Colors.pastelLavender} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.cardTitle} numberOfLines={1}>
@@ -365,7 +365,11 @@ export default function AdminScreen() {
         style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.accent} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={Colors.brandBlue}
+          />
         }
       >
         <View style={styles.toolGrid}>
@@ -409,7 +413,7 @@ export default function AdminScreen() {
           ))}
         </View>
         {loading ? (
-          <ActivityIndicator color={Colors.accent} style={{ marginTop: 40 }} />
+          <ActivityIndicator color={Colors.brandBlue} style={{ marginTop: 40 }} />
         ) : (
           <>
             {activeTab === 'channels' ? (
@@ -450,7 +454,7 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.border,
   },
   backBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  backTxt: { fontSize: 26, color: Colors.accent, fontWeight: FontWeight.bold },
+  backTxt: { fontSize: 26, color: Colors.brandBlue, fontWeight: FontWeight.bold },
   headerTitle: {
     flex: 1,
     fontSize: FontSize.lg,
@@ -476,13 +480,17 @@ const styles = StyleSheet.create({
   summaryRow: {
     flexDirection: 'row',
     margin: Spacing.lg,
-    backgroundColor: Colors.card,
+    backgroundColor: Colors.surfaceElevated,
     borderRadius: Radius.xl,
     borderWidth: 0.5,
     borderColor: Colors.border,
   },
   summaryItem: { flex: 1, alignItems: 'center', paddingVertical: Spacing.lg },
-  summaryVal: { fontSize: FontSize.xxxl, fontWeight: FontWeight.extrabold, color: Colors.accent },
+  summaryVal: {
+    fontSize: FontSize.xxxl,
+    fontWeight: FontWeight.extrabold,
+    color: Colors.brandBlue,
+  },
   summaryLbl: {
     fontSize: FontSize.sm,
     color: Colors.textSecondary,
@@ -493,7 +501,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginHorizontal: Spacing.lg,
     marginBottom: Spacing.md,
-    backgroundColor: Colors.card,
+    backgroundColor: Colors.surfaceElevated,
     borderRadius: Radius.md,
     padding: 3,
     borderWidth: 0.5,
@@ -506,7 +514,7 @@ const styles = StyleSheet.create({
   card: {
     marginHorizontal: Spacing.lg,
     marginBottom: Spacing.md,
-    backgroundColor: Colors.card,
+    backgroundColor: Colors.surfaceElevated,
     borderRadius: Radius.xl,
     padding: Spacing.lg,
     borderWidth: 0.5,
@@ -558,7 +566,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: Spacing.md,
     borderRadius: Radius.md,
-    backgroundColor: Colors.accent,
+    backgroundColor: Colors.brandBlue,
     alignItems: 'center',
   },
   approveTxt: { fontSize: FontSize.md, fontWeight: FontWeight.extrabold, color: '#000' },

@@ -58,7 +58,7 @@ const TONES = {
   good: { bg: 'rgba(46,212,122,0.14)', fg: Colors.success },
   warn: { bg: 'rgba(255,179,71,0.14)', fg: Colors.warning },
   bad: { bg: 'rgba(255,77,109,0.14)', fg: Colors.danger },
-  brand: { bg: Colors.accentOrangeDim, fg: Colors.brandBlue },
+  brand: { bg: Colors.brandBlueDim, fg: Colors.brandBlue },
 };
 
 export function ActionButton({
@@ -181,7 +181,7 @@ export const adminStyles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
   list: { padding: Spacing.lg, paddingBottom: 40 },
   input: {
-    backgroundColor: Colors.card,
+    backgroundColor: Colors.surfaceElevated,
     borderRadius: Radius.md,
     borderWidth: 1,
     borderColor: Colors.border,
@@ -242,7 +242,7 @@ const s = StyleSheet.create({
     marginLeft: Spacing.xs,
   },
   card: {
-    backgroundColor: Colors.card,
+    backgroundColor: Colors.surfaceElevated,
     borderRadius: Radius.lg,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: Colors.border,
@@ -267,7 +267,7 @@ const s = StyleSheet.create({
   btnTxt: { fontSize: FontSize.md, fontWeight: FontWeight.bold },
   tile: {
     width: '48%',
-    backgroundColor: Colors.card,
+    backgroundColor: Colors.surfaceElevated,
     borderRadius: Radius.lg,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: Colors.border,

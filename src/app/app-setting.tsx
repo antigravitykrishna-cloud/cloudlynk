@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
   versionSub: { fontSize: 11, color: Colors.textMuted, fontWeight: '500', marginTop: 2 },
   bottomButtons: { paddingHorizontal: 16, marginTop: 8, gap: 12 },
   logoutBtn: {
-    backgroundColor: Colors.brand,
+    backgroundColor: Colors.brandBlue,
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',

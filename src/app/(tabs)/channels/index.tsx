@@ -329,7 +329,7 @@ export default function ChannelsScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor={Colors.brand}
+              tintColor={Colors.brandBlue}
             />
           }
         >
@@ -371,7 +371,7 @@ export default function ChannelsScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor={Colors.brand}
+              tintColor={Colors.brandBlue}
             />
           }
         >
@@ -498,7 +498,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#ffffff',
   },
-  crownText: { fontSize: 18, color: Colors.brand, fontWeight: '900' },
+  crownText: { fontSize: 18, color: Colors.brandBlue, fontWeight: '900' },
   searchBarWrap: { backgroundColor: Colors.surface, paddingHorizontal: 16, paddingBottom: 16 },
   searchBar: {
     flexDirection: 'row',
@@ -547,7 +547,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
   },
-  filterPillActive: { backgroundColor: Colors.brand, borderColor: Colors.brand },
+  filterPillActive: { backgroundColor: Colors.brandBlue, borderColor: Colors.brandBlue },
   filterPillText: { fontSize: 13, fontWeight: '700', color: Colors.textSecondary },
   filterPillTextActive: { color: '#ffffff' },
   list: { paddingVertical: 8 },
@@ -588,14 +588,14 @@ const styles = StyleSheet.create({
   channelStatIcon: { fontSize: 12 },
   channelStatText: { fontSize: 12, color: Colors.textSecondary, fontWeight: '600' },
   manageBtn: {
-    backgroundColor: Colors.brand,
+    backgroundColor: Colors.brandBlue,
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 8,
   },
   manageBtnText: { color: '#ffffff', fontSize: 13, fontWeight: '800' },
   joinBtn: {
-    backgroundColor: Colors.brand,
+    backgroundColor: Colors.brandBlue,
     paddingHorizontal: 18,
     paddingVertical: 8,
     borderRadius: 8,
@@ -607,9 +607,9 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: Colors.brand,
+    borderColor: Colors.brandBlue,
   },
-  leaveBtnText: { color: Colors.brand, fontSize: 13, fontWeight: '700' },
+  leaveBtnText: { color: Colors.brandBlue, fontSize: 13, fontWeight: '700' },
   lockBtn: {
     width: 44,
     height: 44,
@@ -642,7 +642,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 11,
     borderRadius: 8,
-    backgroundColor: Colors.brand,
+    backgroundColor: Colors.brandBlue,
   },
   retryBtnText: { fontSize: 14, fontWeight: '700', color: '#ffffff' },
 });

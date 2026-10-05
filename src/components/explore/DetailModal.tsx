@@ -241,7 +241,7 @@ DetailModal.displayName = 'DetailModal';
 
 const styles = StyleSheet.create({
   detailModal: { flex: 1, backgroundColor: Colors.bg },
-  detailHero: { height: H * 0.4, position: 'relative', backgroundColor: Colors.brand },
+  detailHero: { height: H * 0.4, position: 'relative', backgroundColor: Colors.brandBlue },
   detailHeroImg: { width: '100%', height: '100%' },
   detailHeroPlaceholder: { alignItems: 'center', justifyContent: 'center' },
   detailClose: {
@@ -262,11 +262,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
-    backgroundColor: Colors.brandLight,
+    backgroundColor: Colors.brandBlueDim,
     borderWidth: 0.5,
-    borderColor: Colors.brand,
+    borderColor: Colors.brandBlue,
   },
-  detailBadgeTxt: { fontSize: 11, color: Colors.brand, fontWeight: '800', letterSpacing: 0.5 },
+  detailBadgeTxt: { fontSize: 11, color: Colors.brandBlue, fontWeight: '800', letterSpacing: 0.5 },
   detailTitle: {
     fontSize: 24,
     fontWeight: '900',
@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   playBtn: {
-    backgroundColor: Colors.brand,
+    backgroundColor: Colors.brandBlue,
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',

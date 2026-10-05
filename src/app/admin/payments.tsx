@@ -126,7 +126,7 @@ export default function AdminPaymentsScreen() {
 const st = StyleSheet.create({
   filters: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 12 },
   filter: {
-    backgroundColor: Colors.card,
+    backgroundColor: Colors.surfaceElevated,
     borderWidth: 1,
     borderColor: Colors.border,
     paddingHorizontal: 14,

@@ -105,6 +105,6 @@ const styles = StyleSheet.create({
   },
   primaryTxt: { color: Colors.textInverse, fontSize: FontSize.lg, fontWeight: FontWeight.bold },
   ghostBtn: { paddingVertical: Spacing.lg, paddingHorizontal: Spacing.xl, marginTop: Spacing.xs },
-  ghostTxt: { color: Colors.accent, fontSize: FontSize.lg, fontWeight: FontWeight.semibold },
+  ghostTxt: { color: Colors.brandBlue, fontSize: FontSize.lg, fontWeight: FontWeight.semibold },
   footnote: { color: Colors.textMuted, fontSize: FontSize.md, marginTop: Spacing.md },
 });

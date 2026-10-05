@@ -1,77 +1,53 @@
 import { Platform } from 'react-native';
 
-/**
- * Cloudlynk design tokens. Dark-only app (userInterfaceStyle "dark"). Some legacy names describe
- * old colours -- `accentOrange` is the brand blue and `accentGreen` the brand cyan; prefer
- * `brandBlue` / `brandCyan` in new code.
- */
+/** Cloudlynk design tokens. The app is dark-only (userInterfaceStyle "dark" in app.json). */
 
 // The two brand hues, and the gradient they form. Everything else is derived.
 const BRAND_BLUE = '#2E7DFF';
 const BRAND_CYAN = '#00D4FF';
 
 export const Colors = {
-  // Surfaces — a navy ramp, not a grey one. Each step is a real hue shift as
-  // well as a lightness shift, so elevation reads on an OLED panel where a
-  // pure-grey ramp collapses into black.
+  // Surfaces: a navy ramp (each step shifts hue as well as lightness, so
+  // elevation stays visible on OLED screens).
   bg: '#0B1220',
   surface: '#121C2E',
   surfaceElevated: '#182437',
   surfaceHover: '#1F2D44',
   border: '#22304A',
   borderStrong: '#31425F',
+
   // Text
   text: '#FFFFFF',
   textSecondary: '#9FB0C9',
   textMuted: '#6B7C97',
   textInverse: '#0B1220',
-  // Brand. Prefer these two names in new code.
+
+  // Brand
   brandBlue: BRAND_BLUE,
+  brandBlueDim: 'rgba(46, 125, 255, 0.15)',
+  brandBlueBorder: 'rgba(46, 125, 255, 0.45)',
   brandCyan: BRAND_CYAN,
-  // Accents. Named for the old palette's hues, carrying the new one — see the
-  // header. `accentOrange` is the primary action colour; `accentGreen` is the
-  // secondary/highlight.
-  accentOrange: BRAND_BLUE,
-  accentOrangeDim: 'rgba(46, 125, 255, 0.15)',
-  accentGreen: BRAND_CYAN,
-  accentGreenDim: 'rgba(0, 212, 255, 0.15)',
-  // Semantic. danger and warning are unchanged — they were already hue-correct
-  // and they must not read as brand colours. success moves off the neon green,
-  // which was unreadable next to cyan and looked like an error state.
+  brandCyanDim: 'rgba(0, 212, 255, 0.15)',
+
+  // Status
   danger: '#FF4D6D',
+  dangerDim: 'rgba(255, 77, 109, 0.15)',
   warning: '#FFB347',
+  warningDim: 'rgba(255, 179, 71, 0.15)',
   success: '#2ED47A',
-  info: BRAND_CYAN,
-  // Pastels — retuned to sit on navy rather than black. Used for category
-  // chips and avatar fallbacks.
+  successDim: 'rgba(46, 212, 122, 0.15)',
+  gold: '#FFC65C',
+
+  // Pastels: category chips and avatar fallbacks
   pastelMint: '#7FE7C4',
   pastelLavender: '#B4A9FF',
+  lavenderDim: 'rgba(180, 169, 255, 0.15)',
   pastelPeach: '#FFC49B',
   pastelPink: '#FFA8CC',
   pastelSky: '#8FD3FF',
   pastelButter: '#FFE29A',
-  // Compatibility aliases
-  brand: BRAND_BLUE,
-  brandLight: 'rgba(46, 125, 255, 0.15)',
-  card: '#182437',
-  cardHover: '#1F2D44',
-  accent: BRAND_BLUE,
-  accentDim: 'rgba(46, 125, 255, 0.15)',
-  accentBorder: 'rgba(46, 125, 255, 0.45)',
-  blue: BRAND_BLUE,
-  blueDim: 'rgba(46, 125, 255, 0.15)',
-  purple: '#B4A9FF',
-  purpleDim: 'rgba(180, 169, 255, 0.15)',
-  dangerDim: 'rgba(255, 77, 109, 0.15)',
-  warningDim: 'rgba(255, 179, 71, 0.15)',
-  successDim: 'rgba(46, 212, 122, 0.15)',
-  feedCard: '#182437',
-  gold: '#FFC65C',
-  goldBorder: '#E5A93C',
-  inactive: '#6B7C97',
-  inactiveBg: '#182437',
+
   white: '#FFFFFF',
-  black: '#000000',
 };
 
 /**
@@ -184,11 +160,3 @@ export const CATEGORY_DIM: Record<string, string> = {
   audio: 'rgba(127, 231, 196, 0.15)',
   other: 'rgba(159, 176, 201, 0.15)',
 };
-
-// Shorthand aliases used in hooks and screens
-export const blueDim = Colors.blueDim;
-export const purpleDim = Colors.purpleDim;
-export const dangerDim = Colors.dangerDim;
-export const warningDim = Colors.warningDim;
-export const accentBorder = Colors.accentBorder;
-export const accentDim = Colors.accentDim;

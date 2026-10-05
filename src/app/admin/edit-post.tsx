@@ -433,12 +433,12 @@ const styles = StyleSheet.create({
   scroll: { padding: Spacing.lg },
 
   banner: {
-    backgroundColor: Colors.accentOrangeDim,
+    backgroundColor: Colors.brandBlueDim,
     borderRadius: Radius.md,
     padding: Spacing.md,
     marginBottom: Spacing.xl,
     borderWidth: 1,
-    borderColor: Colors.accentBorder,
+    borderColor: Colors.brandBlueBorder,
   },
   bannerTxt: { color: Colors.textSecondary, fontSize: FontSize.md, lineHeight: 19 },
 

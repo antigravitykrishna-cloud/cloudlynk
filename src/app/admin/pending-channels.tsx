@@ -402,7 +402,7 @@ export default function PendingChannelsScreen() {
       </View>
 
       {loading ? (
-        <ActivityIndicator color={Colors.brand} size="large" style={{ marginTop: 60 }} />
+        <ActivityIndicator color={Colors.brandBlue} size="large" style={{ marginTop: 60 }} />
       ) : (
         <ScrollView
           style={{ flex: 1 }}
@@ -411,7 +411,7 @@ export default function PendingChannelsScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor={Colors.brand}
+              tintColor={Colors.brandBlue}
             />
           }
         >
@@ -661,16 +661,16 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: Colors.brand,
+    borderColor: Colors.brandBlue,
   },
-  rejectBtnText: { color: Colors.brand, fontSize: 13, fontWeight: '700' },
+  rejectBtnText: { color: Colors.brandBlue, fontSize: 13, fontWeight: '700' },
   typeBadge: {
-    backgroundColor: Colors.brandLight,
+    backgroundColor: Colors.brandBlueDim,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
   },
-  typeBadgeText: { fontSize: 11, fontWeight: '800', color: Colors.brand, letterSpacing: 0.3 },
+  typeBadgeText: { fontSize: 11, fontWeight: '800', color: Colors.brandBlue, letterSpacing: 0.3 },
   emptyState: {
     flex: 1,
     alignItems: 'center',

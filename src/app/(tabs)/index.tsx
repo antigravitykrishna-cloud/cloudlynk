@@ -176,7 +176,7 @@ export default function CloudScreen() {
                 <View
                   style={[
                     styles.fileIcon,
-                    { backgroundColor: CATEGORY_DIM[file.category] ?? Colors.card },
+                    { backgroundColor: CATEGORY_DIM[file.category] ?? Colors.surfaceElevated },
                   ]}
                 >
                   <Icon
@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#ffffff',
   },
-  crownText: { fontSize: 18, color: Colors.brand, fontWeight: '900' },
+  crownText: { fontSize: 18, color: Colors.brandBlue, fontWeight: '900' },
   body: { flex: 1, backgroundColor: Colors.bg },
   emptyState: {
     flex: 1,
@@ -322,9 +322,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
   },
-  categoryChipActive: { backgroundColor: Colors.brandLight, borderColor: Colors.brand },
+  categoryChipActive: { backgroundColor: Colors.brandBlueDim, borderColor: Colors.brandBlue },
   categoryLabel: { fontSize: 12, fontWeight: '700', color: Colors.textSecondary },
-  categoryLabelActive: { color: Colors.brand },
+  categoryLabelActive: { color: Colors.brandBlue },
   fileRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -352,13 +352,13 @@ const styles = StyleSheet.create({
     gap: 10,
     marginHorizontal: 16,
     marginBottom: 12,
-    backgroundColor: Colors.brandLight,
+    backgroundColor: Colors.brandBlueDim,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
-  transferBannerText: { flex: 1, fontSize: 12, fontWeight: '700', color: Colors.brand },
-  transferBannerPct: { fontSize: 12, fontWeight: '800', color: Colors.brand },
+  transferBannerText: { flex: 1, fontSize: 12, fontWeight: '700', color: Colors.brandBlue },
+  transferBannerPct: { fontSize: 12, fontWeight: '800', color: Colors.brandBlue },
   fab: {
     position: 'absolute',
     bottom: 80,
@@ -366,11 +366,11 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: Colors.brand,
+    backgroundColor: Colors.brandBlue,
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 6,
-    shadowColor: Colors.brand,
+    shadowColor: Colors.brandBlue,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 8,

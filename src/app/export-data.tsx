@@ -152,7 +152,7 @@ export default function ExportDataScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
   header: {
-    backgroundColor: Colors.brand,
+    backgroundColor: Colors.brandBlue,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
   successText: { fontSize: 15, fontWeight: '700', color: '#2ED47A', marginBottom: 4 },
   successMeta: { fontSize: 13, color: '#6B7C97', marginTop: 2 },
   exportBtn: {
-    backgroundColor: Colors.brand,
+    backgroundColor: Colors.brandBlue,
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',

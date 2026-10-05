@@ -470,13 +470,13 @@ const styles = StyleSheet.create({
   resumePosition: {
     fontSize: FontSize.xl,
     fontWeight: '700',
-    color: Colors.accentOrange,
+    color: Colors.brandBlue,
     marginBottom: 20,
   },
   resumeActions: { flexDirection: 'row', gap: 12, width: '100%' },
   resumeBtn: {
     flex: 1,
-    backgroundColor: Colors.brand,
+    backgroundColor: Colors.brandBlue,
     borderRadius: Radius.sm,
     paddingVertical: 12,
     alignItems: 'center',
@@ -544,7 +544,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
   },
-  compactChipActive: { backgroundColor: Colors.brand, borderColor: Colors.brand },
+  compactChipActive: { backgroundColor: Colors.brandBlue, borderColor: Colors.brandBlue },
   compactChipTxt: { fontSize: 12, fontWeight: '700', color: Colors.textSecondary },
   compactChipTxtActive: { color: '#ffffff' },
 
@@ -566,7 +566,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.3)',
     overflow: 'hidden',
   },
-  progressFill: { height: 4, borderRadius: 4, backgroundColor: Colors.brand },
+  progressFill: { height: 4, borderRadius: 4, backgroundColor: Colors.brandBlue },
 
   skipFeedback: {
     position: 'absolute',

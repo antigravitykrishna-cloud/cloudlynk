@@ -177,5 +177,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: Spacing.xl,
   },
-  link: { color: Colors.accent, fontWeight: FontWeight.semibold },
+  link: { color: Colors.brandBlue, fontWeight: FontWeight.semibold },
 });

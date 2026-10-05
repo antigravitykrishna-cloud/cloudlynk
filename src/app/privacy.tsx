@@ -47,7 +47,7 @@ export default function PrivacyPolicyScreen() {
           <>
             {opening && (
               <ActivityIndicator
-                color={Colors.accent}
+                color={Colors.brandBlue}
                 size="large"
                 style={{ marginBottom: Spacing.lg }}
               />
@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.border,
   },
   backBtn: { width: 60 },
-  backTxt: { color: Colors.accent, fontSize: FontSize.md, fontWeight: FontWeight.semibold },
+  backTxt: { color: Colors.brandBlue, fontSize: FontSize.md, fontWeight: FontWeight.semibold },
   headerTitle: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.text },
   content: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl },
   body: {
@@ -89,5 +89,5 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   retryBtn: { marginTop: Spacing.lg },
-  retryTxt: { color: Colors.accent, fontSize: FontSize.sm, fontWeight: FontWeight.semibold },
+  retryTxt: { color: Colors.brandBlue, fontSize: FontSize.sm, fontWeight: FontWeight.semibold },
 });

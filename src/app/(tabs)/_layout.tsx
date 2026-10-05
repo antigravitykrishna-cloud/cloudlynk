@@ -19,7 +19,7 @@ function TabIcon({ icon, label, focused }: TabIconProps) {
       <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
         {/* The icon takes the tint from the same source as the label, so the
             active state is one decision rather than two that can drift. */}
-        <Icon name={icon} size={22} color={focused ? Colors.brandBlue : Colors.inactive} />
+        <Icon name={icon} size={22} color={focused ? Colors.brandBlue : Colors.textMuted} />
       </View>
       <Text style={[styles.label, focused && styles.labelActive]}>{label}</Text>
     </View>
@@ -116,17 +116,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconWrapActive: { backgroundColor: Colors.brandLight },
-  icon: { fontSize: 22, color: Colors.inactive },
-  iconActive: { color: Colors.brand },
+  iconWrapActive: { backgroundColor: Colors.brandBlueDim },
+  icon: { fontSize: 22, color: Colors.textMuted },
+  iconActive: { color: Colors.brandBlue },
   label: {
     fontSize: 11,
     fontWeight: '700',
-    color: Colors.inactive,
+    color: Colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     textAlign: 'center',
     marginTop: 3,
   },
-  labelActive: { color: Colors.brand },
+  labelActive: { color: Colors.brandBlue },
 });

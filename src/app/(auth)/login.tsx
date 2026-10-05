@@ -111,7 +111,7 @@ export default function LoginScreen() {
         <View style={styles.logoRow}>
           <Text style={styles.logo}>☁</Text>
           <Text style={styles.logoText}>
-            Cloud<Text style={{ color: Colors.accent }}>lynk</Text>
+            Cloud<Text style={{ color: Colors.brandBlue }}>lynk</Text>
           </Text>
         </View>
         <Text style={styles.tagline}>Your cloud. Your channels.</Text>
@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xxxl,
   },
   card: {
-    backgroundColor: Colors.card,
+    backgroundColor: Colors.surfaceElevated,
     borderRadius: Radius.xl,
     borderWidth: 0.5,
     borderColor: Colors.border,
@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: Colors.accent,
+    backgroundColor: Colors.brandBlue,
     borderRadius: Radius.md,
     paddingVertical: 15,
     marginTop: Spacing.sm,
@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.extrabold,
   },
   linkBack: {
-    color: Colors.accent,
+    color: Colors.brandBlue,
     fontSize: FontSize.md,
     fontWeight: FontWeight.semibold,
     textAlign: 'center',
@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     paddingHorizontal: 8,
   },
-  legalLink: { color: Colors.accent, fontWeight: FontWeight.semibold },
+  legalLink: { color: Colors.brandBlue, fontWeight: FontWeight.semibold },
   version: {
     color: Colors.textMuted,
     fontSize: FontSize.sm,

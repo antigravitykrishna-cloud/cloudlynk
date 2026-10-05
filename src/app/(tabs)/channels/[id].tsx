@@ -354,8 +354,8 @@ export default function ChannelDetailScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
-  hero: { width: W, position: 'relative', backgroundColor: Colors.brand },
-  heroPlaceholder: { backgroundColor: Colors.brandLight },
+  hero: { width: W, position: 'relative', backgroundColor: Colors.brandBlue },
+  heroPlaceholder: { backgroundColor: Colors.brandBlueDim },
   heroBack: {
     position: 'absolute',
     left: 16,
@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
   },
   channelLabel: {
     fontSize: 12,
-    color: Colors.brand,
+    color: Colors.brandBlue,
     fontWeight: '800',
     letterSpacing: 1.5,
     marginBottom: 6,
@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
   },
   heroInfoTxt: { color: '#fff', fontSize: 15, fontWeight: '700' },
   joinBtn: {
-    backgroundColor: Colors.brand,
+    backgroundColor: Colors.brandBlue,
     borderRadius: 8,
     paddingVertical: 10,
     alignItems: 'center',
@@ -423,22 +423,22 @@ const styles = StyleSheet.create({
   addBtnGroup: { marginHorizontal: 16, marginTop: 20, gap: 8 },
   addBtn: {
     borderWidth: 1.5,
-    borderColor: Colors.brand,
+    borderColor: Colors.brandBlue,
     borderRadius: 8,
     paddingVertical: 10,
     alignItems: 'center',
     borderStyle: 'dashed',
   },
-  addBtnTxt: { color: Colors.brand, fontSize: 14, fontWeight: '800' },
+  addBtnTxt: { color: Colors.brandBlue, fontSize: 14, fontWeight: '800' },
   queueBtn: {
     borderWidth: 1,
-    borderColor: Colors.accentOrange,
+    borderColor: Colors.brandBlue,
     borderRadius: 8,
     paddingVertical: 10,
     alignItems: 'center',
-    backgroundColor: Colors.accentOrangeDim,
+    backgroundColor: Colors.brandBlueDim,
   },
-  queueBtnTxt: { color: Colors.accentOrange, fontSize: 14, fontWeight: '700' },
+  queueBtnTxt: { color: Colors.brandBlue, fontSize: 14, fontWeight: '700' },
   emptyState: { alignItems: 'center', paddingTop: 60, paddingHorizontal: 40 },
   emptyTitle: { fontSize: 22, fontWeight: '900', color: Colors.text, marginBottom: 8 },
   emptyDesc: {
@@ -449,7 +449,7 @@ const styles = StyleSheet.create({
     marginBottom: 28,
   },
   emptyAddBtn: {
-    backgroundColor: Colors.brand,
+    backgroundColor: Colors.brandBlue,
     borderRadius: 8,
     paddingHorizontal: 28,
     paddingVertical: 14,

@@ -37,8 +37,8 @@ export const SettingsRow = ({
       <Switch
         value={toggleValue}
         onValueChange={onToggle}
-        trackColor={{ false: Colors.borderStrong, true: Colors.accentOrangeDim }}
-        thumbColor={toggleValue ? Colors.brand : '#cccccc'}
+        trackColor={{ false: Colors.borderStrong, true: Colors.brandBlueDim }}
+        thumbColor={toggleValue ? Colors.brandBlue : '#cccccc'}
       />
     ) : (
       <View style={styles.rowRight}>

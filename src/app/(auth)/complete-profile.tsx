@@ -78,7 +78,7 @@ export default function CompleteProfileScreen() {
       <View
         style={[styles.container, { flex: 1, backgroundColor: Colors.bg, alignItems: 'center' }]}
       >
-        <ActivityIndicator color={Colors.accent} size="large" />
+        <ActivityIndicator color={Colors.brandBlue} size="large" />
         <Text style={[styles.subheading, { marginTop: Spacing.lg, textAlign: 'center' }]}>
           Setting up your account...
         </Text>
@@ -94,7 +94,7 @@ export default function CompleteProfileScreen() {
       <View style={styles.logoRow}>
         <Text style={styles.logo}>☁</Text>
         <Text style={styles.logoText}>
-          Cloud<Text style={{ color: Colors.accent }}>lynk</Text>
+          Cloud<Text style={{ color: Colors.brandBlue }}>lynk</Text>
         </Text>
       </View>
 
@@ -118,15 +118,15 @@ export default function CompleteProfileScreen() {
           </View>
           <Text style={styles.terms}>
             I am 18 or older and agree to the{' '}
-            <Link href="/terms" style={{ color: Colors.accent }}>
+            <Link href="/terms" style={{ color: Colors.brandBlue }}>
               Terms of Service
             </Link>
             ,{' '}
-            <Link href="/community-guidelines" style={{ color: Colors.accent }}>
+            <Link href="/community-guidelines" style={{ color: Colors.brandBlue }}>
               Community Guidelines
             </Link>
             , and{' '}
-            <Link href="/privacy" style={{ color: Colors.accent }}>
+            <Link href="/privacy" style={{ color: Colors.brandBlue }}>
               Privacy Policy
             </Link>
             .
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
     letterSpacing: -1,
   },
   card: {
-    backgroundColor: Colors.card,
+    backgroundColor: Colors.surfaceElevated,
     borderRadius: Radius.xl,
     padding: Spacing.xl,
     borderWidth: 0.5,
@@ -217,11 +217,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 1,
   },
-  checkboxChecked: { backgroundColor: Colors.accent, borderColor: Colors.accent },
+  checkboxChecked: { backgroundColor: Colors.brandBlue, borderColor: Colors.brandBlue },
   checkmark: { color: '#000', fontSize: 13, fontWeight: '900' },
   terms: { flex: 1, fontSize: FontSize.sm, color: Colors.textMuted, lineHeight: 18 },
   btn: {
-    backgroundColor: Colors.accent,
+    backgroundColor: Colors.brandBlue,
     borderRadius: Radius.md,
     paddingVertical: 14,
     alignItems: 'center',

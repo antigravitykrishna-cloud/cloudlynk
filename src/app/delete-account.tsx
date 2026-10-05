@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.border,
   },
   backBtn: { width: 60 },
-  backTxt: { color: Colors.accent, fontSize: FontSize.md, fontWeight: FontWeight.semibold },
+  backTxt: { color: Colors.brandBlue, fontSize: FontSize.md, fontWeight: FontWeight.semibold },
   headerTitle: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.text },
   content: { flex: 1, padding: Spacing.xl },
   warningCard: {
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   input: {
-    backgroundColor: Colors.card,
+    backgroundColor: Colors.surfaceElevated,
     borderRadius: Radius.md,
     borderWidth: 0.5,
     borderColor: Colors.border,

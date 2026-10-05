@@ -104,8 +104,8 @@ export default function QueueScreen() {
       case 'uploading':
         return {
           label: `${Math.round(progress * 100)}%`,
-          color: Colors.accentOrange,
-          bg: Colors.accentOrangeDim,
+          color: Colors.brandBlue,
+          bg: Colors.brandBlueDim,
         };
       case 'failed':
         return { label: 'Failed', color: Colors.danger, bg: Colors.dangerDim };
@@ -139,7 +139,7 @@ export default function QueueScreen() {
           activeOpacity={0.7}
         >
           {adding ? (
-            <ActivityIndicator color={Colors.brand} size="small" />
+            <ActivityIndicator color={Colors.brandBlue} size="small" />
           ) : (
             <Text style={styles.addBtnTxt}>+ Add</Text>
           )}
@@ -202,7 +202,7 @@ export default function QueueScreen() {
       {/* Uploading banner */}
       {isUploading && (
         <View style={styles.banner}>
-          <ActivityIndicator color={Colors.accentOrange} size="small" style={{ marginRight: 8 }} />
+          <ActivityIndicator color={Colors.brandBlue} size="small" style={{ marginRight: 8 }} />
           <Text style={styles.bannerText}>
             {`Uploading ${completedCount + 1} of ${items.length}…`}
           </Text>
@@ -324,7 +324,7 @@ export default function QueueScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
   header: {
-    backgroundColor: Colors.brand,
+    backgroundColor: Colors.brandBlue,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -357,7 +357,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
   },
-  controlBtnPrimary: { backgroundColor: Colors.brand, borderColor: Colors.brand },
+  controlBtnPrimary: { backgroundColor: Colors.brandBlue, borderColor: Colors.brandBlue },
   controlBtnTxt: { fontSize: 13, fontWeight: '800', color: Colors.textSecondary },
   controlBtnTxtPrimary: { color: '#ffffff' },
   banner: {
@@ -365,11 +365,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 8,
-    backgroundColor: Colors.accentOrangeDim,
+    backgroundColor: Colors.brandBlueDim,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.accentOrange,
+    borderBottomColor: Colors.brandBlue,
   },
-  bannerText: { fontSize: 12, fontWeight: '700', color: Colors.accentOrange },
+  bannerText: { fontSize: 12, fontWeight: '700', color: Colors.brandBlue },
   list: { flex: 1 },
   listContent: { paddingHorizontal: 16, paddingTop: 12 },
   itemCard: {
@@ -388,7 +388,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     overflow: 'hidden',
   },
-  progressFill: { height: '100%', backgroundColor: Colors.accentOrange, borderRadius: 4 },
+  progressFill: { height: '100%', backgroundColor: Colors.brandBlue, borderRadius: 4 },
   itemBody: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -427,7 +427,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   emptyAddBtn: {
-    backgroundColor: Colors.brand,
+    backgroundColor: Colors.brandBlue,
     paddingHorizontal: 28,
     paddingVertical: 12,
     borderRadius: Radius.sm,

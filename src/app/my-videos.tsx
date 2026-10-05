@@ -54,7 +54,7 @@ function getStatusColor(status: string): string {
     case 'pending':
       return '#FFB347';
     case 'rejected':
-      return Colors.brand;
+      return Colors.brandBlue;
     default:
       return Colors.textMuted;
   }
@@ -136,7 +136,7 @@ export default function MyVideosScreen() {
       </View>
 
       {loading ? (
-        <ActivityIndicator color={Colors.brand} size="large" style={{ marginTop: 60 }} />
+        <ActivityIndicator color={Colors.brandBlue} size="large" style={{ marginTop: 60 }} />
       ) : posts.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>
@@ -189,7 +189,7 @@ export default function MyVideosScreen() {
                   </Text>
                 )}
                 {post.status === 'rejected' && post.rejection_note && (
-                  <Text style={[styles.cardDate, { color: Colors.brand }]}>
+                  <Text style={[styles.cardDate, { color: Colors.brandBlue }]}>
                     {post.rejection_note}
                   </Text>
                 )}
@@ -225,9 +225,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   tab: { paddingVertical: 12, paddingHorizontal: 14, marginRight: 4 },
-  tabActive: { borderBottomWidth: 2, borderBottomColor: Colors.brand },
+  tabActive: { borderBottomWidth: 2, borderBottomColor: Colors.brandBlue },
   tabText: { fontSize: 13, fontWeight: '600', color: Colors.textMuted },
-  tabTextActive: { color: Colors.brand, fontWeight: '800' },
+  tabTextActive: { color: Colors.brandBlue, fontWeight: '800' },
   list: { paddingVertical: 8 },
   card: {
     flexDirection: 'row',

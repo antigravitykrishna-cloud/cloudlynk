@@ -43,9 +43,9 @@ function getStatusColor(status: string | null): string {
     case 'pending':
       return '#FFB347';
     case 'expired':
-      return Colors.brand;
+      return Colors.brandBlue;
     case 'cancelled':
-      return Colors.brand;
+      return Colors.brandBlue;
     default:
       return Colors.textMuted;
   }
@@ -58,7 +58,7 @@ function getRequestStatusColor(status: string | null): string {
     case 'pending':
       return '#FFB347';
     case 'rejected':
-      return Colors.brand;
+      return Colors.brandBlue;
     default:
       return Colors.textMuted;
   }
@@ -122,7 +122,7 @@ export default function MySubscriptionScreen() {
       </View>
 
       {loading ? (
-        <ActivityIndicator color={Colors.brand} size="large" style={{ marginTop: 60 }} />
+        <ActivityIndicator color={Colors.brandBlue} size="large" style={{ marginTop: 60 }} />
       ) : (
         <ScrollView
           style={{ flex: 1 }}
@@ -199,7 +199,7 @@ export default function MySubscriptionScreen() {
                   )}
 
                 {status.latest_request_status === 'rejected' && (
-                  <Text style={[styles.cardSub, { color: Colors.brand }]}>
+                  <Text style={[styles.cardSub, { color: Colors.brandBlue }]}>
                     Rejected: {status.latest_request_rejection_reason ?? 'Payment not verified'}
                   </Text>
                 )}
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
   upgradeBtn: {
     marginHorizontal: 16,
     marginTop: 8,
-    backgroundColor: Colors.brand,
+    backgroundColor: Colors.brandBlue,
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',

@@ -367,12 +367,12 @@ DetailModal.displayName = 'DetailModal';
 
 const styles = StyleSheet.create({
   detailModal: { flex: 1, backgroundColor: Colors.bg },
-  detailHero: { height: H * 0.4, position: 'relative', backgroundColor: Colors.brand },
+  detailHero: { height: H * 0.4, position: 'relative', backgroundColor: Colors.brandBlue },
   detailHeroImg: { width: '100%', height: '100%' },
   detailHeroPlaceholder: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.brandLight,
+    backgroundColor: Colors.brandBlueDim,
   },
   detailClose: {
     position: 'absolute',
@@ -392,11 +392,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
-    backgroundColor: Colors.brandLight,
+    backgroundColor: Colors.brandBlueDim,
     borderWidth: 0.5,
-    borderColor: Colors.brand,
+    borderColor: Colors.brandBlue,
   },
-  detailBadgeTxt: { fontSize: 11, color: Colors.brand, fontWeight: '700', letterSpacing: 0.5 },
+  detailBadgeTxt: { fontSize: 11, color: Colors.brandBlue, fontWeight: '700', letterSpacing: 0.5 },
   detailTitle: {
     fontSize: 26,
     fontWeight: '900',
@@ -405,7 +405,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
     lineHeight: 30,
   },
-  detailEpisode: { fontSize: 14, color: Colors.brand, fontWeight: '700', marginBottom: 12 },
+  detailEpisode: { fontSize: 14, color: Colors.brandBlue, fontWeight: '700', marginBottom: 12 },
   detailDesc: {
     fontSize: 14,
     color: Colors.textSecondary,
@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.brand,
+    backgroundColor: Colors.brandBlue,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -426,7 +426,7 @@ const styles = StyleSheet.create({
   detailAuthorName: { fontSize: 14, fontWeight: '700', color: Colors.text },
   detailAuthorMeta: { fontSize: 12, color: Colors.textMuted, fontWeight: '600', marginTop: 2 },
   playBtn: {
-    backgroundColor: Colors.brand,
+    backgroundColor: Colors.brandBlue,
     borderRadius: 8,
     paddingVertical: 16,
     alignItems: 'center',

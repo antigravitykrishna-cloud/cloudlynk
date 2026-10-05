@@ -101,13 +101,13 @@ export default function NotificationsScreen() {
       </View>
 
       {loading ? (
-        <ActivityIndicator color={Colors.accent} style={{ marginTop: 60 }} />
+        <ActivityIndicator color={Colors.brandBlue} style={{ marginTop: 60 }} />
       ) : (
         <ScrollView
           style={{ flex: 1 }}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={false} onRefresh={refresh} tintColor={Colors.accent} />
+            <RefreshControl refreshing={false} onRefresh={refresh} tintColor={Colors.brandBlue} />
           }
         >
           {notifications.length === 0 ? (
@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.border,
   },
   backBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  backTxt: { fontSize: 26, color: Colors.accent, fontWeight: FontWeight.bold },
+  backTxt: { fontSize: 26, color: Colors.brandBlue, fontWeight: FontWeight.bold },
   headerTitle: {
     flex: 1,
     fontSize: FontSize.lg,
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   },
   markAllBtn: {
     fontSize: FontSize.sm,
-    color: Colors.accent,
+    color: Colors.brandBlue,
     fontWeight: FontWeight.bold,
     width: 80,
     textAlign: 'right',
