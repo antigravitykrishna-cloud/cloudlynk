@@ -11,10 +11,10 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../../hooks/useAuth';
-import { supabase } from '../../lib/supabase';
-import { Colors, FontSize, FontWeight, Radius, Spacing } from '../../constants/theme';
-import { Icon } from '../../components/Icon';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabase';
+import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme';
+import { Icon } from '@/components/ui/Icon';
 
 // Step 2 of password recovery — reached from the cloudlynk://reset-password
 // deep link in the email.

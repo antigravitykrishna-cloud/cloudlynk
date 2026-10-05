@@ -1,22 +1,22 @@
-import { CloudlynkLogo } from '../../components/CloudlynkLogo';
+import { CloudlynkLogo } from '@/components/ui/CloudlynkLogo';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
-import { showAlert } from '../../components/Feedback';
+import { showAlert } from '@/components/ui/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'expo-router';
-import { GuestPrompt } from '../../components/GuestPrompt';
-import { useAuth } from '../../hooks/useAuth';
-import { promptSaveAccount } from '../../lib/guest';
-import { useFiles } from '../../hooks/useFiles';
-import { Colors } from '../../constants/theme';
+import { GuestPrompt } from '@/components/auth/GuestPrompt';
+import { useAuth } from '@/hooks/useAuth';
+import { promptSaveAccount } from '@/lib/auth/guest';
+import { useFiles } from '@/hooks/useFiles';
+import { Colors } from '@/constants/theme';
 import {
   formatBytes,
   formatTimeAgo,
   CATEGORY_ICONS,
   CATEGORY_DIM,
   CATEGORY_COLORS,
-} from '../../lib/storage';
-import { Icon, type IconName } from '../../components/Icon';
+} from '@/lib/data/files';
+import { Icon, type IconName } from '@/components/ui/Icon';
 
 const CATEGORIES: { key: string; label: string; icon: IconName }[] = [
   { key: 'all', label: 'All', icon: 'folder' },

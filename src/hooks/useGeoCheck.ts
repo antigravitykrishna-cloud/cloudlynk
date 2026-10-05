@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { config } from '../lib/config';
+import { config } from '@/lib/config';
 
 const GEO_CACHE_KEY = 'cloudlynk_geo_check';
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;

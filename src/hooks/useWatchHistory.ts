@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { supabase } from '../lib/supabase';
-import { ChannelPost } from '../lib/posts';
+import { supabase } from '@/lib/supabase';
+import { ChannelPost } from '@/lib/data/posts';
 
 export type WatchHistoryEntry = {
   id: string;

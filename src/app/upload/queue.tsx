@@ -13,13 +13,13 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import { showAlert } from '../../components/Feedback';
+import { showAlert } from '@/components/ui/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Colors, Radius, FontSize } from '../../constants/theme';
-import { useUploadQueue, QueueItem } from '../../hooks/useUploadQueue';
-import { StreamService, STREAM_MAX_MB } from '../../lib/stream';
-import { Icon } from '../../components/Icon';
+import { Colors, Radius, FontSize } from '@/constants/theme';
+import { useUploadQueue, QueueItem } from '@/hooks/useUploadQueue';
+import { StreamService, STREAM_MAX_MB } from '@/lib/video/stream';
+import { Icon } from '@/components/ui/Icon';
 
 export default function QueueScreen() {
   const router = useRouter();

@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback, useSyncExternalStore } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { supabase, Database } from '../lib/supabase';
-import { queryClient } from '../lib/queryClient';
-import { UploadQueue } from '../lib/uploadQueue';
-import { ComplianceService } from '../lib/compliance';
-import { config, isGoogleAuthLive } from '../lib/config';
+import { supabase, Database } from '@/lib/supabase';
+import { queryClient } from '@/lib/queryClient';
+import { UploadQueue } from '@/lib/video/uploadQueue';
+import { ComplianceService } from '@/lib/data/compliance';
+import { config, isGoogleAuthLive } from '@/lib/config';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 

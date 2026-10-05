@@ -5,10 +5,10 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { UploadQueue, QueueState, QueueItem } from '../lib/uploadQueue';
+import { UploadQueue, QueueState, QueueItem } from '@/lib/video/uploadQueue';
 import { useAuth } from './useAuth';
 
-export type { QueueState, QueueItem } from '../lib/uploadQueue';
+export type { QueueState, QueueItem } from '@/lib/video/uploadQueue';
 
 export function useUploadQueue(channelId: string | undefined) {
   const { user, isPaidUser } = useAuth();

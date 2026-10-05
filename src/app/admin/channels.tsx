@@ -2,13 +2,13 @@ import { useCallback, useState } from 'react';
 import { View, Text, FlatList, TextInput, Switch, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { AdminHeader, ActionButton, Card, Chip, adminStyles } from '../../components/AdminUI';
-import { showAlert } from '../../components/Feedback';
-import { fireHaptic, PressScale } from '../../components/Press';
-import { Colors } from '../../constants/theme';
-import { supabase } from '../../lib/supabase';
-import { ChannelService } from '../../lib/channels';
-import { AdminControl } from '../../lib/adminControl';
+import { AdminHeader, ActionButton, Card, Chip, adminStyles } from '@/components/admin/AdminUI';
+import { showAlert } from '@/components/ui/Feedback';
+import { fireHaptic, PressScale } from '@/components/ui/Press';
+import { Colors } from '@/constants/theme';
+import { supabase } from '@/lib/supabase';
+import { ChannelService } from '@/lib/data/channels';
+import { AdminControl } from '@/lib/admin/adminControl';
 
 // Every channel, including hidden, pending and suspended ones (admins read
 // all channels -- "Admins see all channels" RLS policy). Tap one to edit its

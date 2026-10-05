@@ -10,10 +10,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { Colors } from '../constants/theme';
-import { useAuth } from '../hooks/useAuth';
-import { supabase } from '../lib/supabase';
-import { Icon } from '../components/Icon';
+import { Colors } from '@/constants/theme';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabase';
+import { Icon } from '@/components/ui/Icon';
 
 interface MyPost {
   id: string;

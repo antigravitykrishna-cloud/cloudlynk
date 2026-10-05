@@ -5,17 +5,17 @@ import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
-import { queryClient, asyncStoragePersister } from '../lib/queryClient';
-import { ServiceProvider, createServices } from '../lib/services';
-import ErrorBoundary from '../components/ErrorBoundary';
-import { AgeGate } from '../components/AgeGate';
-import { FeedbackHost } from '../components/Feedback';
-import { useAuth } from '../hooks/useAuth';
-import { useGeoCheck } from '../hooks/useGeoCheck';
-import { ComplianceService } from '../lib/compliance';
-import { Colors } from '../constants/theme';
-import { Icon } from '../components/Icon';
-import { peekPostLoginRoute, setPostLoginRoute } from '../lib/postLogin';
+import { queryClient, asyncStoragePersister } from '@/lib/queryClient';
+import { ServiceProvider, createServices } from '@/lib/services';
+import ErrorBoundary from '@/components/ui/ErrorBoundary';
+import { AgeGate } from '@/components/auth/AgeGate';
+import { FeedbackHost } from '@/components/ui/Feedback';
+import { useAuth } from '@/hooks/useAuth';
+import { useGeoCheck } from '@/hooks/useGeoCheck';
+import { ComplianceService } from '@/lib/data/compliance';
+import { Colors } from '@/constants/theme';
+import { Icon } from '@/components/ui/Icon';
+import { peekPostLoginRoute, setPostLoginRoute } from '@/lib/auth/postLogin';
 
 SplashScreen.preventAutoHideAsync();
 

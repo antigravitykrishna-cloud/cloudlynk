@@ -11,8 +11,8 @@ import {
 } from 'react-native';
 import { Link } from 'expo-router';
 import { useState } from 'react';
-import { useAuth } from '../../hooks/useAuth';
-import { Colors, FontSize, FontWeight, Radius, Spacing } from '../../constants/theme';
+import { useAuth } from '@/hooks/useAuth';
+import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme';
 
 export default function SignupScreen() {
   const { signUp } = useAuth();

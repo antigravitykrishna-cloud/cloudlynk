@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Colors } from '../../constants/theme';
+import { Colors } from '@/constants/theme';
 
 /**
  * Campaign landing route: https://thecloudlynk.com/c/<channel-id>

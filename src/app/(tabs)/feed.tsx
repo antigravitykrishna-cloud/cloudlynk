@@ -1,15 +1,15 @@
 import { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, RefreshControl } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { PressScale } from '../../components/Press';
+import { PressScale } from '@/components/ui/Press';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { CloudlynkLogo } from '../../components/CloudlynkLogo';
-import { useAuth } from '../../hooks/useAuth';
-import { PostService, GuestChannelPost } from '../../lib/posts';
-import { Colors } from '../../constants/theme';
-import { ListSkeleton } from '../../components/Skeleton';
-import { Icon } from '../../components/Icon';
+import { CloudlynkLogo } from '@/components/ui/CloudlynkLogo';
+import { useAuth } from '@/hooks/useAuth';
+import { PostService, GuestChannelPost } from '@/lib/data/posts';
+import { Colors } from '@/constants/theme';
+import { ListSkeleton } from '@/components/ui/Skeleton';
+import { Icon } from '@/components/ui/Icon';
 
 // The Feed tab: newest content from the channels you have joined -- the
 // client's reference flow.

@@ -10,12 +10,12 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { showAlert } from '../components/Feedback';
+import { showAlert } from '@/components/ui/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../hooks/useAuth';
-import { ChannelService } from '../lib/channels';
-import { Colors } from '../constants/theme';
+import { useAuth } from '@/hooks/useAuth';
+import { ChannelService } from '@/lib/data/channels';
+import { Colors } from '@/constants/theme';
 
 const CATEGORIES = [
   'Entertainment',

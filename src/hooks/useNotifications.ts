@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { NotificationService, Notification } from '../lib/notifications';
-import { supabase } from '../lib/supabase';
+import { NotificationService, Notification } from '@/lib/data/notifications';
+import { supabase } from '@/lib/supabase';
 
 // ── Shared unread-count across all hook instances ────────────────
 // The home-tab badge and the Notifications screen mount this hook separately,

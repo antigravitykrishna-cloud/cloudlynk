@@ -3,11 +3,11 @@ import { View, Text, ScrollView, TextInput, Switch, RefreshControl } from 'react
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { AdminHeader, ActionButton, Card, Chip, adminStyles } from '../../components/AdminUI';
-import { showAlert } from '../../components/Feedback';
-import { fireHaptic } from '../../components/Press';
-import { Colors } from '../../constants/theme';
-import { AdminControl, type AdminPlan } from '../../lib/adminControl';
+import { AdminHeader, ActionButton, Card, Chip, adminStyles } from '@/components/admin/AdminUI';
+import { showAlert } from '@/components/ui/Feedback';
+import { fireHaptic } from '@/components/ui/Press';
+import { Colors } from '@/constants/theme';
+import { AdminControl, type AdminPlan } from '@/lib/admin/adminControl';
 
 // Plan names, prices, lengths, which one is "Most popular", and which are on
 // sale. Saved through admin_update_plan (v82, audited).

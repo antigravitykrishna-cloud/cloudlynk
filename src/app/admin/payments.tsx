@@ -10,9 +10,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
-import { AdminHeader, Card, Chip, adminStyles, formatDateTime } from '../../components/AdminUI';
-import { Colors, FontSize, FontWeight, Radius } from '../../constants/theme';
-import { AdminControl, type AdminPayment } from '../../lib/adminControl';
+import { AdminHeader, Card, Chip, adminStyles, formatDateTime } from '@/components/admin/AdminUI';
+import { Colors, FontSize, FontWeight, Radius } from '@/constants/theme';
+import { AdminControl, type AdminPayment } from '@/lib/admin/adminControl';
 
 // Every UPI / Razorpay / Sabpaisa payment (v80). Google Play purchases are in
 // Play Console, not here.

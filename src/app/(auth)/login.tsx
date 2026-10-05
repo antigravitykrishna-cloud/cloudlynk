@@ -9,14 +9,14 @@ import {
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
-import { showAlert } from '../../components/Feedback';
+import { showAlert } from '@/components/ui/Feedback';
 import { Link } from 'expo-router';
 import { useState } from 'react';
-import { useAuth } from '../../hooks/useAuth';
-import { isGoogleAuthLive } from '../../lib/config';
-import { Colors, FontSize, FontWeight, Radius, Spacing } from '../../constants/theme';
+import { useAuth } from '@/hooks/useAuth';
+import { isGoogleAuthLive } from '@/lib/config';
+import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme';
 import Constants from 'expo-constants';
-import { Icon } from '../../components/Icon';
+import { Icon } from '@/components/ui/Icon';
 
 // One-tap entry: guest, Google, or an emailed code. No password field, no
 // name field.

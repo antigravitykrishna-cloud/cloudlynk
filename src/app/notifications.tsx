@@ -10,12 +10,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCallback } from 'react';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../hooks/useAuth';
-import { useNotifications } from '../hooks/useNotifications';
-import { Notification, NOTIF_META } from '../lib/notifications';
-import { Colors, FontSize, FontWeight, Radius, Spacing } from '../constants/theme';
-import { formatTimeAgo } from '../lib/storage';
-import { Icon } from '../components/Icon';
+import { useAuth } from '@/hooks/useAuth';
+import { useNotifications } from '@/hooks/useNotifications';
+import { Notification, NOTIF_META } from '@/lib/data/notifications';
+import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme';
+import { formatTimeAgo } from '@/lib/data/files';
+import { Icon } from '@/components/ui/Icon';
 
 export default function NotificationsScreen() {
   const { user } = useAuth();

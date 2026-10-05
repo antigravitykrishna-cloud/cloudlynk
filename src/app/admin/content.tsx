@@ -7,12 +7,12 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import { showAlert } from '../../components/Feedback';
+import { showAlert } from '@/components/ui/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { useAuth } from '../../hooks/useAuth';
-import { AdminContentService, AdminPost, AdminPostStatus } from '../../lib/adminContent';
-import { AccessLevel } from '../../lib/posts';
+import { useAuth } from '@/hooks/useAuth';
+import { AdminContentService, AdminPost, AdminPostStatus } from '@/lib/admin/adminContent';
+import { AccessLevel } from '@/lib/data/posts';
 
 // The admin content list. Everything Cloudlynk publishes, plus every
 // user-created post, filterable by status and access level.

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { fireHaptic } from '../../components/Press';
+import { fireHaptic } from '@/components/ui/Press';
 import {
   View,
   Text,
@@ -10,13 +10,13 @@ import {
   RefreshControl,
   Linking,
 } from 'react-native';
-import { showAlert } from '../../components/Feedback';
+import { showAlert } from '@/components/ui/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { useAuth } from '../../hooks/useAuth';
-import { supabase } from '../../lib/supabase';
-import { Colors } from '../../constants/theme';
-import { formatFileSize, formatDuration } from '../../lib/channelVideos';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabase';
+import { Colors } from '@/constants/theme';
+import { formatFileSize, formatDuration } from '@/lib/data/channelVideos';
 
 interface PendingChannel {
   id: string;

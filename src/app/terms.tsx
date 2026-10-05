@@ -3,8 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { Colors, FontSize, FontWeight, Spacing } from '../constants/theme';
-import { config } from '../lib/config';
+import { Colors, FontSize, FontWeight, Spacing } from '@/constants/theme';
+import { config } from '@/lib/config';
 
 // This screen used to carry its own hardcoded, much shorter copy of the
 // Terms of Service — which meant the app could show one set of terms while

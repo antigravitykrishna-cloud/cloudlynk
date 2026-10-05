@@ -76,6 +76,11 @@ module.exports = [
       // documented API is imperative (player.currentTime = 30,
       // player.playbackRate = 1.5), which this rule reports as mutating a hook value.
       'react-hooks/immutability': 'off',
+
+      // Imports use the `@/` alias (tsconfig paths -> src/). The plain Node
+      // resolver cannot follow it; `tsc --noEmit` already fails on any import
+      // that does not resolve, so this rule would only duplicate it.
+      'import/no-unresolved': 'off',
     },
   },
 

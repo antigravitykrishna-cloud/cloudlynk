@@ -10,12 +10,12 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { showAlert } from '../../components/Feedback';
+import { showAlert } from '@/components/ui/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
-import { useAuth } from '../../hooks/useAuth';
-import { AdminContentService, AdminPost, PostClearableField } from '../../lib/adminContent';
-import { Colors, Spacing, Radius, FontSize, FontWeight } from '../../constants/theme';
+import { useAuth } from '@/hooks/useAuth';
+import { AdminContentService, AdminPost, PostClearableField } from '@/lib/admin/adminContent';
+import { Colors, Spacing, Radius, FontSize, FontWeight } from '@/constants/theme';
 
 // Edit a published post in place.
 //

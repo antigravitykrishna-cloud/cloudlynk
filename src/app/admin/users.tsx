@@ -9,11 +9,11 @@ import {
   adminStyles,
   formatDate,
   planChip,
-} from '../../components/AdminUI';
-import { PressScale } from '../../components/Press';
-import { Colors } from '../../constants/theme';
-import { AdminControl, type AdminUserSummary } from '../../lib/adminControl';
-import { useAuth } from '../../hooks/useAuth';
+} from '@/components/admin/AdminUI';
+import { PressScale } from '@/components/ui/Press';
+import { Colors } from '@/constants/theme';
+import { AdminControl, type AdminUserSummary } from '@/lib/admin/adminControl';
+import { useAuth } from '@/hooks/useAuth';
 
 // Every account, searchable by email or name. Tap one for the controls:
 // premium, admin rights, uploads, suspend/ban, approval (app/admin/user/[id]).

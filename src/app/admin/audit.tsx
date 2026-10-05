@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { showAlert } from '../../components/Feedback';
+import { showAlert } from '@/components/ui/Feedback';
 import {
   View,
   Text,
@@ -10,8 +10,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { useAuth } from '../../hooks/useAuth';
-import { AdminContentService, AuditEntry, AUDIT_ACTION_LABELS } from '../../lib/adminContent';
+import { useAuth } from '@/hooks/useAuth';
+import { AdminContentService, AuditEntry, AUDIT_ACTION_LABELS } from '@/lib/admin/adminContent';
 
 // The admin audit log, newest first. admin_audit_log has RLS enabled with no
 // policies at all, so this is only readable through admin_list_audit_log,

@@ -3,8 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { Colors, FontSize, FontWeight, Spacing } from '../constants/theme';
-import { config } from '../lib/config';
+import { Colors, FontSize, FontWeight, Spacing } from '@/constants/theme';
+import { config } from '@/lib/config';
 
 // This screen used to carry its own hardcoded, much shorter set of
 // guidelines — one that, for example, banned "explicit or adult content"

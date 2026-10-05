@@ -1,76 +1,29 @@
-import { CloudlynkLogo } from '../../components/CloudlynkLogo';
+import { CloudlynkLogo } from '@/components/ui/CloudlynkLogo';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Switch,
   Linking,
   ActivityIndicator,
 } from 'react-native';
-import { showAlert } from '../../components/Feedback';
+import { showAlert } from '@/components/ui/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { ChannelService } from '../../lib/channels';
-import { GuestPlans, PlanList, useDefaultPlan } from '../../components/GuestPlans';
-import { useSubscriptionPlans } from '../../lib/subscriptionService';
-import { useAuth } from '../../hooks/useAuth';
-import { useNotifications } from '../../hooks/useNotifications';
-import { supabase } from '../../lib/supabase';
-import { Colors } from '../../constants/theme';
-import { formatBytes } from '../../lib/storage';
-import { config } from '../../lib/config';
+import { ChannelService } from '@/lib/data/channels';
+import { GuestPlans, PlanList, useDefaultPlan } from '@/components/premium/GuestPlans';
+import { useSubscriptionPlans } from '@/lib/data/plans';
+import { useAuth } from '@/hooks/useAuth';
+import { useNotifications } from '@/hooks/useNotifications';
+import { supabase } from '@/lib/supabase';
+import { Colors } from '@/constants/theme';
+import { formatBytes } from '@/lib/data/files';
+import { config } from '@/lib/config';
 import Constants from 'expo-constants';
-import { Icon, type IconName } from '../../components/Icon';
-
-const SettingsRow = ({
-  icon,
-  iconBg,
-  label,
-  value,
-  onPress,
-  danger = false,
-  toggle,
-  toggleValue,
-  onToggle,
-}: {
-  icon: IconName;
-  iconBg: string;
-  label: string;
-  value?: string;
-  onPress?: () => void;
-  danger?: boolean;
-  toggle?: boolean;
-  toggleValue?: boolean;
-  onToggle?: (v: boolean) => void;
-}) => (
-  <TouchableOpacity
-    style={styles.row}
-    onPress={onPress}
-    activeOpacity={onPress ? 0.7 : 1}
-    disabled={!onPress && !toggle}
-  >
-    <View style={[styles.rowIcon, { backgroundColor: iconBg }]}>
-      <Icon name={icon} size={18} color={danger ? Colors.danger : Colors.brandBlue} />
-    </View>
-    <Text style={[styles.rowLabel, danger && { color: Colors.danger }]}>{label}</Text>
-    {toggle ? (
-      <Switch
-        value={toggleValue}
-        onValueChange={onToggle}
-        trackColor={{ false: Colors.borderStrong, true: Colors.accentOrangeDim }}
-        thumbColor={toggleValue ? Colors.brand : '#cccccc'}
-      />
-    ) : (
-      <View style={styles.rowRight}>
-        {value ? <Text style={styles.rowValue}>{value}</Text> : null}
-        {onPress ? <Icon name="chevron-right" size={16} color={Colors.textMuted} /> : null}
-      </View>
-    )}
-  </TouchableOpacity>
-);
+import { Icon } from '@/components/ui/Icon';
+import { SettingsRow } from '@/components/profile/SettingsRow';
 
 export default function ProfileScreen() {
   const {
@@ -613,7 +566,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerActionIcon: { fontSize: 18 },
   body: { backgroundColor: Colors.bg, paddingTop: 16 },
   plansBlock: { marginBottom: 20 },
   saveBanner: {
@@ -698,53 +650,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     overflow: 'hidden',
   },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 14,
-    borderBottomWidth: 0.5,
-    borderBottomColor: Colors.border,
-  },
-  rowIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  rowLabel: { flex: 1, fontSize: 14, fontWeight: '600', color: Colors.text },
-  rowRight: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  rowValue: { fontSize: 12, color: Colors.textMuted, fontWeight: '600' },
-  chevron: { fontSize: 18, color: Colors.textMuted },
   emptyState: { alignItems: 'center', paddingVertical: 40, paddingHorizontal: 20 },
-  emptyIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 20,
-    backgroundColor: Colors.brand,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-    shadowColor: Colors.brand,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  emptyIconText: { fontSize: 36 },
-  emptyIconUpload: {
-    position: 'absolute',
-    bottom: 12,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#ffffff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyIconUploadText: { fontSize: 14, fontWeight: '900', color: Colors.brand },
   emptyText: { fontSize: 14, color: Colors.text, fontWeight: '600' },
   channelsList: { gap: 8 },
   channelCard: {

@@ -1,4 +1,4 @@
-import { CloudlynkLogo } from '../../../components/CloudlynkLogo';
+import { CloudlynkLogo } from '@/components/ui/CloudlynkLogo';
 import {
   View,
   Text,
@@ -8,20 +8,20 @@ import {
   TextInput,
   RefreshControl,
 } from 'react-native';
-import { showAlert } from '../../../components/Feedback';
-import { LoginSheet } from '../../../components/LoginSheet';
-import { promptSaveAccount } from '../../../lib/guest';
+import { showAlert } from '@/components/ui/Feedback';
+import { LoginSheet } from '@/components/auth/LoginSheet';
+import { promptSaveAccount } from '@/lib/auth/guest';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { useAuth } from '../../../hooks/useAuth';
-import { ChannelService } from '../../../lib/channels';
-import { supabase, Database } from '../../../lib/supabase';
-import { Colors } from '../../../constants/theme';
-import { ListSkeleton } from '../../../components/Skeleton';
-import { Icon } from '../../../components/Icon';
+import { useAuth } from '@/hooks/useAuth';
+import { ChannelService } from '@/lib/data/channels';
+import { supabase, Database } from '@/lib/supabase';
+import { Colors } from '@/constants/theme';
+import { ListSkeleton } from '@/components/ui/Skeleton';
+import { Icon } from '@/components/ui/Icon';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { fireHaptic } from '../../../components/Press';
+import { fireHaptic } from '@/components/ui/Press';
 
 type Channel = Database['public']['Tables']['channels']['Row'];
 type TabKey = 'discover' | 'feed' | 'joined';

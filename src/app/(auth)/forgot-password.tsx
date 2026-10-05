@@ -11,8 +11,8 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../../hooks/useAuth';
-import { Colors, FontSize, FontWeight, Radius, Spacing } from '../../constants/theme';
+import { useAuth } from '@/hooks/useAuth';
+import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme';
 
 // Step 1 of password recovery: ask where to send the link.
 //

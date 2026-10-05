@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AdminHeader, ActionButton, Card, adminStyles } from '../../components/AdminUI';
-import { showAlert } from '../../components/Feedback';
-import { fireHaptic } from '../../components/Press';
-import { Colors, FontSize, FontWeight, Radius } from '../../constants/theme';
-import { AdminControl } from '../../lib/adminControl';
+import { AdminHeader, ActionButton, Card, adminStyles } from '@/components/admin/AdminUI';
+import { showAlert } from '@/components/ui/Feedback';
+import { fireHaptic } from '@/components/ui/Press';
+import { Colors, FontSize, FontWeight, Radius } from '@/constants/theme';
+import { AdminControl } from '@/lib/admin/adminControl';
 
 // Send a message to users. It lands in their Notifications inbox (the bell).
 // Push notifications are not wired up yet, so it is seen the next time the

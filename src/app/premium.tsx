@@ -7,16 +7,16 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import { showAlert } from '../components/Feedback';
+import { showAlert } from '@/components/ui/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { setPostLoginRoute } from '../lib/postLogin';
-import { GuestPlans } from '../components/GuestPlans';
-import { Colors, Radius, FontSize, FontWeight } from '../constants/theme';
-import { useAuth } from '../hooks/useAuth';
-import { useSubscriptionPlans } from '../lib/subscriptionService';
-import { getIapService } from '../lib/services/iap';
-import { config } from '../lib/config';
+import { setPostLoginRoute } from '@/lib/auth/postLogin';
+import { GuestPlans } from '@/components/premium/GuestPlans';
+import { Colors, Radius, FontSize, FontWeight } from '@/constants/theme';
+import { useAuth } from '@/hooks/useAuth';
+import { useSubscriptionPlans } from '@/lib/data/plans';
+import { getIapService } from '@/lib/services/iap';
+import { config } from '@/lib/config';
 import {
   createGatewayOrder,
   getGatewayMethods,
@@ -25,12 +25,12 @@ import {
   type GatewayMethod,
   type OrderStatus,
   type SabpaisaOrder,
-} from '../lib/payments';
-import { PaymentSheet, type PaymentChoice } from '../components/PaymentSheet';
-import { SabpaisaCheckout } from '../components/SabpaisaCheckout';
-import { logCheckoutStarted } from '../lib/metaAds';
-import { Icon } from '../components/Icon';
-import { PressScale, fireHaptic } from '../components/Press';
+} from '@/lib/payments/gateways';
+import { PaymentSheet, type PaymentChoice } from '@/components/premium/PaymentSheet';
+import { SabpaisaCheckout } from '@/components/premium/SabpaisaCheckout';
+import { logCheckoutStarted } from '@/lib/analytics/metaAds';
+import { Icon } from '@/components/ui/Icon';
+import { PressScale, fireHaptic } from '@/components/ui/Press';
 
 // v52: Premium no longer sells storage — every account (free or premium)
 // gets the same 15GB. Premium instead unlocks movies/series/shorts the

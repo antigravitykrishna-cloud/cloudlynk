@@ -1,13 +1,13 @@
 import { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { showAlert } from '../components/Feedback';
+import { showAlert } from '@/components/ui/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
-import { supabase } from '../lib/supabase';
-import { Colors } from '../constants/theme';
-import { Icon } from '../components/Icon';
+import { supabase } from '@/lib/supabase';
+import { Colors } from '@/constants/theme';
+import { Icon } from '@/components/ui/Icon';
 
 type ExportStatus = 'idle' | 'loading' | 'success' | 'error';
 

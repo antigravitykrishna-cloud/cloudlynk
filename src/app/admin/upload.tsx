@@ -11,13 +11,19 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { showAlert } from '../../components/Feedback';
+import { showAlert } from '@/components/ui/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../../hooks/useAuth';
-import { StreamService, VideoMeta } from '../../lib/stream';
-import { PostService, ContentType, AccessLevel, GENRES, defaultAccessLevel } from '../../lib/posts';
-import { AdminContentService } from '../../lib/adminContent';
+import { useAuth } from '@/hooks/useAuth';
+import { StreamService, VideoMeta } from '@/lib/video/stream';
+import {
+  PostService,
+  ContentType,
+  AccessLevel,
+  GENRES,
+  defaultAccessLevel,
+} from '@/lib/data/posts';
+import { AdminContentService } from '@/lib/admin/adminContent';
 
 // Admin video upload — first-party Cloudlynk content, published into the
 // official channel (channels.is_official, seeded by the v56 migration).

@@ -19,14 +19,14 @@ import {
   Modal,
   Image,
 } from 'react-native';
-import { showAlert } from '../../../components/Feedback';
+import { showAlert } from '@/components/ui/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Colors, Radius, FontSize } from '../../../constants/theme';
-import { useUploadQueue } from '../../../hooks/useUploadQueue';
-import { QueueItem } from '../../../lib/uploadQueue';
-import { PostService, ContentType, GENRES } from '../../../lib/posts';
-import { Icon, type IconName } from '../../../components/Icon';
+import { Colors, Radius, FontSize } from '@/constants/theme';
+import { useUploadQueue } from '@/hooks/useUploadQueue';
+import { QueueItem } from '@/lib/video/uploadQueue';
+import { PostService, ContentType, GENRES } from '@/lib/data/posts';
+import { Icon, type IconName } from '@/components/ui/Icon';
 
 const CONTENT_TYPES: { id: ContentType; label: string; icon: IconName }[] = [
   { id: 'movie', label: 'Movie', icon: 'film' },

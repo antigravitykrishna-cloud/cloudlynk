@@ -9,9 +9,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { Colors } from '../constants/theme';
-import { useAuth } from '../hooks/useAuth';
-import { supabase } from '../lib/supabase';
+import { Colors } from '@/constants/theme';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabase';
 
 interface SubscriptionStatus {
   plan_status: string | null;

@@ -43,8 +43,19 @@ Current version: **0.7.11** (versionCode 18) · Package `com.cloudlynk.app`
 | `src/app/(tabs)/` | The 5 bottom tabs: Cloud, Feed, Explore, Channels, Profile | |
 | `src/app/(auth)/` | Login and first-time setup | |
 | `src/app/admin/` | Admin panel screens | |
-| `src/components/` | Reusable UI pieces (buttons, sheets, player, plan list) | |
-| `src/lib/` | Talking to the backend: posts, channels, payments, storage, video | |
+| `src/components/ui/` | Building blocks used everywhere: `Icon`, `Feedback` (alerts/toasts), `Press`, `Skeleton`, logo | |
+| `src/components/auth/` | 18+ gate, "Please sign in" sheet, guest prompt | |
+| `src/components/premium/` | Plan list, payment method sheet, Sabpaisa checkout | |
+| `src/components/player/` | The video player overlay | |
+| `src/components/admin/` | Shared admin-panel UI | |
+| `src/lib/supabase.ts`, `config.ts`, `queryClient.ts` | Core: database client, app settings, cache | |
+| `src/lib/data/` | Reading/writing app data: posts, channels, files, notifications, plans, compliance | |
+| `src/lib/admin/` | Admin-only actions | |
+| `src/lib/video/` | Cloudflare Stream upload/playback and the upload queue | |
+| `src/lib/auth/` | Guest rules, where to go after sign-in | |
+| `src/lib/payments/` | UPI / Razorpay / Sabpaisa checkout | |
+| `src/lib/analytics/` | Meta ads measurement | |
+| `src/lib/services/` | Swappable services: Google Play billing, push, analytics | |
 | `src/hooks/` | Shared state, e.g. `useAuth` (who is signed in, their plan) | |
 | `src/constants/` | Colours, font sizes, spacing | changing the look |
 | **`supabase/`** | **Backend + database** | |

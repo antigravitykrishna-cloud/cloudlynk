@@ -1,6 +1,6 @@
-import { supabase } from '../supabase';
+import { supabase } from '@/lib/supabase';
 import { Platform } from 'react-native';
-import { config, isIapLive } from '../config';
+import { config, isIapLive } from '@/lib/config';
 import { IIapService, IapProduct, PurchaseResult } from './types';
 
 // The four Cloudlynk Premium plans. They all share ONE Play Console

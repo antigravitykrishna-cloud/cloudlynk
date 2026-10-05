@@ -8,12 +8,12 @@ import {
   ActivityIndicator,
   TextInput,
 } from 'react-native';
-import { showAlert } from '../../components/Feedback';
+import { showAlert } from '@/components/ui/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { useAuth } from '../../hooks/useAuth';
-import { supabase } from '../../lib/supabase';
-import { AdminContentService, UserGrant } from '../../lib/adminContent';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabase';
+import { AdminContentService, UserGrant } from '@/lib/admin/adminContent';
 
 // The vetting queue for the v55 PRE-purchase approval gate: who is allowed
 // to reach the subscribe flow at all. Approving or rejecting here decides

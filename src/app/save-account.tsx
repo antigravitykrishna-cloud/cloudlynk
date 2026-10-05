@@ -23,11 +23,11 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '../hooks/useAuth';
-import { isGoogleAuthLive } from '../lib/config';
-import { showAlert } from '../components/Feedback';
-import { Icon } from '../components/Icon';
-import { Colors, FontSize, FontWeight, Radius, Spacing } from '../constants/theme';
+import { useAuth } from '@/hooks/useAuth';
+import { isGoogleAuthLive } from '@/lib/config';
+import { showAlert } from '@/components/ui/Feedback';
+import { Icon } from '@/components/ui/Icon';
+import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme';
 
 type Mode = 'choose' | 'email' | 'code';
 

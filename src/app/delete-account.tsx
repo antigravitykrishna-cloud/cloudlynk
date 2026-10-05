@@ -7,12 +7,12 @@ import {
   TextInput,
   ActivityIndicator,
 } from 'react-native';
-import { showAlert } from '../components/Feedback';
+import { showAlert } from '@/components/ui/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../hooks/useAuth';
-import { Colors, FontSize, FontWeight, Radius, Spacing } from '../constants/theme';
-import { Icon } from '../components/Icon';
+import { useAuth } from '@/hooks/useAuth';
+import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme';
+import { Icon } from '@/components/ui/Icon';
 
 export default function DeleteAccountScreen() {
   const router = useRouter();

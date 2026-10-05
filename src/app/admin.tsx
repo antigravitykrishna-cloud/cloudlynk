@@ -8,17 +8,17 @@ import {
   RefreshControl,
   Image,
 } from 'react-native';
-import { showAlert } from '../components/Feedback';
+import { showAlert } from '@/components/ui/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../hooks/useAuth';
-import { PostService, ChannelPost } from '../lib/posts';
-import { NotificationService } from '../lib/notifications';
-import { Colors, FontSize, FontWeight, Radius, Spacing } from '../constants/theme';
-import { formatTimeAgo } from '../lib/storage';
-import { Icon, type IconName } from '../components/Icon';
-import { ToolTile } from '../components/AdminUI';
+import { useAuth } from '@/hooks/useAuth';
+import { PostService, ChannelPost } from '@/lib/data/posts';
+import { NotificationService } from '@/lib/data/notifications';
+import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme';
+import { formatTimeAgo } from '@/lib/data/files';
+import { Icon, type IconName } from '@/components/ui/Icon';
+import { ToolTile } from '@/components/admin/AdminUI';
 
 // Every admin tool, in one grid at the top of the panel. The client runs the
 // app from here, so nothing an admin can do should need hunting for.

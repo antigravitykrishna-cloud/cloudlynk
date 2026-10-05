@@ -11,12 +11,12 @@ import {
   adminStyles,
   formatDate,
   planChip,
-} from '../../../components/AdminUI';
-import { showAlert } from '../../../components/Feedback';
-import { fireHaptic } from '../../../components/Press';
-import { Colors } from '../../../constants/theme';
-import { AdminControl, type AdminUserDetail, type PlanAction } from '../../../lib/adminControl';
-import { useAuth } from '../../../hooks/useAuth';
+} from '@/components/admin/AdminUI';
+import { showAlert } from '@/components/ui/Feedback';
+import { fireHaptic } from '@/components/ui/Press';
+import { Colors } from '@/constants/theme';
+import { AdminControl, type AdminUserDetail, type PlanAction } from '@/lib/admin/adminControl';
+import { useAuth } from '@/hooks/useAuth';
 
 // One account, every control. Each action asks first, runs one audited RPC
 // (v82), then reloads -- the screen always shows what the database now says,

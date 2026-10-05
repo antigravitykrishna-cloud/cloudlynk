@@ -8,13 +8,13 @@ import {
   TextInput,
   ActivityIndicator,
 } from 'react-native';
-import { showAlert } from '../../../components/Feedback';
+import { showAlert } from '@/components/ui/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useAuth } from '../../../hooks/useAuth';
-import { ChannelService } from '../../../lib/channels';
-import { PostService, ChannelPost } from '../../../lib/posts';
-import { supabase } from '../../../lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
+import { ChannelService } from '@/lib/data/channels';
+import { PostService, ChannelPost } from '@/lib/data/posts';
+import { supabase } from '@/lib/supabase';
 
 // guards-allow-select-star
 // Channel management is owner-only; anon never reaches this query.

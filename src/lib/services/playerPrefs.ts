@@ -3,7 +3,7 @@
  * Reads/writes user_preferences table (quality, speed, subtitle language, auto-play).
  */
 
-import { supabase } from '../supabase';
+import { supabase } from '@/lib/supabase';
 
 export type PlayerPrefs = {
   user_id: string;

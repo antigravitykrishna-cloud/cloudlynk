@@ -14,12 +14,12 @@ import {
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { supabase } from '../lib/supabase';
-import { PostService } from '../lib/posts';
-import { useAuth } from '../hooks/useAuth';
-import { showAlert, toast } from '../components/Feedback';
-import { Icon } from '../components/Icon';
-import { Colors, FontSize, FontWeight, Radius, Spacing } from '../constants/theme';
+import { supabase } from '@/lib/supabase';
+import { PostService } from '@/lib/data/posts';
+import { useAuth } from '@/hooks/useAuth';
+import { showAlert, toast } from '@/components/ui/Feedback';
+import { Icon } from '@/components/ui/Icon';
+import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme';
 
 // Editing your own name, username and picture.
 //

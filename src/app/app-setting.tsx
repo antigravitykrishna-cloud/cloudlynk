@@ -1,13 +1,13 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
 import { useEffect, useState } from 'react';
-import { getMetaMeasurement, metaConfigured, setMetaMeasurement } from '../lib/metaAds';
-import { showAlert } from '../components/Feedback';
+import { getMetaMeasurement, metaConfigured, setMetaMeasurement } from '@/lib/analytics/metaAds';
+import { showAlert } from '@/components/ui/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../hooks/useAuth';
-import { Colors } from '../constants/theme';
+import { useAuth } from '@/hooks/useAuth';
+import { Colors } from '@/constants/theme';
 import Constants from 'expo-constants';
-import { Icon, type IconName } from '../components/Icon';
+import { Icon, type IconName } from '@/components/ui/Icon';
 
 type MenuRow = {
   icon: IconName;

@@ -8,11 +8,11 @@ import {
   ActivityIndicator,
   TextInput,
 } from 'react-native';
-import { showAlert } from '../../components/Feedback';
+import { showAlert } from '@/components/ui/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
-import { useAuth } from '../../hooks/useAuth';
-import { AdminContentService, AdminUser, PostGrantee } from '../../lib/adminContent';
+import { useAuth } from '@/hooks/useAuth';
+import { AdminContentService, AdminUser, PostGrantee } from '@/lib/admin/adminContent';
 
 // Per-post access management: who may watch this one video, regardless of
 // whether they subscribe.

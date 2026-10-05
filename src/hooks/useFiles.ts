@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
-import { StorageService, UploadProgress } from '../lib/storage';
-import { Database } from '../lib/supabase';
+import { StorageService, UploadProgress } from '@/lib/data/files';
+import { Database } from '@/lib/supabase';
 
 type FileRow = Database['public']['Tables']['files']['Row'];
 

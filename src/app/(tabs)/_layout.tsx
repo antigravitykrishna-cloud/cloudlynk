@@ -1,11 +1,11 @@
 import { Tabs } from 'expo-router';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Icon, type IconName } from '../../components/Icon';
+import { Icon, type IconName } from '@/components/ui/Icon';
 import { useEffect } from 'react';
-import { Colors } from '../../constants/theme';
-import { useAuth } from '../../hooks/useAuth';
-import { NotificationService } from '../../lib/notifications';
+import { Colors } from '@/constants/theme';
+import { useAuth } from '@/hooks/useAuth';
+import { NotificationService } from '@/lib/data/notifications';
 
 type TabIconProps = {
   icon: IconName;

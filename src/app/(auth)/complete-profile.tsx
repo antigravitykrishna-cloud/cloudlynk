@@ -18,13 +18,13 @@ import {
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
-import { showAlert } from '../../components/Feedback';
+import { showAlert } from '@/components/ui/Feedback';
 import { Link } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { logRegistration } from '../../lib/metaAds';
-import { useAuth } from '../../hooks/useAuth';
-import { hasConfirmedAgeOnDevice } from '../../components/AgeGate';
-import { Colors, FontSize, FontWeight, Radius, Spacing } from '../../constants/theme';
+import { logRegistration } from '@/lib/analytics/metaAds';
+import { useAuth } from '@/hooks/useAuth';
+import { hasConfirmedAgeOnDevice } from '@/components/auth/AgeGate';
+import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme';
 
 export default function CompleteProfileScreen() {
   const { user, profile, completeProfile, signOut } = useAuth();
