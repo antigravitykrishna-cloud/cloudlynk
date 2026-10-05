@@ -1,71 +1,21 @@
 import { supabase } from '@/lib/supabase';
-import * as Device from 'expo-device';
-import * as Notifications from 'expo-notifications';
-import Constants from 'expo-constants';
-import { Platform } from 'react-native';
+import type { Notification, NotificationType } from '@/features/notifications/model';
 
-// Icon + color per notification type
-import type { IconName } from '@/components/ui/Icon';
-import { Colors } from '@/theme';
+const LIST_LIMIT = 50;
 
-export type NotificationType =
-  | 'channel_approved'
-  | 'channel_rejected'
-  | 'post_approved'
-  | 'post_rejected'
-  // v75. Written by the pg_cron sweepers (expire_lapsed_plans,
-  // notify_expiring_plans), never by the client — there is no
-  // NotificationService.create for these.
-  | 'subscription_expiring'
-  // An admin announcement (Admin -> Announcement).
-  | 'announcement'
-  | 'subscription_expired';
-
-export type Notification = {
-  id: string;
-  user_id: string;
-  type: NotificationType;
-  title: string;
-  body: string;
-  channel_id: string | null;
-  post_id: string | null;
-  read: boolean;
-  created_at: string;
-};
-
-// `icon` names an entry in the app's icon set rather than holding an emoji
-// glyph: the glyph came from the system font, so the same notification looked
-// different on every phone and could not take the row's accent colour.
-export const NOTIF_META: Record<
-  NotificationType,
-  { icon: IconName; color: string; dimColor: string }
-> = {
-  channel_approved: { icon: 'check-circle', color: Colors.success, dimColor: Colors.successDim },
-  channel_rejected: { icon: 'flag', color: Colors.danger, dimColor: Colors.dangerDim },
-  post_approved: { icon: 'check-circle', color: Colors.success, dimColor: Colors.successDim },
-  post_rejected: { icon: 'flag', color: Colors.danger, dimColor: Colors.dangerDim },
-  // Amber, not red: the subscription still works when this one arrives.
-  subscription_expiring: { icon: 'diamond', color: Colors.warning, dimColor: Colors.warningDim },
-  subscription_expired: { icon: 'lock', color: Colors.danger, dimColor: Colors.dangerDim },
-  // Sent by an admin from Admin -> Announcement (v82).
-  announcement: { icon: 'bell', color: Colors.brandBlue, dimColor: Colors.brandBlueDim },
-};
-
-export const NotificationService = {
-  // ── Read ─────────────────────────────────────────────────────
-
-  async getAll(userId: string): Promise<Notification[]> {
+export const notificationsApi = {
+  async list(userId: string): Promise<Notification[]> {
     const { data, error } = await supabase
       .from('notifications')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
-      .limit(50);
+      .limit(LIST_LIMIT);
     if (error) throw error;
     return (data ?? []) as Notification[];
   },
 
-  async getUnreadCount(userId: string): Promise<number> {
+  async countUnread(userId: string): Promise<number> {
     const { count, error } = await supabase
       .from('notifications')
       .select('id', { count: 'exact', head: true })
@@ -75,9 +25,7 @@ export const NotificationService = {
     return count ?? 0;
   },
 
-  // ── Update ───────────────────────────────────────────────────
-
-  async markAsRead(notificationId: string): Promise<void> {
+  async markRead(notificationId: string): Promise<void> {
     const { error } = await supabase
       .from('notifications')
       .update({ read: true })
@@ -85,7 +33,7 @@ export const NotificationService = {
     if (error) throw error;
   },
 
-  async markAllAsRead(userId: string): Promise<void> {
+  async markAllRead(userId: string): Promise<void> {
     const { error } = await supabase
       .from('notifications')
       .update({ read: true })
@@ -94,122 +42,86 @@ export const NotificationService = {
     if (error) throw error;
   },
 
-  // ── Create (called by admin panel only) ──────────────────────
+  /**
+   * Calls `onNew` within moments of a notification arriving for `userId` (Supabase Realtime).
+   * `listenerId` must be unique per caller: a second subscription under the same channel name
+   * reuses the first, already-subscribed channel, and adding a listener to it throws.
+   */
+  subscribeToNew(userId: string, listenerId: string, onNew: () => void): () => void {
+    const channel = supabase
+      .channel(`notifications:${userId}:${listenerId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${userId}`,
+        },
+        onNew,
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  },
 
+  /** Sends a notification to someone. Admin-only (the insert policy checks). */
   async send(
     userId: string,
     type: NotificationType,
     title: string,
     body: string,
-    channelId?: string,
-    postId?: string,
+    links: { channelId?: string; postId?: string } = {},
   ): Promise<void> {
     const { error } = await supabase.from('notifications').insert({
       user_id: userId,
       type,
       title,
       body,
-      channel_id: channelId ?? null,
-      post_id: postId ?? null,
+      channel_id: links.channelId ?? null,
+      post_id: links.postId ?? null,
       read: false,
     });
     if (error) throw error;
   },
+};
 
-  // ── Push Notifications ───────────────────────────────────────
-
-  async registerForPushNotificationsAsync(): Promise<string | null> {
-    if (Platform.OS === 'android') {
-      await Notifications.setNotificationChannelAsync('default', {
-        name: 'default',
-        importance: Notifications.AndroidImportance.MAX,
-        vibrationPattern: [0, 250, 250, 250],
-        lightColor: Colors.brandBlue,
-      });
-    }
-
-    if (Device.isDevice) {
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
-      if (existingStatus !== 'granted') {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-      }
-      if (finalStatus !== 'granted') {
-        return null;
-      }
-      const projectId =
-        Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
-      // We wrap in try catch in case projectId is missing or network error
-      try {
-        const pushTokenString = (
-          await Notifications.getExpoPushTokenAsync({
-            projectId,
-          })
-        ).data;
-        return pushTokenString;
-      } catch (e: any) {
-        if (__DEV__) console.warn('Failed to get push token:', e.message);
-        return null;
-      }
-    } else {
-      if (__DEV__) console.log('Must use physical device for Push Notifications');
-      return null;
-    }
-  },
-
-  async syncPushToken(userId: string): Promise<void> {
-    try {
-      const token = await this.registerForPushNotificationsAsync();
-      if (token) {
-        await supabase.from('profiles').update({ fcm_token: token }).eq('id', userId);
-      }
-    } catch (e) {
-      if (__DEV__) console.warn('Failed to sync push token', e);
-    }
-  },
-
-  // ── Convenience senders ──────────────────────────────────────
-
-  async channelApproved(ownerId: string, channelName: string, channelId: string) {
-    return NotificationService.send(
+/** The messages an admin's review decisions send to the uploader. */
+export const reviewNotifications = {
+  channelApproved: (ownerId: string, channelName: string, channelId: string) =>
+    notificationsApi.send(
       ownerId,
       'channel_approved',
       'Channel approved 🎉',
       `Your channel "${channelName}" is now live and visible to everyone.`,
-      channelId,
-    );
-  },
+      { channelId },
+    ),
 
-  async channelRejected(ownerId: string, channelName: string, channelId: string) {
-    return NotificationService.send(
+  channelRejected: (ownerId: string, channelName: string, channelId: string) =>
+    notificationsApi.send(
       ownerId,
       'channel_rejected',
       'Channel not approved',
       `Your channel "${channelName}" did not meet our content guidelines. You can edit and resubmit.`,
-      channelId,
-    );
-  },
+      { channelId },
+    ),
 
-  async postApproved(authorId: string, channelName: string, channelId: string, postId: string) {
-    return NotificationService.send(
+  postApproved: (authorId: string, channelName: string, channelId: string, postId: string) =>
+    notificationsApi.send(
       authorId,
       'post_approved',
       'Post approved ✓',
       `Your post in "${channelName}" is now live.`,
-      channelId,
-      postId,
-    );
-  },
+      { channelId, postId },
+    ),
 
-  async postRejected(authorId: string, channelName: string, channelId: string, postId: string) {
-    return NotificationService.send(
+  postRejected: (authorId: string, channelName: string, channelId: string, postId: string) =>
+    notificationsApi.send(
       authorId,
       'post_rejected',
       'Post not approved',
       `Your post in "${channelName}" was not approved. Check the rejection note for details.`,
-      channelId,
-      postId,
-    );
-  },
+      { channelId, postId },
+    ),
 };

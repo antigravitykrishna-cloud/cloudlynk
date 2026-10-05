@@ -16,7 +16,7 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { adminModerationApi } from '@/features/admin/api/adminModerationApi';
 import { publicMedia } from '@/lib/publicMedia';
 import type { ChannelPost } from '@/features/content/model';
-import { NotificationService } from '@/features/notifications/api/notificationsApi';
+import { reviewNotifications } from '@/features/notifications/api/notificationsApi';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/theme';
 import { formatTimeAgo } from '@/utils/format';
 import { Icon, type IconName } from '@/components/ui/Icon';
@@ -180,7 +180,7 @@ export default function AdminScreen() {
     setReviewing(ch.id);
     try {
       await adminModerationApi.approveChannel(ch.id);
-      await NotificationService.channelApproved(ch.owner?.id ?? ch.owner_id, ch.name, ch.id);
+      await reviewNotifications.channelApproved(ch.owner?.id ?? ch.owner_id, ch.name, ch.id);
       setPendingChannels(prev => prev.filter(c => c.id !== ch.id));
       showAlert('✓ Approved', `"${ch.name}" is live. Owner notified.`);
     } catch (err: any) {
@@ -200,7 +200,7 @@ export default function AdminScreen() {
           setReviewing(ch.id);
           try {
             await adminModerationApi.rejectChannel(ch.id);
-            await NotificationService.channelRejected(ch.owner?.id ?? ch.owner_id, ch.name, ch.id);
+            await reviewNotifications.channelRejected(ch.owner?.id ?? ch.owner_id, ch.name, ch.id);
             setPendingChannels(prev => prev.filter(c => c.id !== ch.id));
           } catch (err: any) {
             showAlert('Error', err.message);
@@ -217,7 +217,7 @@ export default function AdminScreen() {
     setReviewing(post.id);
     try {
       await adminModerationApi.approvePost(post.id, profile.id);
-      await NotificationService.postApproved(
+      await reviewNotifications.postApproved(
         post.author_id,
         (post.channel as any)?.name ?? 'your channel',
         post.channel_id,
@@ -247,7 +247,7 @@ export default function AdminScreen() {
               profile.id,
               'Does not meet content guidelines.',
             );
-            await NotificationService.postRejected(
+            await reviewNotifications.postRejected(
               post.author_id,
               (post.channel as any)?.name ?? 'your channel',
               post.channel_id,

@@ -162,34 +162,3 @@ export const Shadows = {
     },
   }),
 };
-
-// Names in the app's icon set, not emoji glyphs — a file list rendered with
-// system emoji looked different on every device and could not take the
-// category colour beside it.
-export const CATEGORY_ICONS: Record<string, string> = {
-  photo: 'image',
-  video: 'film',
-  document: 'document',
-  audio: 'music',
-  other: 'package',
-};
-
-// Categories were all one colour before, which made the icon the only
-// distinguishing mark in a dense file list. Distinct hues let a category be
-// recognised before the label is read — the file list in the store screenshots
-// relies on exactly this.
-export const CATEGORY_COLORS: Record<string, string> = {
-  photo: '#8FD3FF',
-  video: BRAND_BLUE,
-  document: '#B4A9FF',
-  audio: '#7FE7C4',
-  other: '#9FB0C9',
-};
-
-export const CATEGORY_DIM: Record<string, string> = {
-  photo: 'rgba(143, 211, 255, 0.15)',
-  video: 'rgba(46, 125, 255, 0.15)',
-  document: 'rgba(180, 169, 255, 0.15)',
-  audio: 'rgba(127, 231, 196, 0.15)',
-  other: 'rgba(159, 176, 201, 0.15)',
-};

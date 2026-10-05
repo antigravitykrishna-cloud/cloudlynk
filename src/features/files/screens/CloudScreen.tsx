@@ -1,85 +1,75 @@
-import { CloudlynkLogo } from '@/components/ui/CloudlynkLogo';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
-import { showAlert } from '@/components/ui/Feedback';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { GuestPrompt } from '@/features/auth/components/GuestPrompt';
-import { useAuth } from '@/features/auth/hooks/useAuth';
-import { promptSaveAccount } from '@/features/auth/guestPrompts';
-import { useFiles } from '@/features/files/hooks/useFiles';
-import { Colors } from '@/theme';
-import { CATEGORY_ICONS, CATEGORY_DIM, CATEGORY_COLORS } from '@/features/files/api/filesApi';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { CloudlynkLogo } from '@/components/ui/CloudlynkLogo';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { showAlert } from '@/components/ui/Feedback';
+import { SearchBar } from '@/components/ui/SearchBar';
+import { TabHeader } from '@/components/ui/TabHeader';
+import { Colors, FontSize, FontWeight, Shadows, Spacing } from '@/theme';
 import { formatBytes, formatTimeAgo } from '@/utils/format';
-import { Icon, type IconName } from '@/components/ui/Icon';
+import { GuestPrompt } from '@/features/auth/components/GuestPrompt';
+import { promptSaveAccount } from '@/features/auth/guestPrompts';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import type { StoredFile } from '@/features/files/api/filesApi';
+import { CategoryFilter } from '@/features/files/components/CategoryFilter';
+import { FileRow } from '@/features/files/components/FileRow';
+import { TransferBanner } from '@/features/files/components/TransferBanner';
+import type { FileCategory } from '@/features/files/fileCategories';
+import { useFiles } from '@/features/files/hooks/useFiles';
 
-const CATEGORIES: { key: string; label: string; icon: IconName }[] = [
-  { key: 'all', label: 'All', icon: 'folder' },
-  { key: 'photo', label: 'Photos', icon: 'image' },
-  { key: 'video', label: 'Videos', icon: 'film' },
-  { key: 'document', label: 'Docs', icon: 'document' },
-  { key: 'audio', label: 'Audio', icon: 'music' },
-];
+// The Cloud tab: the person's private 15 GB drive. Files are visible to their owner only, so there
+// is deliberately no share link (one would be a public URL to the file).
 
 export default function CloudScreen() {
-  const { user, isGuest } = useAuth();
-  const { files, activeTransfers, loadFiles, uploadImage, uploadDocument, deleteFile } = useFiles(
-    user?.id,
-  );
   const router = useRouter();
+  const { user, isGuest } = useAuth();
+  const { files, transfers, load, uploadFromGallery, uploadDocument, remove } = useFiles(user?.id);
+  const [query, setQuery] = useState('');
+  const [category, setCategory] = useState<FileCategory | 'all'>('all');
 
-  const [search, setSearch] = useState('');
-  const [activeCategory, setActiveCategory] = useState('all');
-
-  const prevUserIdRef = useRef<string | undefined>(undefined);
+  // Reloads for every account change too, since `load` depends on the user id.
   useEffect(() => {
-    if (prevUserIdRef.current !== undefined && prevUserIdRef.current !== user?.id) {
-      loadFiles();
-    }
-    prevUserIdRef.current = user?.id;
-  }, [user?.id, loadFiles]);
+    load();
+  }, [load]);
 
-  useEffect(() => {
-    loadFiles();
-  }, [loadFiles]);
-
-  const filteredFiles = files.filter(f => {
-    const matchesSearch = f.name.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = activeCategory === 'all' || f.category === activeCategory;
-    return matchesSearch && matchesCategory;
-  });
-
-  // What a user uploads is visible to that user only, so
-  // there is no Share / Copy Link. A share link is a public URL to the file.
-  const handleFileOptions = useCallback(
-    (file: (typeof files)[0]) => {
-      showAlert(file.name, `${formatBytes(file.size)} · ${formatTimeAgo(file.created_at)}`, [
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            showAlert('Delete File', `Are you sure you want to delete "${file.name}"?`, [
-              { text: 'Cancel', style: 'cancel' },
-              {
-                text: 'Delete',
-                style: 'destructive',
-                onPress: () => deleteFile(file.id, file.storage_path, file.size),
-              },
-            ]);
-          },
-        },
-        { text: 'Cancel', style: 'cancel' },
-      ]);
-    },
-    [deleteFile],
+  const visible = files.filter(
+    file =>
+      file.name.toLowerCase().includes(query.toLowerCase()) &&
+      (category === 'all' || file.category === category),
   );
 
-  // Guests reach this tab but every query here early-returns on
-  // !user?.id, so without this they get a blank screen and assume the app
-  // is broken rather than that the feature needs an account.
-  if (!user?.id) {
+  const showOptions = (file: StoredFile) =>
+    showAlert(file.name, `${formatBytes(file.size)} · ${formatTimeAgo(file.created_at)}`, [
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () =>
+          showAlert('Delete File', `Are you sure you want to delete "${file.name}"?`, [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Delete', style: 'destructive', onPress: () => remove(file) },
+          ]),
+      },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+
+  const chooseUpload = () => {
+    if (isGuest) {
+      promptSaveAccount(router);
+      return;
+    }
+    showAlert('Upload', 'What would you like to upload?', [
+      { text: 'Photo / Video', onPress: uploadFromGallery },
+      { text: 'Document', onPress: uploadDocument },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
+
+  // Signed out, nothing here would load; say what the tab is for instead of showing a blank screen.
+  if (!user) {
     return (
-      <SafeAreaView style={styles.safe} edges={['top']}>
+      <SafeAreaView style={styles.page} edges={['top']}>
         <GuestPrompt
           icon="cloud"
           title="Your 15 GB cloud drive"
@@ -90,274 +80,65 @@ export default function CloudScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      {/* Red Header */}
-      <View style={styles.redHeader}>
-        <Text style={styles.redHeaderTitle}>Cloud Storage</Text>
-        <CloudlynkLogo size={28} />
-      </View>
+    <SafeAreaView style={styles.page} edges={['top']}>
+      <TabHeader title="Cloud Storage" />
 
-      <View style={styles.body}>
+      <View style={styles.page}>
         {files.length === 0 ? (
-          <View style={styles.emptyState}>
-            <CloudlynkLogo size={48} />
-            {/* "No Record Found" is what a database says, not what you tell
-                someone opening their empty drive. An empty state has one job:
-                say what goes here and how to put it there. */}
-            <Text style={styles.emptyText}>Nothing here yet</Text>
-            <Text style={styles.emptyHint}>
-              Tap + to upload photos, videos and documents. You have 15 GB free.
-            </Text>
-          </View>
+          <EmptyState
+            artwork={<CloudlynkLogo size={48} />}
+            title="Nothing here yet"
+            message="Tap + to upload photos, videos and documents. You have 15 GB free."
+          />
         ) : (
-          <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-            {/* Search bar */}
-            <View style={styles.searchBar}>
-              <Icon name="search" size={16} color={Colors.textMuted} />
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Search files..."
-                placeholderTextColor={Colors.textMuted}
-                value={search}
-                onChangeText={setSearch}
-              />
-              {search.length > 0 && (
-                <TouchableOpacity onPress={() => setSearch('')}>
-                  <Text style={{ fontSize: 16, color: Colors.textMuted }}>{'✕'}</Text>
-                </TouchableOpacity>
-              )}
+          <ScrollView showsVerticalScrollIndicator={false}>
+            <View style={styles.search}>
+              <SearchBar value={query} onChange={setQuery} placeholder="Search files..." />
             </View>
-
-            {/* Category chips */}
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.categoryRow}
-            >
-              {CATEGORIES.map(cat => (
-                <TouchableOpacity
-                  key={cat.key}
-                  style={[
-                    styles.categoryChip,
-                    activeCategory === cat.key && styles.categoryChipActive,
-                  ]}
-                  onPress={() => setActiveCategory(cat.key)}
-                >
-                  <Icon
-                    name={cat.icon}
-                    size={15}
-                    color={activeCategory === cat.key ? Colors.brandBlue : Colors.textMuted}
-                  />
-                  <Text
-                    style={[
-                      styles.categoryLabel,
-                      activeCategory === cat.key && styles.categoryLabelActive,
-                    ]}
-                  >
-                    {cat.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-
-            {/* File rows */}
-            {filteredFiles.map(file => (
-              <TouchableOpacity
-                key={file.id}
-                style={styles.fileRow}
-                activeOpacity={0.7}
-                onPress={() => handleFileOptions(file)}
-              >
-                <View
-                  style={[
-                    styles.fileIcon,
-                    { backgroundColor: CATEGORY_DIM[file.category] ?? Colors.surfaceElevated },
-                  ]}
-                >
-                  <Icon
-                    name={(CATEGORY_ICONS[file.category] ?? 'package') as IconName}
-                    size={20}
-                    color={CATEGORY_COLORS[file.category] ?? Colors.textMuted}
-                  />
-                </View>
-                <View style={styles.fileInfo}>
-                  <Text style={styles.fileName} numberOfLines={1}>
-                    {file.name}
-                  </Text>
-                  <Text style={styles.fileMeta}>
-                    {formatBytes(file.size)} · {formatTimeAgo(file.created_at)}
-                  </Text>
-                </View>
-                <TouchableOpacity style={styles.moreBtn} onPress={() => handleFileOptions(file)}>
-                  <Text style={styles.moreDots}>{'⋯'}</Text>
-                </TouchableOpacity>
-              </TouchableOpacity>
+            <CategoryFilter selected={category} onSelect={setCategory} />
+            {visible.map(file => (
+              <FileRow key={file.id} file={file} onPress={() => showOptions(file)} />
             ))}
-
-            {filteredFiles.length === 0 && (
-              <View style={styles.emptyState}>
-                <Icon name="folder" size={44} color={Colors.textMuted} />
-                <Text style={styles.emptyText}>{`No files matching "${search}"`}</Text>
-              </View>
-            )}
+            {visible.length === 0 ? (
+              <EmptyState icon="folder" title={`No files matching "${query}"`} />
+            ) : null}
           </ScrollView>
         )}
-
-        {/* Active transfers banner */}
-        {activeTransfers.length > 0 && (
-          <View style={styles.transferBanner}>
-            <Icon name="upload" size={15} color={Colors.text} />
-            <Text style={styles.transferBannerText}>
-              {activeTransfers.length} upload{activeTransfers.length > 1 ? 's' : ''} in progress
-            </Text>
-            <Text style={styles.transferBannerPct}>
-              {Math.round(
-                activeTransfers.reduce((a, t) => a + t.progress.percentage, 0) /
-                  activeTransfers.length,
-              )}
-              %
-            </Text>
-          </View>
-        )}
+        <TransferBanner transfers={transfers} />
       </View>
 
-      {/* FAB — upload to personal cloud storage */}
       <TouchableOpacity
-        style={styles.fab}
-        onPress={() => {
-          if (isGuest) {
-            promptSaveAccount(router);
-            return;
-          }
-          showAlert('Upload', 'What would you like to upload?', [
-            { text: 'Photo / Video', onPress: () => uploadImage() },
-            { text: 'Document', onPress: () => uploadDocument() },
-            { text: 'Cancel', style: 'cancel' },
-          ]);
-        }}
+        style={styles.uploadButton}
+        onPress={chooseUpload}
         activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel="Upload"
       >
-        <Text style={styles.fabText}>+</Text>
+        <Text style={styles.uploadButtonText}>+</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.bg },
-  redHeader: {
-    backgroundColor: Colors.surface,
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  redHeaderTitle: { color: Colors.text, fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
-  body: { flex: 1, backgroundColor: Colors.bg },
-  emptyState: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 80,
-    paddingHorizontal: 20,
-  },
-  emptyText: { fontSize: 16, color: Colors.text, fontWeight: '600', marginTop: 16 },
-  emptyHint: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    marginTop: 8,
-    textAlign: 'center',
-    paddingHorizontal: 40,
-    lineHeight: 20,
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginHorizontal: 16,
-    marginTop: 16,
-    marginBottom: 12,
-    backgroundColor: Colors.bg,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  searchInput: { flex: 1, color: Colors.text, fontSize: 14, paddingVertical: 0 },
-  categoryRow: {
-    paddingHorizontal: 16,
-    gap: 8,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-    marginBottom: 8,
-  },
-  categoryChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 20,
-    backgroundColor: Colors.bg,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  categoryChipActive: { backgroundColor: Colors.brandBlueDim, borderColor: Colors.brandBlue },
-  categoryLabel: { fontSize: 12, fontWeight: '700', color: Colors.textSecondary },
-  categoryLabelActive: { color: Colors.brandBlue },
-  fileRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  fileIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  fileInfo: { flex: 1, minWidth: 0 },
-  fileName: { fontSize: 14, fontWeight: '700', color: Colors.text },
-  fileMeta: { fontSize: 12, color: Colors.textSecondary, fontWeight: '500', marginTop: 2 },
-  moreBtn: { padding: 8 },
-  moreDots: { fontSize: 20, color: Colors.textMuted, fontWeight: '700' },
-  transferBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginHorizontal: 16,
-    marginBottom: 12,
-    backgroundColor: Colors.brandBlueDim,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  transferBannerText: { flex: 1, fontSize: 12, fontWeight: '700', color: Colors.brandBlue },
-  transferBannerPct: { fontSize: 12, fontWeight: '800', color: Colors.brandBlue },
-  fab: {
+  page: { flex: 1, backgroundColor: Colors.bg },
+  search: { marginHorizontal: Spacing.lg, marginTop: Spacing.lg, marginBottom: Spacing.md },
+  uploadButton: {
     position: 'absolute',
     bottom: 80,
-    right: 20,
+    right: Spacing.xl,
     width: 56,
     height: 56,
     borderRadius: 28,
     backgroundColor: Colors.brandBlue,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 6,
-    shadowColor: Colors.brandBlue,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
+    ...Shadows.brand,
   },
-  fabText: { fontSize: 28, fontWeight: '800', color: Colors.text, marginTop: -2 },
+  uploadButtonText: {
+    fontSize: FontSize.xxxl,
+    fontWeight: FontWeight.extrabold,
+    color: Colors.text,
+    marginTop: -2,
+  },
 });

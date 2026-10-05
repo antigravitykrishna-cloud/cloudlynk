@@ -5,7 +5,7 @@ import { Icon, type IconName } from '@/components/ui/Icon';
 import { useEffect } from 'react';
 import { Colors } from '@/theme';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { NotificationService } from '@/features/notifications/api/notificationsApi';
+import { registerForPushNotifications } from '@/features/notifications/pushRegistration';
 
 type TabIconProps = {
   icon: IconName;
@@ -32,7 +32,7 @@ export default function TabsLayout() {
 
   useEffect(() => {
     if (user && profile?.notifications_enabled !== false) {
-      NotificationService.syncPushToken(user.id);
+      registerForPushNotifications(user.id);
     }
   }, [user, profile?.notifications_enabled]);
 
