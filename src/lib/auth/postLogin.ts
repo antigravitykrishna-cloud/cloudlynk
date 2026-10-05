@@ -1,15 +1,7 @@
 import type { Href } from 'expo-router';
 
-// Where to land after the next successful sign-in.
-//
-// A guest who taps a plan on the Profile tab is sent to /(auth)/login first.
-// Without this, app/_layout.tsx drops every fresh sign-in on Explore, so the
-// person has to go back and find the plan they had already picked -- the
-// point in the funnel where losing them is most expensive.
-//
-// Module state, not storage: it only has to survive the in-app hop through
-// login and complete-profile, and a destination that outlived an app restart
-// would ambush someone days later.
+// Where to land after the next sign-in, e.g. the plan a guest picked before being asked to sign in.
+// Kept in memory only, so it never resurfaces after an app restart.
 let pending: Href | null = null;
 
 export function setPostLoginRoute(route: Href | null) {

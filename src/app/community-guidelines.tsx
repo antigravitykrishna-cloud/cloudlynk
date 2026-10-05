@@ -6,13 +6,8 @@ import * as WebBrowser from 'expo-web-browser';
 import { Colors, FontSize, FontWeight, Spacing } from '@/constants/theme';
 import { config } from '@/lib/config';
 
-// This screen used to carry its own hardcoded, much shorter set of
-// guidelines — one that, for example, banned "explicit or adult content"
-// outright with different wording than the zero-tolerance list actually
-// maintained in supabase/functions/legal-pages/guidelines.ts. Two different
-// documents both called "Community Guidelines" is exactly the kind of
-// inconsistency a reviewer (or a user) can catch. There is now exactly one
-// source of truth: this screen opens that same hosted page.
+// Opens the hosted Community Guidelines so the app and the website can never show different
+// versions.
 export default function CommunityGuidelinesScreen() {
   const router = useRouter();
   const [opening, setOpening] = useState(false);

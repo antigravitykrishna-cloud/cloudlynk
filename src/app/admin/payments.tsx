@@ -14,13 +14,9 @@ import { AdminHeader, Card, Chip, adminStyles, formatDateTime } from '@/componen
 import { Colors, FontSize, FontWeight, Radius } from '@/constants/theme';
 import { AdminControl, type AdminPayment } from '@/lib/admin/adminControl';
 
-// Every UPI / Razorpay / Sabpaisa payment (v80). Google Play purchases are in
-// Play Console, not here.
-//
-// "Not reported to Google" matters: under user choice billing each of these
-// sales has to be reported to Google within 24 hours. The server does it
-// automatically and retries; a lasting flag here means it keeps failing
-// (usually the Play service account), and needs looking at.
+// UPI / Razorpay / Sabpaisa payments (Google Play purchases are in Play Console). Under User Choice
+// Billing each sale must be reported to Google within 24 hours; the server retries automatically,
+// so a lasting "Not reported" flag means something is wrong (usually the Play service account).
 
 type Filter = 'all' | 'paid' | 'created' | 'failed';
 const FILTERS: { key: Filter; label: string }[] = [

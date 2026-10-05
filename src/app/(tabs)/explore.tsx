@@ -60,7 +60,7 @@ export default function ExploreScreen() {
   // say what it unlocks.
   const handleSelect = useCallback(
     async (item: ChannelPost) => {
-      // v90 (client rule): a guest -- signed out, or a guest account -- sees
+      // A guest -- signed out, or a guest account -- sees
       // previews only. Nothing plays, free or premium; the plans are the next
       // step (and, signed out, the sign-in sheet after them).
       if (!user?.id || isGuest) {
@@ -68,27 +68,8 @@ export default function ExploreScreen() {
         return;
       }
 
-      // Signed in, but not entitled to THIS title.
-      //
-      // Before v79 this branch could not be reached with a premium item:
-      // channel_posts_select_v57 filtered those rows out, so a signed-in free
-      // user never had one to tap. v79 deliberately shows them the locked
-      // catalogue through premium_preview -- and those rows carry no video_url
-      // by construction, because the view has no such column.
-      //
-      // So without this check, tapping a locked title opens the detail view on
-      // a post that can never play: a dead player and no explanation. That is
-      // the exact failure v56 called out -- "they would see the post in the
-      // feed and then get a 403 the moment they pressed play, visibly broken"
-      // -- reintroduced through the front door by making previews visible.
-      //
-      // Admins are exempt: they hold access without a plan, and the row they
-      // received came from channel_posts with a real video_url.
-      //
-      // Straight to the plans, no "Premium title / See plans" dialog first: the
-      // client asked for it, and a signed-in person who taps a locked title has
-      // already said what they want. The dialog was one extra tap that could
-      // only lose them.
+      // Signed in but not entitled to this title (locked previews have no video URL): go straight
+      // to the plans. Admins have access without a plan.
       if (item.access_level === 'premium' && !isPaidUser && !isAdmin) {
         router.push('/premium');
         return;
@@ -102,7 +83,7 @@ export default function ExploreScreen() {
 
   const load = useCallback(async () => {
     try {
-      // v61: signed-out visitors browse too. getGuestExplorePosts names its
+      // Signed-out visitors browse too. getGuestExplorePosts names its
       // columns explicitly because `anon` is not granted video_url — asking
       // for it with select('*') would fail the whole query rather than return
       // a null, and the guest would see an empty Explore with no clue why.

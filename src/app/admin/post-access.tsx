@@ -14,12 +14,8 @@ import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { AdminContentService, AdminUser, PostGrantee } from '@/lib/admin/adminContent';
 
-// Per-post access management: who may watch this one video, regardless of
-// whether they subscribe.
-//
-// A grant is NOT a subscription. It gives one person one post and never
-// touches plan_status; revoking it never disturbs anything they have paid
-// for. The database enforces both — see the v56 migration.
+// Per-post access: let one person watch one video regardless of subscription. A grant never touches
+// plan_status, and revoking it never affects anything paid for (enforced in the database).
 
 type DurationChoice = 'forever' | '7d' | '30d' | 'custom';
 

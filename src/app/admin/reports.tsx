@@ -39,14 +39,8 @@ const TARGET_BADGE: Record<string, { label: string; color: string }> = {
   other: { label: 'OTHER', color: '#9FB0C9' },
 };
 
-// Admin moderation queue for content_reports. AdminModerationService
-// (lib/compliance.ts) has existed since v48, but nothing in the app ever
-// called it — reports were being filed (via ChannelService.reportContent /
-// ReportService.reportUser) into a table nobody could see through the UI.
-// This is the missing other half: where those reports actually go to be
-// reviewed and acted on. Every action here still independently re-verifies
-// is_admin server-side inside admin_resolve_report — this screen is a
-// convenience, not the security boundary.
+// Moderation queue for content reports. Every action re-checks is_admin server-side in
+// admin_resolve_report; this screen is a convenience, not the security boundary.
 export default function AdminReportsScreen() {
   const router = useRouter();
   const { isAdmin } = useAuth();
@@ -71,12 +65,8 @@ export default function AdminReportsScreen() {
       const profileIds = [...new Set([...reporterIds, ...reportedIds])];
       const postIds = [...new Set(rows.map(r => r.post_id).filter(Boolean))] as string[];
 
-      // Names come from admin_get_profiles_by_ids, not a direct select.
-      // public.profiles' only SELECT policy is `auth.uid() = id`, so the
-      // direct `.in('id', ids)` this used to do returned an empty set for
-      // everyone except the admin themselves — silently, with no error —
-      // which is why every row here used to read 'Unknown'. The v56 reader
-      // is SECURITY DEFINER and verifies is_admin itself.
+      // Names come from admin_get_profiles_by_ids (admin-only, SECURITY DEFINER). A direct select
+      // would return nothing: profiles are only readable by their owner.
       const [profiles, { data: posts }] = await Promise.all([
         AdminContentService.getProfilesByIds(profileIds),
         postIds.length

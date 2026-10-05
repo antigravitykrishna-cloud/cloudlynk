@@ -6,14 +6,9 @@ import { PressScale } from '@/components/ui/Press';
 import { Icon } from '@/components/ui/Icon';
 import type { GatewayMethod } from '@/lib/payments/gateways';
 
-// "Choose payment method" -- the client's reference sheet.
-//
-// Which rows appear is decided by the caller:
-//   * Google Play is a row only in 'test' builds. On Play, user choice
-//     billing requires Google's own choice screen to come first, so by the
-//     time this sheet opens the person has already chosen not to use Play.
-//   * A gateway row appears only if the server has that gateway's keys
-//     (lib/payments.ts getGatewayMethods) -- never a button that cannot work.
+// "Choose payment method" sheet. The caller decides the rows: Google Play appears only in 'test'
+// builds (on Play, Google's own choice screen comes first), and a gateway appears only if the
+// server has its keys.
 
 export type PaymentChoice = GatewayMethod | 'play';
 

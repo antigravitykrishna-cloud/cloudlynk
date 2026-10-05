@@ -8,16 +8,8 @@ import { PostService, ChannelPost } from '@/lib/data/posts';
 import { Colors, Radius, FontWeight } from '@/constants/theme';
 
 /**
- * Full-bleed hero for the first Featured title.
- *
- * A streaming home screen opens with one large piece of art, not a grid — it
- * is what tells you in half a second that this is a place to watch something.
- * Before this, "Featured" was a 140x80 thumbnail in a row, which read as a
- * list item, and with one entry it left two thirds of the row empty.
- *
- * The gradient is a scrim, not decoration: poster art is arbitrary, so white
- * title text needs a guaranteed dark floor underneath it or it becomes
- * unreadable over a bright frame.
+ * Full-width hero for the first Featured title. The gradient keeps the white title readable over
+ * any poster.
  */
 export const HeroCard = memo(({ item, onPress }: { item: ChannelPost; onPress: () => void }) => {
   const thumb = item.thumbnail_url ? PostService.getMediaPublicUrl(item.thumbnail_url) : null;

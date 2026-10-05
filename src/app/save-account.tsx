@@ -1,14 +1,7 @@
-// Save a guest account (v89) by linking Google or an email to it.
-//
-// A guest account lives only in this app's storage on this phone: uninstall,
-// clear data, change phones or sign out, and it cannot be signed back into --
-// with whatever plan was bought on it. Linking keeps the SAME account id, so
-// the plan, joined channels and everything else stay exactly as they are;
-// nothing is copied or migrated.
-//
-// Opened from: the banner on Profile, the prompt after a purchase
-// (app/premium.tsx, `?reason=purchase`), the guest sign-out warning, and any
-// action a guest cannot take (uploads).
+// Save a guest account by linking Google or an email. A guest account cannot be signed back into
+// after uninstalling or signing out; linking keeps the same account id, so the plan and channels
+// stay. Opened from the Profile banner, after a purchase (?reason=purchase), before subscribing
+// (?reason=subscribe) and from the guest sign-out warning.
 import { useState } from 'react';
 import {
   View,

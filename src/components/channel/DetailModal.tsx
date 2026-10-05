@@ -141,7 +141,7 @@ export const DetailModal = memo(
             if (!cancelled) setVideoLoading(false);
           });
       } else {
-        // v57: free playback is async now. Videos are created locked, so a free
+        // Free playback is async now. Videos are created locked, so a free
         // post whose unlock did not land needs the signed-token fallback rather
         // than a plain URL that 403s. The common case still resolves without a
         // round trip — see StreamService.resolveFreePlaybackUrl.

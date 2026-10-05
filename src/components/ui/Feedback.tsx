@@ -12,18 +12,9 @@ import {
 } from 'react-native';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme';
 
-// Branded toasts and dialogs, replacing React Native's Alert.alert.
-//
-// Alert.alert renders the operating system's own dialog. On Android that is a
-// square, light-grey Material box with ALL-CAPS text buttons — it ignores the
-// app's palette, typography and corner radius entirely. In a dark navy product
-// it reads as an unfinished prototype, which is exactly the note we got.
-//
-// State lives in a module-level store read through useSyncExternalStore rather
-// than a React context, matching how hooks/useAuth.ts already shares the
-// profile. That means any file can call toast() or confirm() as a plain
-// function — including code outside a component — without threading a provider
-// through 27 screens.
+// Branded alerts and toasts, replacing React Native's Alert.alert (the stock Android dialog ignores
+// the app's theme). State lives in a module-level store, so showAlert() and toast() can be called
+// from anywhere without a provider.
 
 type ToastKind = 'success' | 'error' | 'info';
 
@@ -88,12 +79,8 @@ export function toast(message: string, kind: ToastKind = 'info') {
 }
 
 /**
- * A dialog that demands a choice. Mirrors Alert.alert's shape so migrating a
- * call site is a rename plus button objects, not a rewrite.
- *
- * Buttons render in the order given, stacked vertically — an Android dialog
- * squeezes three actions into a horizontal row and truncates them, which is
- * half of why the stock ones look cheap.
+ * A dialog that needs a choice, with the same shape as Alert.alert. Buttons stack vertically so
+ * long labels are never truncated.
  */
 export function showAlert(title: string, message?: string, buttons?: ConfirmButton[]) {
   confirmState = {

@@ -64,7 +64,7 @@ export const DetailModal = memo(
               if (!cancelled) setVideoLoading(false);
             });
         } else {
-          // v57: see the matching comment in app/(tabs)/channels/[id].tsx.
+          // See the matching comment in app/(tabs)/channels/[id].tsx.
           setVideoLoading(true);
           StreamService.resolveFreePlaybackUrl(selected.id, selected.video_url)
             .then(url => {

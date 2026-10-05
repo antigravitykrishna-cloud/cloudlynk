@@ -21,16 +21,8 @@ import { showAlert, toast } from '@/components/ui/Feedback';
 import { Icon } from '@/components/ui/Icon';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme';
 
-// Editing your own name, username and picture.
-//
-// This screen replaces an alert that said "Edit profile coming soon." — the
-// pencil button on Profile has been a dead end since the app was written, and
-// it is the first thing anyone taps after signing up.
-//
-// Only three columns are writable here. plan_status, is_admin, approval_status
-// and the rest are governed by protect_profile_privileged_fields, which
-// reverts them for any writer that is not trusted — so a direct update from
-// the client cannot escalate anything even if this screen tried.
+// Edit your own name, username and picture. Only these columns are writable: privileged fields
+// (plan, admin, approval) are reverted server-side by protect_profile_privileged_fields.
 
 const NAME_MAX = 60;
 const USERNAME_MAX = 24;

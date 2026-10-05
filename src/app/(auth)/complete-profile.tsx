@@ -1,15 +1,8 @@
-// Shown after sign-in for an account that has not yet accepted the current
-// POLICY_VERSIONS (or has no 18+ confirmation on file). RootLayout
-// (app/_layout.tsx) routes here via ComplianceService.hasAcceptedCurrentPolicies().
-//
-// v88: no birth year. Every visitor already answered "I am 18 or older" on
-// the age gate (components/AgeGate.tsx), whose text also accepts the Terms,
-// Community Guidelines and Privacy Policy. So a brand-new account on a
-// device that passed the gate is completed automatically and this screen is
-// only a spinner. The card appears only when that is not enough:
-//   * the device has no gate answer on file (e.g. storage was cleared), or
-//   * the account accepted an OLDER policy version -- a policy change has to
-//     be shown to the person, not accepted for them.
+// Shown after sign-in when the account has not accepted the current policy versions or has no 18+
+// confirmation. A new account on a device that already passed the age gate is completed
+// automatically (just a spinner). The card is shown when the device has no gate answer, or when the
+// policies changed since the account accepted them -- a change must be shown, not accepted on the
+// person's behalf.
 import {
   View,
   Text,

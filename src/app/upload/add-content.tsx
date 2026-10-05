@@ -1,8 +1,6 @@
 /**
- * Multi-entry upload screen.
- * User picks 1-N video files, fills metadata for each inline,
- * taps "Upload All" — queue starts and progress is shown in-place.
- * User stays on screen until all items are done or failed.
+ * Upload screen: pick one or more videos, fill in details for each, then "Upload All". Progress is
+ * shown in place until every item finishes or fails.
  */
 
 import { useState, useCallback, useEffect, useRef } from 'react';

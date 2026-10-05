@@ -11,17 +11,9 @@ import { Colors } from '@/constants/theme';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { Icon } from '@/components/ui/Icon';
 
-// The Feed tab: newest content from the channels you have joined -- the
-// client's reference flow.
-//
-//   guest                     -> "Join channels to get content here!"
-//   signed in, joined nothing -> the same, with a way to the channels
-//   joined channels           -> their newest posts, premium ones included
-//
-// Anyone signed in can join a public channel (v81); watching premium needs a
-// plan. So premium titles are listed with a lock, and tapping one goes
-// straight to the plans. Tapping anything else opens its channel, where the
-// existing playback gates apply.
+// Feed: newest posts from the channels you joined. Guests and people who joined nothing see an
+// empty state with a way to the channels. Premium titles show a lock and open the plans; others
+// open their channel.
 
 type FeedItem = GuestChannelPost;
 
@@ -95,7 +87,7 @@ export default function FeedScreen() {
   };
 
   // The empty state's next step: sign-in comes later, when they join.
-  // v90: a guest account cannot join, so "Browse channels" would be a dead
+  // A guest account cannot join, so "Browse channels" would be a dead
   // end for it -- saving the account is the step that unlocks joining.
   const emptyAction = isGuest
     ? {

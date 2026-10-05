@@ -1,15 +1,9 @@
 import { supabase } from '@/lib/supabase';
 
 /**
- * Client-side contract for the backend added in
- * supabase/migrations/20260825090000_v48_ugc_moderation_and_entitlements.sql.
- *
- * Keep POLICY_VERSIONS in sync with `current_policy_versions()` in that
- * migration — bump both together whenever Terms/Guidelines/Privacy change.
- * A user who accepted an older version will fail the server-side
- * `can_create_ugc` check the next time they try to create a channel or post,
- * so the front-end should re-prompt for acceptance whenever this differs
- * from what `profiles.terms_version`/`community_guidelines_version` holds.
+ * Client side of policy acceptance. Keep POLICY_VERSIONS in step with current_policy_versions() in
+ * the database; bump both when the Terms, Guidelines or Privacy Policy change, and people are asked
+ * to accept again.
  */
 export const POLICY_VERSIONS = {
   terms: 'v1',
@@ -29,10 +23,8 @@ export const ComplianceService = {
   },
 
   /**
-   * Client-side pre-check so the UI can show "accept terms to continue"
-   * instead of a raw RLS failure. The server independently re-checks this
-   * via `can_create_ugc` on every channel/post INSERT — this is a UX
-   * convenience, not the security boundary.
+   * UI pre-check so the app can ask for acceptance instead of failing with a database error. The
+   * server re-checks (can_create_ugc) on every insert.
    */
   hasAcceptedCurrentPolicies(
     profile: {
@@ -44,7 +36,7 @@ export const ComplianceService = {
     } | null,
   ): boolean {
     if (!profile) return false;
-    // v88: the age gate's "I am 18 or older" (adult_confirmed_at). Older
+    // The age gate's "I am 18 or older" (adult_confirmed_at). Older
     // accounts that typed a birth year at signup still count.
     const isAdult =
       !!profile.adult_confirmed_at ||

@@ -3,26 +3,16 @@ import { useRouter } from 'expo-router';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme';
 import { Icon, type IconName } from '@/components/ui/Icon';
 
-// What a signed-out visitor sees on a tab that needs an account.
-//
-// v61 opened every tab to guests, but only Explore has anything to show them.
-// Cloud, Channels and Profile all early-return on `!user?.id`, so without this
-// a guest tapping them got a blank screen and no idea why — which reads as a
-// broken app, not a locked feature.
-//
-// Each tab passes its own line about what the account unlocks, because "sign in
-// to continue" three times says nothing, and the reason someone would want an
-// account differs per tab.
+// What a signed-out visitor sees on a tab that needs an account, with a line per tab saying what an
+// account unlocks -- instead of a blank screen that looks broken.
 
 export function GuestPrompt({
   icon,
   title,
   message,
   /**
-   * Optional third action. Profile uses it to link to the Premium plans:
-   * a signed-out visitor could not see what a subscription costs from
-   * anywhere in the app, which hides the pitch from the people most likely
-   * to be deciding whether to make an account at all.
+   * Optional third action, e.g. Profile links to the Premium plans so visitors can see prices
+   * before making an account.
    */
   linkLabel,
   linkHref,

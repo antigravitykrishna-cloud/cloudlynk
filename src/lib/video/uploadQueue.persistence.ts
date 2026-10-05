@@ -1,8 +1,6 @@
 /**
- * AsyncStorage persistence for the upload queue.
- * Key: 'upload_queue' — mirrors the pattern in queryClient.ts.
- * Serializes QueueState as JSON. On load, filters out items with
- * stale content:// URIs (device file no longer accessible).
+ * Saves the upload queue to AsyncStorage as JSON. On load, drops items whose content:// file is no
+ * longer accessible.
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';

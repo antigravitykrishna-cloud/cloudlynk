@@ -16,19 +16,9 @@ import { supabase } from '@/lib/supabase';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme';
 import { Icon } from '@/components/ui/Icon';
 
-// Step 2 of password recovery — reached from the cloudlynk://reset-password
-// deep link in the email.
-//
-// Supabase establishes a short-lived recovery session when that link opens the
-// app, and updateUser({ password }) only works while it is active. So this
-// screen checks for a session on mount: without one, the link has expired or
-// was opened out of context, and saying so is far more use than an
-// "Auth session missing!" error from the SDK.
-//
-// Requires cloudlynk://reset-password to be listed under Authentication ->
-// URL Configuration -> Redirect URLs in the Supabase dashboard. Supabase
-// refuses to redirect anywhere not on that list, and the symptom is a link
-// that appears to do nothing at all.
+// Password recovery, step 2, opened from the cloudlynk://reset-password link in the email. The link
+// creates a short-lived recovery session; without it the link has expired. Requires
+// cloudlynk://reset-password in Supabase -> Authentication -> URL Configuration -> Redirect URLs.
 
 const MIN_LENGTH = 8;
 

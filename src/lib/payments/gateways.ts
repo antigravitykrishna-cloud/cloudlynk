@@ -2,13 +2,9 @@ import { supabase } from '@/lib/supabase';
 import { Colors } from '@/constants/theme';
 import { metaDeviceSignals } from '@/lib/analytics/metaAds';
 
-// Razorpay (incl. its UPI app-list checkout) and Sabpaisa, from the app side.
-//
-// The app never decides that a payment worked. It starts an order on the
-// server (supabase/functions/payments), hands the person to the gateway, and
-// then asks the server to confirm with the gateway's own servers. Premium is
-// switched on by the server, so a faked "success" from a modified app or a
-// UPI app gets nothing.
+// Razorpay (including its UPI app list) and Sabpaisa, app side. The app never decides that a
+// payment worked: it creates an order on the server, sends the person to the gateway, then asks the
+// server, which confirms with the gateway and switches Premium on.
 
 export type GatewayMethod = 'upi' | 'razorpay' | 'sabpaisa';
 
@@ -91,10 +87,8 @@ export async function verifyGatewayOrder(
 }
 
 /**
- * Asks the server until the gateway has a final answer. UPI confirmations
- * can trail the person returning to the app by several seconds, and a
- * Sabpaisa callback lands on the server, not in the app -- so "pending" right
- * after returning is normal and is polled, not reported as a failure.
+ * Ask the server until the gateway has a final answer. UPI confirmations can lag a few seconds and
+ * Sabpaisa's result goes to the server, so 'pending' right after returning is normal.
  */
 export async function waitForPayment(
   orderId: string,
@@ -113,19 +107,16 @@ export async function waitForPayment(
 }
 
 /**
- * Opens Razorpay's native checkout. For 'upi' it shows only UPI, where
- * Razorpay lists the UPI apps installed on the phone (GPay, PhonePe, Paytm,
- * ...) and opens the one the person picks. Resolves with the checkout's
- * result, or null if the person closed it or it errored -- in both cases the
- * caller still asks the server, because a UPI payment can succeed even when
- * the app never hears back from the UPI app.
+ * Razorpay's native checkout. For 'upi' it lists the UPI apps on the phone and opens the one
+ * chosen. Resolves with the result, or null if closed or failed -- the caller asks the server
+ * either way, since a UPI payment can succeed without the app hearing back.
  */
 export async function openRazorpay(
   order: RazorpayOrder,
 ): Promise<{ razorpayPaymentId: string; razorpaySignature: string } | null> {
   // Lazy: the native module only exists in a build that includes it, and a
   // missing module must not take the Premium screen down with it.
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- loaded on first use so a build without this native module still starts
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- optional native module, loaded on first use
   const RazorpayCheckout = require('react-native-razorpay').default;
 
   const options: Record<string, unknown> = {

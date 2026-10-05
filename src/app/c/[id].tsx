@@ -4,31 +4,9 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Colors } from '@/constants/theme';
 
 /**
- * Campaign landing route: https://thecloudlynk.com/c/<channel-id>
- *
- * This is the compliant replacement for the client's "verify by IP/source,
- * then grant access to hidden channels". An ad link opens the app directly on
- * the channel it advertised, so the campaign decides WHERE SOMEONE STARTS —
- * never WHAT EXISTS, and never what they are entitled to.
- *
- * That distinction is the whole point, so it is enforced structurally rather
- * than by convention:
- *
- *   - This route only calls router.replace. It cannot grant anything; there is
- *     no entitlement code here to get it wrong later.
- *   - It sends everyone to the same destination the Channels tab does, so an
- *     ad visitor and an organic visitor land on identical screens and hit the
- *     identical paywall.
- *   - Nothing about the arrival is recorded. Storing the campaign would be
- *     harmless on its own, but `profiles.acquisition_source` is the column the
- *     removed cloaking system used (v46, and Finding 0 in
- *     docs/PLAY_STORE_COMPLIANCE_AUDIT.md). Leaving it untouched means there is
- *     no half-populated field for a future change to start reading again.
- *     It also keeps the Data Safety declaration accurate: no IP, no location,
- *     nothing new collected.
- *
- * `replace`, not `push`: the landing route should not sit in the back stack,
- * or pressing back from the channel returns to a spinner.
+ * Campaign landing route: https://thecloudlynk.com/c/<channel-id>. Opens the advertised channel --
+ * the same screen and the same rules as reaching it from the Channels tab. It grants nothing and
+ * records nothing about the arrival. `replace` keeps this spinner out of the back stack.
  */
 export default function CampaignLanding() {
   const { id } = useLocalSearchParams<{ id: string }>();

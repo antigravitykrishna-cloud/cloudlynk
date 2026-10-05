@@ -3,22 +3,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import { config } from '@/lib/config';
 
-// Meta (Facebook) ad measurement: which Meta ads led to installs, sign-ups
-// and purchases, so the client's Meta campaigns can optimise for them.
-//
-// Who sends what -- chosen so nothing is counted twice:
-//   installs / app opens          Meta SDK, automatically (MainApplication.kt)
-//   Google Play purchases         Meta SDK, automatically (Play Billing)
-//   sign-up, checkout started     this file, from the app
-//   UPI / Razorpay / Sabpaisa     the payments server, via Meta's Conversions
-//                                 API, once the payment is confirmed -- the
-//                                 app may be closed by then, and a purchase
-//                                 the server has not confirmed is not one.
-//
-// Nothing here runs unless META_APP_ID is set in app.json AND the person has
-// not turned "Ad measurement" off in Settings. The SDK module is required
-// lazily: merely importing it starts a native logger that needs the SDK to be
-// initialised, which it is not in a build without an app ID.
+// Meta ad measurement: which Meta ads led to installs, sign-ups and purchases. Installs, app opens
+// and Google Play purchases are logged by the Meta SDK automatically; sign-up and checkout-started
+// are logged here; UPI / card purchases are reported by the payments server (Conversions API) once
+// confirmed. Nothing runs unless META_APP_ID is set and the person has not turned "Ad measurement"
+// off. The SDK is loaded lazily because importing it starts a native logger.
 
 const OPT_KEY = 'cloudlynk.metaMeasurement';
 let optedOut: boolean | null = null;
@@ -40,7 +29,7 @@ async function allowed(): Promise<boolean> {
 }
 
 function sdk(): any {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- loaded on first use so a build without this native module still starts
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- optional native module, loaded on first use
   return require('react-native-fbsdk-next');
 }
 
@@ -105,10 +94,8 @@ export interface MetaDeviceSignals {
 }
 
 /**
- * What Meta's Conversions API needs to tie a server-reported purchase back
- * to this phone (and so to the ad that brought it): the SDK's anonymous ID,
- * the advertising ID, and Meta's 16-field "extinfo" device description.
- * Sent with each gateway order; null when measurement is off.
+ * What Meta's Conversions API needs to match a server-reported purchase to this phone: the SDK's
+ * anonymous id, the advertising id and Meta's device description. Null when measurement is off.
  */
 export async function metaDeviceSignals(): Promise<MetaDeviceSignals | null> {
   if (!(await allowed())) return null;

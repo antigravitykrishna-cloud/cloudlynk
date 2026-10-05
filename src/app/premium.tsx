@@ -32,17 +32,8 @@ import { logCheckoutStarted } from '@/lib/analytics/metaAds';
 import { Icon } from '@/components/ui/Icon';
 import { PressScale, fireHaptic } from '@/components/ui/Press';
 
-// v52: Premium no longer sells storage — every account (free or premium)
-// gets the same 15GB. Premium instead unlocks movies/series/shorts the
-// creator has flagged as premium (channel_posts.access_level), enforced
-// server-side via RLS — see the v52 migration and lib/posts.ts
-// defaultAccessLevel(). Deliberately a short, honest list: "No Ads" isn't
-// listed because no ad is shown anywhere in the app yet (lib/ads.ts exists
-// but nothing currently renders a BannerAd/interstitial), and "priority
-// upload speed" / "early access" have no backing mechanism — don't
-// re-add store-listing-style claims here without also wiring up the
-// enforcement, or Data Safety/Play listing reviewers will find a real gap
-// between what's promised and what the app does.
+// Premium unlocks titles marked Premium (enforced server-side); it does not add storage. Keep this
+// list to things the app really does -- Play reviewers compare it with the app.
 const BENEFITS = [
   'Unlock Premium Movies & Web Series',
   'Support the channels and creators you follow',
@@ -83,20 +74,10 @@ export default function PremiumScreen() {
     router.push('/(auth)/login');
   };
 
-  // Google Play policy requires digital content to be sold exclusively
-  // through Play Billing — the app never offers an alternate payment method
-  // to unlock in-app content.
-  // ── Paying ────────────────────────────────────────────────────────────
-  //
-  // Google Play plus, when the server has their keys, UPI / Razorpay /
-  // Sabpaisa. How they are offered depends on config.alternativeBilling
-  // (lib/config.ts):
-  //   user_choice  Google Play's own choice screen comes first. If the
-  //                person picks our option there, Google hands over a token
-  //                and our payment sheet opens with the gateways.
-  //   test         our sheet straight away, Google Play as one of its rows
-  //                (sideloaded test builds only).
-  //   off          Google Play only.
+  // Ways to pay: Google Play, plus UPI / Razorpay / Sabpaisa when the server has their keys.
+  // config.alternativeBilling decides how they are offered: 'user_choice' = Google's choice screen
+  // first; 'test' = our sheet with Google Play as one option (sideloaded test builds); 'off' =
+  // Google Play only.
   const [gatewayMethods, setGatewayMethods] = useState<GatewayMethod[]>([]);
   const [sheet, setSheet] = useState<{ choices: PaymentChoice[]; token?: string } | null>(null);
   const [sabpaisaOrder, setSabpaisaOrder] = useState<SabpaisaOrder | null>(null);
@@ -114,7 +95,7 @@ export default function PremiumScreen() {
     fireHaptic('success');
     await refreshProfile();
     if (isGuest) {
-      // v89: a plan on a guest account is one uninstall away from being
+      // A plan on a guest account is one uninstall away from being
       // lost. Saving the account is the very next thing they see.
       router.replace({ pathname: '/save-account', params: { reason: 'purchase' } } as never);
       return;
@@ -299,18 +280,9 @@ export default function PremiumScreen() {
     );
   }
 
-  // v55 approval gate — enforced on the PURCHASE, not on the page.
-  //
-  // This used to early-return a "your account is being reviewed" screen, so a
-  // guest and a pending user never saw what Premium costs or what it includes.
-  // That hides the pitch from precisely the two audiences it needs to reach:
-  // someone deciding whether to make an account, and someone waiting on
-  // approval and wondering whether it is worth waiting for.
-  //
-  // Everyone sees the benefits and the four prices. Only the button changes.
-  // v92: a guest ACCOUNT saves it (Google/email) before paying -- a plan on
-  // a guest account could not be watched and would be lost on uninstall.
-  // The database refuses a guest's payment order too.
+  // Everyone sees the plans; only the button changes. Guests sign in, guest accounts save their
+  // account first (the server also refuses their orders), pending accounts wait for approval,
+  // rejected accounts cannot buy.
   const gate: 'guest' | 'save' | 'pending' | 'rejected' | null = !user
     ? 'guest'
     : isGuest

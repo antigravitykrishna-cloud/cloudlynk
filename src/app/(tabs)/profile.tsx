@@ -135,7 +135,7 @@ export default function ProfileScreen() {
   };
 
   // Signed out: the plans, not a sign-in wall -- see components/GuestPlans.tsx.
-  // v61: guests reach this tab but every query here early-returns on
+  // Guests reach this tab but every query here early-returns on
   // !user?.id, so without this they get a blank screen and assume the app
   // is broken rather than that the feature needs an account.
   if (!user?.id) {
@@ -269,7 +269,7 @@ export default function ProfileScreen() {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>My Channels</Text>
-              {/* v90: only admins publish. */}
+              {/* Only admins publish. */}
               {isAdmin && (
                 <TouchableOpacity
                   onPress={() => router.push('/create-content')}

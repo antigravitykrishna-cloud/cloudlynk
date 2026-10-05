@@ -1,8 +1,6 @@
 /**
- * v0.7.0 Per-item upload form.
- * Edits metadata for a queued video before it uploads.
- * Mirrors CreateModal fields: content type, title, description,
- * genre, duration, season/episode, thumbnail.
+ * Edit the details of a queued video before it uploads: type, title, description, genre, duration,
+ * season/episode, thumbnail.
  */
 
 import { useState, useCallback, useEffect } from 'react';

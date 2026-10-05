@@ -1,9 +1,6 @@
 /**
- * v0.7.0 Video player overlay.
- * nativeControls=false — ExoPlayer's native bottom row (play/pause, skip, progress, settings)
- * is fully replaced by our own custom bottom row, so there's only ONE settings button (top bar).
- * We add: close button, settings (quality/speed), custom play/pause + progress bar/seek.
- * No tapOverlay blocking anything. Double-tap skip on narrow left/right edge strips only.
+ * Full-screen video player with our own controls (native controls are off): close, settings
+ * (quality/speed), play/pause, seek bar, and double-tap on the left/right edges to skip 10 seconds.
  */
 
 import {

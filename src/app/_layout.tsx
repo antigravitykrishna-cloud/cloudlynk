@@ -42,28 +42,9 @@ export default function RootLayout() {
     const inAuthGroup = segments[0] === '(auth)';
 
     if (!session) {
-      // v61: guests may browse. The app opens on Explore and only asks for an
-      // account at the moment of watching — see the sign-in prompt in
-      // app/(tabs)/explore.tsx.
-      //
-      // A guest who has deliberately navigated to Sign in / Sign up is left
-      // alone; bouncing them back to Explore would make the login screen
-      // impossible to reach. Everyone else lands on Explore.
-      //
-      // Screens that genuinely need an account gate themselves rather than
-      // being gated here, because "needs an account" is per-action now
-      // (watching, uploading, subscribing) rather than per-app.
-      // The redirect has to fire even when the guest is ALREADY inside the
-      // tabs group, which is the case on a cold start: expo-router resolves
-      // '/(tabs)' against the index route file — app/(tabs)/index.tsx, the
-      // Cloud tab — before any of this runs, and `initialRouteName` on the
-      // Tabs layout does not override a direct index match. Guarding on
-      // !inTabsGroup therefore skipped the redirect entirely and the app
-      // opened on Cloud.
-      //
-      // One-shot, so this only steers the FIRST routing decision. Without the
-      // ref, a guest tapping the Cloud tab would be bounced straight back to
-      // Explore and the other tabs would be unreachable.
+      // Guests may browse; screens that need an account ask for one themselves. On the first
+      // routing decision only, send the guest to Explore (expo-router would otherwise open the
+      // Cloud tab, the index route). Leave the auth screens alone so Sign in stays reachable.
       didShowPlans.current = false;
       if (!inAuthGroup && !didInitialGuestRoute.current) {
         didInitialGuestRoute.current = true;
@@ -98,14 +79,9 @@ export default function RootLayout() {
       return;
     }
 
-    // Land on Explore, not the Cloud tab. Explore is the content surface and
-    // the reason someone installed the app; the storage tab is a feature they
-    // find later. Routing to '/(tabs)' would resolve to the first declared
-    // screen, which is index (Cloud) — so name the route explicitly rather
-    // than relying on tab order, which a later reorder would silently change.
-    //
-    // Unless the person was part-way through something when they were asked
-    // to sign in -- a guest who tapped a plan goes back to that plan.
+    // Land on Explore (the content tab), named explicitly so a tab reorder cannot change it --
+    // unless the person was mid-way through something when asked to sign in (e.g. a plan they
+    // picked).
     if (inAuthGroup) {
       router.replace(peekPostLoginRoute() ?? '/(tabs)/explore');
     } else {
@@ -113,14 +89,9 @@ export default function RootLayout() {
       // destination has been reached, so it must not fire again.
       setPostLoginRoute(null);
 
-      // Until they subscribe, every launch and every sign-in opens the plans
-      // first. It is an ordinary screen the person can close -- the free
-      // tier stays reachable -- and it is skipped when they are already on
-      // it (a guest who picked a plan comes back to /premium). Rejected
-      // accounts cannot buy, so showing them plans would only frustrate.
-      // Not while an admin still has to approve the account either: it could
-      // only show "Awaiting admin approval" on every launch. Guests are
-      // 'pending' too but still get it -- saving the account is their step.
+      // Open the plans once per launch/sign-in for accounts without a plan. It can be closed.
+      // Skipped when already on it, for rejected accounts (they cannot buy) and while waiting for
+      // admin approval. Guests still get it: saving the account is their next step.
       const waitingForApproval = approvalStatus === 'pending' && !isGuest;
       if (
         !didShowPlans.current &&
@@ -201,7 +172,7 @@ export default function RootLayout() {
               />
             </Stack>
 
-            {/* v61: guests never reach signup, where the 18+ birth-year check
+            {/* Guests never reach signup, where the 18+ birth-year check
                 lives — so without this, opening the app to visitors would
                 remove the only age gate in the product. Signed-in accounts
                 already passed that check and are not asked again. */}

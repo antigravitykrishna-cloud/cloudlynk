@@ -14,15 +14,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { AdminContentService, AdminPost, AdminPostStatus } from '@/lib/admin/adminContent';
 import { AccessLevel } from '@/lib/data/posts';
 
-// The admin content list. Everything Cloudlynk publishes, plus every
-// user-created post, filterable by status and access level.
-//
-// Access level is changeable HERE, after upload — not only at creation.
-// That is an explicit client requirement, and the creator-side upload flow
-// (app/upload/add-content.tsx) only offers it at creation time.
-//
-// Both isAdmin checks in this file are UX. Every write goes through an RPC
-// that re-verifies is_admin in the database.
+// Admin content list: everything published, filterable by status and access level. Access level can
+// be changed here after upload. The isAdmin checks are UX only -- every write is an RPC that re-
+// checks is_admin.
 
 type StatusFilter = AdminPostStatus | 'all';
 type AccessFilter = AccessLevel | 'all';

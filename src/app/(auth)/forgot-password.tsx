@@ -14,16 +14,8 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme';
 
-// Step 1 of password recovery: ask where to send the link.
-//
-// Before this existed there was no recovery path at all — no link on the login
-// screen, no resetPasswordForEmail call anywhere. Anyone who forgot their
-// password was permanently locked out and had to be fixed by hand in the
-// Supabase dashboard.
-//
-// The confirmation is deliberately the same whether or not the address has an
-// account. A screen that says "no account with that email" is a free tool for
-// finding out who has registered.
+// Password recovery, step 1: ask where to send the reset link. The confirmation is the same whether
+// or not the address has an account, so the screen cannot be used to find out who is registered.
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();

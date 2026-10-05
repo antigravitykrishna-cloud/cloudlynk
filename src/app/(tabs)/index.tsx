@@ -54,7 +54,7 @@ export default function CloudScreen() {
     return matchesSearch && matchesCategory;
   });
 
-  // v90 (client rule): what a user uploads is visible to that user only, so
+  // What a user uploads is visible to that user only, so
   // there is no Share / Copy Link. A share link is a public URL to the file.
   const handleFileOptions = useCallback(
     (file: (typeof files)[0]) => {
@@ -79,7 +79,7 @@ export default function CloudScreen() {
     [deleteFile],
   );
 
-  // v61: guests reach this tab but every query here early-returns on
+  // Guests reach this tab but every query here early-returns on
   // !user?.id, so without this they get a blank screen and assume the app
   // is broken rather than that the feature needs an account.
   if (!user?.id) {

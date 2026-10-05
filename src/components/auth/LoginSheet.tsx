@@ -17,15 +17,9 @@ import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme
 import { setPostLoginRoute } from '@/lib/auth/postLogin';
 import { PressScale } from '@/components/ui/Press';
 
-// "Please sign in" -- the sheet a guest gets when they try something that
-// needs an account (joining a channel, picking a plan).
-//
-// A sheet over the current screen rather than a jump to the login page, per
-// the client's reference flow: the person sees what they were doing, and
-// "Not now" or a tap outside leaves them exactly where they were.
-//
-// `returnTo` is where to land once signed in (lib/postLogin.ts). Without it
-// a fresh sign-in goes to Explore, which loses the thing they were doing.
+// "Please sign in" sheet shown when a guest tries something that needs an account. It opens over
+// the current screen, so "Not now" leaves them where they were. `returnTo` is where to go after
+// signing in (lib/auth/postLogin.ts).
 
 export function LoginSheet({
   visible,
@@ -38,7 +32,7 @@ export function LoginSheet({
   onClose: () => void;
   message?: string;
   returnTo?: Href | null;
-  /** v90: false where a guest account could not do the thing anyway (joining). */
+  /** False where a guest account could not do the thing anyway (joining). */
   allowGuest?: boolean;
 }) {
   const router = useRouter();
@@ -52,7 +46,7 @@ export function LoginSheet({
     router.push('/(auth)/login');
   };
 
-  // v89: a guest ID on the spot, then straight back to what they were doing.
+  // A guest ID on the spot, then straight back to what they were doing.
   const continueAsGuest = async () => {
     setGuestBusy(true);
     setPostLoginRoute(returnTo);

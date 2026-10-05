@@ -1,13 +1,7 @@
 /**
- * v0.7.0 Upload Queue — foreground upload manager.
- *
- * Manages a sequence of video uploads: each item flows through
- * StreamService.uploadVideo() → PostService.createPost() into channel_posts.
- * The queue state is async (waiting on network), so the public API is
- * callback-driven: the caller subscribes to get state updates.
- *
- * Queue items are persisted to AsyncStorage for survival across app restarts.
- * Background survival (Android foreground service) is deferred to a future release.
+ * Foreground upload manager: each item goes StreamService.uploadVideo() ->
+ * PostService.createPost(). Callers subscribe for state updates. The queue is saved to
+ * AsyncStorage, so it survives an app restart.
  */
 
 import { StreamService, VideoMeta, STREAM_MAX_MB } from './stream';

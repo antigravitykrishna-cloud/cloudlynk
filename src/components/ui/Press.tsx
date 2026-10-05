@@ -4,26 +4,9 @@ import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-na
 import * as Haptics from 'expo-haptics';
 
 /**
- * The app's press interaction, in one place.
- *
- * react-native-reanimated and expo-haptics were both already dependencies,
- * the babel plugin was already configured, and neither was imported anywhere.
- * Every touchable in the app was a TouchableOpacity doing nothing but fading
- * to `activeOpacity`. That is why taps felt flat: opacity alone reads as "the
- * screen dimmed", where a scale reads as "the thing I touched moved".
- *
- * Two deliberate choices:
- *
- * - **Spring, not timing.** A tap is a physical gesture and a spring settles
- *   the way a real object does. `damping: 15` is just short of critical, so
- *   there is a hint of overshoot on release without a visible wobble.
- *
- * - **Haptics are opt-in per call site, not automatic.** A buzz on every tap
- *   in a scrolling list is worse than none. It is reserved for actions with a
- *   consequence — subscribing, joining, approving, rejecting — where the
- *   feedback confirms something happened. iOS honours the style; Android maps
- *   these onto its own effects, and any failure is swallowed because a device
- *   without a motor must not break the button.
+ * The app's press interaction: a spring scale on touch, plus optional haptics. Use haptics only for
+ * actions with a consequence (subscribe, join, approve) -- not on every tap. Haptic failures are
+ * ignored so devices without a motor still work.
  */
 export type HapticStyle =
   'light' | 'medium' | 'heavy' | 'selection' | 'success' | 'warning' | 'error';

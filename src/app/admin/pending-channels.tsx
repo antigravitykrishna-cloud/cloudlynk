@@ -180,19 +180,9 @@ export default function PendingChannelsScreen() {
   }, [loadPending]);
 
   /**
-   * Set a channel's status, preferring the audited v64 RPC.
-   *
-   * admin_set_channel_status() re-checks admin standing server-side and writes
-   * an admin_audit_log row, so "who published this channel, and when" has an
-   * answer. It ships in migration v64.
-   *
-   * Until v64 is applied, PostgREST answers PGRST202 ("Could not find the
-   * function") and we fall back to the direct UPDATE this screen used before.
-   * Security is unchanged either way — v60's protect_channel_privileged_fields
-   * trigger reverts a status write from anyone who is not an active admin. What
-   * the fallback loses is the audit row, which is why it is a fallback.
-   *
-   * Delete this helper's fallback branch once v64 is deployed everywhere.
+   * Set a channel's status through the audited admin_set_channel_status RPC. Falls back to a direct
+   * update if the RPC is missing (PGRST202); that is still safe -- a trigger reverts status writes
+   * from non-admins -- but leaves no audit row.
    */
   async function setChannelStatus(channelId: string, status: 'active' | 'rejected') {
     const rpc = await supabase.rpc('admin_set_channel_status', {

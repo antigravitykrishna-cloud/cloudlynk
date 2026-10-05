@@ -22,10 +22,8 @@ export interface PurchaseResult {
   expiresAt: string | null;
   errorMessage?: string;
   /**
-   * Set when, on Google's user choice billing screen, the person picked the
-   * app's own payment option instead of Google Play. Nothing was bought yet:
-   * the app now shows its payment methods, and this token travels with the
-   * order so the server can report the sale to Google (lib/payments.ts).
+   * Set when the person chose the app's own payment option on Google's choice screen. Nothing is
+   * bought yet; the token goes with the gateway order so the server can report the sale to Google.
    */
   alternativeBillingToken?: string;
 }

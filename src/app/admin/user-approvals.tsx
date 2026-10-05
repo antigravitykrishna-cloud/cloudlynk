@@ -15,17 +15,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import { AdminContentService, UserGrant } from '@/lib/admin/adminContent';
 
-// The vetting queue for the v55 PRE-purchase approval gate: who is allowed
-// to reach the subscribe flow at all. Approving or rejecting here decides
-// nothing about content and nothing about an existing entitlement — a
-// rejected account keeps a fully working free tier, and if it has somehow
-// already paid, verify-play-receipt still grants the plan. See
-// supabase/migrations/20260905120000_v55_user_approval_gate.sql.
-//
-// The `isAdmin` check below is UX only. Both RPCs this screen calls
-// (admin_list_user_approvals, admin_set_user_approval) re-verify is_admin
-// server-side themselves — that is the actual security boundary, exactly as
-// it is for admin_resolve_report and app/admin/reports.tsx.
+// Account approval queue: who may buy Premium. It decides nothing about free features or existing
+// purchases. Guests are not listed (they must save their account first). The isAdmin check is UX
+// only; both RPCs re-check it.
 
 type ApprovalStatus = 'pending' | 'approved' | 'rejected';
 

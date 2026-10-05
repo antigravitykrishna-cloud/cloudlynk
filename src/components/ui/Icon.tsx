@@ -1,22 +1,8 @@
 import Svg, { Path, Circle, Rect, Line, Polyline } from 'react-native-svg';
 import { Colors } from '@/constants/theme';
 
-// A stroke-based icon set, drawn here rather than pulled from a library.
-//
-// The app used emoji for every piece of UI chrome — ☁️ for the Cloud tab, 🛡️
-// for Admin, 💎 for Premium. Emoji are rendered by the *system* font, so they
-// look different on every phone (Samsung, Pixel and Xiaomi each ship their own
-// set), they cannot inherit the brand colour, and at tab-bar size they read as
-// clip-art. That is the single clearest "unfinished app" signal left in the UI.
-//
-// @expo/vector-icons is not a dependency and adding one overnight risks the
-// native build, but react-native-svg is already installed and already renders
-// CloudlynkLogo. So these are hand-drawn on a 24x24 grid with a consistent
-// 1.8 stroke, round caps and round joins — the geometry Netflix, Instagram and
-// Linear all use, and the reason their icon sets look like a set.
-//
-// Every icon inherits `color`, so an active tab tints blue and an inactive one
-// greys, from the same component.
+// Stroke icons drawn on a 24x24 grid (1.8 stroke, round caps and joins) with react-native-svg, so
+// they look the same on every phone and take the theme colour via `color`.
 
 export type IconName =
   | 'cloud'

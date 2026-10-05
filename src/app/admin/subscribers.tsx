@@ -14,20 +14,9 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 
-// "Expired subscribers should be managed separately" (v75). This is that
-// screen: the subscriber base split into cohorts, filtered server-side by
-// admin_list_subscribers so the expired list stays complete past the row
-// limit — the reason it is an RPC and not admin_search_users plus a client
-// filter.
-//
-// Tap a subscriber to open their account (app/admin/user/[id]), where an
-// admin can add days, make Premium lifetime, or remove it (v82, audited).
-// Those hand edits are for support cases: for a Google Play subscriber,
-// Google's own renewal and cancellation messages still update the plan
-// afterwards, as they should.
-//
-// The `isAdmin` check below is UX only. Both RPCs re-verify is_admin
-// server-side; that is the actual boundary.
+// Subscribers split into cohorts, filtered server-side so lists stay complete past the row limit.
+// Tap a subscriber to adjust their plan by hand (support cases; Google Play renewals still update
+// it afterwards). The isAdmin check is UX only; both RPCs re-check it.
 
 type Cohort = 'expired' | 'expiring' | 'active' | 'cancelled' | 'free';
 

@@ -1,27 +1,15 @@
 import { supabase } from '@/lib/supabase';
 
 // guards-allow-select-star
-// getMyChannels / getMyOwnedChannels are membership and ownership queries keyed to a user id. getDiscoverChannels, the one path guests DO hit, names its columns via CHANNEL_LIST_COLUMNS.
+// getMyChannels / getMyOwnedChannels are membership and ownership queries keyed to a user id.
+// getDiscoverChannels, the one path guests DO hit, names its columns via CHANNEL_LIST_COLUMNS.
 // See scripts/guards.mjs check 2 for why select('*') is unsafe on a
 // guest-reachable path.
 
 /**
- * The columns the channel LIST screens actually render, and — not by
- * coincidence — a subset of what `anon` is granted on `channels`.
- *
- * `channels` has 14 columns; anon may read 11. `approval_expires_at`, `link`
- * and `updated_at` are withheld. PostgREST does not quietly null out a column
- * a role cannot read: it fails the ENTIRE request with a permission error. So
- * `.select('*')` returns nothing at all for a guest — not a partial row — and
- * the caller's error handling turns that into an empty list. The Channels tab
- * rendered "No channels yet" over eight perfectly visible public channels.
- *
- * This is the same trap `GUEST_POST_COLUMNS` in lib/posts.ts exists to avoid,
- * and its comment says so: "list as a guest fails the whole query with a
- * permission error, not a null."
- *
- * Naming the columns also works for authenticated callers, who are granted a
- * superset — so there is one query for both roles rather than a fork.
+ * The columns the channel lists render -- a subset of what guests may read. Selecting a column a
+ * role cannot read fails the whole request (it is not nulled), so select('*') would return nothing
+ * for guests. Works for signed-in users too.
  */
 export const CHANNEL_LIST_COLUMNS =
   'id, owner_id, name, description, category, is_public, is_official, ' +
@@ -174,12 +162,8 @@ export const ChannelService = {
   },
 };
 
-// Reporting a USER — distinct from reporting one piece of their content.
-// Google's UGC policy expects a way to report a user's behavior generally,
-// not just flag a single post; this is what admins see grouped as
-// target_type='user' in the moderation queue (app/admin/reports.tsx),
-// separate from content-specific reports. No channel_id/post_id is attached
-// — content_reports.channel_id has always been nullable for exactly this.
+// Reporting a user (their behaviour in general), separate from reporting one post. Shown to admins
+// as target_type 'user' in the moderation queue.
 export const ReportService = {
   async reportUser(reporterId: string, reportedUserId: string, reason: string) {
     const { error } = await supabase.from('content_reports').insert({

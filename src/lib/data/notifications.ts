@@ -16,7 +16,7 @@ export type NotificationType =
   // notify_expiring_plans), never by the client — there is no
   // NotificationService.create for these.
   | 'subscription_expiring'
-  // v82: an admin announcement (Admin -> Announcement).
+  // An admin announcement (Admin -> Announcement).
   | 'announcement'
   | 'subscription_expired';
 

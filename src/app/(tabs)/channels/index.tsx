@@ -94,17 +94,9 @@ export default function ChannelsScreen() {
         // Nothing to fetch for a guest, and getMyChannels needs a user id.
         data = user?.id ? ((await ChannelService.getMyChannels(user.id)) as Channel[]) : [];
       } else {
-        // Discover runs for guests too. getDiscoverChannels ignores the id it
-        // is handed and filters on is_public + status, which anon is allowed
-        // to read since v61 — so browsing works without an account.
-        // `as unknown as` because getDiscoverChannels names its columns
-        // rather than selecting *, so the inferred row is narrower than
-        // Channel and a narrower-to-wider cast is not allowed. Everything this
-        // screen renders is present; the omitted fields are ones anon may not
-        // read and this list never shows.
-        //
-        // The Database type is no longer the reason — `category`, `is_official`
-        // and `link` were missing from it and have since been added.
+        // Discover also works for guests (public, active channels are readable without an account).
+        // The cast is needed because getDiscoverChannels selects named columns, a narrower type
+        // than Channel; every field this list renders is included.
         data = (await ChannelService.getDiscoverChannels(
           user?.id ?? '',
           activeFilter,
@@ -151,7 +143,7 @@ export default function ChannelsScreen() {
       setSignInSheet(true);
       return false;
     }
-    // v90: guests cannot join channels.
+    // Guests cannot join channels.
     if (isGuest) {
       promptSaveAccount(router, 'join channels');
       return false;

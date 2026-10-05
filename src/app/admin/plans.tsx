@@ -9,13 +9,9 @@ import { fireHaptic } from '@/components/ui/Press';
 import { Colors } from '@/constants/theme';
 import { AdminControl, type AdminPlan } from '@/lib/admin/adminControl';
 
-// Plan names, prices, lengths, which one is "Most popular", and which are on
-// sale. Saved through admin_update_plan (v82, audited).
-//
-// What a change reaches: the app's plan screens and the price UPI / Razorpay
-// / Sabpaisa charge (the payments function reads it from this table), from
-// the next order. What it does NOT reach: Google Play's price, which lives in
-// Play Console. Change both, or the two will disagree.
+// Plan names, prices, lengths, "Most popular" and availability (admin_update_plan, audited).
+// Changes reach the app's plan screens and the UPI/card price from the next order. Google Play
+// prices live in Play Console -- change both or they will disagree.
 
 export default function AdminPlansScreen() {
   const qc = useQueryClient();

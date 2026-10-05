@@ -3,13 +3,9 @@ import { Platform } from 'react-native';
 import { config, isIapLive } from '@/lib/config';
 import { IIapService, IapProduct, PurchaseResult } from './types';
 
-// The four Cloudlynk Premium plans. They all share ONE Play Console
-// subscription product (`cloudlynk_premium`) and are distinguished by
-// `basePlanId`, not by product id. The `code` deliberately equals the
-// `basePlanId` string so there is one naming scheme, not two — the DB
-// `subscription_plans.code` column (see the v53 migration) must match these
-// exactly, since app/premium.tsx passes `selectedPlan.code` straight into
-// purchasePlan(). See BACKEND_REFERENCE.md "Payments — Google Play Billing".
+// The Premium plans. They share one Play Console subscription product (`cloudlynk_premium`) and
+// differ by base plan. `code` equals the base plan id and must match subscription_plans.code in the
+// database.
 const PREMIUM_PRODUCT_ID = 'cloudlynk_premium';
 const DEFAULT_PLANS: IapProduct[] = [
   // Play base plan 'trial-3d' must be PREPAID: Play cannot auto-renew every 3 days.
@@ -98,35 +94,11 @@ export class NoOpIapService implements IIapService {
 }
 
 /**
- * Real Google Play Billing via `react-native-iap` (OpenIAP-based, v14+ API —
- * this is an event-driven library: `requestPurchase` does NOT resolve with
- * the purchase, results arrive via `purchaseUpdatedListener` /
- * `purchaseErrorListener`; see node_modules/react-native-iap's index.d.ts if
- * this ever needs re-checking against a newer installed version).
- *
- * This satisfies Play's Payments policy for digital subscriptions — content
- * unlocked inside the app must be paid for through Play Billing, never an
- * alternate payment method. Cloudlynk ships with Play Billing as its only
- * purchase path (the earlier UPI/manual-approval flow was removed entirely).
- *
- * Three things must exist OUTSIDE this code before purchases will actually
- * work in production, and none of them can be done from here:
- *   1. The `cloudlynk_premium` subscription product must exist in Play
- *      Console (Monetize > Subscriptions) with one base plan per entry in
- *      DEFAULT_PLANS, each base plan id matching that entry's `basePlanId`
- *      and its price/duration, and the app must be in at least Internal
- *      Testing. These are AUTO-RENEWING base plans (confirmed by the owner) —
- *      the Play Console base plan type must be set to auto-renewing, matching
- *      the auto-renewing-subscription language already shipped in
- *      supabase/functions/legal-pages/terms.ts and refund.ts.
- *   2. A server-side receipt verifier: `verifyReceipt` below calls
- *      `config.receiptVerifierUrl`, which must be a deployed Supabase Edge
- *      Function (`verify-play-receipt`) that calls the Play Developer API
- *      using a service-account key — Play purchase tokens must never be
- *      trusted client-side, since a rooted device can fabricate a
- *      "successful" local purchase result.
- *   3. `config.googlePlayPackageName` and `IAP_PROVIDER=google_play` must be
- *      set for `isIapLive()` to select this service instead of NoOpIapService.
+ * Google Play Billing via react-native-iap (event-driven: results arrive through
+ * purchaseUpdatedListener / purchaseErrorListener, not from requestPurchase). Purchases are
+ * verified server-side (verify-play-receipt) before Premium switches on. Needs, outside this code:
+ * the `cloudlynk_premium` product with one base plan per DEFAULT_PLANS entry in Play Console, the
+ * verifier's service account, and IAP_PROVIDER=google_play.
  */
 export class GooglePlayIapService implements IIapService {
   async getProducts(): Promise<IapProduct[]> {
@@ -134,13 +106,9 @@ export class GooglePlayIapService implements IIapService {
   }
 
   /**
-   * Wraps the event-driven purchase flow in a promise: calls `dispatch()`
-   * (the `requestPurchase` call) to kick off the native flow, then resolves
-   * with the `Purchase` matching `productId` once `purchaseUpdatedListener`
-   * fires, rejects on `purchaseErrorListener` OR if `dispatch()` itself
-   * throws (e.g. a synchronous `E_NOT_PREPARED`), and times out after 5
-   * minutes in case the user backgrounds the app mid-flow without canceling.
-   * Whichever of those settles first tears down both listeners.
+   * Wraps the event-driven purchase in a promise: starts it with dispatch(), resolves on the
+   * matching purchase, rejects on a purchase error or if dispatch throws, and times out after 5
+   * minutes. Both listeners are removed when it settles.
    */
   private awaitPurchaseResult(
     RNIap: any,
@@ -228,7 +196,7 @@ export class GooglePlayIapService implements IIapService {
       // Lazy-required so the native module is only touched on Android, and so
       // this file still loads in environments without the native module linked
       // (e.g. Expo Go, or before a dev build has been rebuilt).
-      // eslint-disable-next-line @typescript-eslint/no-require-imports -- loaded on first use so a build without this native module still starts
+      // eslint-disable-next-line @typescript-eslint/no-require-imports -- optional native module, loaded on first use
       const RNIap = require('react-native-iap');
       const userChoice = !!opts?.userChoiceBilling;
       // With user choice billing on, Google shows its choice screen before
@@ -329,7 +297,7 @@ export class GooglePlayIapService implements IIapService {
   async restorePurchases(): Promise<PurchaseResult[]> {
     if (Platform.OS !== 'android') return [];
     try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports -- loaded on first use so a build without this native module still starts
+      // eslint-disable-next-line @typescript-eslint/no-require-imports -- optional native module, loaded on first use
       const RNIap = require('react-native-iap');
       await RNIap.initConnection();
       try {

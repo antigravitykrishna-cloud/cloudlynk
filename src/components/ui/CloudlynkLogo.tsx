@@ -4,25 +4,15 @@ import { Colors } from '@/constants/theme';
 type Props = {
   size?: number;
   /**
-   * `mark` draws the cloud + play glyph alone, for a surface that already has
-   * a background. `tile` puts it on the navy rounded square — the app-icon
-   * lockup — for when the logo sits on an arbitrary colour (a photo, a video
-   * still) and needs its own ground to stay legible.
+   * `mark`: the glyph alone, for surfaces with their own background. `tile`: on the navy rounded
+   * square, for photos and video stills.
    */
   variant?: 'mark' | 'tile';
 };
 
 /**
- * The Cloudlynk mark, drawn rather than rasterised.
- *
- * This used to be `<Image source={require('../assets/icon.png')} />`, i.e. the
- * 512px launcher icon scaled down — soft at the 24-32px sizes it is actually
- * used at, and impossible to recolour. As vector it is sharp at every size,
- * costs no asset, and takes its colours from the theme, so the next palette
- * change reaches it too.
- *
- * assets/icon.png is untouched and is still the launcher icon; Android and the
- * store both need a raster. This is only what the app itself draws.
+ * The Cloudlynk mark drawn as vector: sharp at small sizes and coloured from the theme.
+ * assets/icon.png remains the launcher icon.
  */
 export function CloudlynkLogo({ size = 32, variant = 'mark' }: Props) {
   // Gradient ids are scoped to their own <Svg>, so two logos on one screen do

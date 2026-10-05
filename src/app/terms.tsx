@@ -6,12 +6,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { Colors, FontSize, FontWeight, Spacing } from '@/constants/theme';
 import { config } from '@/lib/config';
 
-// This screen used to carry its own hardcoded, much shorter copy of the
-// Terms of Service — which meant the app could show one set of terms while
-// supabase/functions/legal-pages/terms.ts (the document actually maintained
-// and versioned via current_policy_versions()) said something else. There is
-// now exactly one source of truth: this screen just opens that same hosted
-// page in an in-app browser.
+// Opens the hosted Terms of Service so the app and the website can never show different versions.
 export default function TermsOfServiceScreen() {
   const router = useRouter();
   const [opening, setOpening] = useState(false);

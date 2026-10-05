@@ -25,13 +25,8 @@ import {
 } from '@/lib/data/posts';
 import { AdminContentService } from '@/lib/admin/adminContent';
 
-// Admin video upload — first-party Cloudlynk content, published into the
-// official channel (channels.is_official, seeded by the v56 migration).
-//
-// Reuses the existing pipeline on purpose: StreamService.uploadVideo ->
-// generate-stream-upload (whose can_post_to_channel check already passes an
-// is_admin caller straight through) -> PostService.createPost. There is
-// deliberately no second upload path.
+// Admin video upload into the official channel. Uses the same pipeline as everything else:
+// StreamService.uploadVideo -> generate-stream-upload -> PostService.createPost.
 
 const CONTENT_TYPES: { id: ContentType; label: string }[] = [
   { id: 'movie', label: 'Movie' },

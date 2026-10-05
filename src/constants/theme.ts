@@ -1,26 +1,9 @@
 import { Platform } from 'react-native';
 
 /**
- * Cloudlynk design tokens.
- *
- * ── Rebrand note (v0.7.1) ────────────────────────────────────────────────
- * This palette used to be orange (#FF6B00) and neon green (#39FF14) on
- * near-black. It is now deep navy with a blue -> cyan brand gradient, to match
- * the store listing: the app icon, the feature graphic and the splash screen
- * (app.json already sets backgroundColor #0d1117) are all navy/blue, and the
- * old in-app palette matched none of them.
- *
- * EVERY EXPORTED NAME IS PRESERVED, including ones that now describe the wrong
- * hue — `accentOrange` is the brand blue, `accentGreen` is the brand cyan.
- * That is deliberate. Around 38 screens import these tokens directly, and
- * renaming them would mean touching all of those in the same change as
- * re-colouring them, which makes the diff impossible to review and any
- * regression impossible to bisect. The names are a rename away whenever
- * somebody wants to do that as its own commit; use `brandBlue`/`brandCyan`
- * (added below) in new code and leave the old names for the migration.
- *
- * The app is dark-only (`userInterfaceStyle: "dark"` in app.json). There is no
- * light palette here because there is no light mode to serve.
+ * Cloudlynk design tokens. Dark-only app (userInterfaceStyle "dark"). Some legacy names describe
+ * old colours -- `accentOrange` is the brand blue and `accentGreen` the brand cyan; prefer
+ * `brandBlue` / `brandCyan` in new code.
  */
 
 // The two brand hues, and the gradient they form. Everything else is derived.
@@ -92,10 +75,8 @@ export const Colors = {
 };
 
 /**
- * The brand gradient, as an expo-linear-gradient `colors` tuple.
- * Left-to-right blue -> cyan, matching the logo and the feature graphic.
- * Use for primary CTAs, the storage meter fill, and the Premium badge —
- * not for large surfaces, where it fights the content.
+ * The brand gradient (blue -> cyan) as an expo-linear-gradient `colors` tuple. Use for primary
+ * buttons, the storage meter and the Premium badge, not large surfaces.
  */
 export const BrandGradient = [BRAND_BLUE, BRAND_CYAN] as const;
 
@@ -125,19 +106,7 @@ export const Radius = {
   full: 999,
 };
 
-/**
- * Type scale, aligned to Apple's text styles.
- *
- * The previous scale had eight steps and the app used twelve sizes. The two
- * heaviest omissions were 12 (71 uses) and 15 (39 uses) — both of which are
- * real iOS sizes (caption1 and subheadline), so the code was closer to a
- * coherent scale than the theme was. They are named here rather than snapped
- * away.
- *
- * Nothing below 11. Apple's smallest text style is caption2 at 11pt and that
- * is their legibility floor; this app had 29 instances of 9pt and 10pt, all
- * on metadata and badges — precisely the text people squint at.
- */
+/** Type scale aligned to Apple's text styles. Nothing below 11, Apple's legibility floor. */
 export const FontSize = {
   xs: 11, // caption2 — the floor
   sm: 12, // caption1

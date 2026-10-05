@@ -9,23 +9,10 @@ import { config, isGoogleAuthLive } from '@/lib/config';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 
-// ── Shared profile store ─────────────────────────────────────────────
-// useAuth() is a plain hook, not a context provider, so each of the ~25
-// components that call it gets its own useState. The profile used to live
-// in that per-instance state, which meant a fetch triggered by one screen
-// never reached any other screen's copy.
-//
-// That silently broke the signup flow. complete-profile.tsx would accept
-// the terms successfully and re-fetch — but only into ITS instance. The
-// copy app/_layout.tsx routes on was never updated, so the root redirect
-// kept reading terms_accepted_at = null and never sent the session to
-// /(tabs). The write succeeded and the screen simply sat there.
-//
-// Hoisting the profile to module scope means every instance reads one
-// value and a single fetch notifies all of them. Session/user are left in
-// per-instance state on purpose: every instance subscribes to
-// onAuthStateChange, so those already converge on their own — it is only
-// the imperatively-fetched profile that could drift.
+// Shared profile store. useAuth() is a plain hook, so each caller has its own state; the profile
+// lives at module scope so one fetch updates every screen (otherwise a screen could keep routing on
+// a stale copy). Session and user stay per-instance: every instance subscribes to onAuthStateChange
+// and they converge on their own.
 let sharedProfile: Profile | null = null;
 let sharedProfileChecked = false;
 const profileListeners = new Set<() => void>();
@@ -92,13 +79,9 @@ export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const profile = useSyncExternalStore(subscribeToProfile, getSharedProfile, getSharedProfile);
-  // Tracks whether the CURRENT session's profile row has been fetched at
-  // least once. Distinct from `loading` (which only covers the initial
-  // getSession() round-trip): the root layout's "does this account still
-  // need to complete its profile" redirect (app/_layout.tsx) must not fire
-  // off a stale/empty `profile` while the fetch after a fresh sign-in is
-  // still in flight, or it'll bounce a legitimate user through
-  // complete-profile for a split second on every login.
+  // Whether the current session's profile has been fetched at least once. The root layout waits for
+  // it before deciding whether to show complete-profile, so a fresh sign-in is not bounced there
+  // for a moment.
   const profileChecked = useSyncExternalStore(
     subscribeToProfile,
     getSharedProfileChecked,
@@ -135,18 +118,9 @@ export function useAuth() {
     if (error) throw error;
   }
 
-  // ── Passwordless email ───────────────────────────────────────
-  //
-  // The one-tap flow: a 6-digit code to the address, no password to choose,
-  // remember or reset. signInWithPassword stays for accounts that already have
-  // a password — removing it would lock them out.
-  //
-  // shouldCreateUser is true because this is sign-IN and sign-UP at once,
-  // which is the point: there is no separate signup screen in the new flow.
-  // A first-time address gets a profile from the handle_new_user trigger with
-  // no full_name and no birth_year, and app/_layout.tsx routes it to
-  // complete-profile for the 18+ gate and policy acceptance before it reaches
-  // the tabs. The age gate is not optional — see docs/PLAY_STORE_COMPLIANCE_AUDIT.md.
+  // Passwordless email: a 6-digit code signs in or creates the account. New accounts then pass the
+  // 18+ gate and policy acceptance (app/_layout.tsx). Password sign-in remains for accounts that
+  // already have one.
   async function sendEmailCode(email: string) {
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim(),
@@ -166,23 +140,9 @@ export function useAuth() {
     if (error) throw error;
   }
 
-  // ── Google ───────────────────────────────────────────────────
-  //
-  // Native Google Sign-In, then hand the ID token to Supabase. NOT
-  // signInWithOAuth: that opens a browser and needs a redirect URL, which on
-  // Android means a custom scheme and an intent filter — more moving parts,
-  // and a visibly worse flow than the native account picker.
-  //
-  // The module is lazy-required (same approach as lib/ads.ts) so that a build
-  // without the native package installed still runs: this is dead code until
-  // GOOGLE_WEB_CLIENT_ID is set, and a top-level import would crash the whole
-  // auth screen at load time in Expo Go or any build predating the config.
-  // ── Guest (v89) ──────────────────────────────────────────────
-  //
-  // A real, anonymous Supabase account: its own id, so a guest can join
-  // channels and buy a plan. The database blocks uploads and publishing for
-  // it (v89 migration). Linking Google or an email later keeps the same id,
-  // so nothing -- plan, channels -- is lost.
+  // Guest: a real anonymous Supabase account with its own id. The database blocks uploads, joining
+  // and payment orders for guests. Linking Google or an email later keeps the same id, so nothing
+  // is lost.
   async function signInAsGuest() {
     const { error } = await supabase.auth.signInAnonymously();
     if (error) throw error;
@@ -221,6 +181,10 @@ export function useAuth() {
     if (user) await fetchProfile(user.id, true);
   }
 
+  /**
+   * Native Google Sign-In, then the ID token goes to Supabase (no browser redirect). The
+   * library is loaded on first use, so builds without Google configured still start.
+   */
   async function googleIdToken(): Promise<string> {
     if (!isGoogleAuthLive()) {
       throw new Error('Google sign-in is not configured in this build.');
@@ -228,7 +192,7 @@ export function useAuth() {
 
     let GoogleSignin: any;
     try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports -- loaded on first use so a build without this native module still starts
+      // eslint-disable-next-line @typescript-eslint/no-require-imports -- optional native module, loaded on first use
       ({ GoogleSignin } = require('@react-native-google-signin/google-signin'));
     } catch {
       throw new Error('Google sign-in is unavailable in this build.');
@@ -255,20 +219,8 @@ export function useAuth() {
     if (error) throw error;
   }
 
-  // Fills in whatever complete-profile.tsx found missing: the birth year
-  // (for the 18+ gate) and/or Terms/Guidelines/Privacy acceptance.
-  //
-  // `set_birth_year` (v51) is deliberately one-shot — it raises "Birth year
-  // is already set." rather than silently overwriting, so an age can't be
-  // re-rolled after the fact. That means it must only be called when the
-  // profile genuinely has no birth year: an email/password signup already
-  // has one (handle_new_user reads it out of the signup metadata), and
-  // calling it again threw before acceptTerms could run, stranding the
-  // account on this screen with no way forward. Skip it in that case and
-  // go straight to the acceptance, which is the part actually missing.
-  //
-  // v88: the 18+ answer comes from the age gate (confirm_adult), so a birth
-  // year is no longer asked for after sign-in.
+  // Fills in what complete-profile found missing: the 18+ confirmation (confirm_adult) and/or
+  // acceptance of the current policies.
   async function completeProfile() {
     if (!user) throw new Error('Not authenticated');
     const adultOnFile =
@@ -295,20 +247,10 @@ export function useAuth() {
 
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    // Record the versioned policy acceptance HERE, before the first profile
-    // fetch below — not in the calling screen afterwards. The checkbox on
-    // app/(auth)/signup.tsx is the acceptance; this persists it.
-    //
-    // Ordering is the whole point: this used to run in signup.tsx *after*
-    // signUp() had already cached the profile, so the cached copy still had
-    // terms_accepted_at = null. app/_layout.tsx then read that stale copy,
-    // decided the account hadn't accepted anything, and bounced a perfectly
-    // valid brand-new signup to complete-profile.
-    //
-    // Non-fatal on purpose: the account already exists by this point, so
-    // failing the whole signup over it would be worse. can_create_ugc
-    // re-blocks server-side at upload time, and complete-profile is the
-    // recovery path — it collects the acceptance properly now.
+    // Record policy acceptance here, before the first profile fetch, so the cached profile already
+    // includes it (otherwise the root layout would see a stale copy and send the new account to
+    // complete-profile). Not fatal: complete-profile is the recovery path, and the server re-checks
+    // before any upload.
     try {
       await ComplianceService.acceptTerms();
     } catch (err) {
@@ -319,18 +261,8 @@ export function useAuth() {
   }
 
   /**
-   * Sends a password-reset email.
-   *
-   * `redirectTo` is a cloudlynk:// deep link, so the link in the email reopens
-   * the app on the reset screen rather than a web page. That URL must also be
-   * listed under Authentication -> URL Configuration -> Redirect URLs in the
-   * Supabase dashboard; Supabase silently refuses to redirect anywhere that is
-   * not on that allow-list, and the symptom is a link that appears to do
-   * nothing.
-   *
-   * Resolves the same way whether or not the address has an account. Telling a
-   * caller "no such user" turns this into an endpoint for discovering who is
-   * registered.
+   * Send a password-reset email. `redirectTo` reopens the app on the reset screen and must be in
+   * Supabase's Redirect URLs list. Resolves the same way whether or not the address has an account.
    */
   async function requestPasswordReset(email: string) {
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
@@ -390,13 +322,8 @@ export function useAuth() {
     ? Math.min((profile.storage_used / profile.storage_limit) * 100, 100)
     : 0;
 
-  // v55 pre-purchase approval gate. Defaults to 'approved' while the profile
-  // row is still loading (or on a client running against a pre-v55 DB) so a
-  // momentarily-absent profile never flashes the "under review" state at an
-  // account that is in fact approved. The gate's real enforcement is the
-  // admin-only RPC + trigger in the v55 migration; this is presentation only,
-  // and it deliberately gates nothing except reaching app/premium.tsx's plan
-  // list — never playback, uploads, or anything already paid for.
+  // Account approval (who may buy Premium). Defaults to 'approved' while the profile loads so the
+  // "under review" state never flashes. Presentation only -- the server enforces approval.
   const approvalStatus = (profile?.approval_status as string | undefined) ?? 'approved';
   const isApproved = approvalStatus === 'approved';
 

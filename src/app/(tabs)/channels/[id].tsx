@@ -28,11 +28,10 @@ import { DetailModal } from '@/components/channel/DetailModal';
 import { GenreRow } from '@/components/channel/GenreRow';
 
 // guards-allow-select-star
-// Guests DO reach this screen now (opening a channel is ungated). Their path
-// in load() names its columns -- CHANNEL_LIST_COLUMNS, getGuestChannelPosts --
-// and only the signed-in path uses select('*').
-// See scripts/guards.mjs check 2 for why select('*') is unsafe on a
-// guest-reachable path.
+//
+// Guests reach this screen; their path in load() names its columns (CHANNEL_LIST_COLUMNS,
+// getGuestChannelPosts). Only the signed-in path uses select('*') -- see scripts/guards.mjs check
+// 2.
 
 const W = Dimensions.get('window').width;
 
@@ -149,7 +148,7 @@ export default function ChannelDetailScreen() {
       setSignInSheet(true);
       return;
     }
-    // v90: guests cannot join channels.
+    // Guests cannot join channels.
     if (isGuest) {
       promptSaveAccount(router, 'join channels');
       return;
@@ -175,7 +174,7 @@ export default function ChannelDetailScreen() {
   // the client's reference flow. Free titles still play for a signed-in
   // user; a guest is asked to pick a plan (and sign in) for any title.
   const openPost = (item: ChannelPost) => {
-    // v90: guests (signed out or guest account) see previews only.
+    // Guests (signed out or guest account) see previews only.
     const canWatch =
       !isGuest &&
       (isPaidUser ||

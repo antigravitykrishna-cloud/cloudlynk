@@ -12,16 +12,9 @@ type GeoState = {
 };
 
 /**
- * Country + block decision, resolved via a Cloudflare Worker
- * (`cloudflare/geo-check-worker/`) instead of the third-party `ipapi.co`
- * this used to call. Cloudflare sees the connecting IP itself
- * (`request.cf.country`) and never forwards it anywhere else — no
- * undisclosed IP-to-third-party data flow to carry in the privacy policy.
- *
- * The Worker reads `app_settings.geo_block_enabled` / `blocked_countries`
- * from Supabase on every request, so the admin-configurable blocklist still
- * lives in one place; this hook just calls the Worker's URL
- * (`GEO_CHECK_WORKER_URL` in app.json `extra`, wired through `lib/config.ts`).
+ * Country block check through our Cloudflare Worker (cloudflare/geo-check-worker), which reads the
+ * admin-set blocklist from app_settings. Cloudflare sees the IP itself, so no IP goes to a third
+ * party. Off unless GEO_CHECK_WORKER_URL is set.
  */
 export function useGeoCheck(): GeoState {
   const [state, setState] = useState<GeoState>({ isBlocked: false, country: null, loading: true });

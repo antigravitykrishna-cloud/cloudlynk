@@ -2,17 +2,8 @@ import { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated, Easing } from 'react-native';
 import { Colors, Radius } from '@/constants/theme';
 
-// Loading placeholders shaped like the content they are standing in for.
-//
-// Explore previously showed a centred spinner on an empty black screen while
-// it fetched. A spinner communicates "wait" and nothing else — the screen
-// stays blank, so a slow network is indistinguishable from a broken app, and
-// when content arrives it appears all at once and the layout jumps.
-//
-// Netflix, Instagram and YouTube all draw the *shape* of the page instead:
-// the eye reads the layout immediately, the arrival of real content is a
-// crossfade rather than a jump, and perceived load time drops even though the
-// actual request takes exactly as long.
+// Loading placeholders shaped like the content they stand in for, so the layout appears immediately
+// and content fades in without jumping.
 
 /** One shimmering block. Everything else here composes these. */
 function Shimmer({ style }: { style?: object }) {

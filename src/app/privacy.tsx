@@ -6,12 +6,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { Colors, FontSize, FontWeight, Spacing } from '@/constants/theme';
 import { config } from '@/lib/config';
 
-// This screen used to carry its own hardcoded, much shorter copy of the
-// Privacy Policy — which meant the app could show one policy while
-// supabase/functions/legal-pages/privacy.ts (the URL actually submitted to
-// Play Console) said something else entirely. There is now exactly one
-// source of truth: this screen just opens that same hosted page in an
-// in-app browser, so the two can never drift apart again.
+// Opens the hosted Privacy Policy (the one linked in Play Console) so the two can never differ.
 export default function PrivacyPolicyScreen() {
   const router = useRouter();
   const [opening, setOpening] = useState(false);

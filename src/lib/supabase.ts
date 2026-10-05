@@ -12,25 +12,10 @@ const supabaseUrl =
 const supabaseAnonKey =
   Constants.expoConfig?.extra?.supabaseAnonKey ?? process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
 
-// Fail loudly, at launch, if the build has no backend credentials.
-//
-// EXPO_PUBLIC_* variables are inlined by Metro at BUNDLE time, from whatever
-// .env the bundler could see. An EAS cloud build cannot see .env at all: it is
-// listed in .easignore (and .gitignore), and eas.json's `env` blocks set only
-// APP_ENV. So unless the values are supplied another way, an `eas build`
-// produces a bundle where both constants are '' -- createClient accepts that
-// without complaint and every request then fails at runtime with an opaque
-// network error. The app looks installed, opens, and does nothing.
-//
-// That failure is invisible until someone launches the artifact, which for a
-// production AAB means after it has been uploaded to Play. Crashing here with
-// a readable message is strictly better: it surfaces on the first launch of
-// the first test build, and it names the fix.
-//
-// To fix: either add the two values to eas.json's env block for the profile
-// being built (both are public by design -- they ship inside every APK, and
-// RLS is the actual security boundary), or set them as EAS environment
-// variables in the Expo dashboard. See DEPLOY.md 1.2.
+// Fail at launch with a clear message if the build has no backend credentials. EXPO_PUBLIC_* values
+// are inlined at bundle time; a build that could not see them would otherwise open and silently
+// fail every request. Both values are public by design (RLS is the security boundary); for EAS
+// builds set them in eas.json `env`.
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error(
     'Cloudlynk is not configured: EXPO_PUBLIC_SUPABASE_URL / ' +
@@ -88,23 +73,14 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
-    // PKCE rather than the implicit flow. The app is email+password only
-    // (there is no OAuth provider), so no redirect currently carries tokens
-    // at all — but PKCE is the safer default for every auth flow Supabase
-    // routes through a URL (password recovery, email confirmation links),
-    // since a captured link is useless without the verifier this client
-    // holds. Kept deliberately; do not switch back to 'implicit'.
+    // PKCE: a captured recovery or confirmation link is useless without the verifier this client
+    // holds. Do not switch back to 'implicit'.
     flowType: 'pkce',
   },
 });
 
-// ── Auto-refresh lifecycle (REQUIRED on React Native) ─────────
-// supabase-js manages token refresh behind an internal auth lock. On native,
-// that lock must be tied to the app's foreground state: if the auto-refresh
-// timer is left running while the app is backgrounded (or during long XHR
-// uploads), the lock can deadlock and every subsequent DB call — e.g. an
-// insert — hangs forever with no network request ever firing.
-// Driving start/stop from AppState is the fix Supabase mandates for RN.
+// Required on React Native: run token auto-refresh only while the app is in the foreground.
+// Otherwise supabase-js' auth lock can deadlock in the background and every later request hangs.
 if (Platform.OS !== 'web') {
   AppState.addEventListener('change', state => {
     if (state === 'active') {
@@ -138,19 +114,14 @@ export type Database = {
           auto_backup: boolean;
           wifi_only: boolean;
           notifications_enabled: boolean;
-          // Added by supabase/migrations/20260824120000_v46_compliance_hardening.sql
-          // and 20260825090000_v48_ugc_moderation_and_entitlements.sql — these were
-          // missing from this hand-maintained type even though the columns have
-          // existed in the real schema since v46/v48, which made every read of
-          // profile.birth_year / profile.terms_accepted_at (e.g. in
-          // lib/compliance.ts and app/_layout.tsx) fail to type-check.
+          // Compliance columns (v46/v48 migrations).
           account_status: 'active' | 'suspended' | 'banned';
           terms_accepted_at: string | null;
           terms_version: string | null;
           community_guidelines_version: string | null;
           privacy_version: string | null;
           birth_year: number | null;
-          // v88: set by confirm_adult() -- the 18+ answer from the age gate.
+          // Set by confirm_adult() -- the 18+ answer from the age gate.
           adult_confirmed_at: string | null;
           // Added by supabase/migrations/20260905120000_v55_user_approval_gate.sql.
           // PRE-purchase vetting gate: 'pending' accounts keep a full free tier

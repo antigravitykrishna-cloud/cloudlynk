@@ -14,21 +14,10 @@ import { LoginSheet } from '@/components/auth/LoginSheet';
 import { PressScale, fireHaptic } from '@/components/ui/Press';
 import { Icon } from '@/components/ui/Icon';
 
-// The Profile tab for someone who is not signed in.
-//
-// The client's reference flow: the plans ARE the page. Pick one, press Next,
-// and only then is sign-in asked for, in a sheet over the plans rather than a
-// jump to another screen, so the choice they just made stays in view.
-//
-// Nothing is bought here: a purchase needs an account to attach the
-// entitlement to. Signing in from the sheet remembers the plan
-// (lib/postLogin.ts), so the person lands on /premium with it already
-// selected, one tap from paying.
-//
-// The benefits list is deliberately ours, not the reference app's. "2 TB
-// storage", "ad-free" and "faster uploads" are not things Cloudlynk Premium
-// does, and a store listing that promises what the app does not deliver is a
-// Play policy problem as well as a refund problem.
+// Profile tab for signed-out visitors: the plans are the page. Pick one and press Next; sign-in is
+// asked for in a sheet over the plans, and the chosen plan is remembered (lib/auth/postLogin.ts) so
+// they land on /premium ready to pay. The benefits list only claims what Cloudlynk Premium actually
+// does.
 
 const BENEFITS = [
   'Every premium movie and web series',

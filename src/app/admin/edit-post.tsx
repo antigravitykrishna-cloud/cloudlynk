@@ -17,22 +17,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { AdminContentService, AdminPost, PostClearableField } from '@/lib/admin/adminContent';
 import { Colors, Spacing, Radius, FontSize, FontWeight } from '@/constants/theme';
 
-// Edit a published post in place.
-//
-// Why in place and not remove-and-re-upload: content_access_grants rows are
-// keyed on post_id. Re-uploading mints a new id, so every individual access
-// grant an admin had issued for that post stops applying — the grantee keeps a
-// row pointing at nothing, sees nothing, and nobody is told. Editing keeps the
-// id, so it keeps the grants.
-//
-// Not editable here, on purpose:
-//   * access_level — has to move Cloudflare's requireSignedURLs flag in step
-//     with the database, so it goes through stream-set-access from the content
-//     list, not through a form field.
-//   * status — admin_set_post_status, also from the content list.
-//
-// The isAdmin check below is UX. admin_update_post and admin_replace_post_video
-// both re-verify is_admin in the database.
+// Edit a published post in place. Editing keeps the post id, so per-user access grants (keyed on
+// post_id) keep working; re-uploading would orphan them. Access level and status are changed from
+// the content list instead (access level must stay in step with Cloudflare's signed-URL flag). The
+// isAdmin check is UX only; the RPCs re-check it.
 
 /** Mirrors the whitelist in admin_update_post's CASE block. */
 const CLEARABLE: Record<string, PostClearableField> = {
@@ -85,12 +73,8 @@ function toForm(p: AdminPost): Form {
 }
 
 /**
- * Defined at module scope, NOT inside the screen.
- *
- * A component declared in the render body is a brand-new component type on
- * every render, so React unmounts and remounts its whole subtree each time
- * state changes. For a TextInput that means the field loses focus after every
- * single keystroke and the form is unusable.
+ * Module scope on purpose: a component declared inside the screen would be a new type every render,
+ * remounting the TextInput and dropping focus after each keystroke.
  */
 function Field({
   label,

@@ -4,20 +4,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme';
 import { config } from '@/lib/config';
 
-// Age confirmation for signed-out visitors.
-//
-// Cloudlynk is 18+ and signup enforces that with a birth-year field
-// (app/(auth)/signup.tsx rejects under-18s). But v61 lets people browse without
-// an account, and a guest never reaches signup — so without this, guest
-// browsing would quietly remove the only age check in the app. Play's UGC and
-// mature-content policies expect one on the way in.
-//
-// A self-attested gate is not identity verification and does not pretend to
-// be. It is the standard, expected control, and it is what the reference app
-// this was modelled on does.
-//
-// Only shown to signed-out users: a signed-in account already passed the
-// birth-year check at signup, and asking again would be noise.
+// 18+ confirmation for visitors without an account (accounts confirm it when they sign up). Self-
+// attested, as is standard; Play's mature-content and UGC policies expect an age check on the way
+// in.
 
 const STORAGE_KEY = 'cloudlynk.ageConfirmed.v1';
 

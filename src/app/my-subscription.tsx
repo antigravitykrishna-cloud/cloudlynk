@@ -96,21 +96,9 @@ export default function MySubscriptionScreen() {
 
   const planStatus = status?.plan_status ?? 'free';
 
-  // Mirrors public.is_plan_active() (v75) exactly, and for the same reason
-  // stream-playback-token does: whether someone is subscribed RIGHT NOW is one
-  // question, and every layer has to answer it identically or the app
-  // contradicts itself.
-  //
-  // `plan_status === 'active'` on its own is not that answer. expire_lapsed_plans
-  // runs hourly, so a plan whose term ended can sit at 'active' with a past
-  // plan_expires_at until the next sweep. During that window this screen said
-  // "ACTIVE - Active until <a date in the past>" while the database had already
-  // stopped serving premium content and the player was returning 403. The user
-  // is told they are subscribed by the one screen whose entire job is to tell
-  // them whether they are subscribed.
-  //
-  // 'lifetime' was also missing, so a lifetime subscriber fell through every
-  // branch: a bare badge and no explanation.
+  // Mirrors public.is_plan_active(): 'lifetime', or 'active' with an end date still in the future.
+  // plan_status alone is not enough -- the hourly expiry job can leave a lapsed plan marked
+  // 'active' for up to an hour.
   const expiresAt = status?.plan_expires_at ?? null;
   const notExpired = !expiresAt || new Date(expiresAt) > new Date();
   const isActive = planStatus === 'lifetime' || (planStatus === 'active' && notExpired);

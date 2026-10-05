@@ -1,18 +1,10 @@
 import { supabase } from '@/lib/supabase';
 import { AccessLevel, ContentType } from '@/lib/data/posts';
 
-// Client wrappers for the v56 Admin Content & Access Panel.
-//
-// Every write here goes through a SECURITY DEFINER RPC that re-verifies
-// is_admin in the database. The screens' isAdmin checks are UX only — this
-// module is not a security boundary either, it is just the typed surface the
-// admin screens call.
-//
-// Two kinds of access, deliberately kept apart (see the v56 migration):
-//   PAID PREMIUM — a subscriber sees everything marked premium.
-//   ADMIN GRANT  — one named person, one named post, no subscription.
-// Nothing in this file writes plan_status, and revoking a grant never
-// touches a paid entitlement.
+// Client wrappers for the admin content and access panel. Every write is a SECURITY DEFINER RPC
+// that re-checks is_admin; neither the screens nor this module are the security boundary. Two kinds
+// of access are kept apart: a paid plan (everything premium) and an admin grant (one person, one
+// post). Nothing here writes plan_status.
 
 /** Statuses the admin panel can set. Matches channel_posts_status_check. */
 export type AdminPostStatus = 'draft' | 'pending' | 'approved' | 'rejected' | 'removed';
@@ -82,19 +74,8 @@ export type AuditEntry = {
 };
 
 /**
- * Fields admin_update_post will set back to NULL. Mirrors the CASE whitelist
- * in the function body — anything else raises 22023 there, so keeping this in
- * step turns that into a compile error instead.
- */
-/**
- * Turns "this RPC does not exist on the server yet" into something an admin can
- * act on. PostgREST answers an unknown function with PGRST202, Postgres itself
- * with 42883; either way the raw text is a schema-cache complaint that reads
- * like a crash.
- *
- * This is a real state, not a hypothetical: v59 and v60 are written and, until
- * someone with a Supabase login runs the push, not deployed. A build handed to
- * a tester before then will hit exactly this.
+ * Turns "this RPC does not exist on the server" (PGRST202 / 42883) into a message an admin can act
+ * on, instead of a raw schema-cache error.
  */
 function describeRpcError(err: any, feature: string): Error {
   const code = err?.code ?? '';
@@ -107,6 +88,7 @@ function describeRpcError(err: any, feature: string): Error {
   return new Error(err?.message ?? 'Something went wrong.');
 }
 
+/** Fields admin_update_post may set back to NULL (mirrors its whitelist). */
 export type PostClearableField =
   | 'body'
   | 'genre'
@@ -119,13 +101,8 @@ export type PostClearableField =
 
 export const AdminContentService = {
   /**
-   * The first-party channel admin uploads go to. Found by the is_official
-   * flag rather than a hardcoded id, so more official channels can exist
-   * later without a code change. Returns null when the v56 seed was skipped
-   * (no admin profile existed at migration time).
-   *
-   * A direct select is fine here: channels has an "Admins see all channels"
-   * SELECT policy.
+   * The official channel admin uploads go to, found by the is_official flag. Null if none exists. A
+   * direct select is allowed for admins.
    */
   async getOfficialChannel(): Promise<{ id: string; name: string } | null> {
     const { data, error } = await supabase
@@ -139,13 +116,7 @@ export const AdminContentService = {
   },
 
   /**
-   * Admin content list.
-   *
-   * Deliberately a direct table select, not a SECURITY DEFINER reader:
-   * channel_posts_select_v56 carries a top-level
-   * `EXISTS (... profiles.is_admin = true)` branch, so an admin already
-   * reads every post regardless of status, channel or access level. This is
-   * unlike public.profiles, which has no such branch and does need readers.
+   * Admin content list. A direct select works: the posts read policy lets admins see every post.
    */
   async listPosts(opts?: {
     status?: AdminPostStatus | 'all';
@@ -237,19 +208,9 @@ export const AdminContentService = {
   },
 
   /**
-   * Changes a post's access level.
-   *
-   * Goes through the `stream-set-access` EDGE FUNCTION rather than calling
-   * admin_set_post_access_level directly, and that is not optional. Flipping
-   * premium -> free also has to unlock the video on Cloudflare: v54's
-   * stream-playback-token permanently sets requireSignedURLs=true on first
-   * premium play, and free playback uses a plain unsigned URL that a locked
-   * video rejects. Change only the database and the post looks free while
-   * its player is dead for everyone, with no diagnosable error.
-   *
-   * The function unlocks Cloudflare first and only then changes the level,
-   * so a failed unlock leaves the post premium and reports an error rather
-   * than silently half-applying.
+   * Change a post's access level through the stream-set-access function. Going premium locks the
+   * video on Cloudflare first, and the level only changes if that succeeded. Videos stay locked
+   * when made free (free titles play through a token too).
    */
   async setPostAccessLevel(postId: string, accessLevel: AccessLevel): Promise<void> {
     const {
@@ -277,17 +238,9 @@ export const AdminContentService = {
   },
 
   /**
-   * Edits a post in place. `patch` carries only the fields being changed;
-   * `clearFields` names fields being set back to NULL, so blanking is always
-   * deliberate rather than something an omitted key does by accident.
-   *
-   * In place matters: content_access_grants rows are keyed on post_id, so the
-   * remove-and-re-upload workaround this replaces silently orphaned every
-   * individual grant an admin had issued for the post.
-   *
-   * Cannot change access_level or status — those have their own paths, and
-   * access_level in particular has to move Cloudflare's requireSignedURLs flag
-   * in step with the database (see setPostAccessLevel).
+   * Edit a post in place. `patch` holds the changed fields; `clearFields` names fields to set back
+   * to NULL, so blanking is always deliberate. Keeping the post id keeps its access grants. Access
+   * level and status have their own paths (see setPostAccessLevel).
    */
   async updatePost(
     postId: string,
@@ -321,18 +274,10 @@ export const AdminContentService = {
   },
 
   /**
-   * Swaps the Cloudflare video behind a post, keeping the post id and its
-   * grants.
-   *
-   * Goes through the `admin-replace-video` edge function rather than the RPC
-   * directly, because a premium post's new video has to be carrying
-   * requireSignedURLs=true BEFORE it becomes the post's video. Postgres cannot
-   * call Cloudflare, so an RPC-only swap would leave a premium post serving an
-   * unsigned manifest until its first play — reopening the hole v57 closed.
-   *
-   * `newUid` is a Cloudflare Stream UID from a completed upload
-   * (StreamService.requestUploadUrl -> upload -> the `uid` it returned). The
-   * old video is left on Cloudflare on purpose; its UID is in the audit row.
+   * Swap the Cloudflare video behind a post, keeping the post id and its grants. Goes through the
+   * admin-replace-video function so a premium post's new video is locked before it goes live.
+   * `newUid` is the uid returned by a completed upload; the old video stays on Cloudflare (its uid
+   * is in the audit log).
    */
   async replaceVideo(postId: string, newUid: string): Promise<{ previousUid: string | null }> {
     const {

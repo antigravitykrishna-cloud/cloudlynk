@@ -102,14 +102,8 @@ async function withRetry<T>(fn: () => Promise<T>, maxAttempts = 3): Promise<T> {
 }
 
 /**
- * Uploads via fetch(uri).arrayBuffer() → Uint8Array.
- *
- * Why not Blob? supabase-js storage.upload() in React Native rejects Blob/ArrayBufferView
- * with: "Creating blobs from 'ArrayBuffer' and 'ArrayBufferView' are not supported".
- * Uint8Array (a typed array) IS accepted because supabase-js handles it as raw bytes.
- *
- * Memory: ~2x file size peak (ArrayBuffer + Uint8Array view). For 25MB video = ~50MB.
- * This is better than the old Base64 path (91MB) and the only path that works in RN.
+ * Uploads via fetch(uri).arrayBuffer() -> Uint8Array: supabase-js storage on React Native rejects
+ * Blob/ArrayBuffer but accepts a typed array. Peak memory is about twice the file size.
  */
 export async function uploadChannelVideo(
   channelId: string,

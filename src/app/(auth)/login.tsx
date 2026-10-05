@@ -18,28 +18,10 @@ import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme
 import Constants from 'expo-constants';
 import { Icon } from '@/components/ui/Icon';
 
-// One-tap entry: guest, Google, or an emailed code. No password field, no
-// name field.
-//
-// Three things this screen deliberately does NOT do:
-//
-//   * v89: "Continue as guest" creates a guest ACCOUNT (Supabase anonymous
-//     sign-in) with its own id, so a guest can join channels and buy a plan.
-//     That hands them the `authenticated` role, so the v89 migration blocks
-//     uploads and publishing for guests at the database, and they go through
-//     admin approval like everyone else. Saving the account later (Google or
-//     email, app/save-account.tsx) keeps the same id.
-//
-//   * It does not collect a name. handle_new_user is happy with none, and
-//     nothing in the app requires one.
-//
-//   * It does not skip the age gate. A new account still lands on
-//     complete-profile for birth year and policy acceptance (app/_layout.tsx),
-//     because 18+ verification is a Play content-rating requirement, not a
-//     signup formality.
-//
-// The old email+password path is still reachable at /(auth)/signup for
-// accounts that already have a password.
+// Sign-in choices: guest, Google, or an emailed code. 'Continue as guest' creates an anonymous
+// account (it can browse; joining, watching and buying need a saved account -- enforced in the
+// database). New accounts still pass the 18+ gate and policy acceptance (app/_layout.tsx). Accounts
+// with a password can use /(auth)/signup.
 
 const APP_VERSION = Constants.expoConfig?.version ?? '0.0.0';
 

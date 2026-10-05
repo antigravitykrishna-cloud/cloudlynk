@@ -4,14 +4,8 @@ import { showAlert } from '@/components/ui/Feedback';
 type Router = ReturnType<typeof useRouter>;
 
 /**
- * A guest account (v89) cannot upload or create channels -- the database
- * refuses it. Say so up front, with the way out, instead of letting the
- * person pick a file and hit a permission error.
- */
-/**
- * A guest tapped a title. Guests see previews only (v90), so nothing plays.
- * One who has already paid is not sent to the plans again -- that reads as
- * "you did not pay" -- but to saving the account, which is what unlocks it.
+ * A guest tapped a title. Guests see previews only. One who already has a plan is sent to save the
+ * account (which unlocks watching), not back to the plans.
  */
 export function guestTappedTitle(router: Router, hasPlan: boolean) {
   if (hasPlan) {
@@ -28,6 +22,7 @@ export function guestTappedTitle(router: Router, hasPlan: boolean) {
   router.push('/premium');
 }
 
+/** Guests cannot upload, create channels or join -- say so up front, with the way out. */
 export function promptSaveAccount(router: Router, what = 'upload') {
   showAlert(
     'Save your account first',

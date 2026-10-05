@@ -12,18 +12,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, FontSize, FontWeight, Spacing } from '@/constants/theme';
 import { sabpaisaFormHtml, type SabpaisaOrder } from '@/lib/payments/gateways';
 
-// Sabpaisa's hosted checkout, inside the app.
-//
-// Sabpaisa takes a POSTed form (encData + clientCode), so the page is started
-// from a tiny auto-submitting form (lib/payments.ts sabpaisaFormHtml). Two
-// things need handling that a plain browser does for free:
-//
-//   * UPI. Sabpaisa's page opens UPI apps with upi:// or intent:// links. A
-//     WebView cannot follow those, so they are handed to Android, which opens
-//     GPay / PhonePe / Paytm.
-//   * The end. Sabpaisa finishes by posting the result to our callback URL on
-//     the server. When the WebView reaches it, the checkout is over -- the
-//     server has the result -- and the caller asks the server for the status.
+// Sabpaisa's hosted checkout in a WebView, started from an auto-submitting form
+// (lib/payments/gateways.ts). UPI links (upi://, intent://) are handed to Android so GPay / PhonePe
+// / Paytm open. Reaching our callback URL means the checkout is over; the caller then asks the
+// server for the result.
 
 const APP_SCHEMES = /^(upi|intent|tez|phonepe|paytmmp|gpay|credpay|bhim):/i;
 

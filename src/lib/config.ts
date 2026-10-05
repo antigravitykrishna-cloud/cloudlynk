@@ -4,16 +4,10 @@ export type IapProvider = 'google_play' | 'noop';
 export type AppEnv = 'development' | 'staging' | 'production';
 
 /**
- * How Razorpay / UPI / Sabpaisa are offered next to Google Play.
- *
- *   'user_choice'  (default) Google Play's user choice billing: on Pay,
- *                  Google shows its own choice screen; picking the app's
- *                  option opens our payment methods, and every such sale is
- *                  reported to Google. The only mode allowed on Play.
- *   'test'         our payment sheet straight away, Google Play as one of
- *                  its rows, nothing reported to Google. For sideloaded test
- *                  APKs ONLY -- scripts/audit-apk.mjs fails a build with it.
- *   'off'          Google Play only.
+ * How UPI / Razorpay / Sabpaisa are offered next to Google Play: 'user_choice' (default; Google's
+ * choice screen first, sales reported to Google -- the only mode allowed on Play), 'test' (our
+ * sheet directly; sideloaded test APKs only, scripts/audit-apk.mjs rejects it), 'off' (Google Play
+ * only).
  */
 export type AlternativeBilling = 'user_choice' | 'test' | 'off';
 
@@ -88,12 +82,8 @@ export function isSentryLive(): boolean {
 }
 
 /**
- * True when Google Sign-In is configured.
- *
- * The button is hidden rather than shown-and-broken when this is false: a
- * "Sign in with Google" that always errors is worse than one that isn't
- * offered, and this ships before the OAuth client exists. Setting
- * GOOGLE_WEB_CLIENT_ID in app.json's `extra` turns it on with no code change.
+ * True when Google Sign-In is configured (GOOGLE_WEB_CLIENT_ID in app.json `extra`). Otherwise the
+ * button is hidden rather than shown broken.
  */
 export function isGoogleAuthLive(): boolean {
   return !!config.googleWebClientId;
