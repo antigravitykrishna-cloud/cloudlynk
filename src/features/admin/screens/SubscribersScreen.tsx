@@ -1,54 +1,36 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
+import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { Card } from '@/components/ui/Card';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { showAlert } from '@/components/ui/Feedback';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-  TextInput,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, useFocusEffect } from 'expo-router';
-import { useAuth } from '@/features/auth/hooks/useAuth';
-import { supabase } from '@/lib/supabase';
+import { PressScale } from '@/components/ui/Press';
+import { SearchBar } from '@/components/ui/SearchBar';
+import { PillTabs } from '@/components/ui/Tabs';
+import { Colors, FontSize, Spacing } from '@/theme';
+import { errorMessage } from '@/utils/errors';
 import { formatDate } from '@/utils/format';
-import { Colors } from '@/theme';
+import {
+  adminUsersApi,
+  type SubscriberCohort,
+  type SubscriberCounts,
+  type SubscriberRow,
+} from '@/features/admin/api/adminUsersApi';
+import { AdminScreen } from '@/features/admin/components/AdminScreen';
+import { adminStyles } from '@/features/admin/components/adminStyles';
+import { isLapsedButUnswept, termLabel } from '@/features/admin/subscriptionTerm';
 
-// Subscribers split into cohorts, filtered server-side so lists stay complete past the row limit.
-// Tap a subscriber to adjust their plan by hand (support cases; Google Play renewals still update
-// it afterwards). The isAdmin check is UX only; both RPCs re-check it.
+// Subscribers by where they are in their term. Tap one for the account's controls.
 
-type Cohort = 'expired' | 'expiring' | 'active' | 'cancelled' | 'free';
-
-type SubscriberRow = {
-  id: string;
-  email: string;
-  full_name: string | null;
-  plan_status: string | null;
-  plan_started_at: string | null;
-  plan_expires_at: string | null;
-  account_status: string | null;
-  created_at: string;
-};
-
-type Counts = {
-  active_count: number;
-  expiring_count: number;
-  expired_count: number;
-  cancelled_count: number;
-};
-
-const COHORTS: { key: Cohort; label: string; countKey?: keyof Counts }[] = [
-  { key: 'expired', label: 'Expired', countKey: 'expired_count' },
-  { key: 'expiring', label: 'Ending', countKey: 'expiring_count' },
-  { key: 'active', label: 'Active', countKey: 'active_count' },
-  { key: 'cancelled', label: 'Cancelled', countKey: 'cancelled_count' },
+const COHORTS: { key: SubscriberCohort; label: string; count?: keyof SubscriberCounts }[] = [
+  { key: 'expired', label: 'Expired', count: 'expired_count' },
+  { key: 'expiring', label: 'Ending', count: 'expiring_count' },
+  { key: 'active', label: 'Active', count: 'active_count' },
+  { key: 'cancelled', label: 'Cancelled', count: 'cancelled_count' },
   { key: 'free', label: 'Free' },
 ];
 
-const BLURB: Record<Cohort, string> = {
+const DESCRIPTIONS: Record<SubscriberCohort, string> = {
   expired:
     'Subscriptions whose term has run out. Premium access is already gone — the gate reads the date, not this status.',
   expiring: 'Active subscriptions ending within 7 days. Each was sent a reminder 3 days out.',
@@ -58,301 +40,117 @@ const BLURB: Record<Cohort, string> = {
   free: 'No subscription on record.',
 };
 
-// Days until (positive) or since (negative) the date, for the relative label.
-function dayDelta(iso: string | null): number | null {
-  if (!iso) return null;
-  return Math.round((new Date(iso).getTime() - Date.now()) / 86_400_000);
-}
+const SEARCH_DEBOUNCE_MS = 400;
 
-export default function AdminSubscribersScreen() {
+export default function SubscribersScreen() {
   const router = useRouter();
-  const { isAdmin } = useAuth();
-
-  const [cohort, setCohort] = useState<Cohort>('expired');
+  const [cohort, setCohort] = useState<SubscriberCohort>('expired');
   const [query, setQuery] = useState('');
   const [rows, setRows] = useState<SubscriberRow[]>([]);
-  const [counts, setCounts] = useState<Counts | null>(null);
+  const [counts, setCounts] = useState<SubscriberCounts | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const load = useCallback(async (which: Cohort, search: string) => {
+  const load = useCallback(async () => {
     try {
-      const [listRes, countRes] = await Promise.all([
-        supabase.rpc('admin_list_subscribers', {
-          p_cohort: which,
-          p_limit: 200,
-        }),
-        supabase.rpc('admin_subscriber_counts'),
-      ]);
-      if (listRes.error) throw listRes.error;
-      setRows((listRes.data ?? []) as SubscriberRow[]);
-      // A failed count must not blank the list — the tabs just lose their
-      // badges.
-      if (!countRes.error) setCounts(((countRes.data ?? [])[0] ?? null) as Counts | null);
+      setRows(await adminUsersApi.listSubscribers(cohort, query));
     } catch (err) {
-      if (__DEV__) console.error('AdminSubscribers load error:', err);
-      showAlert(
-        'Could not load subscribers',
-        err instanceof Error ? err.message : 'Check your connection and try again.',
-      );
       setRows([]);
+      showAlert('Could not load subscribers', errorMessage(err, 'Check your connection.'));
     } finally {
       setLoading(false);
     }
-  }, []);
+    // A failed count only costs the tabs their numbers, never the list.
+    adminUsersApi
+      .subscriberCounts()
+      .then(setCounts)
+      .catch(() => {});
+  }, [cohort, query]);
 
   useFocusEffect(
     useCallback(() => {
       setLoading(true);
-      load(cohort, query);
-      // `query` is deliberately not a dependency: refetching on every
-      // keystroke would fire an RPC per character. Search runs on submit.
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [load, cohort]),
+      const timer = setTimeout(load, query ? SEARCH_DEBOUNCE_MS : 0);
+      return () => clearTimeout(timer);
+    }, [load, query]),
   );
 
-  const selectCohort = (next: Cohort) => {
-    if (next === cohort) return;
-    setCohort(next);
-    setLoading(true);
-    load(next, query);
-  };
-
-  const runSearch = () => {
-    setLoading(true);
-    load(cohort, query);
-  };
-
-  if (!isAdmin) {
-    return (
-      <SafeAreaView style={styles.safe}>
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>Admin access required.</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
+  const tabs = COHORTS.map(option => ({
+    key: option.key,
+    label: option.count && counts ? `${option.label} (${counts[option.count]})` : option.label,
+  }));
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.headerBack}
-          onPress={() => router.back()}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <Text style={styles.headerBackTxt}>‹</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Subscribers</Text>
-        <View style={{ width: 32 }} />
+    <AdminScreen title="Subscribers">
+      <View style={styles.controls}>
+        <PillTabs tabs={tabs} selected={cohort} onSelect={setCohort} />
+        <Text style={adminStyles.muted}>{DESCRIPTIONS[cohort]}</Text>
+        <SearchBar value={query} onChange={setQuery} placeholder="Search name or email" />
       </View>
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.filterScroll}
-        contentContainerStyle={styles.filterRow}
-      >
-        {COHORTS.map(c => {
-          const n = c.countKey && counts ? counts[c.countKey] : null;
-          const active = cohort === c.key;
-          return (
-            <TouchableOpacity
-              key={c.key}
-              style={[styles.filterTab, active && styles.filterTabActive]}
-              onPress={() => selectCohort(c.key)}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.filterTabText, active && styles.filterTabTextActive]}>
-                {c.label}
-                {n !== null ? ` (${n})` : ''}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
-
-      <Text style={styles.blurb}>{BLURB[cohort]}</Text>
-
-      <View style={styles.searchWrap}>
-        <TextInput
-          style={styles.searchInput}
-          value={query}
-          onChangeText={setQuery}
-          onSubmitEditing={runSearch}
-          returnKeyType="search"
-          placeholder="Search name or email"
-          placeholderTextColor={Colors.textMuted}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-        <TouchableOpacity style={styles.searchBtn} onPress={runSearch} activeOpacity={0.7}>
-          <Text style={styles.searchBtnText}>Search</Text>
-        </TouchableOpacity>
-      </View>
-
       {loading ? (
-        <ActivityIndicator color={Colors.brandBlue} style={{ marginTop: 60 }} />
-      ) : rows.length === 0 ? (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>
-            {query.trim() ? 'Nobody matches that search in this group.' : 'Nobody in this group.'}
-          </Text>
-        </View>
+        <ActivityIndicator color={Colors.brandBlue} style={styles.loading} />
       ) : (
-        <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
-          {rows.map(row => {
-            const delta = dayDelta(row.plan_expires_at);
-            // The sweeper runs hourly, so a row can sit at 'active' with a
-            // date already past. Say what is true — access is gone — rather
-            // than echoing a status the gate no longer honours.
-            const lapsedButUnswept = row.plan_status === 'active' && delta !== null && delta <= 0;
-
-            let dateLabel = '—';
-            if (row.plan_expires_at) {
-              if (delta === null) dateLabel = formatDate(row.plan_expires_at);
-              else if (delta > 0)
-                dateLabel = `Ends ${formatDate(row.plan_expires_at)} · in ${delta}d`;
-              else if (delta === 0) dateLabel = `Ends today · ${formatDate(row.plan_expires_at)}`;
-              else dateLabel = `Ended ${formatDate(row.plan_expires_at)} · ${Math.abs(delta)}d ago`;
-            } else if (row.plan_status === 'lifetime') {
-              dateLabel = 'No end date · lifetime';
-            }
-
-            return (
-              <TouchableOpacity
-                key={row.id}
-                style={styles.card}
-                activeOpacity={0.75}
-                onPress={() => router.push(`/admin/user/${row.id}` as never)}
-              >
-                <View style={styles.cardTopRow}>
-                  <Text style={styles.nameText} numberOfLines={1}>
-                    {row.full_name?.trim() || row.email}
-                  </Text>
-                  <Text style={styles.cardDate}>{row.plan_status ?? 'free'}</Text>
-                </View>
-
-                {!!row.full_name?.trim() && (
-                  <Text style={styles.metaText} numberOfLines={1}>
-                    {row.email}
-                  </Text>
-                )}
-
-                <Text style={styles.metaText}>{dateLabel}</Text>
-
-                {row.plan_started_at && (
-                  <Text style={styles.metaText}>Started {formatDate(row.plan_started_at)}</Text>
-                )}
-
-                {lapsedButUnswept && (
-                  <Text style={styles.warnText}>
-                    Term has ended — access already revoked. Status updates on the next hourly
-                    sweep.
-                  </Text>
-                )}
-
-                {row.account_status && row.account_status !== 'active' && (
-                  <Text style={styles.warnText}>
-                    Account {row.account_status} — content hidden regardless of plan.
-                  </Text>
-                )}
-              </TouchableOpacity>
-            );
-          })}
-          <View style={{ height: 24 }} />
-        </ScrollView>
+        <FlatList
+          data={rows}
+          keyExtractor={row => row.id}
+          contentContainerStyle={adminStyles.list}
+          ListEmptyComponent={
+            <EmptyState
+              icon="diamond"
+              title={
+                query.trim() ? 'Nobody matches that search in this group.' : 'Nobody in this group.'
+              }
+            />
+          }
+          renderItem={({ item }) => (
+            <PressScale
+              onPress={() => router.push({ pathname: '/admin/user/[id]', params: { id: item.id } })}
+            >
+              <SubscriberCard row={item} />
+            </PressScale>
+          )}
+        />
       )}
-    </SafeAreaView>
+    </AdminScreen>
+  );
+}
+
+function SubscriberCard({ row }: { row: SubscriberRow }) {
+  const name = row.full_name?.trim();
+  return (
+    <Card>
+      <View style={adminStyles.row}>
+        <Text style={[adminStyles.name, styles.flex]} numberOfLines={1}>
+          {name || row.email}
+        </Text>
+        <Text style={styles.status}>{row.plan_status ?? 'free'}</Text>
+      </View>
+      {name ? (
+        <Text style={adminStyles.muted} numberOfLines={1}>
+          {row.email}
+        </Text>
+      ) : null}
+      <Text style={adminStyles.muted}>{termLabel(row.plan_status, row.plan_expires_at)}</Text>
+      {row.plan_started_at ? (
+        <Text style={adminStyles.muted}>Started {formatDate(row.plan_started_at)}</Text>
+      ) : null}
+      {isLapsedButUnswept(row.plan_status, row.plan_expires_at) ? (
+        <Text style={styles.warning}>
+          Term has ended — access already revoked. Status updates on the next hourly sweep.
+        </Text>
+      ) : null}
+      {row.account_status && row.account_status !== 'active' ? (
+        <Text style={styles.warning}>
+          Account {row.account_status} — content hidden regardless of plan.
+        </Text>
+      ) : null}
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.bg },
-  header: {
-    backgroundColor: Colors.bg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  headerBack: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  headerBackTxt: { color: Colors.brandBlue, fontSize: 28, fontWeight: '700', lineHeight: 28 },
-  headerTitle: { color: Colors.text, fontSize: 18, fontWeight: '800' },
-  blurb: {
-    color: Colors.textSecondary,
-    fontSize: 12,
-    fontWeight: '500',
-    lineHeight: 18,
-    paddingHorizontal: 16,
-    paddingBottom: 4,
-  },
-  filterScroll: { flexGrow: 0 },
-  filterRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 12 },
-  filterTab: {
-    backgroundColor: Colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  filterTabActive: { backgroundColor: Colors.brandBlue, borderColor: Colors.brandBlue },
-  filterTabText: { color: Colors.textSecondary, fontSize: 12, fontWeight: '700' },
-  filterTabTextActive: { color: Colors.text },
-  searchWrap: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 12 },
-  searchInput: {
-    flex: 1,
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    color: Colors.text,
-    fontSize: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  searchBtn: {
-    backgroundColor: Colors.border,
-    paddingHorizontal: 16,
-    justifyContent: 'center',
-    borderRadius: 8,
-  },
-  searchBtnText: { color: Colors.text, fontSize: 13, fontWeight: '700' },
-  list: { paddingBottom: 12, paddingHorizontal: 16 },
-  card: {
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 16,
-    marginBottom: 12,
-  },
-  cardTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 6,
-    gap: 10,
-  },
-  nameText: { fontSize: 15, fontWeight: '700', color: Colors.text, flex: 1 },
-  cardDate: {
-    fontSize: 11,
-    color: Colors.textMuted,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-  },
-  metaText: { fontSize: 13, color: Colors.textSecondary, fontWeight: '500', marginBottom: 2 },
-  warnText: { fontSize: 12, color: Colors.gold, fontWeight: '600', marginTop: 6, lineHeight: 17 },
-  emptyState: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 80,
-    paddingHorizontal: 20,
-  },
-  emptyText: { fontSize: 16, color: Colors.textSecondary, fontWeight: '600', textAlign: 'center' },
+  controls: { padding: Spacing.lg, paddingBottom: 0, gap: Spacing.md },
+  loading: { marginTop: 60 },
+  flex: { flex: 1 },
+  status: { color: Colors.textMuted, fontSize: FontSize.xs },
+  warning: { color: Colors.warning, fontSize: FontSize.sm, marginTop: Spacing.xs },
 });

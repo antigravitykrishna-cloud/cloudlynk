@@ -9,7 +9,8 @@ import {
   type ModerationAction,
   type PendingReport,
 } from '@/features/admin/api/adminReportsApi';
-import { AdminScreen, adminStyles } from '@/features/admin/components/AdminUI';
+import { AdminScreen } from '@/features/admin/components/AdminScreen';
+import { adminStyles } from '@/features/admin/components/adminStyles';
 import { ReportCard } from '@/features/admin/components/ReportCard';
 
 // The moderation queue for reports filed from the app. Every action re-checks is_admin on the

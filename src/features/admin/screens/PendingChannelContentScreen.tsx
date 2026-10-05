@@ -1,382 +1,89 @@
-import { useState, useCallback } from 'react';
-import { fireHaptic } from '@/components/ui/Press';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-  TextInput,
-} from 'react-native';
+import { useState } from 'react';
+import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
+import { Button } from '@/components/ui/Button';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { showAlert } from '@/components/ui/Feedback';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, useFocusEffect } from 'expo-router';
-import { useAuth } from '@/features/auth/hooks/useAuth';
-import { supabase } from '@/lib/supabase';
-import { Colors } from '@/theme';
+import { TextField } from '@/components/ui/TextField';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { Colors, Spacing } from '@/theme';
+import { AdminScreen } from '@/features/admin/components/AdminScreen';
+import { adminStyles } from '@/features/admin/components/adminStyles';
+import { PendingPostCard } from '@/features/admin/components/PendingItems';
+import { useReviewQueue } from '@/features/admin/hooks/useReviewQueue';
 
-interface PendingContentItem {
-  id: string;
-  channel_name: string;
-  owner_name: string;
-  title: string;
-  content_type: string;
-  created_at: string;
-}
+// New posts waiting for review. Rejecting here asks for a reason, which the author sees.
 
 export default function PendingChannelContentScreen() {
-  const router = useRouter();
-  const { isAdmin } = useAuth();
+  const queue = useReviewQueue();
+  const refreshControl = usePullToRefresh(queue.reload);
+  const [rejecting, setRejecting] = useState<string | null>(null);
 
-  const [items, setItems] = useState<PendingContentItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [rejectingId, setRejectingId] = useState<string | null>(null);
-  const [rejectReason, setRejectReason] = useState('');
-
-  const loadPendingContent = useCallback(async () => {
-    try {
-      const { data, error } = await supabase.rpc('admin_list_pending_content');
-      if (error) throw error;
-      setItems(data ?? []);
-    } catch (err) {
-      if (__DEV__) console.error('loadPendingContent error:', err);
-      // A moderation queue that renders "nothing here" after a failed
-      // fetch is worse than one that errors: the admin concludes there is
-      // nothing to review and stops checking, while the queue fills up.
-      showAlert(
-        'Could not load pending content',
-        err instanceof Error ? err.message : 'Check your connection and try again.',
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      setLoading(true);
-      loadPendingContent();
-    }, [loadPendingContent]),
+  return (
+    <AdminScreen title="Pending Content">
+      {queue.loading ? (
+        <ActivityIndicator color={Colors.brandBlue} size="large" style={styles.loading} />
+      ) : (
+        <FlatList
+          data={queue.posts}
+          keyExtractor={post => post.id}
+          contentContainerStyle={adminStyles.list}
+          refreshControl={refreshControl}
+          keyboardShouldPersistTaps="handled"
+          ListEmptyComponent={<EmptyState icon="check-circle" title="No pending content" />}
+          renderItem={({ item: post }) => (
+            <View>
+              <PendingPostCard post={post} queue={queue} onReject={() => setRejecting(post.id)} />
+              {rejecting === post.id ? (
+                <RejectWithReason
+                  onCancel={() => setRejecting(null)}
+                  onConfirm={async reason => {
+                    await queue.rejectPost(post, reason);
+                    setRejecting(null);
+                  }}
+                />
+              ) : null}
+            </View>
+          )}
+        />
+      )}
+    </AdminScreen>
   );
+}
 
-  const handleApprove = async (item: PendingContentItem) => {
-    try {
-      const { error } = await supabase.rpc('approve_channel_content', { content_id: item.id });
-      if (error) throw error;
-      setItems(prev => prev.filter(i => i.id !== item.id));
-      fireHaptic('success');
-      showAlert('Approved', `"${item.title}" has been approved.`);
-    } catch (err: unknown) {
-      fireHaptic('error');
-      showAlert('Error', err instanceof Error ? err.message : 'Approve failed');
-    }
-  };
-
-  const handleReject = async (item: PendingContentItem) => {
-    if (!rejectReason.trim()) {
+function RejectWithReason({
+  onCancel,
+  onConfirm,
+}: {
+  onCancel: () => void;
+  onConfirm: (reason: string) => Promise<void>;
+}) {
+  const [reason, setReason] = useState('');
+  const confirm = () => {
+    if (!reason.trim()) {
       showAlert('Reason required', 'Please enter a reason for rejection.');
       return;
     }
-    try {
-      const { error } = await supabase.rpc('reject_channel_content', {
-        content_id: item.id,
-        reason: rejectReason.trim(),
-      });
-      if (error) throw error;
-      setItems(prev => prev.filter(i => i.id !== item.id));
-      setRejectingId(null);
-      setRejectReason('');
-      fireHaptic('warning');
-      showAlert('Rejected', `"${item.title}" has been rejected.`);
-    } catch (err: unknown) {
-      fireHaptic('error');
-      showAlert('Error', err instanceof Error ? err.message : 'Reject failed');
-    }
+    onConfirm(reason.trim());
   };
-
-  if (!isAdmin) {
-    return (
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.replace('/(tabs)/profile')}
-            style={styles.headerBack}
-            activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-          >
-            <Text style={styles.headerBackTxt}>{'‹'}</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Pending Content</Text>
-          <View style={{ width: 32 }} />
-        </View>
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>Access denied</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.replace('/(tabs)/profile')}
-          style={styles.headerBack}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <Text style={styles.headerBackTxt}>{'‹'}</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Pending Content</Text>
-        <View style={{ width: 32 }} />
+    <View style={styles.rejectForm}>
+      <TextField
+        value={reason}
+        onChangeText={setReason}
+        placeholder="Reason for rejection..."
+        multiline
+        autoFocus
+      />
+      <View style={adminStyles.row}>
+        <Button label="Cancel" variant="secondary" onPress={onCancel} style={styles.flex} />
+        <Button label="Confirm Reject" variant="danger" onPress={confirm} style={styles.flex} />
       </View>
-
-      {loading ? (
-        <ActivityIndicator color={Colors.brandBlue} size="large" style={{ marginTop: 60 }} />
-      ) : items.length === 0 ? (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>No pending content</Text>
-        </View>
-      ) : (
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.list}>
-          {items.map(item => (
-            <View key={item.id} style={styles.card}>
-              <View style={styles.cardInfo}>
-                <Text style={styles.cardTitle} numberOfLines={1}>
-                  {item.title}
-                </Text>
-                <Text style={styles.cardMeta} numberOfLines={1}>
-                  {item.channel_name} · {item.owner_name}
-                </Text>
-                <View style={styles.cardRow}>
-                  <View style={styles.typeBadge}>
-                    <Text style={styles.typeBadgeText}>{item.content_type.toUpperCase()}</Text>
-                  </View>
-                  <Text style={styles.cardDate}>
-                    {new Date(item.created_at).toLocaleDateString()}
-                  </Text>
-                </View>
-              </View>
-
-              {rejectingId === item.id ? (
-                <View style={styles.rejectForm}>
-                  <TextInput
-                    style={styles.rejectInput}
-                    placeholder="Reason for rejection..."
-                    placeholderTextColor={Colors.textMuted}
-                    value={rejectReason}
-                    onChangeText={setRejectReason}
-                    multiline
-                  />
-                  <View style={styles.rejectFormActions}>
-                    <TouchableOpacity
-                      style={styles.cancelBtn}
-                      onPress={() => {
-                        setRejectingId(null);
-                        setRejectReason('');
-                      }}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={styles.cancelBtnText}>Cancel</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.confirmRejectBtn}
-                      onPress={() => handleReject(item)}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={styles.confirmRejectBtnText}>Confirm Reject</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              ) : (
-                <View style={styles.cardActions}>
-                  <TouchableOpacity
-                    style={styles.approveBtn}
-                    onPress={() => handleApprove(item)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.approveBtnText}>Approve</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.rejectBtn}
-                    onPress={() => setRejectingId(item.id)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.rejectBtnText}>Reject</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
-          ))}
-          <View style={{ height: 40 }} />
-        </ScrollView>
-      )}
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: Colors.bg,
-  },
-  header: {
-    backgroundColor: Colors.bg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  headerBack: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerBackTxt: {
-    color: Colors.brandBlue,
-    fontSize: 28,
-    fontWeight: '700',
-    lineHeight: 28,
-  },
-  headerTitle: {
-    color: Colors.text,
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  list: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-  },
-  card: {
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 16,
-    marginBottom: 12,
-  },
-  cardInfo: {
-    marginBottom: 12,
-  },
-  cardTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: Colors.text,
-    marginBottom: 4,
-  },
-  cardMeta: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    fontWeight: '500',
-    marginBottom: 6,
-  },
-  cardRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  typeBadge: {
-    backgroundColor: Colors.border,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 4,
-  },
-  typeBadgeText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: Colors.brandBlue,
-    letterSpacing: 0.3,
-  },
-  cardDate: {
-    fontSize: 12,
-    color: Colors.textMuted,
-    fontWeight: '500',
-  },
-  cardActions: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  approveBtn: {
-    backgroundColor: Colors.brandCyan,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  approveBtnText: {
-    color: Colors.bg,
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  rejectBtn: {
-    backgroundColor: Colors.danger,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  rejectBtnText: {
-    color: Colors.text,
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  rejectForm: {
-    marginTop: 4,
-  },
-  rejectInput: {
-    backgroundColor: Colors.border,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.danger,
-    color: Colors.text,
-    fontSize: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    minHeight: 60,
-    textAlignVertical: 'top',
-    marginBottom: 10,
-  },
-  rejectFormActions: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  cancelBtn: {
-    backgroundColor: Colors.border,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  cancelBtnText: {
-    color: Colors.text,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  confirmRejectBtn: {
-    backgroundColor: Colors.danger,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  confirmRejectBtnText: {
-    color: Colors.text,
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  emptyState: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 80,
-    paddingHorizontal: 20,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: Colors.textSecondary,
-    fontWeight: '600',
-  },
+  loading: { marginTop: 60 },
+  rejectForm: { marginTop: -Spacing.xs, marginBottom: Spacing.md },
+  flex: { flex: 1 },
 });

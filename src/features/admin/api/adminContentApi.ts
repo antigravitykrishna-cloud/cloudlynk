@@ -1,4 +1,6 @@
+import { callEdgeFunction } from '@/lib/edgeFunctions';
 import { supabase } from '@/lib/supabase';
+import { errorMessage } from '@/utils/errors';
 import type { AccessLevel, ContentType } from '@/features/content/model';
 
 // Client wrappers for the admin content and access panel. Every write is a SECURITY DEFINER RPC
@@ -24,17 +26,6 @@ export type AdminPost = {
   created_at: string;
 };
 
-export type AdminUser = {
-  id: string;
-  email: string;
-  full_name: string | null;
-  plan_status: string | null;
-  plan_expires_at: string | null;
-  approval_status: 'pending' | 'approved' | 'rejected';
-  account_status: 'active' | 'suspended' | 'banned';
-  created_at: string;
-};
-
 export type PostGrantee = {
   grant_id: string;
   user_id: string;
@@ -46,18 +37,6 @@ export type PostGrantee = {
   reason: string | null;
   granted_by: string | null;
   granted_by_email: string | null;
-  created_at: string;
-};
-
-export type UserGrant = {
-  grant_id: string;
-  post_id: string;
-  post_title: string | null;
-  access_level: AccessLevel;
-  starts_at: string;
-  expires_at: string | null;
-  status: 'active' | 'revoked';
-  reason: string | null;
   created_at: string;
 };
 
@@ -77,15 +56,15 @@ export type AuditEntry = {
  * Turns "this RPC does not exist on the server" (PGRST202 / 42883) into a message an admin can act
  * on, instead of a raw schema-cache error.
  */
-function describeRpcError(err: any, feature: string): Error {
-  const code = err?.code ?? '';
+function describeRpcError(err: unknown, feature: string): Error {
+  const code = (err as { code?: string } | null)?.code ?? '';
   if (code === 'PGRST202' || code === '42883') {
     return new Error(
       `${feature} is not available yet — the backend migration for it has not been deployed. ` +
         `Everything else in the admin panel works normally.`,
     );
   }
-  return new Error(err?.message ?? 'Something went wrong.');
+  return new Error(errorMessage(err, 'Something went wrong.'));
 }
 
 /** Fields admin_update_post may set back to NULL (mirrors its whitelist). */
@@ -99,22 +78,20 @@ export type PostClearableField =
   | 'episode_title'
   | 'thumbnail_url';
 
-export const AdminContentService = {
-  /**
-   * The official channel admin uploads go to, found by the is_official flag. Null if none exists. A
-   * direct select is allowed for admins.
-   */
-  async getOfficialChannel(): Promise<{ id: string; name: string } | null> {
-    const { data, error } = await supabase
-      .from('channels')
-      .select('id, name')
-      .eq('is_official', true)
-      .order('created_at')
-      .limit(1);
-    if (error) throw error;
-    return data?.[0] ?? null;
-  },
+/** The fields of a post an admin can edit in place. Absent means "leave as it is". */
+export type PostPatch = {
+  title?: string;
+  body?: string;
+  genre?: string;
+  durationMin?: number;
+  releaseYear?: number;
+  seasonNumber?: number;
+  episodeNumber?: number;
+  episodeTitle?: string;
+  thumbnailUrl?: string;
+};
 
+export const adminContentApi = {
   /**
    * Admin content list. A direct select works: the posts read policy lets admins see every post.
    */
@@ -136,38 +113,10 @@ export const AdminContentService = {
     return (data ?? []) as AdminPost[];
   },
 
-  async searchUsers(query?: string, limit = 50): Promise<AdminUser[]> {
-    const { data, error } = await supabase.rpc('admin_search_users', {
-      p_limit: limit,
-    });
-    if (error) throw error;
-    return (data ?? []) as AdminUser[];
-  },
-
-  async getProfilesByIds(
-    ids: string[],
-  ): Promise<{ id: string; email: string; full_name: string | null; username: string | null }[]> {
-    if (ids.length === 0) return [];
-    const { data, error } = await supabase.rpc('admin_get_profiles_by_ids', { p_ids: ids });
-    if (error) throw error;
-    return (data ?? []) as {
-      id: string;
-      email: string;
-      full_name: string | null;
-      username: string | null;
-    }[];
-  },
-
   async getPostGrantees(postId: string): Promise<PostGrantee[]> {
     const { data, error } = await supabase.rpc('admin_get_post_grantees', { p_post_id: postId });
     if (error) throw error;
     return (data ?? []) as PostGrantee[];
-  },
-
-  async getUserGrants(userId: string): Promise<UserGrant[]> {
-    const { data, error } = await supabase.rpc('admin_get_user_grants', { p_user_id: userId });
-    if (error) throw error;
-    return (data ?? []) as UserGrant[];
   },
 
   /** Grants one post to one person. Never touches plan_status. */
@@ -212,28 +161,14 @@ export const AdminContentService = {
    * when made free (free titles play through a token too).
    */
   async setPostAccessLevel(postId: string, accessLevel: AccessLevel): Promise<void> {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session) throw new Error('Not authenticated');
-
-    const fnUrl = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/stream-set-access`;
-    let res: Response;
-    try {
-      res = await fetch(fnUrl, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ postId, accessLevel }),
-      });
-    } catch {
-      throw new Error('Could not reach the video service. The access level was not changed.');
-    }
-
-    const json = await res.json().catch(() => null);
-    if (!res.ok) throw new Error(json?.error ?? 'Could not change the access level.');
+    const res = await callEdgeFunction(
+      'stream-set-access',
+      { postId, accessLevel },
+      {
+        unreachableMessage: 'Could not reach the video service. The access level was not changed.',
+      },
+    );
+    if (!res.ok) throw new Error(res.data?.error ?? 'Could not change the access level.');
   },
 
   /**
@@ -243,17 +178,7 @@ export const AdminContentService = {
    */
   async updatePost(
     postId: string,
-    patch: {
-      title?: string;
-      body?: string;
-      genre?: string;
-      durationMin?: number;
-      releaseYear?: number;
-      seasonNumber?: number;
-      episodeNumber?: number;
-      episodeTitle?: string;
-      thumbnailUrl?: string;
-    },
+    patch: PostPatch,
     clearFields?: PostClearableField[],
   ): Promise<void> {
     const { error } = await supabase.rpc('admin_update_post', {
@@ -279,38 +204,22 @@ export const AdminContentService = {
    * is in the audit log).
    */
   async replaceVideo(postId: string, newUid: string): Promise<{ previousUid: string | null }> {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session) throw new Error('Not authenticated');
-
-    const fnUrl = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/admin-replace-video`;
-    let res: Response;
-    try {
-      res = await fetch(fnUrl, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ postId, newUid }),
-      });
-    } catch {
-      throw new Error('Could not reach the video service. The post still uses its old video.');
-    }
-
-    const json = await res.json().catch(() => null);
-    if (res.status === 404) {
-      // The edge function itself is missing, not the post — a deployed
-      // function answering about a missing post returns its own 404 body with
-      // an `error` field, so distinguish on that.
+    const res = await callEdgeFunction<{ previousUid?: string | null }>(
+      'admin-replace-video',
+      { postId, newUid },
+      {
+        unreachableMessage: 'Could not reach the video service. The post still uses its old video.',
+      },
+    );
+    if (res.status === 404 && !res.data?.error) {
+      // A deployed function answering about a missing post sends its own error; a bare 404 means
+      // the function itself is not deployed.
       throw new Error(
-        json?.error ??
-          'Replacing videos is not available yet — the admin-replace-video function has not been deployed.',
+        'Replacing videos is not available yet — the admin-replace-video function has not been deployed.',
       );
     }
-    if (!res.ok) throw new Error(json?.error ?? 'Could not replace the video.');
-    return { previousUid: json?.previousUid ?? null };
+    if (!res.ok) throw new Error(res.data?.error ?? 'Could not replace the video.');
+    return { previousUid: res.data?.previousUid ?? null };
   },
 
   async listAuditLog(limit = 100, targetType?: string): Promise<AuditEntry[]> {
@@ -321,14 +230,4 @@ export const AdminContentService = {
     if (error) throw error;
     return (data ?? []) as AuditEntry[];
   },
-};
-
-/** Human-readable labels for admin_audit_log.action values. */
-export const AUDIT_ACTION_LABELS: Record<string, string> = {
-  access_granted: 'Granted access',
-  access_revoked: 'Revoked access',
-  access_level_changed: 'Changed access level',
-  post_status_changed: 'Changed post status',
-  post_updated: 'Edited post',
-  post_video_replaced: 'Replaced video',
 };

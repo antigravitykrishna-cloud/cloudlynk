@@ -23,7 +23,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error(
     'Cloudlynk is not configured: EXPO_PUBLIC_SUPABASE_URL / ' +
       'EXPO_PUBLIC_SUPABASE_ANON_KEY were empty when this bundle was built. ' +
-      'The bundler could not see them -- see DEPLOY.md 1.2.',
+      'The bundler could not see them -- see docs/history/DEPLOY.md 1.2.',
   );
 }
 

@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Colors.text,
     marginTop: 6,
-    fontWeight: '600',
+    fontWeight: FontWeight.semibold,
     lineHeight: 17,
   },
   shortCard: { width: 120, borderRadius: 8, overflow: 'hidden' },
@@ -93,5 +93,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  shortTitle: { fontSize: 11, fontWeight: '600', color: Colors.text, marginTop: 4 },
+  shortTitle: { fontSize: 11, fontWeight: FontWeight.semibold, color: Colors.text, marginTop: 4 },
 });

@@ -93,13 +93,6 @@ module.exports = [
       'src/features/*/api/**',
       'src/features/premium/billing/**',
       'src/lib/**',
-      // Admin screens still awaiting their api/ pass.
-      'src/features/admin/screens/PendingChannelContentScreen.tsx',
-      'src/features/admin/screens/PendingChannelsScreen.tsx',
-      'src/features/admin/screens/AdminChannelsScreen.tsx',
-      'src/features/admin/screens/UserApprovalsScreen.tsx',
-      'src/features/admin/screens/SubscribersScreen.tsx',
-      'src/features/admin/screens/ChannelActivityScreen.tsx',
     ],
     rules: {
       'no-restricted-imports': [

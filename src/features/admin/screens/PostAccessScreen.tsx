@@ -1,534 +1,146 @@
-import { useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-  TextInput,
-} from 'react-native';
+import { useCallback, useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { Chip } from '@/components/ui/Chip';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { showAlert } from '@/components/ui/Feedback';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
-import { useAuth } from '@/features/auth/hooks/useAuth';
-import { AdminContentService, AdminUser, PostGrantee } from '@/features/admin/api/adminContentApi';
-import { Colors } from '@/theme';
+import { Colors, FontSize, Spacing } from '@/theme';
+import { errorMessage } from '@/utils/errors';
+import { formatDateTime } from '@/utils/format';
+import { adminContentApi, type PostGrantee } from '@/features/admin/api/adminContentApi';
+import { AdminScreen } from '@/features/admin/components/AdminScreen';
+import { adminStyles } from '@/features/admin/components/adminStyles';
+import { GrantAccessForm } from '@/features/admin/components/GrantAccessForm';
+import { useAdminAction } from '@/features/admin/hooks/useAdminAction';
 
-// Per-post access: let one person watch one video regardless of subscription. A grant never touches
-// plan_status, and revoking it never affects anything paid for (enforced in the database).
+// Who can watch one post without a subscription. A grant never changes anyone's plan, and revoking
+// one never affects anything they paid for (enforced in the database).
 
-type DurationChoice = 'forever' | '7d' | '30d' | 'custom';
-
-const DURATIONS: { key: DurationChoice; label: string }[] = [
-  { key: 'forever', label: 'Until revoked' },
-  { key: '7d', label: '7 days' },
-  { key: '30d', label: '30 days' },
-  { key: 'custom', label: 'Custom date' },
-];
-
-function expiryFor(choice: DurationChoice, customDate: string): string | null {
-  if (choice === 'forever') return null;
-  if (choice === '7d') return new Date(Date.now() + 7 * 86400_000).toISOString();
-  if (choice === '30d') return new Date(Date.now() + 30 * 86400_000).toISOString();
-  const parsed = new Date(customDate.trim());
-  if (Number.isNaN(parsed.getTime())) throw new Error('Enter the custom date as YYYY-MM-DD.');
-  if (parsed.getTime() <= Date.now()) throw new Error('That date is in the past.');
-  return parsed.toISOString();
-}
-
-export default function AdminPostAccessScreen() {
-  const router = useRouter();
-  const { isAdmin } = useAuth();
+export default function PostAccessScreen() {
   const { postId } = useLocalSearchParams<{ postId?: string }>();
-
   const [grantees, setGrantees] = useState<PostGrantee[]>([]);
   const [loading, setLoading] = useState(true);
-  const [actingId, setActingId] = useState<string | null>(null);
-
-  const [search, setSearch] = useState('');
-  const [results, setResults] = useState<AdminUser[]>([]);
-  const [searching, setSearching] = useState(false);
-  const [selected, setSelected] = useState<AdminUser | null>(null);
-  const [duration, setDuration] = useState<DurationChoice>('forever');
-  const [customDate, setCustomDate] = useState('');
-  const [reason, setReason] = useState('');
 
   const load = useCallback(async () => {
-    if (!postId) {
-      setLoading(false);
-      return;
-    }
+    if (!postId) return;
     try {
-      setGrantees(await AdminContentService.getPostGrantees(postId));
+      setGrantees(await adminContentApi.getPostGrantees(postId));
     } catch (err) {
-      if (__DEV__) console.error('AdminPostAccess load error:', err);
       setGrantees([]);
+      showAlert('Could not load who has access', errorMessage(err, 'Please try again.'));
     } finally {
       setLoading(false);
     }
   }, [postId]);
+  const actions = useAdminAction(load);
 
   useFocusEffect(
     useCallback(() => {
-      setLoading(true);
       load();
     }, [load]),
   );
 
-  const runSearch = async () => {
-    setSearching(true);
-    try {
-      setResults(await AdminContentService.searchUsers(search));
-    } catch (err: any) {
-      showAlert('Error', err?.message ?? 'Could not search users.');
-    } finally {
-      setSearching(false);
-    }
-  };
-
-  const grant = async () => {
-    if (!postId || !selected) return;
-    let expiresAt: string | null;
-    try {
-      expiresAt = expiryFor(duration, customDate);
-    } catch (err: any) {
-      showAlert('Check the date', err.message);
-      return;
-    }
-    setActingId(selected.id);
-    try {
-      await AdminContentService.grantAccess(selected.id, postId, expiresAt, reason.trim() || null);
-      setSelected(null);
-      setResults([]);
-      setSearch('');
-      setReason('');
-      setDuration('forever');
-      setCustomDate('');
-      await load();
-    } catch (err: any) {
-      showAlert('Error', err?.message ?? 'Could not grant access.');
-    } finally {
-      setActingId(null);
-    }
-  };
-
-  const revoke = (g: PostGrantee) => {
-    if (!postId) return;
-    showAlert(
-      'Revoke access?',
-      `${g.email} will no longer be able to watch this post. Their subscription, if any, is unaffected.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Revoke',
-          style: 'destructive',
-          onPress: async () => {
-            setActingId(g.user_id);
-            try {
-              await AdminContentService.revokeAccess(g.user_id, postId);
-              await load();
-            } catch (err: any) {
-              showAlert('Error', err?.message ?? 'Could not revoke access.');
-            } finally {
-              setActingId(null);
-            }
-          },
-        },
-      ],
-    );
-  };
-
-  if (!isAdmin) {
-    return (
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.headerBack}
-            activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-          >
-            <Text style={styles.headerBackTxt}>{'‹'}</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Post Access</Text>
-          <View style={{ width: 32 }} />
-        </View>
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>Access denied</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   if (!postId) {
     return (
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.headerBack}
-            activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-          >
-            <Text style={styles.headerBackTxt}>{'‹'}</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Post Access</Text>
-          <View style={{ width: 32 }} />
-        </View>
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>Open this from a post in Content.</Text>
-        </View>
-      </SafeAreaView>
+      <AdminScreen title="Post Access" fallbackHref="/admin/content">
+        <EmptyState icon="lock" title="Open this from a post in Content." />
+      </AdminScreen>
     );
   }
 
-  return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.headerBack}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <Text style={styles.headerBackTxt}>{'‹'}</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Post Access</Text>
-        <View style={{ width: 32 }} />
-      </View>
+  const revoke = (grantee: PostGrantee) =>
+    actions.confirm(
+      'Revoke access?',
+      `${grantee.email} will no longer be able to watch this post. Their subscription, if any, is unaffected.`,
+      'Revoke',
+      () =>
+        actions.run(
+          grantee.user_id,
+          () => adminContentApi.revokeAccess(grantee.user_id, postId),
+          'Access revoked.',
+        ),
+    );
 
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={styles.list}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Text style={styles.blurb}>
+  return (
+    <AdminScreen title="Post Access" fallbackHref="/admin/content">
+      <ScrollView contentContainerStyle={adminStyles.list} keyboardShouldPersistTaps="handled">
+        <Text style={[adminStyles.muted, styles.intro]}>
           Granting access lets one person watch this post without a subscription. It never changes
           their plan, and revoking it never affects anything they have paid for.
         </Text>
+        <GrantAccessForm postId={postId} onGranted={load} />
 
-        {/* ── Grant form ── */}
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Grant access</Text>
-          <View style={styles.searchRow}>
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search by email or name…"
-              placeholderTextColor={Colors.textMuted}
-              value={search}
-              onChangeText={setSearch}
-              autoCapitalize="none"
-              onSubmitEditing={runSearch}
-              returnKeyType="search"
-            />
-            <TouchableOpacity
-              style={styles.searchBtn}
-              onPress={runSearch}
-              activeOpacity={0.7}
-              disabled={searching}
-            >
-              {searching ? (
-                <ActivityIndicator color={Colors.text} size="small" />
-              ) : (
-                <Text style={styles.searchBtnText}>Find</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-
-          {results.map(u => (
-            <TouchableOpacity
-              key={u.id}
-              style={[styles.userRow, selected?.id === u.id && styles.userRowSelected]}
-              onPress={() => setSelected(u)}
-              activeOpacity={0.7}
-            >
-              <View style={{ flex: 1 }}>
-                <Text style={styles.userName}>{u.full_name || u.email}</Text>
-                <Text style={styles.metaText}>{u.email}</Text>
-                <Text style={styles.metaText}>
-                  plan: {u.plan_status ?? 'free'} · {u.account_status}
-                </Text>
-              </View>
-              {selected?.id === u.id && <Text style={styles.tick}>{'✓'}</Text>}
-            </TouchableOpacity>
-          ))}
-
-          {selected && (
-            <View style={styles.grantForm}>
-              <Text style={styles.label}>Duration</Text>
-              <View style={styles.chipRow}>
-                {DURATIONS.map(d => (
-                  <TouchableOpacity
-                    key={d.key}
-                    style={[styles.chip, duration === d.key && styles.chipActive]}
-                    onPress={() => setDuration(d.key)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={[styles.chipText, duration === d.key && styles.chipTextActive]}>
-                      {d.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              {duration === 'custom' && (
-                <TextInput
-                  style={styles.input}
-                  placeholder="YYYY-MM-DD"
-                  placeholderTextColor={Colors.textMuted}
-                  value={customDate}
-                  onChangeText={setCustomDate}
-                  autoCapitalize="none"
-                />
-              )}
-
-              <Text style={styles.label}>Reason (optional)</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Why does this person get access?"
-                placeholderTextColor={Colors.textMuted}
-                value={reason}
-                onChangeText={setReason}
-              />
-
-              <View style={styles.formActions}>
-                <TouchableOpacity
-                  style={styles.cancelBtn}
-                  onPress={() => setSelected(null)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.cancelBtnText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.confirmBtn}
-                  onPress={grant}
-                  activeOpacity={0.7}
-                  disabled={actingId === selected.id}
-                >
-                  {actingId === selected.id ? (
-                    <ActivityIndicator color={Colors.text} size="small" />
-                  ) : (
-                    <Text style={styles.confirmBtnText}>Grant access</Text>
-                  )}
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
-        </View>
-
-        {/* ── Current grantees ── */}
-        <Text style={styles.sectionHeading}>Who has access</Text>
+        <Text style={adminStyles.section}>WHO HAS ACCESS</Text>
         {loading ? (
-          <ActivityIndicator color={Colors.brandBlue} size="large" style={{ marginTop: 30 }} />
+          <ActivityIndicator color={Colors.brandBlue} size="large" style={styles.loading} />
         ) : grantees.length === 0 ? (
-          <View style={styles.card}>
-            <Text style={styles.emptyText}>Nobody has been granted access to this post.</Text>
-          </View>
+          <Card>
+            <Text style={adminStyles.muted}>Nobody has been granted access to this post.</Text>
+          </Card>
         ) : (
-          grantees.map(g => (
-            <View key={g.grant_id} style={styles.card}>
-              <View style={styles.cardTopRow}>
-                <Text style={styles.userName} numberOfLines={1}>
-                  {g.full_name || g.email}
-                </Text>
-                <View
-                  style={[
-                    styles.badge,
-                    { backgroundColor: g.status === 'active' ? Colors.success : Colors.textMuted },
-                  ]}
-                >
-                  <Text style={styles.badgeText}>{g.status.toUpperCase()}</Text>
-                </View>
-              </View>
-              <Text style={styles.metaText}>{g.email}</Text>
-              <Text style={styles.metaText}>
-                {g.expires_at
-                  ? `Expires ${new Date(g.expires_at).toLocaleString()}`
-                  : 'No expiry — until revoked'}
-              </Text>
-              {!!g.reason && <Text style={styles.reasonText}>Reason: {g.reason}</Text>}
-              {!!g.granted_by_email && (
-                <Text style={styles.metaText}>Granted by {g.granted_by_email}</Text>
-              )}
-              {g.status === 'active' && (
-                <View style={styles.actionsWrap}>
-                  <TouchableOpacity
-                    style={styles.revokeBtn}
-                    onPress={() => revoke(g)}
-                    activeOpacity={0.7}
-                    disabled={actingId === g.user_id}
-                  >
-                    {actingId === g.user_id ? (
-                      <ActivityIndicator color={Colors.danger} size="small" />
-                    ) : (
-                      <Text style={styles.revokeBtnText}>Revoke</Text>
-                    )}
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
+          grantees.map(grantee => (
+            <GranteeCard
+              key={grantee.grant_id}
+              grantee={grantee}
+              revoking={actions.busy === grantee.user_id}
+              onRevoke={() => revoke(grantee)}
+            />
           ))
         )}
-        <View style={{ height: 40 }} />
       </ScrollView>
-    </SafeAreaView>
+    </AdminScreen>
+  );
+}
+
+function GranteeCard({
+  grantee,
+  revoking,
+  onRevoke,
+}: {
+  grantee: PostGrantee;
+  revoking: boolean;
+  onRevoke: () => void;
+}) {
+  const active = grantee.status === 'active';
+  return (
+    <Card>
+      <View style={[adminStyles.row, styles.header]}>
+        <Text style={[adminStyles.name, styles.flex]} numberOfLines={1}>
+          {grantee.full_name || grantee.email}
+        </Text>
+        <Chip label={grantee.status.toUpperCase()} tone={active ? 'good' : 'neutral'} />
+      </View>
+      <Text style={adminStyles.muted}>{grantee.email}</Text>
+      <Text style={adminStyles.muted}>
+        {grantee.expires_at
+          ? `Expires ${formatDateTime(grantee.expires_at)}`
+          : 'No expiry — until revoked'}
+      </Text>
+      {grantee.reason ? <Text style={styles.reason}>Reason: {grantee.reason}</Text> : null}
+      {grantee.granted_by_email ? (
+        <Text style={adminStyles.muted}>Granted by {grantee.granted_by_email}</Text>
+      ) : null}
+      {active ? (
+        <Button
+          label="Revoke"
+          variant="danger"
+          size="sm"
+          onPress={onRevoke}
+          busy={revoking}
+          style={styles.revoke}
+        />
+      ) : null}
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.bg },
-  header: {
-    backgroundColor: Colors.bg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  headerBack: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  headerBackTxt: { color: Colors.brandBlue, fontSize: 28, fontWeight: '700', lineHeight: 28 },
-  headerTitle: { color: Colors.text, fontSize: 18, fontWeight: '800' },
-  list: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12 },
-  blurb: {
-    color: Colors.textSecondary,
-    fontSize: 12,
-    fontWeight: '500',
-    lineHeight: 18,
-    marginBottom: 12,
-  },
-  card: {
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 16,
-    marginBottom: 12,
-  },
-  cardTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 6,
-    gap: 10,
-  },
-  sectionTitle: { color: Colors.text, fontSize: 15, fontWeight: '800', marginBottom: 10 },
-  sectionHeading: {
-    color: Colors.textSecondary,
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    marginBottom: 8,
-    marginTop: 4,
-  },
-  searchRow: { flexDirection: 'row', gap: 8 },
-  searchInput: {
-    flex: 1,
-    backgroundColor: Colors.border,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    color: Colors.text,
-    fontSize: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  searchBtn: {
-    backgroundColor: Colors.brandBlue,
-    paddingHorizontal: 18,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: 70,
-  },
-  searchBtnText: { color: Colors.text, fontSize: 13, fontWeight: '800' },
-  userRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  userRowSelected: { backgroundColor: Colors.warningDim },
-  userName: { fontSize: 14, fontWeight: '700', color: Colors.text, flex: 1 },
-  tick: { color: Colors.brandBlue, fontSize: 18, fontWeight: '900' },
-  metaText: { fontSize: 12, color: Colors.textSecondary, fontWeight: '500', marginTop: 2 },
-  reasonText: { fontSize: 12, color: Colors.gold, fontWeight: '600', marginTop: 6 },
-  grantForm: { marginTop: 12 },
-  label: {
-    color: Colors.textSecondary,
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-    marginBottom: 6,
-    marginTop: 8,
-  },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: {
-    backgroundColor: Colors.border,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  chipActive: { backgroundColor: Colors.brandBlue, borderColor: Colors.brandBlue },
-  chipText: { color: Colors.textSecondary, fontSize: 12, fontWeight: '700' },
-  chipTextActive: { color: Colors.text },
-  input: {
-    backgroundColor: Colors.border,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    color: Colors.text,
-    fontSize: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginTop: 4,
-  },
-  formActions: { flexDirection: 'row', gap: 10, marginTop: 14 },
-  cancelBtn: {
-    backgroundColor: Colors.border,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  cancelBtnText: { color: Colors.text, fontSize: 13, fontWeight: '700' },
-  confirmBtn: {
-    backgroundColor: Colors.brandBlue,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-    minWidth: 120,
-    alignItems: 'center',
-  },
-  confirmBtnText: { color: Colors.text, fontSize: 13, fontWeight: '800' },
-  badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
-  badgeText: { fontSize: 11, fontWeight: '900', color: Colors.bg, letterSpacing: 0.5 },
-  actionsWrap: { flexDirection: 'row', gap: 8, marginTop: 12 },
-  revokeBtn: {
-    backgroundColor: Colors.border,
-    paddingHorizontal: 18,
-    paddingVertical: 9,
-    borderRadius: 8,
-    minWidth: 90,
-    alignItems: 'center',
-  },
-  revokeBtnText: { color: Colors.danger, fontSize: 12, fontWeight: '800' },
-  emptyState: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 80,
-    paddingHorizontal: 20,
-  },
-  emptyText: { fontSize: 14, color: Colors.textSecondary, fontWeight: '600', textAlign: 'center' },
+  intro: { marginBottom: Spacing.md },
+  loading: { marginTop: 30 },
+  header: { justifyContent: 'space-between' },
+  flex: { flex: 1 },
+  reason: { color: Colors.gold, fontSize: FontSize.sm, marginTop: Spacing.xs },
+  revoke: { marginTop: Spacing.md, alignSelf: 'flex-start' },
 });

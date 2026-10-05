@@ -1,57 +1,46 @@
 import { useCallback, useState } from 'react';
-import { View, Text, FlatList, TextInput, Switch, RefreshControl } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { AdminHeader, ActionButton, adminStyles } from '@/features/admin/components/AdminUI';
+import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Chip } from '@/components/ui/Chip';
+import { Chip, type ChipTone } from '@/components/ui/Chip';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { showAlert } from '@/components/ui/Feedback';
-import { fireHaptic, PressScale } from '@/components/ui/Press';
-import { Colors } from '@/theme';
-import { supabase } from '@/lib/supabase';
+import { PressScale } from '@/components/ui/Press';
+import { SearchBar } from '@/components/ui/SearchBar';
+import { TextField } from '@/components/ui/TextField';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { Spacing } from '@/theme';
+import { errorMessage } from '@/utils/errors';
 import { channelsApi } from '@/features/channels/api/channelsApi';
-import { AdminControl } from '@/features/admin/api/adminControlApi';
+import { adminChannelsApi, type AdminChannel } from '@/features/admin/api/adminChannelsApi';
+import { AdminScreen } from '@/features/admin/components/AdminScreen';
+import { adminStyles } from '@/features/admin/components/adminStyles';
+import { SwitchRow } from '@/features/admin/components/SwitchRow';
+import { useAdminAction } from '@/features/admin/hooks/useAdminAction';
 
-// Every channel, including hidden, pending and suspended ones (admins read
-// all channels -- "Admins see all channels" RLS policy). Tap one to edit its
-// name, description and category, make it public or hidden, mark it
-// official, suspend or reactivate it, or delete it.
+// Every channel, hidden, pending and suspended ones included. Tap one to edit its details, make it
+// public or hidden, mark it official, suspend or reactivate it, or delete it.
 
-type Row = {
-  id: string;
-  name: string;
-  description: string | null;
-  category: string | null;
-  is_public: boolean;
-  is_official: boolean;
-  status: string;
-  member_count: number;
-  post_count: number;
-  created_at: string;
-};
-
-const COLUMNS =
-  'id, name, description, category, is_public, is_official, status, member_count, post_count, created_at';
+const STATUS_TONE: Record<string, ChipTone> = { active: 'good', pending: 'warn' };
 
 export default function AdminChannelsScreen() {
-  const router = useRouter();
-  const [rows, setRows] = useState<Row[]>([]);
+  const [channels, setChannels] = useState<AdminChannel[]>([]);
   const [query, setQuery] = useState('');
-  const [open, setOpen] = useState<string | null>(null);
-  const [draft, setDraft] = useState<Row | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('channels')
-      .select(COLUMNS)
-      .order('created_at', { ascending: false });
-    if (error) showAlert('Could not load channels', error.message);
-    else setRows((data ?? []) as Row[]);
-    setLoading(false);
+    try {
+      setChannels(await adminChannelsApi.list());
+    } catch (err) {
+      showAlert('Could not load channels', errorMessage(err, 'Please try again.'));
+    }
   }, []);
+  const refreshControl = usePullToRefresh(load);
+  const actions = useAdminAction(async () => {
+    await load();
+    setOpenId(null);
+  });
 
   useFocusEffect(
     useCallback(() => {
@@ -59,223 +48,179 @@ export default function AdminChannelsScreen() {
     }, [load]),
   );
 
-  const toggle = (r: Row) => {
-    if (open === r.id) {
-      setOpen(null);
-      setDraft(null);
-      return;
-    }
-    setOpen(r.id);
-    setDraft({ ...r });
-  };
-
-  const run = async (key: string, fn: () => Promise<unknown>, done: string) => {
-    setBusy(key);
-    try {
-      await fn();
-      fireHaptic('success');
-      await load();
-      setOpen(null);
-      setDraft(null);
-      showAlert('Done', done);
-    } catch (e: any) {
-      fireHaptic('error');
-      showAlert('Could not do that', e?.message ?? 'Please try again.');
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const q = query.trim().toLowerCase();
-  const shown = q
-    ? rows.filter(
-        r => r.name.toLowerCase().includes(q) || (r.category ?? '').toLowerCase().includes(q),
+  const search = query.trim().toLowerCase();
+  const shown = search
+    ? channels.filter(
+        channel =>
+          channel.name.toLowerCase().includes(search) ||
+          (channel.category ?? '').toLowerCase().includes(search),
       )
-    : rows;
+    : channels;
 
   return (
-    <SafeAreaView style={adminStyles.safe} edges={['top']}>
-      <AdminHeader title="Channels" />
-      <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
-        <TextInput
-          style={adminStyles.input}
-          value={query}
-          onChangeText={setQuery}
-          placeholder="Search channels"
-          placeholderTextColor={Colors.textMuted}
-          autoCorrect={false}
-        />
+    <AdminScreen title="Channels">
+      <View style={styles.search}>
+        <SearchBar value={query} onChange={setQuery} placeholder="Search channels" />
       </View>
       <FlatList
         data={shown}
-        keyExtractor={r => r.id}
+        keyExtractor={channel => channel.id}
         contentContainerStyle={adminStyles.list}
         keyboardShouldPersistTaps="handled"
-        refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={load} tintColor={Colors.brandBlue} />
-        }
-        ListEmptyComponent={!loading ? <Text style={adminStyles.empty}>No channels.</Text> : null}
-        renderItem={({ item: r }) => (
+        refreshControl={refreshControl}
+        ListEmptyComponent={<EmptyState icon="broadcast" title="No channels." />}
+        renderItem={({ item }) => (
           <Card>
-            <PressScale onPress={() => toggle(r)} scaleTo={0.99}>
-              <Text style={adminStyles.name} numberOfLines={1}>
-                {r.name}
-              </Text>
-              <View style={[adminStyles.row, { marginTop: 8, flexWrap: 'wrap' }]}>
-                <Chip
-                  label={r.status.toUpperCase()}
-                  tone={r.status === 'active' ? 'good' : r.status === 'pending' ? 'warn' : 'bad'}
-                />
-                <Chip
-                  label={r.is_public ? 'PUBLIC' : 'HIDDEN'}
-                  tone={r.is_public ? 'neutral' : 'brand'}
-                />
-                {r.is_official && <Chip label="OFFICIAL" tone="brand" />}
-                <Text style={[adminStyles.muted, { marginLeft: 'auto' }]}>
-                  {r.member_count} members · {r.post_count} posts
-                </Text>
-              </View>
+            <PressScale
+              onPress={() => setOpenId(current => (current === item.id ? null : item.id))}
+              scaleTo={0.99}
+            >
+              <ChannelSummary channel={item} />
             </PressScale>
-
-            {open === r.id && draft && (
-              <View style={{ marginTop: 14 }}>
-                <Text style={adminStyles.label}>Name</Text>
-                <TextInput
-                  style={adminStyles.input}
-                  value={draft.name}
-                  maxLength={60}
-                  onChangeText={t => setDraft({ ...draft, name: t })}
-                />
-                <Text style={[adminStyles.label, { marginTop: 10 }]}>Description</Text>
-                <TextInput
-                  style={[adminStyles.input, { minHeight: 70, textAlignVertical: 'top' }]}
-                  multiline
-                  maxLength={500}
-                  value={draft.description ?? ''}
-                  onChangeText={t => setDraft({ ...draft, description: t })}
-                />
-                <Text style={[adminStyles.label, { marginTop: 10 }]}>Category</Text>
-                <TextInput
-                  style={adminStyles.input}
-                  value={draft.category ?? ''}
-                  maxLength={40}
-                  onChangeText={t => setDraft({ ...draft, category: t })}
-                  placeholder="e.g. Comedy"
-                  placeholderTextColor={Colors.textMuted}
-                />
-
-                <View style={[adminStyles.row, { justifyContent: 'space-between', marginTop: 12 }]}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={adminStyles.value}>Public</Text>
-                    <Text style={adminStyles.muted}>
-                      Off = hidden: only members and people with a plan can join.
-                    </Text>
-                  </View>
-                  <Switch
-                    value={draft.is_public}
-                    onValueChange={v => setDraft({ ...draft, is_public: v })}
-                    trackColor={{ false: Colors.borderStrong, true: Colors.brandBlue }}
-                  />
-                </View>
-                <View style={[adminStyles.row, { justifyContent: 'space-between', marginTop: 10 }]}>
-                  <Text style={adminStyles.value}>Official</Text>
-                  <Switch
-                    value={draft.is_official}
-                    onValueChange={v => setDraft({ ...draft, is_official: v })}
-                    trackColor={{ false: Colors.borderStrong, true: Colors.brandBlue }}
-                  />
-                </View>
-
-                <View style={[adminStyles.row, { marginTop: 14 }]}>
-                  <ActionButton
-                    label="Open"
-                    tone="neutral"
-                    onPress={() =>
-                      router.push({ pathname: '/(tabs)/channels/[id]', params: { id: r.id } })
-                    }
-                  />
-                  <ActionButton
-                    label="Save"
-                    busy={busy === `save-${r.id}`}
-                    onPress={() =>
-                      run(
-                        `save-${r.id}`,
-                        () => AdminControl.updateChannel(draft),
-                        'Channel updated.',
-                      )
-                    }
-                  />
-                </View>
-                <View style={[adminStyles.row, { marginTop: 10 }]}>
-                  {r.status === 'active' ? (
-                    <ActionButton
-                      label="Suspend"
-                      tone="neutral"
-                      busy={busy === `status-${r.id}`}
-                      onPress={() =>
-                        showAlert(
-                          'Suspend channel?',
-                          `"${r.name}" disappears for everyone until you reactivate it.`,
-                          [
-                            { text: 'Cancel', style: 'cancel' },
-                            {
-                              text: 'Suspend',
-                              style: 'destructive',
-                              onPress: () =>
-                                run(
-                                  `status-${r.id}`,
-                                  () => AdminControl.setChannelStatus(r.id, 'suspended'),
-                                  'Channel suspended.',
-                                ),
-                            },
-                          ],
-                        )
-                      }
-                    />
-                  ) : (
-                    <ActionButton
-                      label="Make active"
-                      tone="good"
-                      busy={busy === `status-${r.id}`}
-                      onPress={() =>
-                        run(
-                          `status-${r.id}`,
-                          () => AdminControl.setChannelStatus(r.id, 'active'),
-                          'Channel is live.',
-                        )
-                      }
-                    />
-                  )}
-                  <ActionButton
-                    label="Delete"
-                    tone="bad"
-                    busy={busy === `del-${r.id}`}
-                    onPress={() =>
-                      showAlert(
-                        'Delete channel?',
-                        `"${r.name}" and all its content are deleted permanently. This cannot be undone.`,
-                        [
-                          { text: 'Cancel', style: 'cancel' },
-                          {
-                            text: 'Delete',
-                            style: 'destructive',
-                            onPress: () =>
-                              run(
-                                `del-${r.id}`,
-                                () => channelsApi.remove(r.id),
-                                'Channel deleted.',
-                              ),
-                          },
-                        ],
-                      )
-                    }
-                  />
-                </View>
-              </View>
-            )}
+            {openId === item.id ? <ChannelEditor channel={item} actions={actions} /> : null}
           </Card>
         )}
       />
-    </SafeAreaView>
+    </AdminScreen>
   );
 }
+
+function ChannelSummary({ channel }: { channel: AdminChannel }) {
+  return (
+    <>
+      <Text style={adminStyles.name} numberOfLines={1}>
+        {channel.name}
+      </Text>
+      <View style={[adminStyles.row, styles.chips]}>
+        <Chip label={channel.status.toUpperCase()} tone={STATUS_TONE[channel.status] ?? 'bad'} />
+        <Chip
+          label={channel.is_public ? 'PUBLIC' : 'HIDDEN'}
+          tone={channel.is_public ? 'neutral' : 'brand'}
+        />
+        {channel.is_official ? <Chip label="OFFICIAL" tone="brand" /> : null}
+        <Text style={[adminStyles.muted, styles.counts]}>
+          {channel.member_count} members · {channel.post_count} posts
+        </Text>
+      </View>
+    </>
+  );
+}
+
+function ChannelEditor({
+  channel,
+  actions,
+}: {
+  channel: AdminChannel;
+  actions: ReturnType<typeof useAdminAction>;
+}) {
+  const router = useRouter();
+  const [draft, setDraft] = useState(channel);
+  const edit = (patch: Partial<AdminChannel>) => setDraft(current => ({ ...current, ...patch }));
+  const isActive = channel.status === 'active';
+
+  return (
+    <View style={styles.editor}>
+      <TextField
+        label="Name"
+        value={draft.name}
+        maxLength={60}
+        onChangeText={name => edit({ name })}
+      />
+      <TextField
+        label="Description"
+        value={draft.description ?? ''}
+        multiline
+        maxLength={500}
+        onChangeText={description => edit({ description })}
+      />
+      <TextField
+        label="Category"
+        value={draft.category ?? ''}
+        maxLength={40}
+        placeholder="e.g. Comedy"
+        onChangeText={category => edit({ category })}
+      />
+      <SwitchRow
+        label="Public"
+        hint="Off = hidden: only members and people with a plan can join."
+        value={draft.is_public}
+        onChange={is_public => edit({ is_public })}
+      />
+      <SwitchRow
+        label="Official"
+        value={draft.is_official}
+        onChange={is_official => edit({ is_official })}
+      />
+
+      <View style={adminStyles.actions}>
+        <Button
+          label="Open"
+          variant="secondary"
+          onPress={() =>
+            router.push({ pathname: '/(tabs)/channels/[id]', params: { id: channel.id } })
+          }
+        />
+        <Button
+          label="Save"
+          busy={actions.busy === 'save'}
+          onPress={() =>
+            actions.run('save', () => adminChannelsApi.update(draft), 'Channel updated.')
+          }
+        />
+        {isActive ? (
+          <Button
+            label="Suspend"
+            variant="secondary"
+            busy={actions.busy === 'status'}
+            onPress={() =>
+              actions.confirm(
+                'Suspend channel?',
+                `"${channel.name}" disappears for everyone until you reactivate it.`,
+                'Suspend',
+                () =>
+                  actions.run(
+                    'status',
+                    () => adminChannelsApi.setStatus(channel.id, 'suspended'),
+                    'Channel suspended.',
+                  ),
+              )
+            }
+          />
+        ) : (
+          <Button
+            label="Make active"
+            variant="success"
+            busy={actions.busy === 'status'}
+            onPress={() =>
+              actions.run(
+                'status',
+                () => adminChannelsApi.setStatus(channel.id, 'active'),
+                'Channel is live.',
+              )
+            }
+          />
+        )}
+        <Button
+          label="Delete"
+          variant="danger"
+          busy={actions.busy === 'delete'}
+          onPress={() =>
+            actions.confirm(
+              'Delete channel?',
+              `"${channel.name}" and all its content are deleted permanently. This cannot be undone.`,
+              'Delete',
+              () => actions.run('delete', () => channelsApi.remove(channel.id), 'Channel deleted.'),
+            )
+          }
+        />
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  search: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.md },
+  chips: { marginTop: Spacing.sm, flexWrap: 'wrap' },
+  counts: { marginLeft: 'auto' },
+  editor: { marginTop: 14 },
+});

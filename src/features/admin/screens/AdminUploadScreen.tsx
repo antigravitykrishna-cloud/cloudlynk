@@ -14,10 +14,12 @@ import { Card } from '@/components/ui/Card';
 import { showAlert } from '@/components/ui/Feedback';
 import { pickVideoFiles } from '@/lib/mediaPicker';
 import { Colors, Radius, Spacing } from '@/theme';
+import { errorMessage } from '@/utils/errors';
 import { formatBytes } from '@/utils/format';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { AdminContentService } from '@/features/admin/api/adminContentApi';
-import { AdminScreen, adminStyles } from '@/features/admin/components/AdminUI';
+import { adminChannelsApi } from '@/features/admin/api/adminChannelsApi';
+import { AdminScreen } from '@/features/admin/components/AdminScreen';
+import { adminStyles } from '@/features/admin/components/adminStyles';
 import { postsApi } from '@/features/content/api/postsApi';
 import { streamUploadApi, type VideoMeta } from '@/features/upload/api/streamUploadApi';
 import { VideoDetailsFields } from '@/features/upload/components/VideoDetailsFields';
@@ -27,12 +29,10 @@ import { toNewPost } from '@/features/upload/toNewPost';
 // An admin upload into the official channel, through the same pipeline as every upload:
 // Cloudflare Stream (streamUploadApi), then the post (postsApi.create).
 
-type Channel = { id: string; name: string };
-
 export default function AdminUploadScreen() {
   const router = useRouter();
   const { profile } = useAuth();
-  const [channel, setChannel] = useState<Channel | null>(null);
+  const [channel, setChannel] = useState<{ id: string; name: string } | null>(null);
   const [channelLoading, setChannelLoading] = useState(true);
   const [video, setVideo] = useState<VideoMeta | null>(null);
   const [details, setDetails] = useState(blankDetails);
@@ -40,7 +40,8 @@ export default function AdminUploadScreen() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    AdminContentService.getOfficialChannel()
+    adminChannelsApi
+      .getOfficial()
       .then(setChannel)
       .catch(err => __DEV__ && console.error('AdminUpload channel error:', err))
       .finally(() => setChannelLoading(false));
@@ -51,7 +52,7 @@ export default function AdminUploadScreen() {
       const [picked] = await pickVideoFiles({ multiple: false });
       if (picked) setVideo(picked);
     } catch (err) {
-      showAlert('Could not pick video', (err as Error)?.message ?? 'Please try again.');
+      showAlert('Could not pick video', errorMessage(err, 'Please try again.'));
     }
   }
 
@@ -92,7 +93,7 @@ export default function AdminUploadScreen() {
         [{ text: 'OK', onPress: () => router.replace('/admin/content') }],
       );
     } catch (err) {
-      showAlert('Upload failed', (err as Error)?.message ?? 'Something went wrong.');
+      showAlert('Upload failed', errorMessage(err, 'Something went wrong.'));
     } finally {
       setSubmitting(false);
     }

@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { AdminContentService } from '@/features/admin/api/adminContentApi';
+import { adminUsersApi } from '@/features/admin/api/adminUsersApi';
 
 // The moderation queue for reports filed from the app (a post, a user, a copyright claim). Every
 // action re-checks is_admin on the server.
@@ -52,7 +52,7 @@ export const adminReportsApi = {
     // Names come from admin_get_profiles_by_ids (admin-only): profiles are otherwise readable only
     // by their owner, so a direct select would return nothing.
     const [profiles, posts] = await Promise.all([
-      AdminContentService.getProfilesByIds(profileIds),
+      adminUsersApi.getProfilesByIds(profileIds),
       postIds.length
         ? supabase.from('channel_posts').select('id, title').in('id', postIds)
         : Promise.resolve({ data: [] as { id: string; title: string | null }[] }),

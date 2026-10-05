@@ -1,101 +1,96 @@
 import { useCallback, useEffect, useState } from 'react';
-import { View, Text, FlatList, TextInput, RefreshControl } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { AdminHeader, adminStyles, planChip } from '@/features/admin/components/AdminUI';
 import { Card } from '@/components/ui/Card';
 import { Chip } from '@/components/ui/Chip';
-import { formatDate } from '@/utils/format';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { PressScale } from '@/components/ui/Press';
-import { Colors } from '@/theme';
-import { AdminControl, type AdminUserSummary } from '@/features/admin/api/adminControlApi';
-import { useAuth } from '@/features/auth/hooks/useAuth';
+import { SearchBar } from '@/components/ui/SearchBar';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { Spacing } from '@/theme';
+import { errorMessage } from '@/utils/errors';
+import { formatDate } from '@/utils/format';
+import { adminUsersApi, type AdminUserSummary } from '@/features/admin/api/adminUsersApi';
+import { AdminScreen } from '@/features/admin/components/AdminScreen';
+import { adminStyles } from '@/features/admin/components/adminStyles';
+import { PlanChip } from '@/features/admin/components/PlanChip';
 
-// Every account, searchable by email or name. Tap one for the controls:
-// premium, admin rights, uploads, suspend/ban, approval (app/admin/user/[id]).
+// Every account, searchable by email or name. Tap one for its controls (UserDetailScreen).
 
-export default function AdminUsersScreen() {
+const SEARCH_DEBOUNCE_MS = 300;
+
+export default function UsersScreen() {
   const router = useRouter();
-  const { isAdmin } = useAuth();
   const [query, setQuery] = useState('');
-  const [rows, setRows] = useState<AdminUserSummary[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [users, setUsers] = useState<AdminUserSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async (q: string) => {
-    setLoading(true);
+  const load = useCallback(async () => {
     try {
-      setRows(await AdminControl.searchUsers(q, 100));
+      setUsers(await adminUsersApi.search(query, 100));
       setError(null);
-    } catch (e: any) {
-      setError(e?.message ?? 'Could not load users.');
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      setError(errorMessage(err, 'Could not load users.'));
     }
-  }, []);
+  }, [query]);
+  const refreshControl = usePullToRefresh(load);
 
-  // Search as they type, lightly debounced.
   useEffect(() => {
-    if (!isAdmin) return;
-    const t = setTimeout(() => load(query), 300);
-    return () => clearTimeout(t);
-  }, [query, isAdmin, load]);
+    const timer = setTimeout(load, SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [load]);
 
   return (
-    <SafeAreaView style={adminStyles.safe} edges={['top']}>
-      <AdminHeader title="Users" />
-      <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
-        <TextInput
-          style={adminStyles.input}
-          value={query}
-          onChangeText={setQuery}
-          placeholder="Search by email or name"
-          placeholderTextColor={Colors.textMuted}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
+    <AdminScreen title="Users">
+      <View style={styles.search}>
+        <SearchBar value={query} onChange={setQuery} placeholder="Search by email or name" />
       </View>
       <FlatList
-        data={rows}
-        keyExtractor={u => u.id}
+        data={users}
+        keyExtractor={user => user.id}
         contentContainerStyle={adminStyles.list}
-        refreshControl={
-          <RefreshControl
-            refreshing={loading && rows.length > 0}
-            onRefresh={() => load(query)}
-            tintColor={Colors.brandBlue}
-          />
-        }
-        ListEmptyComponent={
-          !loading ? <Text style={adminStyles.empty}>{error ?? 'No users match.'}</Text> : null
-        }
-        renderItem={({ item: u }) => (
-          <PressScale onPress={() => router.push(`/admin/user/${u.id}` as never)}>
-            <Card>
-              <Text style={adminStyles.name} numberOfLines={1}>
-                {u.full_name?.trim() || u.email}
-              </Text>
-              {!!u.full_name?.trim() && (
-                <Text style={adminStyles.muted} numberOfLines={1}>
-                  {u.email}
-                </Text>
-              )}
-              <View style={[adminStyles.row, { marginTop: 8, flexWrap: 'wrap' }]}>
-                {planChip(u)}
-                {u.account_status && u.account_status !== 'active' && (
-                  <Chip label={u.account_status.toUpperCase()} tone="bad" />
-                )}
-                {u.approval_status && u.approval_status !== 'approved' && (
-                  <Chip label={`APPROVAL ${u.approval_status.toUpperCase()}`} tone="warn" />
-                )}
-                <Text style={[adminStyles.muted, { marginLeft: 'auto' }]}>
-                  Joined {formatDate(u.created_at)}
-                </Text>
-              </View>
-            </Card>
+        refreshControl={refreshControl}
+        ListEmptyComponent={<EmptyState icon="user" title={error ?? 'No users match.'} />}
+        renderItem={({ item }) => (
+          <PressScale
+            onPress={() => router.push({ pathname: '/admin/user/[id]', params: { id: item.id } })}
+          >
+            <UserCard user={item} />
           </PressScale>
         )}
       />
-    </SafeAreaView>
+    </AdminScreen>
   );
 }
+
+function UserCard({ user }: { user: AdminUserSummary }) {
+  const name = user.full_name?.trim();
+  return (
+    <Card>
+      <Text style={adminStyles.name} numberOfLines={1}>
+        {name || user.email}
+      </Text>
+      {name ? (
+        <Text style={adminStyles.muted} numberOfLines={1}>
+          {user.email}
+        </Text>
+      ) : null}
+      <View style={[adminStyles.row, styles.chips]}>
+        <PlanChip plan={user} />
+        {user.account_status && user.account_status !== 'active' ? (
+          <Chip label={user.account_status.toUpperCase()} tone="bad" />
+        ) : null}
+        {user.approval_status && user.approval_status !== 'approved' ? (
+          <Chip label={`APPROVAL ${user.approval_status.toUpperCase()}`} tone="warn" />
+        ) : null}
+        <Text style={[adminStyles.muted, styles.joined]}>Joined {formatDate(user.created_at)}</Text>
+      </View>
+    </Card>
+  );
+}
+
+const styles = StyleSheet.create({
+  search: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.md },
+  chips: { marginTop: Spacing.sm, flexWrap: 'wrap' },
+  joined: { marginLeft: 'auto' },
+});

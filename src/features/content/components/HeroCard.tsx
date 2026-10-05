@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
   heroTitle: {
     color: Colors.text,
     fontSize: 30,
-    fontWeight: '800',
+    fontWeight: FontWeight.extrabold,
     letterSpacing: -0.6,
     lineHeight: 35,
   },

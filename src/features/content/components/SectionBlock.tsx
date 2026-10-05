@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, FlatList } from 'react-native';
 import { memo } from 'react';
 import type { ChannelPost } from '@/features/content/model';
 import type { Shelf } from '@/features/content/shelves';
-import { Colors, Radius } from '@/theme';
+import { Colors, FontWeight, Radius } from '@/theme';
 import { HeroCard } from '@/features/content/components/HeroCard';
 import { SectionCard } from '@/features/content/components/SectionCard';
 
@@ -76,7 +76,12 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     gap: 8,
   },
-  shortsTitle: { fontSize: 19, fontWeight: '800', color: Colors.text, letterSpacing: -0.3 },
+  shortsTitle: {
+    fontSize: 19,
+    fontWeight: FontWeight.extrabold,
+    color: Colors.text,
+    letterSpacing: -0.3,
+  },
   shortsBadge: {
     backgroundColor: Colors.successDim,
     borderWidth: 1,
@@ -85,5 +90,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
-  shortsBadgeText: { fontSize: 11, fontWeight: '800', color: Colors.text, letterSpacing: 0.8 },
+  shortsBadgeText: {
+    fontSize: 11,
+    fontWeight: FontWeight.extrabold,
+    color: Colors.text,
+    letterSpacing: 0.8,
+  },
 });
