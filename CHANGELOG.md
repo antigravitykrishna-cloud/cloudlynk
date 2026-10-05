@@ -1,5 +1,26 @@
 # Changelog
 
+## Unreleased — Codebase restructure
+
+No product changes intended; behaviour changes are listed under Fixes.
+
+### Structure
+- App code moved into feature modules (`src/features/<name>/{api,hooks,components,screens}`);
+  `src/app/` holds one-line route files. See `ARCHITECTURE.md`.
+- Every Supabase query lives in a feature `api/` module; an ESLint rule keeps it that way.
+- Shared design system in `src/components/ui/` (Button, TextField, ScreenHeader, Card, Chip,
+  EmptyState, SelectField, Tabs...). Every colour comes from `src/theme/`.
+- Edge functions share `_shared/http.ts`, `supabase.ts` and `cloudflare-stream.ts`, and are
+  typechecked with Deno in CI.
+- READMEs for `supabase/`, `supabase/functions/`, `scripts/` and `docs/`.
+
+### Fixes
+- Cloud: picking several files from the gallery now uploads all of them, not only the first.
+- Export My Data: the intro card was white text on a white background.
+- Sign up: an error alert recursed into itself and could crash on Android.
+- Rejected / expired / failed states show in red again instead of brand blue.
+- Account deletion now removes profile pictures stored in the public media bucket.
+
 ## v0.7.0 — Upload Queue + Long-Content Player Foundation (2026-07-21)
 
 ### Phase 1: Upload Queue
