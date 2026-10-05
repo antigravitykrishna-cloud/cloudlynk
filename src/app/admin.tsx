@@ -6,143 +6,27 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
-  Image,
 } from 'react-native';
-import { showAlert } from '@/components/ui/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import { useAuth } from '@/hooks/useAuth';
-import { PostService, ChannelPost } from '@/lib/data/posts';
-import { NotificationService } from '@/lib/data/notifications';
-import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme';
-import { formatTimeAgo } from '@/lib/data/files';
-import { Icon, type IconName } from '@/components/ui/Icon';
 import { ToolTile } from '@/components/admin/AdminUI';
-import { errorMessage } from '@/lib/errors';
+import { ADMIN_TOOLS } from '@/components/admin/adminTools';
+import { ReviewCard, ReviewEmpty } from '@/components/admin/ReviewCard';
+import { showAlert } from '@/components/ui/Feedback';
+import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme';
+import { useAdminReview } from '@/hooks/useAdminReview';
+import { useAuth } from '@/hooks/useAuth';
+import { formatTimeAgo } from '@/lib/data/files';
+import { PostService } from '@/lib/data/posts';
 
-// Every admin tool, in one grid at the top of the panel. The client runs the
-// app from here, so nothing an admin can do should need hunting for.
-const TOOLS: { icon: IconName; label: string; hint: string; tint: string; href: string }[] = [
-  {
-    icon: 'user',
-    label: 'Users',
-    hint: 'Premium, admins, uploads, bans',
-    tint: 'rgba(46,125,255,0.22)',
-    href: '/admin/users',
-  },
-  {
-    icon: 'check-circle',
-    label: 'User approvals',
-    hint: 'Approve new accounts',
-    tint: 'rgba(46,212,122,0.2)',
-    href: '/admin/user-approvals',
-  },
-  {
-    icon: 'diamond',
-    label: 'Subscribers',
-    hint: 'Active, ending, expired',
-    tint: 'rgba(227,179,65,0.2)',
-    href: '/admin/subscribers',
-  },
-  {
-    icon: 'chart',
-    label: 'Payments',
-    hint: 'UPI, Razorpay, Sabpaisa',
-    tint: 'rgba(0,212,255,0.18)',
-    href: '/admin/payments',
-  },
-  {
-    icon: 'package',
-    label: 'Plans & prices',
-    hint: 'Names, prices, on sale',
-    tint: 'rgba(180,169,255,0.2)',
-    href: '/admin/plans',
-  },
-  {
-    icon: 'broadcast',
-    label: 'Channels',
-    hint: 'Edit, hide, suspend, delete',
-    tint: 'rgba(46,125,255,0.22)',
-    href: '/admin/channels',
-  },
-  {
-    icon: 'clipboard',
-    label: 'Pending channels',
-    hint: 'New channels to review',
-    tint: 'rgba(255,179,71,0.2)',
-    href: '/admin/pending-channels',
-  },
-  {
-    icon: 'edit',
-    label: 'Pending content',
-    hint: 'Uploads to review',
-    tint: 'rgba(255,179,71,0.2)',
-    href: '/admin/pending-channel-content',
-  },
-  {
-    icon: 'film',
-    label: 'Content & access',
-    hint: 'Publish, free/premium, edit',
-    tint: 'rgba(180,169,255,0.2)',
-    href: '/admin/content',
-  },
-  {
-    icon: 'upload',
-    label: 'Upload',
-    hint: 'Add videos to any channel',
-    tint: 'rgba(46,125,255,0.22)',
-    href: '/admin/upload',
-  },
-  {
-    icon: 'bell',
-    label: 'Announcement',
-    hint: 'Message all users',
-    tint: 'rgba(0,212,255,0.18)',
-    href: '/admin/broadcast',
-  },
-  {
-    icon: 'flag',
-    label: 'Reports',
-    hint: 'Reported content and users',
-    tint: 'rgba(255,77,109,0.2)',
-    href: '/admin/reports',
-  },
-  {
-    icon: 'chart',
-    label: 'Channel activity',
-    hint: 'What is growing',
-    tint: 'rgba(46,212,122,0.2)',
-    href: '/admin/channel-activity',
-  },
-  {
-    icon: 'history',
-    label: 'Audit log',
-    hint: 'Every admin action',
-    tint: 'rgba(159,176,201,0.18)',
-    href: '/admin/audit',
-  },
-];
-
-type PendingChannel = {
-  id: string;
-  name: string;
-  description: string | null;
-  is_public: boolean;
-  created_at: string;
-  owner_id: string;
-  owner?: { id: string; full_name: string | null; email: string };
-};
+type QueueTab = 'channels' | 'posts';
 
 export default function AdminScreen() {
   const { profile } = useAuth();
   const router = useRouter();
-  const [pendingChannels, setPendingChannels] = useState<PendingChannel[]>([]);
-  const [pendingPosts, setPendingPosts] = useState<ChannelPost[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'channels' | 'posts'>('channels');
-  const [reviewing, setReviewing] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<QueueTab>('channels');
+  const review = useAdminReview(profile?.id);
 
   useEffect(() => {
     if (profile && !profile.is_admin) {
@@ -151,201 +35,9 @@ export default function AdminScreen() {
     }
   }, [profile, router]);
 
-  const load = useCallback(async () => {
-    try {
-      const [channels, posts] = await Promise.all([
-        PostService.getPendingChannels(),
-        PostService.getPendingPosts(),
-      ]);
-      setPendingChannels(channels as PendingChannel[]);
-      setPendingPosts(posts);
-    } catch (err) {
-      showAlert('Error', errorMessage(err));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await load();
-    setRefreshing(false);
-  }, [load]);
-
-  const approveChannel = async (ch: PendingChannel) => {
-    setReviewing(ch.id);
-    try {
-      await PostService.approveChannel(ch.id);
-      await NotificationService.channelApproved(ch.owner?.id ?? ch.owner_id, ch.name, ch.id);
-      setPendingChannels(prev => prev.filter(c => c.id !== ch.id));
-      showAlert('✓ Approved', `"${ch.name}" is live. Owner notified.`);
-    } catch (err) {
-      showAlert('Error', errorMessage(err));
-    } finally {
-      setReviewing(null);
-    }
-  };
-
-  const rejectChannel = (ch: PendingChannel) => {
-    showAlert('Reject?', `"${ch.name}" will be suspended.`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Reject',
-        style: 'destructive',
-        onPress: async () => {
-          setReviewing(ch.id);
-          try {
-            await PostService.rejectChannel(ch.id);
-            await NotificationService.channelRejected(ch.owner?.id ?? ch.owner_id, ch.name, ch.id);
-            setPendingChannels(prev => prev.filter(c => c.id !== ch.id));
-          } catch (err) {
-            showAlert('Error', errorMessage(err));
-          } finally {
-            setReviewing(null);
-          }
-        },
-      },
-    ]);
-  };
-
-  const approvePost = async (post: ChannelPost) => {
-    if (!profile?.id) return;
-    setReviewing(post.id);
-    try {
-      await PostService.approvePost(post.id, profile.id);
-      await NotificationService.postApproved(
-        post.author_id,
-        post.channel?.name ?? 'your channel',
-        post.channel_id,
-        post.id,
-      );
-      setPendingPosts(prev => prev.filter(p => p.id !== post.id));
-      showAlert('✓ Post approved', 'Author notified.');
-    } catch (err) {
-      showAlert('Error', errorMessage(err));
-    } finally {
-      setReviewing(null);
-    }
-  };
-
-  const rejectPost = (post: ChannelPost) => {
-    if (!profile?.id) return;
-    showAlert('Reject post?', 'Author will be notified.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Reject',
-        style: 'destructive',
-        onPress: async () => {
-          setReviewing(post.id);
-          try {
-            await PostService.rejectPost(post.id, profile.id, 'Does not meet content guidelines.');
-            await NotificationService.postRejected(
-              post.author_id,
-              post.channel?.name ?? 'your channel',
-              post.channel_id,
-              post.id,
-            );
-            setPendingPosts(prev => prev.filter(p => p.id !== post.id));
-          } catch (err) {
-            showAlert('Error', errorMessage(err));
-          } finally {
-            setReviewing(null);
-          }
-        },
-      },
-    ]);
-  };
-
-  const ChannelCard = ({ ch }: { ch: PendingChannel }) => (
-    <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <View style={styles.cardIcon}>
-          <Icon name={ch.is_public ? 'globe' : 'lock'} size={20} color={Colors.brandBlue} />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.cardTitle}>{ch.name}</Text>
-          <Text style={styles.cardMeta}>
-            by {ch.owner?.full_name ?? ch.owner?.email ?? 'Unknown'} ·{' '}
-            {formatTimeAgo(ch.created_at)}
-          </Text>
-        </View>
-      </View>
-      {!!ch.description && <Text style={styles.cardDesc}>{ch.description}</Text>}
-      <View style={styles.cardActions}>
-        <TouchableOpacity
-          style={styles.rejectBtn}
-          onPress={() => rejectChannel(ch)}
-          disabled={reviewing === ch.id}
-        >
-          <Text style={styles.rejectTxt}>✕ Reject</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.approveBtn}
-          onPress={() => approveChannel(ch)}
-          disabled={reviewing === ch.id}
-        >
-          {reviewing === ch.id ? (
-            <ActivityIndicator color="#000" size="small" />
-          ) : (
-            <Text style={styles.approveTxt}>✓ Approve</Text>
-          )}
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-
-  const PostCard = ({ post }: { post: ChannelPost }) => {
-    const thumbPath = post.thumbnail_url ?? post.media_url;
-    const mediaUrl = thumbPath ? PostService.getMediaPublicUrl(thumbPath) : null;
-    return (
-      <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <View style={[styles.cardIcon, { backgroundColor: Colors.lavenderDim }]}>
-            <Icon name="edit" size={18} color={Colors.pastelLavender} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.cardTitle} numberOfLines={1}>
-              {post.title ?? post.body?.slice(0, 40) ?? 'Untitled'}
-            </Text>
-            <Text style={styles.cardMeta}>
-              {post.author?.full_name ?? 'Unknown'} → #{post.channel?.name ?? '?'} ·{' '}
-              {formatTimeAgo(post.created_at)}
-            </Text>
-          </View>
-        </View>
-        {!!post.body && (
-          <Text style={styles.cardDesc} numberOfLines={4}>
-            {post.body}
-          </Text>
-        )}
-        {!!mediaUrl && (
-          <Image source={{ uri: mediaUrl }} style={styles.postThumb} resizeMode="cover" />
-        )}
-        <View style={styles.cardActions}>
-          <TouchableOpacity
-            style={styles.rejectBtn}
-            onPress={() => rejectPost(post)}
-            disabled={reviewing === post.id}
-          >
-            <Text style={styles.rejectTxt}>✕ Reject</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.approveBtn}
-            onPress={() => approvePost(post)}
-            disabled={reviewing === post.id}
-          >
-            {reviewing === post.id ? (
-              <ActivityIndicator color="#000" size="small" />
-            ) : (
-              <Text style={styles.approveTxt}>✓ Approve</Text>
-            )}
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
+  const counts: Record<QueueTab, number> = {
+    channels: review.channels.length,
+    posts: review.posts.length,
   };
 
   return (
@@ -367,34 +59,33 @@ export default function AdminScreen() {
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
+            refreshing={review.refreshing}
+            onRefresh={review.refresh}
             tintColor={Colors.brandBlue}
           />
         }
       >
         <View style={styles.toolGrid}>
-          {TOOLS.map(t => (
+          {ADMIN_TOOLS.map(t => (
             <ToolTile
-              key={t.href}
+              key={t.label}
               icon={t.icon}
               label={t.label}
               hint={t.hint}
               tint={t.tint}
-              onPress={() => router.push(t.href as never)}
+              onPress={() => router.push(t.href)}
             />
           ))}
         </View>
+
         <Text style={styles.queueLabel}>REVIEW QUEUE</Text>
         <View style={styles.summaryRow}>
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryVal}>{pendingChannels.length}</Text>
+            <Text style={styles.summaryVal}>{counts.channels}</Text>
             <Text style={styles.summaryLbl}>Channels</Text>
           </View>
-          <View
-            style={[styles.summaryItem, { borderLeftWidth: 0.5, borderLeftColor: Colors.border }]}
-          >
-            <Text style={styles.summaryVal}>{pendingPosts.length}</Text>
+          <View style={[styles.summaryItem, styles.summaryDivider]}>
+            <Text style={styles.summaryVal}>{counts.posts}</Text>
             <Text style={styles.summaryLbl}>Posts</Text>
           </View>
         </View>
@@ -406,37 +97,55 @@ export default function AdminScreen() {
               onPress={() => setActiveTab(tab)}
             >
               <Text style={[styles.tabTxt, activeTab === tab && styles.tabTxtActive]}>
-                {tab === 'channels'
-                  ? `Channels (${pendingChannels.length})`
-                  : `Posts (${pendingPosts.length})`}
+                {`${tab === 'channels' ? 'Channels' : 'Posts'} (${counts[tab]})`}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
-        {loading ? (
+
+        {review.loading ? (
           <ActivityIndicator color={Colors.brandBlue} style={{ marginTop: 40 }} />
+        ) : activeTab === 'channels' ? (
+          review.channels.length === 0 ? (
+            <ReviewEmpty message="No channels waiting." />
+          ) : (
+            review.channels.map(ch => (
+              <ReviewCard
+                key={ch.id}
+                icon={ch.is_public ? 'globe' : 'lock'}
+                title={ch.name}
+                meta={`by ${ch.owner?.full_name ?? ch.owner?.email ?? 'Unknown'} · ${formatTimeAgo(ch.created_at)}`}
+                description={ch.description}
+                busy={review.reviewing === ch.id}
+                onApprove={() => review.approveChannel(ch)}
+                onReject={() => review.rejectChannel(ch)}
+              />
+            ))
+          )
+        ) : review.posts.length === 0 ? (
+          <ReviewEmpty message="No posts waiting." />
         ) : (
-          <>
-            {activeTab === 'channels' ? (
-              pendingChannels.length === 0 ? (
-                <View style={styles.emptyState}>
-                  <Icon name="check-circle" size={44} color={Colors.success} />
-                  <Text style={styles.emptyTitle}>All caught up</Text>
-                  <Text style={styles.emptyDesc}>No channels waiting.</Text>
-                </View>
-              ) : (
-                pendingChannels.map(ch => <ChannelCard key={ch.id} ch={ch} />)
-              )
-            ) : pendingPosts.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Icon name="check-circle" size={44} color={Colors.success} />
-                <Text style={styles.emptyTitle}>All caught up</Text>
-                <Text style={styles.emptyDesc}>No posts waiting.</Text>
-              </View>
-            ) : (
-              pendingPosts.map(post => <PostCard key={post.id} post={post} />)
-            )}
-          </>
+          review.posts.map(post => {
+            const thumbPath = post.thumbnail_url ?? post.media_url;
+            return (
+              <ReviewCard
+                key={post.id}
+                icon="edit"
+                iconSize={18}
+                iconColor={Colors.pastelLavender}
+                iconBg={Colors.lavenderDim}
+                title={post.title ?? post.body?.slice(0, 40) ?? 'Untitled'}
+                titleLines={1}
+                meta={`${post.author?.full_name ?? 'Unknown'} → #${post.channel?.name ?? '?'} · ${formatTimeAgo(post.created_at)}`}
+                description={post.body}
+                descriptionLines={4}
+                imageUrl={thumbPath ? PostService.getMediaPublicUrl(thumbPath) : null}
+                busy={review.reviewing === post.id}
+                onApprove={() => review.approvePost(post)}
+                onReject={() => review.rejectPost(post)}
+              />
+            );
+          })
         )}
         <View style={{ height: 32 }} />
       </ScrollView>
@@ -487,6 +196,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
   },
   summaryItem: { flex: 1, alignItems: 'center', paddingVertical: Spacing.lg },
+  summaryDivider: { borderLeftWidth: 0.5, borderLeftColor: Colors.border },
   summaryVal: {
     fontSize: FontSize.xxxl,
     fontWeight: FontWeight.extrabold,
@@ -512,76 +222,4 @@ const styles = StyleSheet.create({
   tabActive: { backgroundColor: Colors.surface },
   tabTxt: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: Colors.textMuted },
   tabTxtActive: { color: Colors.text },
-  card: {
-    marginHorizontal: Spacing.lg,
-    marginBottom: Spacing.md,
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: Radius.xl,
-    padding: Spacing.lg,
-    borderWidth: 0.5,
-    borderColor: Colors.border,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-    marginBottom: Spacing.sm,
-    alignItems: 'center',
-  },
-  cardIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 0.5,
-    borderColor: Colors.border,
-  },
-  cardTitle: { fontSize: FontSize.base, fontWeight: FontWeight.extrabold, color: Colors.text },
-  cardMeta: {
-    fontSize: FontSize.sm,
-    color: Colors.textSecondary,
-    fontWeight: FontWeight.semibold,
-    marginTop: 2,
-  },
-  cardDesc: {
-    fontSize: FontSize.sm,
-    color: Colors.textSecondary,
-    fontWeight: FontWeight.semibold,
-    lineHeight: 20,
-    marginBottom: Spacing.md,
-  },
-  postThumb: { width: '100%', height: 160, borderRadius: Radius.lg, marginBottom: Spacing.md },
-  cardActions: { flexDirection: 'row', gap: Spacing.sm },
-  rejectBtn: {
-    flex: 1,
-    paddingVertical: Spacing.md,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.dangerDim,
-    borderWidth: 0.5,
-    borderColor: 'rgba(248,81,73,0.3)',
-    alignItems: 'center',
-  },
-  rejectTxt: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.danger },
-  approveBtn: {
-    flex: 1,
-    paddingVertical: Spacing.md,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.brandBlue,
-    alignItems: 'center',
-  },
-  approveTxt: { fontSize: FontSize.md, fontWeight: FontWeight.extrabold, color: '#000' },
-  emptyState: { alignItems: 'center', paddingTop: 60, paddingHorizontal: Spacing.xxxl },
-  emptyTitle: {
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.bold,
-    color: Colors.text,
-    marginBottom: Spacing.sm,
-  },
-  emptyDesc: {
-    fontSize: FontSize.md,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
 });
