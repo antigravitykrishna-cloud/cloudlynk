@@ -12,11 +12,12 @@
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
     "guards": "node scripts/guards.mjs",
-    "check": "npm run typecheck && npm run lint && npm run format:check && node scripts/guards.mjs",
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm test -- --ci && node scripts/guards.mjs",
     "lint:fix": "eslint src --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx}\" \"supabase/functions/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx}\" \"supabase/functions/**/*.ts\"",
-    "db:types": "echo \"Regenerate with: npx supabase gen types typescript --project-id wdtwjiixuueqejfraaod > src/lib/database.types.ts\""
+    "db:types": "echo \"Regenerate with: npx supabase gen types typescript --project-id wdtwjiixuueqejfraaod > src/lib/database.types.ts\"",
+    "test": "jest"
   },
   "dependencies": {
     "@expo/metro-runtime": "~56.0.13",
@@ -67,11 +68,14 @@
   },
   "devDependencies": {
     "@babel/core": "^7.29.7",
+    "@types/jest": "29.5.14",
     "@types/react": "~19.2.16",
     "@types/react-native": "~0.73.0",
     "eas-cli": "^20.3.0",
     "eslint": "^10.4.1",
     "eslint-config-expo": "~56.0.4",
+    "jest": "~29.7.0",
+    "jest-expo": "~56.0.5",
     "prettier": "^3.9.9",
     "typescript": "^6.0.3"
   }

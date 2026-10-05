@@ -1,7 +1,7 @@
 name: CI
 
-# Every push and PR. This is cheap (a couple of minutes) and it is the only
-# automated check the project has — there is no test suite yet.
+# Every push and PR: types, lint, formatting, unit tests, project guards and a
+# JS bundle. A couple of minutes; the same as `npm run check` locally.
 on:
   push:
     branches: ['**']
@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   check:
-    name: Typecheck and guards
+    name: Typecheck, lint, test, guards
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -39,6 +39,15 @@ jobs:
       # diff and tsc caught all three in seconds.
       - name: Typecheck
         run: npx tsc --noEmit
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Formatting
+        run: npm run format:check
+
+      - name: Unit tests
+        run: npm test -- --ci
 
       # Bugs tsc cannot see, each one taken from a defect that actually
       # shipped. See the comments in scripts/guards.mjs.

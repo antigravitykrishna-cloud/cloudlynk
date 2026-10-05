@@ -12,6 +12,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { Colors } from '@/constants/theme';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
+import { isPlanActive, isPlanAwaitingExpiry } from '@/lib/plan';
 
 interface SubscriptionStatus {
   plan_status: string | null;
@@ -96,13 +97,9 @@ export default function MySubscriptionScreen() {
 
   const planStatus = status?.plan_status ?? 'free';
 
-  // Mirrors public.is_plan_active(): 'lifetime', or 'active' with an end date still in the future.
-  // plan_status alone is not enough -- the hourly expiry job can leave a lapsed plan marked
-  // 'active' for up to an hour.
   const expiresAt = status?.plan_expires_at ?? null;
-  const notExpired = !expiresAt || new Date(expiresAt) > new Date();
-  const isActive = planStatus === 'lifetime' || (planStatus === 'active' && notExpired);
-  const lapsedAwaitingSweep = planStatus === 'active' && !notExpired;
+  const isActive = isPlanActive(status);
+  const lapsedAwaitingSweep = isPlanAwaitingExpiry(status);
   // One derived status drives the label AND the colour. Deriving them
   // separately is how you get a green badge that reads EXPIRED.
   const effectiveStatus = lapsedAwaitingSweep ? 'expired' : planStatus;

@@ -11,6 +11,21 @@ export const POLICY_VERSIONS = {
   privacy: 'v1',
 } as const;
 
+interface AgeFields {
+  adult_confirmed_at?: string | null;
+  birth_year?: number | null;
+}
+
+/**
+ * Whether the account has confirmed it is 18+: the age gate's answer (adult_confirmed_at), or,
+ * for older accounts, a birth year entered at signup.
+ */
+export function isAdultOnFile(profile: AgeFields | null | undefined, now: Date = new Date()) {
+  if (!profile) return false;
+  if (profile.adult_confirmed_at) return true;
+  return !!profile.birth_year && now.getFullYear() - profile.birth_year >= 18;
+}
+
 export const ComplianceService = {
   /** Call once, at signup and whenever POLICY_VERSIONS changes and the user re-accepts. */
   async acceptTerms() {
@@ -36,13 +51,8 @@ export const ComplianceService = {
     } | null,
   ): boolean {
     if (!profile) return false;
-    // The age gate's "I am 18 or older" (adult_confirmed_at). Older
-    // accounts that typed a birth year at signup still count.
-    const isAdult =
-      !!profile.adult_confirmed_at ||
-      (!!profile.birth_year && new Date().getFullYear() - profile.birth_year >= 18);
     return (
-      isAdult &&
+      isAdultOnFile(profile) &&
       !!profile.terms_accepted_at &&
       profile.terms_version === POLICY_VERSIONS.terms &&
       profile.community_guidelines_version === POLICY_VERSIONS.communityGuidelines

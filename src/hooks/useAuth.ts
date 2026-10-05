@@ -2,9 +2,10 @@ import { useState, useEffect, useCallback, useSyncExternalStore } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase, Database } from '@/lib/supabase';
+import { isPlanActive } from '@/lib/plan';
 import { queryClient } from '@/lib/queryClient';
 import { UploadQueue } from '@/lib/video/uploadQueue';
-import { ComplianceService } from '@/lib/data/compliance';
+import { ComplianceService, isAdultOnFile } from '@/lib/data/compliance';
 import { config, isGoogleAuthLive } from '@/lib/config';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -223,10 +224,7 @@ export function useAuth() {
   // acceptance of the current policies.
   async function completeProfile() {
     if (!user) throw new Error('Not authenticated');
-    const adultOnFile =
-      !!profile?.adult_confirmed_at ||
-      (!!profile?.birth_year && new Date().getFullYear() - profile.birth_year >= 18);
-    if (!adultOnFile) {
+    if (!isAdultOnFile(profile)) {
       const { error } = await supabase.rpc('confirm_adult');
       if (error) throw error;
     }
@@ -318,22 +316,15 @@ export function useAuth() {
     [user, fetchProfile],
   );
 
-  const storagePercentage = profile
-    ? Math.min((profile.storage_used / profile.storage_limit) * 100, 100)
-    : 0;
-
   // Account approval (who may buy Premium). Defaults to 'approved' while the profile loads so the
   // "under review" state never flashes. Presentation only -- the server enforces approval.
   const approvalStatus = (profile?.approval_status as string | undefined) ?? 'approved';
   const isApproved = approvalStatus === 'approved';
 
-  const planStatus =
-    ((profile as Record<string, unknown>)?.plan_status as string | undefined) ?? 'free';
-  const planExpiresAt =
-    ((profile as Record<string, unknown>)?.plan_expires_at as string | null) ?? null;
-  const isActive =
-    planStatus === 'active' && (!planExpiresAt || new Date(planExpiresAt) > new Date());
-  const isPaidUser = isActive || planStatus === 'lifetime' || !!profile?.is_admin;
+  const planStatus = profile?.plan_status ?? 'free';
+  const hasActivePlan = isPlanActive(profile);
+  // Admins have access to everything without a plan.
+  const isPaidUser = hasActivePlan || !!profile?.is_admin;
 
   return {
     session,
@@ -355,8 +346,6 @@ export function useAuth() {
     signOut,
     deleteAccount,
     refreshProfile,
-    storagePercentage,
-    isAuthenticated: !!session,
     canUpload: !!(profile?.can_upload_content || profile?.is_admin),
     isAdmin: !!profile?.is_admin,
     requestPasswordReset,
@@ -364,12 +353,7 @@ export function useAuth() {
     planStatus,
     approvalStatus,
     isApproved,
+    hasActivePlan,
     isPaidUser,
-    isActive,
-    isExpired:
-      planStatus === 'expired' ||
-      (planStatus === 'active' && !!planExpiresAt && new Date(planExpiresAt) <= new Date()),
-    isCancelled: planStatus === 'cancelled',
-    isLifetime: planStatus === 'lifetime',
   };
 }

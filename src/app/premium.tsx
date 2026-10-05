@@ -41,8 +41,7 @@ const BENEFITS = [
 
 export default function PremiumScreen() {
   const router = useRouter();
-  const { user, isActive, planStatus, isApproved, approvalStatus, refreshProfile, isGuest } =
-    useAuth();
+  const { user, hasActivePlan, isApproved, approvalStatus, refreshProfile, isGuest } = useAuth();
   const { data: plans, isLoading: plansLoading } = useSubscriptionPlans();
 
   const [selectedPlanIndex, setSelectedPlanIndex] = useState(2);
@@ -242,7 +241,7 @@ export default function PremiumScreen() {
     }
   };
 
-  if (isActive || planStatus === 'lifetime') {
+  if (hasActivePlan) {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.header}>
