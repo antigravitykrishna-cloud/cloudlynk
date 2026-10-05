@@ -273,7 +273,6 @@ export default function AddContentScreen() {
     }));
 
     try {
-      const prevCount = items.length;
       const added = await addToQueue(queueEntries);
       if (added === 0) {
         showAlert('Queue full', 'Could not add videos — queue is at capacity.');

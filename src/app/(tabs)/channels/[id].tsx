@@ -32,10 +32,10 @@ import {
 import { LoginSheet } from '../../../components/LoginSheet';
 import { promptSaveAccount, guestTappedTitle } from '../../../lib/guest';
 import { PostService, ChannelPost, ContentType, GENRES } from '../../../lib/posts';
-import { StreamService, VideoMeta, STREAM_MAX_MB } from '../../../lib/stream';
+import { StreamService, VideoMeta } from '../../../lib/stream';
 import { Database, supabase } from '../../../lib/supabase';
 import { formatTimeAgo } from '../../../lib/storage';
-import { VideoView, useVideoPlayer } from 'expo-video';
+import { useVideoPlayer } from 'expo-video';
 import { useEvent } from 'expo';
 import { Colors } from '../../../constants/theme';
 import { Icon, type IconName } from '../../../components/Icon';

@@ -4,6 +4,9 @@ import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
+// Icon + color per notification type
+import type { IconName } from '../components/Icon';
+
 export type NotificationType =
   | 'channel_approved'
   | 'channel_rejected'
@@ -28,9 +31,6 @@ export type Notification = {
   read: boolean;
   created_at: string;
 };
-
-// Icon + color per notification type
-import type { IconName } from '../components/Icon';
 
 // `icon` names an entry in the app's icon set rather than holding an emoji
 // glyph: the glyph came from the system font, so the same notification looked

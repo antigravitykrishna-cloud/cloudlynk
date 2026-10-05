@@ -40,6 +40,7 @@ async function allowed(): Promise<boolean> {
 }
 
 function sdk(): any {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- loaded on first use so a build without this native module still starts
   return require('react-native-fbsdk-next');
 }
 

@@ -1,6 +1,8 @@
 import 'react-native-url-polyfill/auto';
 import { createClient } from '@supabase/supabase-js';
 import Constants from 'expo-constants';
+import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppState, Platform } from 'react-native';
 
 // ── Credentials from environment ─────────────────────────────
@@ -37,84 +39,52 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
-// ── Storage adapter — SecureStore on native, localStorage on web ──
-// This prevents the "localStorage is not defined" crash during SSR/bundling
-const getStorageAdapter = () => {
-  if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
-    return {
-      getItem: (key: string) => Promise.resolve(localStorage.getItem(key)),
-      setItem: (key: string, value: string) => {
-        localStorage.setItem(key, value);
-        return Promise.resolve();
-      },
-      removeItem: (key: string) => {
-        localStorage.removeItem(key);
-        return Promise.resolve();
-      },
-    };
-  }
+// ── Where the signed-in session is kept ──────────────────────
+// Native: SecureStore (Android Keystore). SecureStore rejects values over
+// ~2 KB, so larger ones go to AsyncStorage under an "overflow" key.
+// Web (and bundling, where there is no SecureStore): localStorage.
+const SECURE_STORE_LIMIT = 2048;
+const overflowKey = (key: string) => `supabase_overflow_${key}`;
 
-  try {
-    const SecureStore = require('expo-secure-store');
-    return {
-      getItem: async (key: string) => {
-        try {
-          const secureValue = await SecureStore.getItemAsync(key);
-          if (secureValue !== null && secureValue !== undefined) return secureValue;
-          // Value may have been stored in AsyncStorage due to size overflow
-          const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-          return await AsyncStorage.getItem(`supabase_overflow_${key}`);
-        } catch {
-          try {
-            const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-            return await AsyncStorage.getItem(`supabase_overflow_${key}`);
-          } catch {
-            return null;
-          }
-        }
-      },
-      setItem: async (key: string, value: string) => {
-        try {
-          if (value && value.length > 2048) {
-            const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-            await AsyncStorage.setItem(`supabase_overflow_${key}`, value);
-          } else {
-            await SecureStore.setItemAsync(key, value);
-          }
-        } catch {
-          const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-          await AsyncStorage.setItem(`supabase_overflow_${key}`, value);
-        }
-      },
-      removeItem: async (key: string) => {
-        try {
-          await SecureStore.deleteItemAsync(key);
-        } catch {}
-        try {
-          const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-          await AsyncStorage.removeItem(`supabase_overflow_${key}`);
-        } catch {}
-      },
-    };
-  } catch {
-    const mem: Record<string, string> = {};
-    return {
-      getItem: (key: string) => Promise.resolve(mem[key] ?? null),
-      setItem: (key: string, value: string) => {
-        mem[key] = value;
-        return Promise.resolve();
-      },
-      removeItem: (key: string) => {
-        delete mem[key];
-        return Promise.resolve();
-      },
-    };
-  }
+const nativeSessionStorage = {
+  async getItem(key: string): Promise<string | null> {
+    try {
+      const value = await SecureStore.getItemAsync(key);
+      if (value != null) return value;
+    } catch {
+      // Fall through to the overflow copy.
+    }
+    return AsyncStorage.getItem(overflowKey(key)).catch(() => null);
+  },
+  async setItem(key: string, value: string): Promise<void> {
+    if (value.length <= SECURE_STORE_LIMIT) {
+      try {
+        await SecureStore.setItemAsync(key, value);
+        return;
+      } catch {
+        // Fall through to AsyncStorage.
+      }
+    }
+    await AsyncStorage.setItem(overflowKey(key), value);
+  },
+  async removeItem(key: string): Promise<void> {
+    await SecureStore.deleteItemAsync(key).catch(() => {});
+    await AsyncStorage.removeItem(overflowKey(key)).catch(() => {});
+  },
 };
+
+const webSessionStorage = {
+  getItem: (key: string) => Promise.resolve(localStorage.getItem(key)),
+  setItem: (key: string, value: string) => Promise.resolve(localStorage.setItem(key, value)),
+  removeItem: (key: string) => Promise.resolve(localStorage.removeItem(key)),
+};
+
+const hasLocalStorage = typeof window !== 'undefined' && typeof localStorage !== 'undefined';
+const sessionStorage = hasLocalStorage ? webSessionStorage : nativeSessionStorage;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    storage: getStorageAdapter(),
+    storage: sessionStorage,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,

@@ -10,14 +10,13 @@ import {
   ScrollView,
 } from 'react-native';
 import { showAlert } from '../../components/Feedback';
-import { Link, useRouter } from 'expo-router';
+import { Link } from 'expo-router';
 import { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { isGoogleAuthLive } from '../../lib/config';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '../../constants/theme';
 import Constants from 'expo-constants';
 import { Icon } from '../../components/Icon';
-import { setPostLoginRoute } from '../../lib/postLogin';
 
 // One-tap entry: guest, Google, or an emailed code. No password field, no
 // name field.
@@ -48,7 +47,6 @@ type Mode = 'choose' | 'email' | 'code';
 
 export default function LoginScreen() {
   const { sendEmailCode, verifyEmailCode, signInWithGoogle, signInAsGuest } = useAuth();
-  const router = useRouter();
 
   const [mode, setMode] = useState<Mode>('choose');
   const [email, setEmail] = useState('');

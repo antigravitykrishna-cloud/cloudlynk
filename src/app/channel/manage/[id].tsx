@@ -15,7 +15,6 @@ import { useAuth } from '../../../hooks/useAuth';
 import { ChannelService } from '../../../lib/channels';
 import { PostService, ChannelPost } from '../../../lib/posts';
 import { supabase } from '../../../lib/supabase';
-import { Colors } from '../../../constants/theme';
 
 // guards-allow-select-star
 // Channel management is owner-only; anon never reaches this query.
@@ -47,7 +46,7 @@ export default function ManageChannelScreen() {
     setChannel(data);
     setEditName(data.name || '');
     setEditDesc(data.description || '');
-  }, [id]);
+  }, [id, router]);
 
   const loadPosts = useCallback(async () => {
     if (!user) return;
@@ -88,7 +87,7 @@ export default function ManageChannelScreen() {
       showAlert('Access Denied', 'You can only manage your own channels.');
       router.replace('/(tabs)/channels');
     }
-  }, [channel, user, isAdmin, profile]);
+  }, [channel, user, isAdmin, profile, router]);
 
   const handleSave = async () => {
     if (!editName.trim()) {

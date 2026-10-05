@@ -129,7 +129,7 @@ export const UploadQueue = {
    * Returns the number of items actually added.
    */
   async addToQueue(
-    entries: Array<{
+    entries: {
       video: VideoMeta;
       title?: string;
       body?: string;
@@ -144,7 +144,7 @@ export const UploadQueue = {
       thumbnailUri?: string | null;
       seriesName?: string;
       seriesId?: string | null;
-    }>,
+    }[],
     channelId: string,
     userId: string,
     isPremium: boolean,
@@ -365,7 +365,7 @@ export const UploadQueue = {
       );
 
       // Upload succeeded — create the channel_posts row using item.userId
-      const post = await PostService.createPost(item.channelId, item.userId, item.body || '', {
+      await PostService.createPost(item.channelId, item.userId, item.body || '', {
         title: item.title || item.video.name,
         contentType: (item.contentType as any) || 'movie',
         accessLevel: item.accessLevel,

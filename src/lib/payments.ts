@@ -125,6 +125,7 @@ export async function openRazorpay(
 ): Promise<{ razorpayPaymentId: string; razorpaySignature: string } | null> {
   // Lazy: the native module only exists in a build that includes it, and a
   // missing module must not take the Premium screen down with it.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- loaded on first use so a build without this native module still starts
   const RazorpayCheckout = require('react-native-razorpay').default;
 
   const options: Record<string, unknown> = {

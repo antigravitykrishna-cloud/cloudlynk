@@ -12,7 +12,7 @@ import {
   Text,
   StyleSheet,
   StatusBar,
-  Dimensions,
+  useWindowDimensions,
   PanResponder,
 } from 'react-native';
 import { VideoView } from 'expo-video';
@@ -23,7 +23,7 @@ import * as ScreenOrientation from 'expo-screen-orientation';
 import { Colors, Radius, FontSize } from '../constants/theme';
 import { useResumePosition, formatPosition } from '../hooks/useResumePosition';
 import { useAuth } from '../hooks/useAuth';
-import { PlayerPrefsService, PlayerPrefs } from '../lib/services/playerPrefs';
+import { PlayerPrefsService } from '../lib/services/playerPrefs';
 
 type Props = {
   player: any;
@@ -54,7 +54,8 @@ export function VideoPlayerOverlay({
   const { user } = useAuth();
   const userId = user?.id;
 
-  const [dimensions, setDimensions] = useState(Dimensions.get('window'));
+  // Re-render on rotation so the overlay re-lays out for landscape.
+  useWindowDimensions();
   const [showSettings, setShowSettings] = useState(false);
   const [showResume, setShowResume] = useState(true);
 
@@ -64,7 +65,6 @@ export function VideoPlayerOverlay({
     dismiss: dismissResume,
   } = useResumePosition(userId, postId);
 
-  const [playerPrefs, setPlayerPrefs] = useState<PlayerPrefs | null>(null);
   const [quality, setQuality] = useState('720p');
   const [speed, setSpeed] = useState(1);
 
@@ -77,7 +77,6 @@ export function VideoPlayerOverlay({
     PlayerPrefsService.get(userId)
       .then(prefs => {
         if (prefs) {
-          setPlayerPrefs(prefs);
           const savedQ = prefs.default_quality ?? '720p';
           setQuality(QUALITY_OPTIONS.includes(savedQ) ? savedQ : '720p');
           setSpeed(prefs.default_speed ?? 1);
@@ -128,11 +127,6 @@ export function VideoPlayerOverlay({
       ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
       StatusBar.setHidden(false);
     };
-  }, []);
-
-  useEffect(() => {
-    const sub = Dimensions.addEventListener('change', ({ window }) => setDimensions(window));
-    return () => sub.remove();
   }, []);
 
   const handleClose = useCallback(async () => {

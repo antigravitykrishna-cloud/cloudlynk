@@ -9,11 +9,11 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  StyleSheet as RNStyleSheet,
 } from 'react-native';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { StyleSheet as RNStyleSheet } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { PostService } from '../lib/posts';
 import { useAuth } from '../hooks/useAuth';

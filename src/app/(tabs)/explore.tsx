@@ -14,7 +14,6 @@ import {
   Dimensions,
   Share,
 } from 'react-native';
-import { showAlert } from '../../components/Feedback';
 import { Image } from 'expo-image';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
@@ -27,7 +26,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useRecordProgress, getSavedPosition } from '../../hooks/useWatchHistory';
 import { PostService, ChannelPost } from '../../lib/posts';
 import { StreamService } from '../../lib/stream';
-import { VideoView, useVideoPlayer } from 'expo-video';
+import { useVideoPlayer } from 'expo-video';
 import { useEvent } from 'expo';
 import { Colors, Radius, FontWeight } from '../../constants/theme';
 
@@ -477,7 +476,6 @@ export default function ExploreScreen() {
   const { user, isPaidUser, isAdmin, isGuest } = useAuth();
   const router = useRouter();
   const [posts, setPosts] = useState<ChannelPost[]>([]);
-  const [filteredPosts, setFilteredPosts] = useState<ChannelPost[]>([]);
   const [activeFilter, setActiveFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -492,7 +490,6 @@ export default function ExploreScreen() {
   useEffect(() => {
     if (prevUserIdRef.current !== undefined && prevUserIdRef.current !== user?.id) {
       setPosts([]);
-      setFilteredPosts([]);
       setSelected(null);
       setLoading(true);
     }

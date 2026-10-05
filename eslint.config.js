@@ -71,6 +71,11 @@ module.exports = [
       // react-hooks/refs: experimental rule that flags useRef(new Animated.Value(0)).current
       // which is the standard documented React Native Animated API pattern.
       'react-hooks/refs': 'off',
+
+      // react-hooks/immutability: experimental React Compiler rule. expo-video's
+      // documented API is imperative (player.currentTime = 30,
+      // player.playbackRate = 1.5), which this rule reports as mutating a hook value.
+      'react-hooks/immutability': 'off',
     },
   },
 

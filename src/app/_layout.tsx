@@ -40,7 +40,6 @@ export default function RootLayout() {
     if (isBlocked) return;
 
     const inAuthGroup = segments[0] === '(auth)';
-    const inTabsGroup = segments[0] === '(tabs)';
 
     if (!session) {
       // v61: guests may browse. The app opens on Explore and only asks for an

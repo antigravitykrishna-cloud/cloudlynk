@@ -14,7 +14,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
-import { Colors } from '../../constants/theme';
 
 interface PendingContentItem {
   id: string;

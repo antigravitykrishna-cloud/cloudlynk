@@ -1,7 +1,7 @@
 import type { useRouter } from 'expo-router';
+import { showAlert } from '../components/Feedback';
 
 type Router = ReturnType<typeof useRouter>;
-import { showAlert } from '../components/Feedback';
 
 /**
  * A guest account (v89) cannot upload or create channels -- the database

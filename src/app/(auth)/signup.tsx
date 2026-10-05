@@ -9,7 +9,6 @@ import {
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
-import { showAlert } from '../../components/Feedback';
 import { Link } from 'expo-router';
 import { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';

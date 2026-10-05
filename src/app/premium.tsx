@@ -30,7 +30,6 @@ import { PaymentSheet, type PaymentChoice } from '../components/PaymentSheet';
 import { SabpaisaCheckout } from '../components/SabpaisaCheckout';
 import { logCheckoutStarted } from '../lib/metaAds';
 import { Icon } from '../components/Icon';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import { PressScale, fireHaptic } from '../components/Press';
 
 // v52: Premium no longer sells storage — every account (free or premium)

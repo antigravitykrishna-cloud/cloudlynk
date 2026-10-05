@@ -1,3 +1,4 @@
+import { supabase } from '../supabase';
 import { Platform } from 'react-native';
 import { config, isIapLive } from '../config';
 import { IIapService, IapProduct, PurchaseResult } from './types';
@@ -227,6 +228,7 @@ export class GooglePlayIapService implements IIapService {
       // Lazy-required so the native module is only touched on Android, and so
       // this file still loads in environments without the native module linked
       // (e.g. Expo Go, or before a dev build has been rebuilt).
+      // eslint-disable-next-line @typescript-eslint/no-require-imports -- loaded on first use so a build without this native module still starts
       const RNIap = require('react-native-iap');
       const userChoice = !!opts?.userChoiceBilling;
       // With user choice billing on, Google shows its choice screen before
@@ -327,6 +329,7 @@ export class GooglePlayIapService implements IIapService {
   async restorePurchases(): Promise<PurchaseResult[]> {
     if (Platform.OS !== 'android') return [];
     try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports -- loaded on first use so a build without this native module still starts
       const RNIap = require('react-native-iap');
       await RNIap.initConnection();
       try {
@@ -379,7 +382,6 @@ export class GooglePlayIapService implements IIapService {
       // session. This call used to send no Authorization header at all, and
       // the function answered every real purchase with 401 -- money taken,
       // nothing granted.
-      const { supabase } = require('../supabase');
       const {
         data: { session },
       } = await supabase.auth.getSession();

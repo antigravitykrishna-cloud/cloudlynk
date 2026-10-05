@@ -22,7 +22,7 @@ import {
 import { showAlert } from '../../../components/Feedback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Colors, Spacing, Radius, FontSize } from '../../../constants/theme';
+import { Colors, Radius, FontSize } from '../../../constants/theme';
 import { useUploadQueue } from '../../../hooks/useUploadQueue';
 import { QueueItem } from '../../../lib/uploadQueue';
 import { PostService, ContentType, GENRES } from '../../../lib/posts';

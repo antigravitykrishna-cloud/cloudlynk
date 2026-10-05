@@ -228,6 +228,7 @@ export function useAuth() {
 
     let GoogleSignin: any;
     try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports -- loaded on first use so a build without this native module still starts
       ({ GoogleSignin } = require('@react-native-google-signin/google-signin'));
     } catch {
       throw new Error('Google sign-in is unavailable in this build.');

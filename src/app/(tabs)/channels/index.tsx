@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   TextInput,
   RefreshControl,
-  ActivityIndicator,
 } from 'react-native';
 import { showAlert } from '../../../components/Feedback';
 import { LoginSheet } from '../../../components/LoginSheet';
@@ -17,9 +16,8 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '../../../hooks/useAuth';
 import { ChannelService } from '../../../lib/channels';
-import { supabase } from '../../../lib/supabase';
+import { supabase, Database } from '../../../lib/supabase';
 import { Colors } from '../../../constants/theme';
-import { Database } from '../../../lib/supabase';
 import { ListSkeleton } from '../../../components/Skeleton';
 import { Icon } from '../../../components/Icon';
 import Animated, { FadeInDown } from 'react-native-reanimated';
