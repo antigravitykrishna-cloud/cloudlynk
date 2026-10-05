@@ -1,0 +1,16 @@
+code,n_adm,pct,long_title
+9:4019,68,24.7,Unspecified essential hypertension
+10:E785,57,20.7,"Hyperlipidemia, unspecified"
+9:2724,55,20.0,Other and unspecified hyperlipidemia
+10:E039,47,17.1,"Hypothyroidism, unspecified"
+10:Z794,37,13.5,Long term (current) use of insulin
+10:Z87891,35,12.7,Personal history of nicotine dependence
+9:42731,34,12.4,Atrial fibrillation
+10:I2510,33,12.0,Atherosclerotic heart disease of native coronary artery without angina pectoris
+9:25000,33,12.0,"Diabetes mellitus without mention of complication, type II or unspecified type, not stated as uncontrolled"
+10:I10,32,11.6,Essential (primary) hypertension
+10:F329,32,11.6,"Major depressive disorder, single episode, unspecified"
+9:V1582,31,11.3,Personal history of tobacco use
+10:N179,31,11.3,"Acute kidney failure, unspecified"
+9:311,30,10.9,"Depressive disorder, not elsewhere classified"
+9:41401,28,10.2,Coronary atherosclerosis of native coronary artery
