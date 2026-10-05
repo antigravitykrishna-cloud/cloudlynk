@@ -4,13 +4,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme';
 import { PressScale } from '@/components/ui/Press';
 import { Icon } from '@/components/ui/Icon';
-import type { GatewayMethod } from '@/lib/payments/gateways';
+import type { PaymentChoice } from '@/lib/payments/checkout';
 
 // "Choose payment method" sheet. The caller decides the rows: Google Play appears only in 'test'
 // builds (on Play, Google's own choice screen comes first), and a gateway appears only if the
 // server has its keys.
 
-export type PaymentChoice = GatewayMethod | 'play';
+export type { PaymentChoice };
 
 const META: Record<
   PaymentChoice,

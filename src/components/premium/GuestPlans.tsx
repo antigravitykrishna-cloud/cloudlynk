@@ -13,6 +13,7 @@ import { useSubscriptionPlans, type SubscriptionPlan } from '@/lib/data/plans';
 import { LoginSheet } from '@/components/auth/LoginSheet';
 import { PressScale, fireHaptic } from '@/components/ui/Press';
 import { Icon } from '@/components/ui/Icon';
+import { durationLabel } from '@/lib/payments/checkout';
 
 // Profile tab for signed-out visitors: the plans are the page. Pick one and press Next; sign-in is
 // asked for in a sheet over the plans, and the chosen plan is remembered (lib/auth/postLogin.ts) so
@@ -24,13 +25,6 @@ const BENEFITS = [
   'Premium channels unlocked in your feed',
   'Cancel anytime from Google Play',
 ];
-
-function durationLabel(days: number): string {
-  if (days >= 365) return '1 year';
-  if (days >= 180) return '6 months';
-  if (days >= 30) return '1 month';
-  return `${days} days`;
-}
 
 export function GuestPlans({
   onBack,
