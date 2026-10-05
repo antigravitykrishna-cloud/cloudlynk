@@ -81,6 +81,9 @@ module.exports = [
       // resolver cannot follow it; `tsc --noEmit` already fails on any import
       // that does not resolve, so this rule would only duplicate it.
       'import/no-unresolved': 'off',
+
+      // The codebase has no `any`; keep it that way. Use `unknown` and narrow.
+      '@typescript-eslint/no-explicit-any': 'error',
     },
   },
 

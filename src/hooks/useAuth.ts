@@ -10,6 +10,15 @@ import { config, isGoogleAuthLive } from '@/lib/config';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 
+// The part of @react-native-google-signin/google-signin used here. The package is optional (not
+// installed in every build), so its own types can't be imported. signIn() covers both result
+// shapes: v13+ nests the token under `data`, older majors return it at the top level.
+interface GoogleSigninModule {
+  configure(options: { webClientId?: string }): void;
+  hasPlayServices(): Promise<boolean>;
+  signIn(): Promise<{ data?: { idToken?: string | null } | null; idToken?: string | null } | null>;
+}
+
 // Shared profile store. useAuth() is a plain hook, so each caller has its own state; the profile
 // lives at module scope so one fetch updates every screen (otherwise a screen could keep routing on
 // a stale copy). Session and user stay per-instance: every instance subscribes to onAuthStateChange
@@ -191,7 +200,7 @@ export function useAuth() {
       throw new Error('Google sign-in is not configured in this build.');
     }
 
-    let GoogleSignin: any;
+    let GoogleSignin: GoogleSigninModule;
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports -- optional native module, loaded on first use
       ({ GoogleSignin } = require('@react-native-google-signin/google-signin'));
@@ -206,7 +215,7 @@ export function useAuth() {
     // The token moved between library majors: v13+ returns it under `data`,
     // older versions at the top level. Read both rather than pinning a shape
     // that a routine dependency bump would break.
-    const idToken: string | undefined = result?.data?.idToken ?? result?.idToken;
+    const idToken = result?.data?.idToken ?? result?.idToken ?? undefined;
     if (!idToken) throw new Error('Google did not return an ID token.');
     return idToken;
   }

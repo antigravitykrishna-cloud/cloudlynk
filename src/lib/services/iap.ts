@@ -3,6 +3,21 @@ import { Platform } from 'react-native';
 import { config, isIapLive } from '@/lib/config';
 import { IIapService, IapProduct, PurchaseResult } from './types';
 import { errorMessage } from '@/lib/errors';
+import type { Purchase } from 'react-native-iap';
+
+type RNIapModule = typeof import('react-native-iap');
+
+// What a purchase attempt ends with: a Play purchase, or (user choice billing) a token for the
+// app's own payment flow.
+type PurchaseOutcome =
+  { kind: 'purchase'; purchase: Purchase } | { kind: 'alternative'; token: string };
+
+// Lazy-required so the native module is only touched on Android, and so this file still loads
+// in environments without it linked (Expo Go, or before a dev build has been rebuilt).
+function loadIap(): RNIapModule {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- optional native module, loaded on first use
+  return require('react-native-iap') as RNIapModule;
+}
 
 // The Premium plans. They share one Play Console subscription product (`cloudlynk_premium`) and
 // differ by base plan. `code` equals the base plan id and must match subscription_plans.code in the
@@ -112,11 +127,11 @@ export class GooglePlayIapService implements IIapService {
    * minutes. Both listeners are removed when it settles.
    */
   private awaitPurchaseResult(
-    RNIap: any,
+    RNIap: RNIapModule,
     productId: string,
     dispatch: () => Promise<unknown>,
     userChoice = false,
-  ): Promise<any> {
+  ): Promise<PurchaseOutcome> {
     return new Promise((resolve, reject) => {
       let settled = false;
       const cleanup = () => {
@@ -136,22 +151,22 @@ export class GooglePlayIapService implements IIapService {
         5 * 60 * 1000,
       );
 
-      const updateSub = RNIap.purchaseUpdatedListener((purchase: any) => {
-        if (settled || purchase?.productId !== productId) return;
+      const updateSub = RNIap.purchaseUpdatedListener(purchase => {
+        if (settled || purchase.productId !== productId) return;
         settled = true;
         cleanup();
-        resolve(purchase);
+        resolve({ kind: 'purchase', purchase });
       });
       // User choice billing: if the person picks the app's own payment
       // option on Google's screen, no purchase happens here -- Google hands
       // over a token instead, and the caller opens our payment methods.
       const choiceSub =
         userChoice && typeof RNIap.userChoiceBillingListenerAndroid === 'function'
-          ? RNIap.userChoiceBillingListenerAndroid((details: any) => {
-              if (settled || !details?.externalTransactionToken) return;
+          ? RNIap.userChoiceBillingListenerAndroid(details => {
+              if (settled || !details.externalTransactionToken) return;
               settled = true;
               cleanup();
-              resolve({ __alternativeBillingToken: details.externalTransactionToken });
+              resolve({ kind: 'alternative', token: details.externalTransactionToken });
             })
           : null;
       const errorSub = RNIap.purchaseErrorListener((error: unknown) => {
@@ -184,7 +199,8 @@ export class GooglePlayIapService implements IIapService {
       };
     }
     const plan = DEFAULT_PLANS.find(p => p.code === planCode);
-    if (!plan?.iapProductId) {
+    const productId = plan?.iapProductId;
+    if (!plan || !productId) {
       return {
         success: false,
         planCode,
@@ -194,11 +210,7 @@ export class GooglePlayIapService implements IIapService {
       };
     }
     try {
-      // Lazy-required so the native module is only touched on Android, and so
-      // this file still loads in environments without the native module linked
-      // (e.g. Expo Go, or before a dev build has been rebuilt).
-      // eslint-disable-next-line @typescript-eslint/no-require-imports -- optional native module, loaded on first use
-      const RNIap = require('react-native-iap');
+      const RNIap = loadIap();
       const userChoice = !!opts?.userChoiceBilling;
       // With user choice billing on, Google shows its choice screen before
       // the purchase. If the account is not enrolled in the program, or the
@@ -207,14 +219,16 @@ export class GooglePlayIapService implements IIapService {
         userChoice ? { alternativeBillingModeAndroid: 'user-choice' } : undefined,
       );
       try {
-        const products = await RNIap.fetchProducts({ skus: [plan.iapProductId], type: 'subs' });
+        const products = await RNIap.fetchProducts({ skus: [productId], type: 'subs' });
         const product = Array.isArray(products) ? products[0] : null;
+        const offers =
+          product && 'subscriptionOfferDetailsAndroid' in product
+            ? product.subscriptionOfferDetailsAndroid
+            : null;
         // All 4 plans share one product, so pick the offer whose base plan
         // matches this plan — index 0 would silently buy whichever base plan
         // Play happened to list first.
-        const offerToken: string | undefined = product?.subscriptionOfferDetailsAndroid?.find(
-          (o: any) => o?.basePlanId === plan.basePlanId,
-        )?.offerToken;
+        const offerToken = offers?.find(o => o.basePlanId === plan.basePlanId)?.offerToken;
         if (!offerToken) {
           return {
             success: false,
@@ -225,15 +239,15 @@ export class GooglePlayIapService implements IIapService {
           };
         }
 
-        const purchase = await this.awaitPurchaseResult(
+        const outcome = await this.awaitPurchaseResult(
           RNIap,
-          plan.iapProductId,
+          productId,
           () =>
             RNIap.requestPurchase({
               request: {
                 google: {
-                  skus: [plan.iapProductId],
-                  subscriptionOffers: [{ sku: plan.iapProductId, offerToken }],
+                  skus: [productId],
+                  subscriptionOffers: [{ sku: productId, offerToken }],
                 },
               },
               type: 'subs',
@@ -241,17 +255,18 @@ export class GooglePlayIapService implements IIapService {
           userChoice,
         );
 
-        if (purchase?.__alternativeBillingToken) {
+        if (outcome.kind === 'alternative') {
           return {
             success: false,
             planCode,
             purchaseToken: null,
             expiresAt: null,
-            alternativeBillingToken: purchase.__alternativeBillingToken as string,
+            alternativeBillingToken: outcome.token,
           };
         }
 
-        const purchaseToken: string | null = purchase?.purchaseToken ?? null;
+        const { purchase } = outcome;
+        const purchaseToken = purchase.purchaseToken ?? null;
         if (!purchaseToken) {
           return {
             success: false,
@@ -298,23 +313,19 @@ export class GooglePlayIapService implements IIapService {
   async restorePurchases(): Promise<PurchaseResult[]> {
     if (Platform.OS !== 'android') return [];
     try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports -- optional native module, loaded on first use
-      const RNIap = require('react-native-iap');
+      const RNIap = loadIap();
       await RNIap.initConnection();
       try {
-        const purchases: any[] = await RNIap.getAvailablePurchases();
+        const purchases = await RNIap.getAvailablePurchases();
         const results: PurchaseResult[] = [];
         for (const purchase of purchases) {
-          const token = purchase?.purchaseToken ?? null;
+          const token = purchase.purchaseToken ?? null;
           // All 4 plans share one product id, so the product id can't tell
           // us which plan this is — don't resolve it client-side. Pass the
-          // base plan id react-native-iap reports (advisory only) and let
-          // verify-play-receipt derive the authoritative plan from Google.
-          if (token && purchase?.productId === PREMIUM_PRODUCT_ID) {
-            const verified = await this.verifyReceipt(
-              token,
-              purchase?.basePlanIdAndroid ?? undefined,
-            );
+          // base plan id react-native-iap reports as currentPlanId (advisory
+          // only) and let verify-play-receipt derive the authoritative plan.
+          if (token && purchase.productId === PREMIUM_PRODUCT_ID) {
+            const verified = await this.verifyReceipt(token, purchase.currentPlanId ?? undefined);
             if (verified.success) {
               try {
                 await RNIap.finishTransaction({ purchase, isConsumable: false });
