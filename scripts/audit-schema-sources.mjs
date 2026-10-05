@@ -10,8 +10,8 @@
  * this script deliberately does not attempt.
  *
  * Three sources, in the order they were historically applied:
- *   1. supabase/schema.sql              the original hand-run Jollify schema
- *   2. supabase/migration_v*.sql        loose files, run by hand in the
+ *   1. supabase/legacy-sql/schema.sql              the original hand-run Jollify schema
+ *   2. supabase/legacy-sql/migration_v*.sql        loose files, run by hand in the
  *                                       dashboard SQL editor, never in the CLI
  *                                       migration chain
  *   3. supabase/migrations/*.sql        the actual CLI migration chain (v40+)
@@ -35,19 +35,21 @@ function looseOrder(name) {
   return parseInt(m[1], 10) + (m[2] ? 0.5 : 0);
 }
 
-const rootFiles = readdirSync(ROOT).filter(f => f.endsWith('.sql'));
+// The hand-run SQL that predates supabase/migrations/ lives in legacy-sql/.
+const LEGACY = join(ROOT, 'legacy-sql');
+const rootFiles = readdirSync(LEGACY).filter(f => f.endsWith('.sql'));
 const sources = [];
 
 if (rootFiles.includes('schema.sql')) {
-  sources.push({ tier: 'schema.sql', file: 'schema.sql', path: join(ROOT, 'schema.sql'), order: 0 });
+  sources.push({ tier: 'schema.sql', file: 'schema.sql', path: join(LEGACY, 'schema.sql'), order: 0 });
 }
 for (const f of rootFiles.filter(f => /^migration_v/i.test(f)).sort((a, b) => looseOrder(a) - looseOrder(b))) {
-  sources.push({ tier: 'loose', file: f, path: join(ROOT, f), order: looseOrder(f) });
+  sources.push({ tier: 'loose', file: f, path: join(LEGACY, f), order: looseOrder(f) });
 }
 for (const f of rootFiles.filter(f => /^\d{14}_/.test(f))) {
   // A migration-named file sitting in the ROOT rather than migrations/ — a
   // duplicate that does NOT replay. Flagged, not counted as chain coverage.
-  sources.push({ tier: 'stray', file: f, path: join(ROOT, f), order: 40 });
+  sources.push({ tier: 'stray', file: f, path: join(LEGACY, f), order: 40 });
 }
 for (const f of readdirSync(join(ROOT, 'migrations')).filter(f => f.endsWith('.sql')).sort()) {
   sources.push({ tier: 'chain', file: f, path: join(ROOT, 'migrations', f), order: 1000 });

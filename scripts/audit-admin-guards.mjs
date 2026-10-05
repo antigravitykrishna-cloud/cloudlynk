@@ -20,7 +20,7 @@ import { join } from 'node:path';
 
 const ROOT = new URL('../supabase/', import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1');
 const files = [
-  ...readdirSync(ROOT).filter(f => f.endsWith('.sql')).map(f => [f, join(ROOT, f)]),
+  ...readdirSync(join(ROOT, 'legacy-sql')).filter(f => f.endsWith('.sql')).map(f => [f, join(ROOT, 'legacy-sql', f)]),
   ...readdirSync(join(ROOT, 'migrations')).filter(f => f.endsWith('.sql')).map(f => [f, join(ROOT, 'migrations', f)]),
 ];
 

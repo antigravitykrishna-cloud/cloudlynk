@@ -1,229 +1,139 @@
-# 🎬 Cloudlynk
+# Cloudlynk
 
-**Version 1.0.0** · Built with React Native 0.85 + Expo 56 + Supabase
+Android app: **15 GB of private cloud storage** plus **channels of movies, series
+and shorts** published by the Cloudlynk team, with **Premium** plans.
 
-A production-grade video streaming and community platform — featuring Cloudflare HLS streaming, public/private channels, admin review queues, and in-app monetization.
-
----
-
-## Tech Stack
-
-| Layer       | Technology                     |
-|-------------|-------------------------------|
-| Framework   | React Native 0.85 + Expo 56   |
-| Navigation  | Expo Router (file-based)       |
-| Backend     | Supabase (Auth + DB + Storage) |
-| Build/Deploy| EAS Build + EAS Submit         |
-| Language    | TypeScript (strict)            |
+Current version: **0.7.11** (versionCode 18) · Package `com.cloudlynk.app`
 
 ---
 
-## Features
-
-- **Auth** — Email/password sign up & login, secure session management via Supabase
-- **Video Streaming** — Native HLS video playback via `expo-av` backed by Cloudflare Stream
-- **Channels** — Create public or private video channels; public videos go through an Admin review queue
-- **Monetization** — Google Play Billing via `react-native-iap`; Premium unlocks access to specially-flagged premium content (storage stays a flat 15GB for everyone)
-- **Profile** — Storage plan meter, auto-backup toggle, Wi-Fi-only uploads, and push notification toggles
-- **Dark Theme** — Full dark UI, safe area aware, Android & iOS
-
----
-
-## Project Structure
+## How the pieces fit together
 
 ```
-cloudlynk/
-├── app/
-│   ├── _layout.tsx           Root layout, auth guard
-│   ├── (auth)/
-│   │   ├── login.tsx
-│   │   └── signup.tsx
-│   └── (tabs)/
-│       ├── _layout.tsx       Bottom tab bar
-│       ├── index.tsx         Home dashboard
-│       ├── files.tsx         File browser
-│       ├── channels.tsx      Channels
-│       └── profile.tsx       Profile & settings
-├── lib/
-│   ├── supabase.ts           Supabase client + DB types
-│   ├── stream.ts             Cloudflare Stream upload & playback
-│   ├── notifications.ts      Expo Push Notifications service
-│   └── channels.ts           Channel operations
-├── hooks/
-│   ├── useAuth.ts            Session, profile state, and user roles
-│   ├── useUsageTimer.ts      30-minute freemium timer
-│   └── useAcquisitionSource.ts Organic vs Paid acquisition routing
-├── constants/
-│   └── theme.ts              Colors, spacing, typography
-└── supabase/
-    └── schema.sql            Full DB schema + RLS + storage
+ ┌──────────────────────────┐        ┌──────────────────────────────────────┐
+ │  FRONTEND  (the app)     │        │  BACKEND  (Supabase, in the cloud)   │
+ │  src/                    │ ─────► │                                      │
+ │  React Native + Expo     │        │  DATABASE   supabase/migrations/     │
+ │                          │        │   tables + security rules (who can   │
+ │  screens, buttons,       │        │   see / join / buy what)             │
+ │  player, admin panel     │        │                                      │
+ └──────────────────────────┘        │  SERVER CODE  supabase/functions/    │
+            │                        │   payments, Play purchase checks,    │
+            │                        │   video tokens, account deletion     │
+            ▼                        └──────────────────────────────────────┘
+ ┌──────────────────────────┐                         │
+ │  ANDROID BUILD           │                         ▼
+ │  android/                │        ┌──────────────────────────────────────┐
+ │  turns src/ into the     │        │  VIDEO  Cloudflare Stream            │
+ │  .apk / .aab files       │        │  (videos are uploaded and played     │
+ └──────────────────────────┘        │   from Cloudflare, with signed links)│
+                                     └──────────────────────────────────────┘
+ Website (privacy policy, terms, delete-account page): separate folder C:\site,
+ live at https://thecloudlynk.com (Vercel).
 ```
 
 ---
 
-## Setup
+## Folder map
 
-### 1. Clone & Install
+| Folder | What it is | You touch it when… |
+|---|---|---|
+| **`src/`** | **Frontend** — all app code | changing anything the user sees |
+| `src/app/` | Screens. Each file = one screen (file-based routing) | adding/changing a screen |
+| `src/app/(tabs)/` | The 5 bottom tabs: Cloud, Feed, Explore, Channels, Profile | |
+| `src/app/(auth)/` | Login and first-time setup | |
+| `src/app/admin/` | Admin panel screens | |
+| `src/components/` | Reusable UI pieces (buttons, sheets, player, plan list) | |
+| `src/lib/` | Talking to the backend: posts, channels, payments, storage, video | |
+| `src/hooks/` | Shared state, e.g. `useAuth` (who is signed in, their plan) | |
+| `src/constants/` | Colours, font sizes, spacing | changing the look |
+| **`supabase/`** | **Backend + database** | |
+| `supabase/migrations/` | **Database.** Every table, rule and DB function, in order. Newest = last file | changing data rules |
+| `supabase/functions/` | **Server code** (TypeScript on Supabase Edge Functions) | payments, Play, video |
+| `supabase/legacy-sql/` | Old hand-run SQL from before `migrations/` — history only, do not run | never |
+| `supabase/tests/`, `rollback/`, `cleanup/` | DB test and maintenance scripts | |
+| **`android/`** | Native Android project (generated by Expo, then customised) | signing, permissions, version |
+| `assets/` | App icon, splash screen | changing the icon |
+| `plugins/` | Small build plugins (e.g. removes unneeded permissions) | |
+| `scripts/` | Checks run before release (`guards.mjs`, `audit-apk.mjs`, …) | releasing |
+| `cloudflare/` | Optional region-check worker (not deployed, switched off) | |
+| `docs/` | All documentation (see below) | |
 
+Root config files: `app.json` (app name, version, settings), `eas.json` (build
+profiles), `package.json` (libraries), `tsconfig.json`, `babel.config.js`,
+`metro.config.js`, `.env` (local secrets — never commit).
+
+### Server functions (`supabase/functions/`)
+
+| Function | Job |
+|---|---|
+| `payments` | UPI / Razorpay / Sabpaisa orders, verification, webhooks |
+| `verify-play-receipt` | Verifies a Google Play purchase and switches Premium on |
+| `play-rtdn-webhook` | Google Play renewals, cancellations, refunds |
+| `stream-playback-token` | Short-lived video links, only for people allowed to watch |
+| `generate-stream-upload` | Video upload links (admins only) |
+| `stream-set-access` | Switch a video between free and Premium |
+| `admin-replace-video` | Replace a post's video |
+| `delete-account`, `account-deletion` | Account deletion |
+| `legal-pages` | Policy pages |
+| `_shared/` | Code shared by the functions above |
+
+### Docs (`docs/`)
+
+| Folder | Contents |
+|---|---|
+| `docs/guides/` | How-tos: build, deploy, turn on payments, admin access, what's needed from the client |
+| `docs/play-store/` | Store listing text, Data safety answers, App access, screenshots |
+| `docs/audits/` | Security and review audits |
+| `docs/history/` | Old handoffs and notes, kept for reference |
+
+---
+
+## Common tasks
+
+**Install** (Node 22, once):
 ```bash
-git clone <your-repo-url>
-cd cloudlynk
 npm install
 ```
 
-### 2. Create Supabase Project
-
-1. Go to [supabase.com](https://supabase.com) → New Project
-2. Open **SQL Editor** → paste the contents of `supabase/schema.sql` → Run
-3. Go to **Storage** → confirm the `user-files` bucket was created
-4. Copy your **Project URL** and **anon/public key** from Settings → API
-
-### 3. Configure Environment
-
+**Type-check and run the release guards:**
 ```bash
-cp .env.example .env
+npx tsc --noEmit
+node scripts/guards.mjs
 ```
 
-Edit `.env`:
-```
-EXPO_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
-EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIs...
-```
-
-Also update `app.json` → `extra`:
-```json
-"extra": {
-  "supabaseUrl": "https://xxxx.supabase.co",
-  "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIs..."
-}
-```
-
-### 4. Run Locally
-
+**Build the release APK and AAB** (Windows, Git Bash):
 ```bash
-# Start Expo dev server
-npm start
-
-# Run on Android emulator / device
-npm run android
+cd android && ./gradlew assembleRelease bundleRelease --no-daemon -I ../scripts/untracked-cmake.init.gradle -PreactNativeArchitectures=arm64-v8a,armeabi-v7a -PCLOUDLYNK_REQUIRE_RELEASE_SIGNING=true
 ```
+Output: `android/app/build/outputs/apk/release/app-release.apk` and
+`android/app/build/outputs/bundle/release/app-release.aab`. Then check it:
+```bash
+node scripts/audit-apk.mjs android/app/build/outputs/apk/release/app-release.apk
+```
+Signing uses `android/app/cloudlynk-upload.jks` + passwords in
+`~/.gradle/gradle.properties`. **Back both up — losing them means you can never
+update the app on Play.**
+
+**Change the database:** add a new file to `supabase/migrations/` named
+`YYYYMMDDHHMMSS_vNN_what_it_does.sql` and apply it to the Supabase project.
+
+**Change a server function:** edit it in `supabase/functions/<name>/` and deploy
+it (`supabase functions deploy <name>`).
+
+**Bump the version:** `app.json` (`version`, `versionCode`),
+`android/app/build.gradle` (`versionName`, `versionCode`) and the expected
+values at the top of `scripts/audit-apk.mjs`.
 
 ---
 
-## Play Store Build (EAS)
+## Live services
 
-### Prerequisites
+| Service | Where |
+|---|---|
+| Supabase project (database, auth, functions) | `wdtwjiixuueqejfraaod` |
+| Video | Cloudflare Stream |
+| Website | https://thecloudlynk.com (Vercel project `cloudlynk-site`, source in `C:\site`) |
+| Code | github.com/antigravitykrishna-cloud/cloudlynk, branch `harden/r2-stream` |
 
-```bash
-npm install -g eas-cli
-eas login       # Log in with your Expo account
-```
-
-### One-time EAS project setup
-
-```bash
-eas build:configure
-```
-
-Update `app.json` → `extra.eas.projectId` with your EAS project ID.
-
-### Build APK (internal testing)
-
-```bash
-eas build --platform android --profile preview
-```
-
-This produces a signed `.apk` you can install directly on any Android device.
-
-### Build AAB (Play Store submission)
-
-```bash
-eas build --platform android --profile production
-```
-
-This produces a `.aab` (Android App Bundle) ready for Google Play.
-
-### Submit to Play Store
-
-```bash
-# Requires google-play-key.json (service account from Google Play Console)
-eas submit --platform android
-```
-
----
-
-## Play Store Checklist
-
-| Item                          | Status |
-|-------------------------------|--------|
-| App icon (512×512 PNG)        | ☐ Add to assets/ |
-| Feature graphic (1024×500)    | ☐ Upload in Play Console |
-| Screenshots (phone + tablet)  | ☐ Use Expo Go or emulator |
-| Short description (80 chars)  | "Secure cloud storage & community channels" |
-| Full description              | See below |
-| Content rating                | Teen / Medium Maturity |
-| Privacy policy URL            | Required — served from `supabase/functions/legal-pages` (see `PRIVACY_POLICY_URL` in `app.json`) |
-| Data safety form              | Declare: files, account info, usage data |
-| Target API level              | 36 (Android 16) — required for new apps/updates by Aug 31, 2026 (Nov 1, 2026 with an extension); confirm the actual compiled level after a real build, since Expo 56's default may need to be bumped |
-| Signing keystore              | Auto-managed by EAS |
-
-### Play Store Description (copy-paste ready)
-
-```
-Cloudlynk is your personal cloud storage and creator video platform.
-
-🎬 CLOUD STREAMING
-Instantly watch curated movies, web series, and short films. Create your own channel and upload content for the world to see!
-
-⚡ HIGH-SPEED HLS PLAYBACK
-Optimized native playback engine with adaptive bitrate streaming powered by Cloudflare.
-
-📡 COMMUNITY CHANNELS
-Subscribe to your favorite creators, or become one yourself! All public content goes through an approval queue to keep the community safe.
-
-📦 PLANS
-• Free — 15 GB of personal cloud storage, access to all free content
-• Premium — Same 15 GB storage, plus unlocked access to premium creator content
-
-Developer: Cloudlynk Media
-```
-
----
-
-## Required Assets
-
-Place in `assets/`:
-
-| File                  | Size        | Notes                  |
-|-----------------------|-------------|------------------------|
-| `icon.png`            | 1024×1024   | App icon (no alpha)    |
-| `adaptive-icon.png`   | 1024×1024   | Android adaptive icon  |
-| `splash.png`          | 1242×2436   | Splash screen          |
-| `favicon.png`         | 32×32       | Web only               |
-
-Use a dark background (`#0d1117`) with the Cloudlynk cloud logo centered.
-
----
-
-## Environment Variables Reference
-
-| Variable                      | Where to get it              |
-|-------------------------------|------------------------------|
-| `EXPO_PUBLIC_SUPABASE_URL`    | Supabase → Settings → API    |
-| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Supabase → Settings → API  |
-
----
-
-## Supabase Storage Setup
-
-The schema automatically creates the `user-files` bucket. Verify in Supabase dashboard:
-
-- **Bucket:** `user-files` (private)
-- **Max file size:** 1 GB
-- **RLS:** Users can only access `{uid}/...` paths
-
----
-
-## License
-
-Proprietary · © 2026 Cloudlynk
+What is still needed before launch: `docs/guides/WHAT_I_NEED_FROM_YOU.md`.
