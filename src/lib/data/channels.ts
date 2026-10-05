@@ -2,7 +2,8 @@ import { supabase } from '@/lib/supabase';
 import type { Tables } from '@/lib/database.types';
 
 // guards-allow-select-star
-// getMyChannels / getMyOwnedChannels are membership and ownership queries keyed to a user id.
+// getMyChannels / getMyOwnedChannels are membership and ownership queries keyed to a user id;
+// getChannelForManage serves the owner-only manage screen.
 // getDiscoverChannels, the one path guests DO hit, names its columns via CHANNEL_LIST_COLUMNS.
 // See scripts/guards.mjs check 2 for why select('*') is unsafe on a
 // guest-reachable path.
@@ -114,6 +115,17 @@ export const ChannelService = {
   async leaveChannel(channelId: string, _userId: string) {
     const { error } = await supabase.rpc('leave_channel', { p_channel_id: channelId });
     if (error) throw error;
+  },
+
+  /** One channel, every column, for its owner's manage screen (anon never reaches this). */
+  async getChannelForManage(channelId: string): Promise<Tables<'channels'>> {
+    const { data, error } = await supabase
+      .from('channels')
+      .select('*')
+      .eq('id', channelId)
+      .single();
+    if (error) throw error;
+    return data;
   },
 
   /** Returns the updated channel row (update_channel returns it as JSON). */

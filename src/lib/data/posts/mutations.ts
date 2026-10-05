@@ -87,6 +87,12 @@ export async function createPost(
   return data as ChannelPost;
 }
 
+/** Deletes a post. RLS allows the channel owner and admins. */
+export async function deletePost(postId: string) {
+  const { error } = await supabase.from('channel_posts').delete().eq('id', postId);
+  if (error) throw error;
+}
+
 /** Uploads a local file to the channel-media bucket and returns its storage path. */
 export async function uploadMedia(
   userId: string,
