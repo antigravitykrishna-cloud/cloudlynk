@@ -7,14 +7,14 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { queryClient, asyncStoragePersister } from '@/lib/queryClient';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
-import { AgeGate } from '@/components/auth/AgeGate';
+import { AgeGate } from '@/features/auth/components/AgeGate';
 import { FeedbackHost } from '@/components/ui/Feedback';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useGeoCheck } from '@/hooks/useGeoCheck';
-import { ComplianceService } from '@/lib/data/compliance';
-import { Colors } from '@/constants/theme';
+import { ComplianceService } from '@/features/auth/api/complianceApi';
+import { Colors } from '@/theme';
 import { Icon } from '@/components/ui/Icon';
-import { peekPostLoginRoute, setPostLoginRoute } from '@/lib/auth/postLogin';
+import { peekPostLoginRoute, setPostLoginRoute } from '@/features/auth/postLoginRoute';
 
 SplashScreen.preventAutoHideAsync();
 

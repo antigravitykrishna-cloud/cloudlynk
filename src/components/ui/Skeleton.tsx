@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated, Easing } from 'react-native';
-import { Colors, Radius } from '@/constants/theme';
+import { Colors, Radius } from '@/theme';
 
 // Loading placeholders shaped like the content they stand in for, so the layout appears immediately
 // and content fades in without jumping.

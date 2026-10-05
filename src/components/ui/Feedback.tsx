@@ -10,7 +10,7 @@ import {
   Platform,
   Dimensions,
 } from 'react-native';
-import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme';
+import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/theme';
 
 // Branded alerts and toasts, replacing React Native's Alert.alert (the stock Android dialog ignores
 // the app's theme). State lives in a module-level store, so showAlert() and toast() can be called

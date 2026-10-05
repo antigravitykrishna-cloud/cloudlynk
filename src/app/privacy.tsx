@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { Colors, FontSize, FontWeight, Spacing } from '@/constants/theme';
+import { Colors, FontSize, FontWeight, Spacing } from '@/theme';
 import { config } from '@/lib/config';
 
 // Opens the hosted Privacy Policy (the one linked in Play Console) so the two can never differ.

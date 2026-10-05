@@ -3,9 +3,9 @@ import { View, Text, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { useEffect } from 'react';
-import { Colors } from '@/constants/theme';
-import { useAuth } from '@/hooks/useAuth';
-import { NotificationService } from '@/lib/data/notifications';
+import { Colors } from '@/theme';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { NotificationService } from '@/features/notifications/api/notificationsApi';
 
 type TabIconProps = {
   icon: IconName;

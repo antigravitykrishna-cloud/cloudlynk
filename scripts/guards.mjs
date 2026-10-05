@@ -31,7 +31,7 @@ function walk(dir, out = []) {
 
 const sources = walk(ROOT).filter(f => {
   const r = relative(ROOT, f).replace(/\\/g, '/');
-  return r.startsWith('src/app/') || r.startsWith('src/lib/') || r.startsWith('src/hooks/') || r.startsWith('src/components/');
+  return r.startsWith('src/');
 });
 
 /**
