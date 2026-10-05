@@ -8,6 +8,7 @@ import { postsApi } from '@/features/content/api/postsApi';
 import { defaultAccessLevel, type AccessLevel, type ContentType } from '@/features/content/model';
 import { toNewPost } from '@/features/upload/toNewPost';
 import { clearQueue, loadQueue, saveQueue } from '@/features/upload/uploadQueueStorage';
+import { errorMessage } from '@/utils/errors';
 
 // The upload queue: videos picked on the phone, uploaded one at a time while the app is open.
 // Each item goes to Cloudflare Stream (streamUploadApi), then becomes a post (postsApi.create).
@@ -169,7 +170,7 @@ async function processQueue(): Promise<void> {
       updateAt(index, { status: 'done', progress: 1, streamUid });
     } catch (err) {
       // Pausing aborts the upload in flight, so it also ends up here ("Upload cancelled").
-      updateAt(index, { status: 'failed', error: (err as Error)?.message ?? 'Upload failed' });
+      updateAt(index, { status: 'failed', error: errorMessage(err, 'Upload failed') });
     }
     abortController = null;
     state.currentIndex = -1;

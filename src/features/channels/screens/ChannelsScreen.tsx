@@ -18,6 +18,7 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { channelsApi, type Channel, type DiscoverSort } from '@/features/channels/api/channelsApi';
 import { ChannelRow, type ChannelRowAction } from '@/features/channels/components/ChannelRow';
 import { useChannelList, type ChannelListTab } from '@/features/channels/hooks/useChannelList';
+import { errorMessage } from '@/utils/errors';
 
 // The Channels tab. Anyone can browse and open a channel. Joining needs a saved account; a public
 // channel needs no plan to join (the plan is asked for on watching), a hidden one does.
@@ -107,7 +108,7 @@ export default function ChannelsScreen() {
             .remove(channel.id)
             .then(reload)
             .then(() => showAlert('Deleted', `"${channel.name}" has been deleted.`))
-            .catch(err => showAlert('Error', err?.message ?? 'Delete failed')),
+            .catch(err => showAlert('Error', errorMessage(err, 'Delete failed'))),
       },
     ]);
 

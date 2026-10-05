@@ -6,6 +6,7 @@ import { playbackApi } from '@/features/player/api/playbackApi';
 import { watchHistoryApi } from '@/features/player/api/watchHistoryApi';
 import { useWatchProgress } from '@/features/player/hooks/useWatchProgress';
 import type { ChannelPost } from '@/features/content/model';
+import { errorMessage } from '@/utils/errors';
 
 type PlayablePost = Pick<ChannelPost, 'id' | 'video_url' | 'media_url' | 'media_type'>;
 
@@ -43,7 +44,7 @@ export function usePostPlayback(post: PlayablePost | null, userId: string | unde
     playbackApi
       .getPlaybackUrl(postId)
       .then(signedUrl => !cancelled && setUrl(signedUrl))
-      .catch(err => !cancelled && setError(err?.message ?? "This video isn't available."))
+      .catch(err => !cancelled && setError(errorMessage(err, "This video isn't available.")))
       .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;

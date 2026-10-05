@@ -9,6 +9,7 @@ import { authApi } from '@/features/auth/api/authApi';
 import { AuthCard, AuthLayout } from '@/features/auth/components/AuthLayout';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { MIN_PASSWORD_LENGTH } from '@/features/auth/signupValidation';
+import { errorMessage } from '@/utils/errors';
 
 // Password recovery, step 2, opened by the cloudlynk://reset-password link in the email. The link
 // creates a short-lived recovery session; without it the link has expired. Requires
@@ -53,7 +54,7 @@ export default function ResetPasswordScreen() {
       await updatePassword(password);
       setDone(true);
     } catch (err) {
-      setError((err as Error)?.message ?? 'Could not set your password. Try again.');
+      setError(errorMessage(err, 'Could not set your password. Try again.'));
     } finally {
       setSaving(false);
     }

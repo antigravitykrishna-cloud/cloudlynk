@@ -7,6 +7,7 @@ import { Colors, FontSize, FontWeight, Spacing } from '@/theme';
 import { AuthCard, AuthLayout } from '@/features/auth/components/AuthLayout';
 import { isValidEmail } from '@/features/auth/components/EmailCodeForm';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { errorMessage } from '@/utils/errors';
 
 // Password recovery, step 1: where to send the reset link. The confirmation reads the same whether
 // or not the address has an account, so this screen cannot reveal who is registered.
@@ -30,7 +31,7 @@ export default function ForgotPasswordScreen() {
       await requestPasswordReset(email);
       setSent(true);
     } catch (err) {
-      setError((err as Error)?.message ?? 'Could not send the email. Try again in a moment.');
+      setError(errorMessage(err, 'Could not send the email. Try again in a moment.'));
     } finally {
       setSending(false);
     }

@@ -8,6 +8,7 @@ import { hasConfirmedAgeOnDevice } from '@/features/auth/components/AgeGate';
 import { AuthCard, AuthLayout } from '@/features/auth/components/AuthLayout';
 import { PolicyCheckbox } from '@/features/auth/components/PolicyCheckbox';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { errorMessage } from '@/utils/errors';
 
 // Shown after sign-in when the account has no 18+ confirmation or has not accepted the current
 // policy versions. A new account on a device that already passed the age gate is completed
@@ -60,7 +61,7 @@ export default function CompleteProfileScreen() {
     try {
       await finish();
     } catch (err) {
-      showAlert('Could not continue', (err as Error)?.message ?? 'Something went wrong.');
+      showAlert('Could not continue', errorMessage(err, 'Something went wrong.'));
     } finally {
       setSaving(false);
     }

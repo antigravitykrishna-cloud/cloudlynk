@@ -1,6 +1,7 @@
 import { showAlert } from '@/components/ui/Feedback';
 import type { ChannelPost } from '@/features/content/model';
 import { safetyApi } from '@/features/channels/api/safetyApi';
+import { errorMessage } from '@/utils/errors';
 
 const POST_REPORT_REASONS = [
   { label: 'Inappropriate content', reason: 'inappropriate_content' },
@@ -16,7 +17,7 @@ const USER_REPORT_REASONS = [
 ];
 
 const failed = (fallback: string) => (err: unknown) =>
-  showAlert('Error', (err as Error)?.message ?? fallback);
+  showAlert('Error', errorMessage(err, fallback));
 
 /**
  * The "⋯" menu on a post: report the post, report its uploader's account, or block the uploader.

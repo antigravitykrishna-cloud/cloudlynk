@@ -12,6 +12,7 @@ import { TextField } from '@/components/ui/TextField';
 import { Colors, FontSize, FontWeight, Spacing } from '@/theme';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { channelsApi } from '@/features/channels/api/channelsApi';
+import { errorMessage } from '@/utils/errors';
 
 // A new channel. It starts as pending and goes live once an admin approves it.
 
@@ -77,7 +78,7 @@ export default function CreateChannelScreen() {
         [{ text: 'OK', onPress: () => router.back() }],
       );
     } catch (err) {
-      showAlert('Error', (err as Error)?.message ?? 'Failed to create channel.');
+      showAlert('Error', errorMessage(err, 'Failed to create channel.'));
     } finally {
       setSubmitting(false);
     }

@@ -11,6 +11,7 @@ import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/theme';
 import { STREAM_MAX_BYTES, STREAM_MAX_MB } from '@/features/upload/api/streamUploadApi';
 import { QueueItemCard } from '@/features/upload/components/QueueItemCard';
 import { useUploadQueue, type QueueItem } from '@/features/upload/hooks/useUploadQueue';
+import { errorMessage } from '@/utils/errors';
 
 // Every video waiting to upload, with start / pause and per-item edit, retry and remove. The queue
 // is kept on the device, so it survives closing the app.
@@ -46,7 +47,7 @@ export default function UploadQueueScreen() {
         );
       }
     } catch (err) {
-      showAlert('Error', (err as Error)?.message ?? 'Could not add videos');
+      showAlert('Error', errorMessage(err, 'Could not add videos'));
     } finally {
       setAdding(false);
     }

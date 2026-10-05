@@ -12,6 +12,7 @@ import { formatBytes } from '@/utils/format';
 import { VideoDetailsFields } from '@/features/upload/components/VideoDetailsFields';
 import { useUploadQueue, type QueueItem } from '@/features/upload/hooks/useUploadQueue';
 import type { VideoDetails } from '@/features/upload/uploadQueue';
+import { errorMessage } from '@/utils/errors';
 
 // Edit a queued video's details before it uploads. "Save & next" moves on to the next video still
 // waiting, so a batch can be filled in one after another.
@@ -77,7 +78,7 @@ function QueuedItemForm({
         thumbnailUri: details.thumbnailUri,
       });
     } catch (err) {
-      showAlert('Error', (err as Error)?.message ?? 'Failed to save');
+      showAlert('Error', errorMessage(err, 'Failed to save'));
     } finally {
       setSaving(false);
     }

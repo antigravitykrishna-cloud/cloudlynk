@@ -13,6 +13,7 @@ import {
   validateSignup,
   type SignupForm,
 } from '@/features/auth/signupValidation';
+import { errorMessage } from '@/utils/errors';
 
 // Email + password signup. The sign-in screen's emailed code also creates accounts; this form stays
 // for people who want a password.
@@ -49,7 +50,7 @@ export default function SignupScreen() {
       await signUp(form.email.trim(), form.password, form.fullName.trim(), Number(form.birthYear));
       showAlert('Account created!', 'Please check your email to verify your account.');
     } catch (err) {
-      showAlert('Signup failed', (err as Error)?.message ?? 'Something went wrong.');
+      showAlert('Signup failed', errorMessage(err, 'Something went wrong.'));
     } finally {
       setSubmitting(false);
     }

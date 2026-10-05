@@ -18,6 +18,7 @@ import { showPostSafetyMenu } from '@/features/channels/postSafetyMenu';
 import { PostDetailModal } from '@/features/content/components/PostDetailModal';
 import { useWatchGate } from '@/features/content/hooks/useWatchGate';
 import type { ChannelPost } from '@/features/content/model';
+import { errorMessage } from '@/utils/errors';
 
 // A channel's page. Anyone can open it and see what it has; joining needs an account, and watching
 // needs the right to the title (see watchAccess.ts).
@@ -64,7 +65,7 @@ export default function ChannelDetailScreen() {
       markJoined();
       await reload();
     } catch (err) {
-      showAlert('Error', (err as Error)?.message ?? 'Could not join this channel.');
+      showAlert('Error', errorMessage(err, 'Could not join this channel.'));
     } finally {
       setJoining(false);
     }

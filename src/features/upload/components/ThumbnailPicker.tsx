@@ -4,6 +4,7 @@ import { showAlert } from '@/components/ui/Feedback';
 import { Icon } from '@/components/ui/Icon';
 import { pickImage } from '@/lib/mediaPicker';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '@/theme';
+import { errorMessage } from '@/utils/errors';
 
 /** The poster for a video: a preview of the chosen image, or a button to choose one. */
 export function ThumbnailPicker({
@@ -22,7 +23,7 @@ export function ThumbnailPicker({
       const picked = await pickImage();
       if (picked) onChange(picked);
     } catch (err) {
-      showAlert('Could not pick image', (err as Error)?.message ?? 'Please try again.');
+      showAlert('Could not pick image', errorMessage(err, 'Please try again.'));
     } finally {
       setPicking(false);
     }

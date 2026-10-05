@@ -22,6 +22,7 @@ import { publicMedia } from '@/lib/publicMedia';
 import { Colors, FontSize, FontWeight, Spacing } from '@/theme';
 import { profileApi } from '@/features/auth/api/profileApi';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { errorMessage } from '@/utils/errors';
 
 // Edit your own name, username and picture. Only these columns are writable: privileged fields
 // (plan, admin, approval) are reverted server-side by protect_profile_privileged_fields.
@@ -52,7 +53,7 @@ export default function EditProfileScreen() {
       setAvatarPath(await publicMedia.upload(user.id, uri, 'image'));
       toast('Picture updated — remember to save', 'info');
     } catch (err) {
-      showAlert('Upload failed', (err as Error)?.message ?? 'Could not upload that image.');
+      showAlert('Upload failed', errorMessage(err, 'Could not upload that image.'));
     } finally {
       setUploading(false);
     }
@@ -85,7 +86,7 @@ export default function EditProfileScreen() {
       if ((err as { code?: string })?.code === ALREADY_TAKEN) {
         showAlert('Username taken', `"${handle}" is already in use. Try another.`);
       } else {
-        showAlert('Could not save', (err as Error)?.message ?? 'Please try again.');
+        showAlert('Could not save', errorMessage(err, 'Please try again.'));
       }
     } finally {
       setSaving(false);

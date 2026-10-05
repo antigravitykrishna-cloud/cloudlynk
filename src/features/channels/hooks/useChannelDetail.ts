@@ -7,6 +7,7 @@ import { safetyApi } from '@/features/channels/api/safetyApi';
 import { postsApi } from '@/features/content/api/postsApi';
 import type { ChannelPost } from '@/features/content/model';
 import { groupIntoShelves } from '@/features/content/shelves';
+import { errorMessage } from '@/utils/errors';
 
 /**
  * A channel page's data: the channel, whether the viewer is a member, and its posts grouped into
@@ -63,7 +64,7 @@ export function useChannelDetail(channelId: string | undefined) {
         ),
       );
     } catch (err) {
-      showAlert('Error', (err as Error)?.message ?? 'Could not load this channel.');
+      showAlert('Error', errorMessage(err, 'Could not load this channel.'));
     } finally {
       setLoading(false);
     }

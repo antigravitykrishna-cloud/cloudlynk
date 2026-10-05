@@ -10,6 +10,7 @@ import {
   toQueueEntries,
   type NewUpload,
 } from '@/features/upload/newUploads';
+import { errorMessage } from '@/utils/errors';
 
 /** Wait this long after typing stops before copying series details to later episodes. */
 const CARRY_FORWARD_DELAY_MS = 250;
@@ -77,7 +78,7 @@ export function useNewUploads(channelId: string | undefined) {
         );
       }
     } catch (err) {
-      showAlert('Error', (err as Error)?.message ?? 'Could not pick videos');
+      showAlert('Error', errorMessage(err, 'Could not pick videos'));
     } finally {
       setPicking(false);
     }
@@ -108,7 +109,7 @@ export function useNewUploads(channelId: string | undefined) {
       setSubmittedIds(ids);
       await queue.start();
     } catch (err) {
-      showAlert('Error', (err as Error)?.message ?? 'Failed to queue uploads');
+      showAlert('Error', errorMessage(err, 'Failed to queue uploads'));
     }
   };
 
