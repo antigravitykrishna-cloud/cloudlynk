@@ -724,6 +724,7 @@ export type Database = {
           body: string
           channel_id: string | null
           created_at: string
+          data: Json | null
           id: string
           post_id: string | null
           read: boolean
@@ -735,6 +736,7 @@ export type Database = {
           body: string
           channel_id?: string | null
           created_at?: string
+          data?: Json | null
           id?: string
           post_id?: string | null
           read?: boolean
@@ -746,6 +748,7 @@ export type Database = {
           body?: string
           channel_id?: string | null
           created_at?: string
+          data?: Json | null
           id?: string
           post_id?: string | null
           read?: boolean

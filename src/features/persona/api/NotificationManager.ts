@@ -8,6 +8,7 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { supabase } from '@/lib/supabase';
+import type { Json } from '@/lib/database.types';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
@@ -157,6 +158,7 @@ export class NotificationManager {
         body: payload.body,
         read: false,
         created_at: new Date().toISOString(),
+        data: (payload.data ?? null) as Json | null,
       };
 
       await supabase.from('notifications').insert(insertData);
@@ -193,6 +195,10 @@ export class NotificationManager {
           body: n.body,
           read: n.read || false,
           createdAt: n.created_at,
+          data:
+            n.data && typeof n.data === 'object' && !Array.isArray(n.data)
+              ? (n.data as Record<string, string>)
+              : undefined,
         })) || []
       );
     } catch (error) {
