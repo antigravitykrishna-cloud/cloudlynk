@@ -9,6 +9,7 @@ import { TabHeader } from '@/components/ui/TabHeader';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { Colors, Spacing } from '@/theme';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { ContentGate } from '@/features/persona/components/ContentGate';
 import { postsApi } from '@/features/content/api/postsApi';
 import { FeedRow } from '@/features/content/components/FeedRow';
 import type { ListedPost } from '@/features/content/model';
@@ -56,33 +57,35 @@ export default function FeedScreen() {
     <SafeAreaView style={styles.page} edges={['top']}>
       <TabHeader title="Feed" />
 
-      {loading ? (
-        <ListSkeleton rows={6} />
-      ) : posts.length === 0 ? (
-        <ScrollView contentContainerStyle={styles.grow} refreshControl={refreshControl}>
-          {loadFailed ? (
-            <LoadFailedState what="the feed" onRetry={load} />
-          ) : (
-            <EmptyFeed signedIn={!!userId} isGuest={isGuest} />
-          )}
-        </ScrollView>
-      ) : (
-        <ScrollView
-          contentContainerStyle={styles.list}
-          showsVerticalScrollIndicator={false}
-          refreshControl={refreshControl}
-        >
-          {posts.map((post, index) => (
-            <FeedRow
-              key={post.id}
-              post={post}
-              index={index}
-              locked={isLocked(post)}
-              onPress={() => open(post)}
-            />
-          ))}
-        </ScrollView>
-      )}
+      <ContentGate requiredAccess="full">
+        {loading ? (
+          <ListSkeleton rows={6} />
+        ) : posts.length === 0 ? (
+          <ScrollView contentContainerStyle={styles.grow} refreshControl={refreshControl}>
+            {loadFailed ? (
+              <LoadFailedState what="the feed" onRetry={load} />
+            ) : (
+              <EmptyFeed signedIn={!!userId} isGuest={isGuest} />
+            )}
+          </ScrollView>
+        ) : (
+          <ScrollView
+            contentContainerStyle={styles.list}
+            showsVerticalScrollIndicator={false}
+            refreshControl={refreshControl}
+          >
+            {posts.map((post, index) => (
+              <FeedRow
+                key={post.id}
+                post={post}
+                index={index}
+                locked={isLocked(post)}
+                onPress={() => open(post)}
+              />
+            ))}
+          </ScrollView>
+        )}
+      </ContentGate>
     </SafeAreaView>
   );
 }

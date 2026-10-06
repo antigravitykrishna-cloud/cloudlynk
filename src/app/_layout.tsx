@@ -13,6 +13,7 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useLaunchRouting } from '@/features/auth/hooks/useLaunchRouting';
 import { useGeoCheck } from '@/features/geo/hooks/useGeoCheck';
 import { GeoBlockedScreen } from '@/features/geo/screens/GeoBlockedScreen';
+import { usePersona } from '@/features/persona/hooks/usePersona';
 
 // The app shell: providers, the root navigator, and what sits above every screen (the age gate,
 // dialogs and toasts). Where the app navigates as the session changes is useLaunchRouting.
@@ -27,6 +28,8 @@ const PUSHED = { animation: 'slide_from_right' } as const;
 export default function RootLayout() {
   const { session, loading } = useAuth();
   const geo = useGeoCheck();
+  // Initialize persona detection (device cloaking & access control)
+  usePersona();
   useLaunchRouting({ geoReady: !geo.loading, geoBlocked: geo.isBlocked });
 
   if (geo.isBlocked && !geo.loading) return <GeoBlockedScreen country={geo.country} />;
