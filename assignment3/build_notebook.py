@@ -88,9 +88,11 @@ print([c[0] for c in cells])
 
 nb = new_notebook()
 nb.metadata["kernelspec"] = {"display_name": "Python 3", "language": "python", "name": "python3"}
-nb.cells.append(new_markdown_cell(md("intro") + "\n\n**How to run:** put this notebook next to the unzipped `mimic-iv-clinical-database-demo-2.2` folder (or set `MIMIC_DIR` in the first code cell) and choose *Run All*. Explanations under each section are the same as in the Word report; the numbers quoted are from the run saved in this notebook."))
+nb.cells.append(new_markdown_cell(md("intro") + "\n\n**How to run:** put this notebook next to the unzipped `mimic-iv-clinical-database-demo-2.2` folder (or set `MIMIC_DIR` in the first code cell) and choose *Run All*. The numbers quoted in the explanations are from the run saved in this notebook."))
 sect_key = lambda t: t[:2] if t and re.match(r"[AB]\d", t) else None
 for t, code in cells:
+    if t is None:
+        code = re.sub(r'^"""(.|\n)*?"""', '"""Assignment 3: EDA + standards normalization on MIMIC-IV demo v2.2.\nCohort: all ICU stays. Labs: labevents inside the stay window. Vitals: chartevents."""', code, count=1)
     nb.cells.append(new_code_cell(code))
     if t and t.startswith("B1/B2"):
         for k in ("B1", "B2"):
@@ -98,6 +100,6 @@ for t, code in cells:
     elif sect_key(t):
         nb.cells.append(new_markdown_cell(md(sect_key(t))))
         if t.startswith("B3"): nb.cells.append(new_markdown_cell(md("B4")))
-nb.cells.append(new_markdown_cell("## Reproducibility\n\nNotebook: Run All. The `.py` script (`assignment3_mimic_eda.py`) does the same analysis from the command line; `build_report.py` builds the Word report."))
+nb.cells.append(new_markdown_cell("## Reproducibility\n\nRun All from top to bottom. Figures and tables are also saved to the `assignment3_outputs` folder."))
 nbformat.write(nb, "Assignment3_MIMIC_EDA.ipynb")
 print("cells:", len(nb.cells))

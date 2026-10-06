@@ -29,7 +29,8 @@
    "skew": 2.4301893508941554,
    "kurtosis": 11.608757447690438
   },
-  "log_Creatinine_skew": 0.09325593489174984
+  "log_Creatinine_skew": 0.09325593489174984,
+  "HR_pct_divisible_by_5": 21.4
  },
  "A2": {
   "missing_pct": {

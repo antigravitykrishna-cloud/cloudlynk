@@ -22,14 +22,14 @@ def TAB(df):
 
 c = R["cohort"]; a1 = R["A1"]; hr, cr = a1["HR"], a1["Creatinine"]
 d.add_heading("Assignment 3: EDA Report + Standards Normalization on MIMIC-IV", 0)
-P("Dataset: MIMIC-IV Clinical Database Demo v2.2 (100 patients). Code: assignment3_mimic_eda.py (all numbers/figures below are its output; log in assignment3_outputs/run_log.txt).")
+P("Dataset: MIMIC-IV Clinical Database Demo v2.2 (100 patients). All numbers and figures below are produced by the analysis code.")
 H("Cohort and method notes")
 P(f"Cohort: ALL ICU stays in icustays: {c['stays']} stays, {c['admissions']} hospital admissions, {c['patients']} patients. "
   "Vitals come from chartevents (HR 220045, RR 220210, SpO2 220277, NIBP systolic 220179, NIBP mean 220181, Temp °C 223762 and Temp °F 223761 converted to °C). "
   "Labs come from labevents for the stay's hadm_id with charttime between ICU intime and outtime (creatinine 50912, BUN 51006, potassium 50971, sodium 50983, bicarbonate 50882, glucose 50931, hemoglobin 51222, WBC 51301, platelets 51265, lactate 50813).")
 P("Two things to be upfront about:", True)
-P("1. The physiologic range table is the one on Slide 55 (provided by you as an image): HR 20–250 bpm (flag <20 or >250), SpO2 60–100 % (flag >100 or =0), temperature 30–43 °C (flag <30 or >43). For SpO2 the slide’s valid range (60–100) and its flag condition (>100 or =0) are not the same rule, so I report both counts and say which is which. The rules are in one dictionary (SLIDE) in the script.")
-P("2. The d_labitems.csv.gz in this demo has only the columns itemid, label, fluid, category. There is no loinc_code column, so the LOINC coverage answer in Part B is 0 % (see B3), not a number I could estimate from data.")
+P("1. The physiologic range table is the one from Slide 55 (Outlier Detection: Physiologically Impossible Values): HR 20–250 bpm (flag <20 or >250), SpO2 60–100 % (flag >100 or =0), temperature 30–43 °C (flag <30 or >43). For SpO2 the slide’s valid range (60–100) and its flag condition (>100 or =0) are not the same rule, so I report both counts and say which is which. The rules are in one dictionary (SLIDE) in the A3 code.")
+P("2. The d_labitems.csv.gz in this demo has only the columns itemid, label, fluid, category. There is no loinc_code column, so the LOINC coverage answer in Part B is 0 % (see B3).")
 
 H("Part A: Exploratory Data Analysis")
 H("A1. Distributions (10 pts): heart rate and creatinine", 2)
@@ -38,6 +38,8 @@ P(f"Heart rate (n={hr['n']:,} charted values): mean {hr['mean']:.1f}, median {hr
   "It is unimodal and close to symmetric with a slightly longer right tail; the only odd feature is a handful of zeros (artefact, see A3). "
   f"Creatinine (n={cr['n']} values): median {cr['median']:.1f} mg/dL (IQR {cr['q1']:.1f}–{cr['q3']:.1f}), max {cr['max']:.1f}, skew {cr['skew']:.2f}, excess kurtosis {cr['kurtosis']:.1f}. "
   f"It is strongly right-skewed with a heavy tail (patients in renal failure); after a log transform the skew falls to {a1['log_Creatinine_skew']:.2f}, so it is roughly log-normal and a log transform is appropriate before using it in a linear or distance-based model. "
+  "On the log scale the creatinine histogram has a main mode near 0.6 mg/dL and a weaker second hump around 1.5–2.7 mg/dL (a shoulder rather than a clean second peak). That pattern is consistent with a mixture of patients with normal kidney function and patients with impaired function, but I did not test this. The gaps on the left of the log histogram come from creatinine being reported to 0.1 mg/dL. "
+  f"The comb-like bars in the heart-rate histogram come from integer values meeting the bin width, not from round-number rounding: {a1['HR_pct_divisible_by_5']}% of heart rates are multiples of 5, against 20% expected with no digit preference. "
   "Note that the values are repeated measurements within stays, so they are not independent samples.")
 
 H("A2. Missingness (10 pts)", 2)
@@ -120,9 +122,9 @@ P(f"The 20 most frequent codes above map to {b2['top20_unique_families']} distin
 b3 = R["B3"]
 H("B3. LOINC coverage of lab itemids (5 pts)", 2)
 P(f"The dataset has {b3['n_itemids_in_labevents']} distinct itemids in labevents, all present in d_labitems. The d_labitems table in this download has the columns {', '.join(b3['d_labitems_columns'])}, with no loinc_code column. "
-  f"Therefore the fraction of itemids with a non-null LOINC code is {b3['n_with_loinc']}/{b3['n_itemids_in_labevents']} = {b3['fraction_with_loinc']*100:.0f}%. I did not find LOINC codes anywhere else in the download (a text search of the package for “loinc” returned nothing). "
-  "If your course materials show a loinc_code column, it comes from a different release of d_labitems; the script handles this: if the column exists it computes the true non-null fraction.")
-P(f"For scale: the itemids split into fluid Blood {b3['by_fluid']['Blood']}, Urine {b3['by_fluid']['Urine']} and others, and categories Hematology {b3['by_category']['Hematology']}, Chemistry {b3['by_category']['Chemistry']}, Blood Gas {b3['by_category']['Blood Gas']}. The top 25 itemids account for {b3['event_share_top']['25']*100:.0f}% of lab events and the top 50 for {b3['event_share_top']['50']*100:.0f}%, so manual curation of the head is cheap and covers most of the data. {b3['duplicate_labels_across_itemids']} lower-cased labels are shared by more than one itemid (usually the same test with a different fluid or analyzer).")
+  f"Therefore the fraction of itemids with a non-null LOINC code is {b3['n_with_loinc']}/{b3['n_itemids_in_labevents']} = {b3['fraction_with_loinc']*100:.0f}%. I found no LOINC codes anywhere else in the download (a text search of the package for “loinc” returned nothing). "
+  "This is expected: according to the MIMIC-IV change log, the loinc_code column was removed from d_labitems in MIMIC-IV v2.0 because the mapped values contained errors, and the demo v2.2 follows that schema. Earlier releases carried it. The analysis code still checks for the column and would compute the true non-null fraction if it were present.")
+P(f"For scale: the itemids split into fluid Blood {b3['by_fluid']['Blood']}, Urine {b3['by_fluid']['Urine']} and others, and categories Hematology {b3['by_category']['Hematology']}, Chemistry {b3['by_category']['Chemistry']}, Blood Gas {b3['by_category']['Blood Gas']}. The top 25 itemids account for {b3['event_share_top']['25']*100:.0f}% of lab events and the top 50 for {b3['event_share_top']['50']*100:.0f}%, so manual curation of the head is cheap and covers most of the data. {b3['duplicate_labels_across_itemids']} lower-cased labels are shared by more than one itemid, so the label text alone is not a unique key (fluid has to be considered too).")
 
 H("B4. Fallback strategy for itemids without a LOINC code (10 pts)", 2)
 for t in [
@@ -135,5 +137,5 @@ for t in [
     P(t)
 
 H("Reproducibility")
-P("Run: python assignment3_mimic_eda.py <path to mimic-iv-clinical-database-demo-2.2> (writes assignment3_outputs), then python build_report.py. Requires pandas, numpy, scipy, matplotlib, seaborn, python-docx. All figures in this report are generated by that script.")
+P("Run: python assignment3_mimic_eda.py <path to mimic-iv-clinical-database-demo-2.2>. Requires pandas, numpy, scipy, matplotlib, seaborn. All figures in this report are generated by that script.")
 d.save("Assignment3_Report.docx")

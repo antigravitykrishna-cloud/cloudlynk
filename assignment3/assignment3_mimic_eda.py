@@ -126,7 +126,12 @@ def desc(s):
                 max=float(s.max()), skew=float(stats.skew(s)), kurtosis=float(stats.kurtosis(s)))
 R["A1"] = {"HR": desc(hr), "Creatinine": desc(cr), "log_Creatinine_skew": float(stats.skew(np.log(cr)))}
 pd.DataFrame({"HR": R["A1"]["HR"], "Creatinine": R["A1"]["Creatinine"]}).to_csv(f"{OUT}/A1_summary.csv")
-print("A1", json.dumps(R["A1"], indent=1))
+print(pd.DataFrame({"HR": R["A1"]["HR"], "Creatinine": R["A1"]["Creatinine"]}).round(2).to_string())
+print("skew of log(creatinine):", round(R["A1"]["log_Creatinine_skew"], 2))
+# HR digit preference check (are values piled up on round numbers?)
+_h = hr.round().astype(int)
+R["A1"]["HR_pct_divisible_by_5"] = round(float(100 * (_h % 5 == 0).mean()), 1)
+print("HR values divisible by 5: %.1f%% (20%% expected if no digit preference)" % R["A1"]["HR_pct_divisible_by_5"])
 
 # ----------------------------------------------------------------------------
 # A2. Missingness (stay x variable "any measurement during stay")
@@ -246,7 +251,8 @@ R["A4"] = dict(subject_id=int(sid), hadm_id=int(hid), n_draws=nd,
                pct_draws_3_to_7am=round(float(100 * hrs.between(3, 6).mean()), 1),
                pct_this_pt_3_to_7am=round(float(100 * p.charttime.dt.hour.between(3, 6).mean()), 1),
                values=[round(float(x), 2) for x in p.valuenum], times=[str(t) for t in p.charttime])
-print("A4", {k: x for k, x in R["A4"].items() if k not in ("values", "times")}); print(list(zip(R["A4"]["times"], R["A4"]["values"])))
+print(pd.Series({k: x for k, x in R["A4"].items() if k not in ("values", "times")}).to_string())
+print(pd.DataFrame({"charttime": R["A4"]["times"], "creatinine": R["A4"]["values"]}).head(12).to_string(index=False), "\n... (", nd, "draws in total)")
 
 # ----------------------------------------------------------------------------
 # A5. Correlation (per-stay means of cleaned values)
@@ -289,7 +295,8 @@ R["A6"] = dict(
     patient_level={s: dict(n=int(len(x)), median=round(float(x.median()), 2), mean=round(float(x.mean()), 2)) for s, x in gp.items()},
     mwu_p_value_level=float(stats.mannwhitneyu(g["F"], g["M"]).pvalue),
     mwu_p_patient_level=float(stats.mannwhitneyu(gp["F"], gp["M"]).pvalue))
-print("A6", json.dumps(R["A6"], indent=1))
+print(pd.concat({"all measurements": pd.DataFrame(R["A6"]["value_level"]).T, "per-patient mean": pd.DataFrame(R["A6"]["patient_level"]).T}).rename_axis(["level", "gender"]).to_string())
+print("Mann-Whitney p (measurements): %.2e | p (per patient): %.2e" % (R["A6"]["mwu_p_value_level"], R["A6"]["mwu_p_patient_level"]))
 
 # ----------------------------------------------------------------------------
 # A7. Label distribution
@@ -305,8 +312,9 @@ ax.set_ylim(0, vc.max() * 1.2); ax.set_title("hospital_expire_flag (ICU-cohort a
 save("A7_label.png")
 R["A7"] = dict(cohort_admissions={int(k): int(x) for k, x in vc.items()}, cohort_stays={int(k): int(x) for k, x in vs.items()},
                all_admissions={int(k): int(x) for k, x in va.items()},
-               death_rate_pct=round(100 * vc.get(1, 0) / vc.sum(), 1), imbalance=round(vc.max() / vc.min(), 2))
-print("A7", R["A7"])
+               death_rate_pct=float(round(100 * vc.get(1, 0) / vc.sum(), 1)), imbalance=float(round(vc.max() / vc.min(), 2)))
+print("hospital_expire_flag, ICU-cohort admissions:", R["A7"]["cohort_admissions"], "-> %.1f%% died, imbalance %.2f : 1" % (R["A7"]["death_rate_pct"], R["A7"]["imbalance"]))
+print("ICU stays:", R["A7"]["cohort_stays"], "| all admissions in demo:", R["A7"]["all_admissions"])
 
 # ----------------------------------------------------------------------------
 # B1/B2. ICD
@@ -322,7 +330,7 @@ R["B1"] = dict(n_admissions=int(n_adm), n_rows=len(dx), unique_raw_codes=int(per
                unique_raw_codes_ignoring_version=int(dx.icd_code.nunique()),
                threshold_admissions=int(thr), codes_ge_1pct=int(common.size),
                icd9_rows=int((dx.icd_version == 9).sum()), icd10_rows=int((dx.icd_version == 10).sum()),
-               max_prevalence_pct=round(100 * per_code.max() / n_adm, 1),
+               max_prevalence_pct=float(round(100 * per_code.max() / n_adm, 1)),
                all_codes_in_dictionary=bool(dx.merge(ddx, on=["icd_code", "icd_version"], how="left").long_title.notna().all()))
 top = common.sort_values(ascending=False).head(15).rename("n_adm").reset_index()
 top[["v", "c"]] = top.code.str.split(":", expand=True)
@@ -335,7 +343,7 @@ ax.hist(per_code.values, bins=np.arange(0.5, per_code.max() + 1.5), color="C0");
 ax.axvline(thr - 0.5, color="r", ls="--", label=f">=1% of admissions ({thr}+ admissions)")
 ax.set_xlabel("# admissions containing the code"); ax.set_ylabel("# unique codes (log)"); ax.legend(); ax.set_title("Long tail of raw ICD codes")
 save("B1_long_tail.png")
-print("B1", {k: x for k, x in R["B1"].items() if k != "top"}); print(top[["code", "n_adm", "pct", "long_title"]].to_string())
+print(pd.Series({k: x for k, x in R["B1"].items() if k != "top"}).to_string()); print(top[["code", "n_adm", "pct", "long_title"]].to_string())
 
 # roll-up to 3-character family: first 3 chars of the code, per ICD version
 dx["family"] = dx.icd_version.astype(str) + ":" + dx.icd_code.str[:3]
@@ -350,7 +358,7 @@ R["B2"] = dict(unique_raw=int(per_code.size), unique_families=int(fam.size),
                families_ge_1pct=int((fam >= thr).sum()),
                families_with_multiple_raw=int(len(multi)), example=ex.head(8).values.tolist(),
                e_v_code_note=int(dx.icd_code.str.match(r"^[EV]").sum()))
-print("B2", {k: x for k, x in R["B2"].items()})
+print(pd.Series({k: x for k, x in R["B2"].items() if k not in ("example", "e_v_code_note")}).to_string())
 print(ex.to_string())
 
 # ----------------------------------------------------------------------------
@@ -375,7 +383,10 @@ cs = lab_ct.cumsum() / lab_ct.sum()
 R["B3"]["event_share_top"] = {n: round(float(cs.iloc[n - 1]), 3) for n in (10, 25, 50, 100)}
 dup = dl.assign(l=dl.label.str.lower().str.strip()).groupby("l").itemid.nunique(); dup = dup[dup > 1]
 R["B3"]["duplicate_labels_across_itemids"] = int(len(dup))
-print("B3", json.dumps(R["B3"], indent=1))
+print("d_labitems columns:", R["B3"]["d_labitems_columns"])
+print("itemids in labevents: %d | with a loinc_code: %d | fraction: %.1f%%" % (R["B3"]["n_itemids_in_labevents"], R["B3"]["n_with_loinc"], 100 * R["B3"]["fraction_with_loinc"]))
+print("share of lab events covered by top-N itemids:", R["B3"]["event_share_top"])
+print(pd.DataFrame(R["B3"]["top10_items"], columns=["itemid", "label", "fluid", "n_events"]).to_string(index=False))
 
 json.dump(R, open(f"{OUT}/results.json", "w"), indent=1, default=str)
 print("done")
