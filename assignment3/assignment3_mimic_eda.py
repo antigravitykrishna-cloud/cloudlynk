@@ -1,7 +1,7 @@
 """
 Assignment 3: EDA Report + Standards Normalization on MIMIC-IV (demo v2.2)
 
-Usage:  python assignment3_mimic_eda.py [MIMIC_DEMO_DIR] [OUT_DIR]
+Usage:  python assignment3_mimic_eda.py [MIMIC_DEMO_DIR] [OUT_DIR]   (or set MIMIC_DIR below; also runs in Jupyter)
 Outputs: figures (PNG), tables (CSV) and results.json in OUT_DIR; a printed log.
 Cohort : ALL ICU stays in icu/icustays.csv.gz (140 stays, 128 admissions, 100 patients).
 Labs   : labevents rows for the stay's hadm_id with charttime inside [intime, outtime].
@@ -11,20 +11,60 @@ import sys, os, json, math
 import numpy as np
 import pandas as pd
 import matplotlib
-matplotlib.use("Agg")
+if "ipykernel" not in sys.modules: matplotlib.use("Agg")   # no GUI needed when run as a script
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy import stats
 
-ROOT = sys.argv[1] if len(sys.argv) > 1 else "/tmp/mimic"
-OUT = sys.argv[2] if len(sys.argv) > 2 else "outputs"
+# ---- Paths --------------------------------------------------------------
+# Set MIMIC_DIR to the folder that contains hosp/ and icu/ (the unzipped
+# mimic-iv-clinical-database-demo-2.2 folder). Leave None to auto-detect.
+MIMIC_DIR = None
+OUT_DIR = None            # default: "assignment3_outputs" next to where you run it
+
+IN_NOTEBOOK = "ipykernel" in sys.modules
+_args = [] if IN_NOTEBOOK else sys.argv[1:]     # notebooks put kernel args in sys.argv
+if len(_args) > 0: MIMIC_DIR = _args[0]
+if len(_args) > 1: OUT_DIR = _args[1]
+
+def _find_root():
+    here = [os.getcwd()]
+    try: here.append(os.path.dirname(os.path.abspath(__file__)))
+    except NameError: pass
+    home = os.path.expanduser("~")
+    bases = here + [os.path.join(home, d) for d in ("Downloads", "Desktop", "Documents")]
+    for b in bases:
+        for cand in (b, os.path.join(b, "mimic-iv-clinical-database-demo-2.2"),
+                     os.path.join(b, "mimic-iv-clinical-database-demo-2.2_1")):
+            if os.path.exists(os.path.join(cand, "hosp", "patients.csv.gz")): return cand
+        if os.path.isdir(b):
+            for n in os.listdir(b):
+                c = os.path.join(b, n)
+                if n.lower().startswith("mimic-iv") and os.path.exists(os.path.join(c, "hosp", "patients.csv.gz")):
+                    return c
+                # zip extracted into a folder that wraps another folder
+                if os.path.isdir(c) and n.lower().startswith("mimic-iv"):
+                    for m in os.listdir(c):
+                        cc = os.path.join(c, m)
+                        if os.path.exists(os.path.join(cc, "hosp", "patients.csv.gz")): return cc
+    return None
+
+ROOT = MIMIC_DIR or _find_root()
+if not ROOT or not os.path.exists(os.path.join(ROOT, "hosp", "patients.csv.gz")):
+    raise SystemExit("Cannot find MIMIC-IV demo data. Unzip the download and set MIMIC_DIR at the top of "
+                     "this file to the folder that contains the 'hosp' and 'icu' sub-folders, e.g. "
+                     "MIMIC_DIR = r'C:\\Users\\you\\Downloads\\mimic-iv-clinical-database-demo-2.2'")
+OUT = OUT_DIR or os.path.join(os.getcwd(), "assignment3_outputs")
 os.makedirs(OUT, exist_ok=True)
+print("Data folder:", ROOT, "\nOutput folder:", OUT)
 R = {}                                    # results collected for the report
 sns.set_theme(style="whitegrid")
 
 def rd(p, **kw): return pd.read_csv(os.path.join(ROOT, p), **kw)
 def save(name):
-    plt.tight_layout(); plt.savefig(os.path.join(OUT, name), dpi=130); plt.close()
+    plt.tight_layout(); plt.savefig(os.path.join(OUT, name), dpi=130)
+    if IN_NOTEBOOK: plt.show()          # display inline for screenshots
+    plt.close()
 
 # ----------------------------------------------------------------------------
 # Load

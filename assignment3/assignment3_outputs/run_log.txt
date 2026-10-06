@@ -1,3 +1,5 @@
+Data folder: /tmp/mimic 
+Output folder: assignment3_outputs
 COHORT {'stays': 140, 'admissions': 128, 'patients': 100}
 vital rows 61825 | lab rows in ICU window 8707
 A1 {
