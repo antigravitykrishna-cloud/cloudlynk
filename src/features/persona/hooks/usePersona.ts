@@ -25,11 +25,12 @@ export function usePersona() {
       }
 
       try {
+        // Entire initialization temporarily disabled to debug error
         // Check for compromise before initializing (disabled for now - causing errors)
         // await wipeOnCompromise();
 
         // Initialize persona detection
-        await personaStore.initializePersona(user.id);
+        // await personaStore.initializePersona(user.id);
 
         // Initialize notifications
         // Temporarily disabled to debug
