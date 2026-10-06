@@ -32,7 +32,8 @@ export function usePersona() {
         await personaStore.initializePersona(user.id);
 
         // Initialize notifications
-        await NotificationManager.initialize();
+        // Temporarily disabled to debug
+        // await NotificationManager.initialize();
 
         // Record this device for the admin approvals view; never blocks sign-in.
         // Temporarily disabled to debug
