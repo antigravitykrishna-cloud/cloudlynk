@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -11,31 +11,6 @@ export type Database = {
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.5"
-  }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
   }
   public: {
     Tables: {
@@ -1315,6 +1290,57 @@ export type Database = {
         }
         Relationships: []
       }
+      subscriptions: {
+        Row: {
+          amount_paid: number | null
+          auto_renew: boolean | null
+          created_at: string | null
+          currency: string | null
+          end_date: string
+          id: string
+          payment_method: string | null
+          plan_type: string
+          razorpay_order_id: string | null
+          razorpay_subscription_id: string | null
+          start_date: string
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount_paid?: number | null
+          auto_renew?: boolean | null
+          created_at?: string | null
+          currency?: string | null
+          end_date: string
+          id?: string
+          payment_method?: string | null
+          plan_type: string
+          razorpay_order_id?: string | null
+          razorpay_subscription_id?: string | null
+          start_date?: string
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount_paid?: number | null
+          auto_renew?: boolean | null
+          created_at?: string | null
+          currency?: string | null
+          end_date?: string
+          id?: string
+          payment_method?: string | null
+          plan_type?: string
+          razorpay_order_id?: string | null
+          razorpay_subscription_id?: string | null
+          start_date?: string
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       subtitles: {
         Row: {
           created_at: string | null
@@ -2281,9 +2307,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       install_source_type: ["playstore", "ads", "referral", "unknown"],
@@ -2291,3 +2314,4 @@ export const Constants = {
     },
   },
 } as const
+
