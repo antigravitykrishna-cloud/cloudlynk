@@ -34,7 +34,10 @@
       "permissions": [
         "android.permission.INTERNET",
         "android.permission.ACCESS_NETWORK_STATE",
-        "com.android.vending.BILLING"
+        "com.android.vending.BILLING",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE"
       ],
       "intentFilters": [
         {
@@ -69,6 +72,15 @@
       "expo-router",
       "expo-screen-orientation",
       "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#0B1220",
+          "sounds": [],
+          "mode": "production"
+        }
+      ],
       [
         "expo-image-picker",
         {
