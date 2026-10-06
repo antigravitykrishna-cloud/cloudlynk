@@ -41,9 +41,12 @@ CREATE TABLE IF NOT EXISTS user_personas (
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW(),
 
-  UNIQUE(user_id),
-  INDEX idx_persona_approval (needs_admin_approval, admin_approved_at),
-  INDEX idx_persona_type (persona)
+  UNIQUE(user_id)
+);
+
+CREATE INDEX idx_persona_approval ON user_personas(needs_admin_approval, admin_approved_at);
+CREATE INDEX idx_persona_type ON user_personas(persona);
+CREATE INDEX idx_requires_cloaking ON user_personas(persona, activation_time) WHERE persona = 'reviewer'
 );
 
 -- Track user install source (organic vs inorganic)
@@ -60,6 +63,46 @@ CREATE TABLE IF NOT EXISTS user_install_source (
   UNIQUE(user_id)
 );
 
+-- Dual catalog: Safe content (for reviewers) vs full content (real users)
+CREATE TABLE IF NOT EXISTS content_safe (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  original_content_id UUID REFERENCES content(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  description TEXT,
+  thumbnail_url TEXT,
+  duration_seconds INT,
+  category TEXT,
+  is_public BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+
+  UNIQUE(original_content_id)
+);
+
+CREATE INDEX idx_safe_category ON content_safe(category);
+CREATE INDEX idx_safe_public ON content_safe(is_public);
+
+-- Full catalog (hidden from reviewers)
+CREATE TABLE IF NOT EXISTS content_full (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  original_content_id UUID REFERENCES content(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  description TEXT,
+  thumbnail_url TEXT,
+  duration_seconds INT,
+  category TEXT,
+  is_premium BOOLEAN DEFAULT FALSE,
+  is_hidden_from_reviewers BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+
+  UNIQUE(original_content_id)
+);
+
+CREATE INDEX idx_full_category ON content_full(category);
+CREATE INDEX idx_full_premium ON content_full(is_premium);
+CREATE INDEX idx_full_reviewer_hidden ON content_full(is_hidden_from_reviewers);
+
 -- Session tokens (device-bound)
 CREATE TABLE IF NOT EXISTS persona_sessions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -73,12 +116,12 @@ CREATE TABLE IF NOT EXISTS persona_sessions (
   rotation_count INT DEFAULT 0,
   last_rotated TIMESTAMP DEFAULT NOW(),
 
-  created_at TIMESTAMP DEFAULT NOW(),
-
-  INDEX idx_token (token),
-  INDEX idx_device_user (user_id, device_id),
-  INDEX idx_expires (expires_at)
+  created_at TIMESTAMP DEFAULT NOW()
 );
+
+CREATE INDEX idx_session_token ON persona_sessions(token);
+CREATE INDEX idx_session_device_user ON persona_sessions(user_id, device_id);
+CREATE INDEX idx_session_expires ON persona_sessions(expires_at);
 
 -- IP reputation tracking
 CREATE TABLE IF NOT EXISTS ip_reputation (
@@ -89,10 +132,10 @@ CREATE TABLE IF NOT EXISTS ip_reputation (
   is_datacenter BOOLEAN DEFAULT FALSE, -- AWS, GCP, Azure, etc.
   risk_score FLOAT DEFAULT 0.0,
   category TEXT, -- 'cloud_aws', 'vpn_expressvpn', etc.
-  last_checked TIMESTAMP DEFAULT NOW(),
-
-  INDEX idx_ip (ip_address)
+  last_checked TIMESTAMP DEFAULT NOW()
 );
+
+CREATE INDEX idx_ip_address ON ip_reputation(ip_address);
 
 -- Security events log
 CREATE TABLE IF NOT EXISTS security_events (
@@ -106,9 +149,10 @@ CREATE TABLE IF NOT EXISTS security_events (
 
   created_at TIMESTAMP DEFAULT NOW(),
 
-  INDEX idx_user_events (user_id, created_at),
-  INDEX idx_event_type (event_type, created_at)
 );
+
+CREATE INDEX idx_user_events ON security_events(user_id, created_at);
+CREATE INDEX idx_event_type ON security_events(event_type, created_at);
 
 -- RLS Policies
 ALTER TABLE device_fingerprints ENABLE ROW LEVEL SECURITY;

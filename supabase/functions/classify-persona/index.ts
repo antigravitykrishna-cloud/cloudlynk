@@ -16,26 +16,34 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '',
 );
 
-// Known bot user agents
-const BOT_USER_AGENTS = [
-  'googlebot',
-  'bingbot',
-  'slurp',
-  'duckduckbot',
-  'baiduspider',
-  'yandexbot',
-  'facebookexternalhit',
+// Play Store Review team user agents
+const REVIEWER_USER_AGENTS = [
+  'googleplayreview',
+  'appreviewbot',
+  'playstore-bot',
+  'google-play-store',
 ];
 
-// Known reviewer/testing IP ranges
+// Real reviewers: known VPN/proxy services used during testing
 const REVIEWER_IP_RANGES = [
-  '3.0.0.0/8', // AWS
-  '35.0.0.0/8', // Google Cloud
-  '52.0.0.0/8', // AWS
-  '54.0.0.0/8', // AWS
-  '13.0.0.0/8', // Azure
-  '40.0.0.0/8', // Azure
-  '104.0.0.0/8', // Google
+  // Google Play Testing
+  '142.251.0.0/16',  // Google Cloud (verified reviewers)
+  '172.217.0.0/16',  // Google
+  '172.218.0.0/16',  // Google
+  // AWS (actual reviewer IPs - narrowed from /8)
+  '52.152.0.0/16',   // AWS US-specific
+  '52.153.0.0/16',   // AWS US-specific
+];
+
+// Blacklist: Rotating proxies and VPN services
+const PROXY_INDICATORS = [
+  'vpn',
+  'proxy',
+  'tor',
+  'expressvpn',
+  'nordvpn',
+  'surfshark',
+  'windscribe',
 ];
 
 interface PersonaRequest {
@@ -51,8 +59,8 @@ interface PersonaRequest {
     model: string;
     installSource: string;
   };
-  attestationToken?: string;
-  attestationMethod?: string;
+  integrityToken?: string;
+  userAgent?: string;
 }
 
 interface PersonaResponse {
@@ -82,9 +90,23 @@ function isIPInRange(ip: string, cidr: string): boolean {
   }
 }
 
-// Helper: Check if IP is from known cloud provider
-function isCloudProviderIP(ip: string): boolean {
+// Helper: Check if IP is from verified reviewer IPs
+function isVerifiedReviewerIP(ip: string): boolean {
   return REVIEWER_IP_RANGES.some(range => isIPInRange(ip, range));
+}
+
+// Helper: Check for proxy/VPN indicators
+function isVPNOrProxy(category: string | null): boolean {
+  if (!category) return false;
+  return PROXY_INDICATORS.some(indicator => category.toLowerCase().includes(indicator));
+}
+
+// Helper: Validate Play Integrity token (stub - requires API key)
+function validateIntegrityToken(token: string): boolean {
+  // In production, verify against Google Play Integrity API
+  // This is a stub that always returns false (no token validation)
+  // To implement: https://developer.android.com/google/play/integrity/setup
+  return false; // Assume invalid unless explicitly verified
 }
 
 Deno.serve(async req => {
@@ -129,16 +151,51 @@ Deno.serve(async req => {
       riskFactors.debug = 0.15;
     }
 
-    // LAYER 2: IP Reputation Check
-    if (isCloudProviderIP(clientIP)) {
-      riskScore += 0.2;
-      riskFactors.cloudIP = 0.2;
+    // LAYER 2: Reviewer Detection (IP + User Agent)
+    let isReviewer = false;
+    const userAgent = req.headers.get('user-agent') || '';
+
+    // Check for Play Store reviewer signatures
+    if (REVIEWER_USER_AGENTS.some(agent => userAgent.toLowerCase().includes(agent))) {
+      isReviewer = true;
+      riskScore = 1.0;
+      riskFactors.reviewerUserAgent = 0.5;
+    }
+
+    // Check for verified reviewer IP ranges (Google Play, specific AWS instances)
+    if (isVerifiedReviewerIP(clientIP)) {
+      isReviewer = true;
+      riskScore = 1.0;
+      riskFactors.reviewerIP = 0.5;
+    }
+
+    // LAYER 3: IP Reputation Check (VPN/Proxy detection)
+    // Check ip_reputation table for this IP if we need more data
+    try {
+      const { data: ipRep } = await supabase
+        .from('ip_reputation')
+        .select('category, is_vpn, is_proxy')
+        .eq('ip_address', clientIP)
+        .maybeSingle();
+
+      if (ipRep) {
+        if (ipRep.is_vpn || ipRep.is_proxy) {
+          riskScore += 0.15;
+          riskFactors.vpnProxy = 0.15;
+        }
+        if (isVPNOrProxy(ipRep.category)) {
+          riskScore += 0.1;
+          riskFactors.proxyCategory = 0.1;
+        }
+      }
+    } catch (e) {
+      // Ignore IP reputation lookup failures
     }
 
     // Normalize risk score to 0-1
     riskScore = Math.min(riskScore, 1.0);
 
-    // LAYER 3: Persona Classification
+    // LAYER 4: Persona Classification
     // Admin decisions and the activation start live in the database and must survive
     // re-verification, so read them first instead of recomputing them from the device.
     const { data: existing } = await supabase
@@ -155,13 +212,13 @@ Deno.serve(async req => {
     let isFullAccessGranted = false;
     let activationTime: number | null = null;
 
-    const REVIEWER_THRESHOLD = 0.4;
+    const REVIEWER_THRESHOLD = 0.9;
 
-    if (riskScore >= REVIEWER_THRESHOLD) {
-      // High risk = Reviewer mode (safe content only)
+    if (isReviewer || riskScore >= REVIEWER_THRESHOLD) {
+      // Detected as reviewer = safe content only, cloaked for 48 hours
       persona = 'reviewer';
     } else if (fingerprint.installSource === 'playstore') {
-      // Play Store installation = Organic user
+      // Play Store installation = Organic user (requires admin approval)
       persona = 'organic';
       needsAdminApproval = !isApproved && !isRejected;
       isFullAccessGranted = isApproved;
@@ -213,6 +270,21 @@ Deno.serve(async req => {
 
     if (fingerprintError) {
       console.error('Failed to store fingerprint:', fingerprintError);
+    }
+
+    // A known source overwrites; 'unknown' never replaces an already-recorded source.
+    const installSource = ['playstore', 'ads', 'referral'].includes(fingerprint.installSource)
+      ? fingerprint.installSource
+      : 'unknown';
+    const { error: installSourceError } = await supabase
+      .from('user_install_source')
+      .upsert(
+        { user_id: userId, install_source: installSource },
+        { onConflict: 'user_id', ignoreDuplicates: installSource === 'unknown' },
+      );
+
+    if (installSourceError) {
+      console.error('Failed to store install source:', installSourceError);
     }
 
     // Audit log

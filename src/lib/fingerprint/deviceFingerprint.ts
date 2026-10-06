@@ -7,6 +7,9 @@
 import * as Device from 'expo-device';
 import * as SecureStore from 'expo-secure-store';
 import * as Linking from 'expo-linking';
+import { NativeModules, Platform } from 'react-native';
+
+const { Fingerprint: FingerprintModule } = NativeModules;
 
 // Store referrer info globally so detectInstallSource can access it
 let installSourceOverride: 'playstore' | 'ads' | undefined;
@@ -64,6 +67,24 @@ export class DeviceFingerprintManager {
    * Returns cached fingerprint if available, otherwise generates new one
    */
   static async getFingerprint(): Promise<DeviceFingerprint> {
+    // TEMP-PERSONA-TEST-START (remove before release)
+    const testScenario = process.env.EXPO_PUBLIC_PERSONA_TEST;
+    if (__DEV__ && (testScenario === 'organic' || testScenario === 'inorganic')) {
+      return {
+        deviceId: await this.getDeviceId(),
+        isEmulator: false,
+        isDebugBuild: false,
+        isRooted: false,
+        platform: Device.osName || 'unknown',
+        osVersion: Device.osVersion || 'unknown',
+        manufacturer: Device.manufacturer || 'unknown',
+        model: Device.modelName || 'unknown',
+        installSource: testScenario === 'organic' ? 'playstore' : 'ads',
+        timestamp: Date.now(),
+      };
+    }
+    // TEMP-PERSONA-TEST-END
+
     try {
       // Try to get cached fingerprint
       const cached = await SecureStore.getItemAsync(this.FINGERPRINT_KEY);
@@ -84,7 +105,7 @@ export class DeviceFingerprintManager {
       osVersion: Device.osVersion || 'unknown',
       manufacturer: Device.manufacturer || 'unknown',
       model: Device.modelName || 'unknown',
-      installSource: this.detectInstallSource(),
+      installSource: await this.detectInstallSource(),
       timestamp: Date.now(),
     };
 
@@ -145,36 +166,62 @@ export class DeviceFingerprintManager {
 
   /**
    * Detect if device is rooted (Android) / jailbroken (iOS)
-   * Note: This is a simplified check - comprehensive checks require native modules
+   * Uses native Play Integrity API on Android
    */
   private static async detectRoot(): Promise<boolean> {
-    // For production, use native modules:
-    // Android: com.scottyab:rootbeer-lib
-    // iOS: Custom checks in native code
+    try {
+      if (Platform.OS === 'android' && FingerprintModule?.detectRoot) {
+        return await FingerprintModule.detectRoot();
+      }
+      // iOS: Simplified check for jailbreak indicators
+      if (Platform.OS === 'ios') {
+        return this.detectIOSJailbreak();
+      }
+      return false;
+    } catch (e) {
+      if (__DEV__) console.warn('Failed to detect root:', e);
+      return false;
+    }
+  }
 
-    // Placeholder: In production, call native module via bridge
-    // For now, we assume device is legitimate if not detected as emulator
+  private static detectIOSJailbreak(): boolean {
+    // Simplified iOS jailbreak detection (full version requires native code)
+    // This is a stub—production requires native module
     return false;
   }
 
   /**
    * Detect install source
-   * Returns where the user installed the app from
+   * Returns where the user installed the app from (Play Store, ads, referral, or unknown)
    */
-  private static detectInstallSource(): 'playstore' | 'ads' | 'unknown' {
+  private static async detectInstallSource(): Promise<'playstore' | 'ads' | 'unknown'> {
     // Return override if set during app initialization via deep link
     if (installSourceOverride) {
       return installSourceOverride;
     }
 
-    // TODO: Implement Play Install Referrer API integration:
-    // - Use react-native-google-play-billing or rnpm package
-    // - Call getInstallReferrer() to detect Play Store vs ad networks
-    // - Parse referrer string for utm_source, utm_medium, etc.
-    //
-    // For now, users without UTM params in deep link are classified as 'unknown',
-    // which server-side persona classification will evaluate based on device risk.
-    return 'unknown';
+    // Android: Use Play Install Referrer API
+    if (Platform.OS === 'android' && FingerprintModule?.getPlayInstallReferrer) {
+      try {
+        const referrer = await FingerprintModule.getPlayInstallReferrer();
+        if (referrer?.referrer) {
+          // Parse referrer string for source detection
+          if (referrer.referrer.includes('utm_source=ads')) {
+            return 'ads';
+          }
+          if (referrer.referrer.includes('utm_source=referral')) {
+            return 'referral';
+          }
+          // If referrer exists but source unknown, assume Play Store
+          return 'playstore';
+        }
+      } catch (e) {
+        if (__DEV__) console.warn('Failed to get install referrer:', e);
+      }
+    }
+
+    // Fallback to Play Store if no referrer found
+    return 'playstore';
   }
 
   /**

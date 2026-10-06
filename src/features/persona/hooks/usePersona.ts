@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { usePersonaStore } from '@/lib/stores/personaStore';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { NotificationManager } from '@/features/persona/api/NotificationManager';
+import { recordCurrentDevice } from '@/features/persona/api/deviceApi';
 
 export function usePersona() {
   const { user } = useAuth();
@@ -28,6 +29,13 @@ export function usePersona() {
 
         // Initialize notifications
         await NotificationManager.initialize();
+
+        // Record this device for the admin approvals view; never blocks sign-in.
+        try {
+          await recordCurrentDevice();
+        } catch (deviceError) {
+          if (__DEV__) console.warn('Failed to record device:', deviceError);
+        }
 
         setIsInitialized(true);
       } catch (error) {

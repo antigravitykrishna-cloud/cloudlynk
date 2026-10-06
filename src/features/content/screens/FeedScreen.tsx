@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { ScrollView, StyleSheet, View, Text } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,7 +11,9 @@ import { Colors, Spacing } from '@/theme';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { postsApi } from '@/features/content/api/postsApi';
 import { FeedRow } from '@/features/content/components/FeedRow';
+import { SafeContentView } from '@/features/content/components/SafeContentView';
 import { usePersonaStore } from '@/lib/stores/personaStore';
+import { CloakingEngine } from '@/lib/cloaking/cloakingEngine';
 import type { ListedPost } from '@/features/content/model';
 
 // The newest posts from the channels you joined. A premium title shows a lock and opens the plans;
@@ -24,9 +26,19 @@ export default function FeedScreen() {
   const [posts, setPosts] = useState<ListedPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
+  const [isCloaked, setIsCloaked] = useState(false);
 
   // Check persona access state
-  const { isRejected, needsAdminApproval } = usePersonaStore();
+  const { isRejected, needsAdminApproval, persona, riskScore } = usePersonaStore();
+
+  // Check if we should show decoy (cloaked) UI
+  useEffect(() => {
+    const checkCloaking = async () => {
+      const shouldCloak = await CloakingEngine.shouldCloak(persona || 'inorganic', riskScore || 0);
+      setIsCloaked(shouldCloak);
+    };
+    checkCloaking();
+  }, [persona, riskScore]);
 
   const load = useCallback(async () => {
     try {
@@ -55,6 +67,11 @@ export default function FeedScreen() {
     if (isLocked(post)) router.push('/premium');
     else router.push({ pathname: '/(tabs)/channels/[id]', params: { id: post.channel_id } });
   };
+
+  // Show decoy UI if cloaked
+  if (isCloaked) {
+    return <SafeContentView />;
+  }
 
   // Show rejection message if user is rejected
   if (isRejected) {

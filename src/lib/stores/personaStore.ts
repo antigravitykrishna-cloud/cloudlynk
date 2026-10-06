@@ -9,6 +9,7 @@ import { hasFullAccess, isActivated as isActivatedFn } from '@/features/persona/
 import { AuthManager, PersonaState } from '@/features/persona/api/AuthManager';
 import { isPlanActive } from '@/features/premium/planStatus';
 import { profileStore } from '@/features/auth/profileStore';
+import { CloakingEngine } from '@/lib/cloaking/cloakingEngine';
 
 export interface PersonaStore {
   // Persona state
@@ -25,6 +26,9 @@ export interface PersonaStore {
   isRejected: boolean;
   isActivated: boolean;
   activationProgress: number; // 0-1
+
+  // Derived fields
+  riskScore: number;
 
   // Actions
   initializePersona: (userId: string) => Promise<void>;
@@ -44,6 +48,7 @@ export const usePersonaStore = create<PersonaStore>((set, get) => ({
   isRejected: false,
   isActivated: false,
   activationProgress: 0,
+  riskScore: 0,
 
   // Initialize persona on app start
   initializePersona: async (userId: string) => {
@@ -70,6 +75,11 @@ export const usePersonaStore = create<PersonaStore>((set, get) => ({
         activationProgress = 1;
       }
 
+      // Initialize cloaking if reviewer
+      if (persona?.persona === 'reviewer') {
+        await CloakingEngine.initialize(true);
+      }
+
       set({
         persona,
         isSubscribed,
@@ -78,6 +88,7 @@ export const usePersonaStore = create<PersonaStore>((set, get) => ({
         isRejected: persona?.isRejected || false,
         isActivated: isActivated || false,
         activationProgress,
+        riskScore: persona?.riskScore || 0,
         isLoading: false,
       });
     } catch (error) {
