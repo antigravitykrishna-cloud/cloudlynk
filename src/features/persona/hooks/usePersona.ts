@@ -35,11 +35,12 @@ export function usePersona() {
         await NotificationManager.initialize();
 
         // Record this device for the admin approvals view; never blocks sign-in.
-        try {
-          await recordCurrentDevice();
-        } catch (deviceError) {
-          if (__DEV__) console.warn('Failed to record device:', deviceError);
-        }
+        // Temporarily disabled to debug
+        // try {
+        //   await recordCurrentDevice();
+        // } catch (deviceError) {
+        //   if (__DEV__) console.warn('Failed to record device:', deviceError);
+        // }
 
         setIsInitialized(true);
       } catch (error) {
