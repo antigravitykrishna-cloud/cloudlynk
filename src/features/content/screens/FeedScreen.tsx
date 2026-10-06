@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, View, Text } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CloudlynkLogo } from '@/components/ui/CloudlynkLogo';
@@ -11,6 +11,7 @@ import { Colors, Spacing } from '@/theme';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { postsApi } from '@/features/content/api/postsApi';
 import { FeedRow } from '@/features/content/components/FeedRow';
+import { usePersonaStore } from '@/lib/stores/personaStore';
 import type { ListedPost } from '@/features/content/model';
 
 // The newest posts from the channels you joined. A premium title shows a lock and opens the plans;
@@ -23,6 +24,9 @@ export default function FeedScreen() {
   const [posts, setPosts] = useState<ListedPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
+
+  // Check persona access state
+  const { isRejected, needsAdminApproval } = usePersonaStore();
 
   const load = useCallback(async () => {
     try {
@@ -51,6 +55,37 @@ export default function FeedScreen() {
     if (isLocked(post)) router.push('/premium');
     else router.push({ pathname: '/(tabs)/channels/[id]', params: { id: post.channel_id } });
   };
+
+  // Show rejection message if user is rejected
+  if (isRejected) {
+    return (
+      <SafeAreaView style={styles.page} edges={['top']}>
+        <TabHeader title="Feed" />
+        <View style={styles.blockMessage}>
+          <Text style={styles.blockTitle}>Access Restricted</Text>
+          <Text style={styles.blockText}>
+            Your account has been restricted and cannot access premium content at this time.
+            Please contact support for more information.
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Show pending approval message for organic users awaiting approval
+  if (needsAdminApproval) {
+    return (
+      <SafeAreaView style={styles.page} edges={['top']}>
+        <TabHeader title="Feed" />
+        <View style={styles.blockMessage}>
+          <Text style={styles.blockTitle}>Under Review</Text>
+          <Text style={styles.blockText}>
+            Your account is under review. You'll have full access once approved. Thank you for your patience.
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.page} edges={['top']}>
@@ -120,4 +155,23 @@ const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: Colors.bg },
   grow: { flexGrow: 1 },
   list: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, paddingBottom: Spacing.xxl },
+  blockMessage: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.lg,
+  },
+  blockTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: Colors.text,
+    marginBottom: Spacing.md,
+    textAlign: 'center',
+  },
+  blockText: {
+    fontSize: 16,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
 });

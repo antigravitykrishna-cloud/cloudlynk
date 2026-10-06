@@ -6,6 +6,10 @@
 
 import * as Device from 'expo-device';
 import * as SecureStore from 'expo-secure-store';
+import * as Linking from 'expo-linking';
+
+// Store referrer info globally so detectInstallSource can access it
+let installSourceOverride: 'playstore' | 'ads' | undefined;
 
 export interface DeviceFingerprint {
   deviceId: string;
@@ -22,6 +26,38 @@ export interface DeviceFingerprint {
 
 export class DeviceFingerprintManager {
   private static readonly FINGERPRINT_KEY = 'device_fingerprint';
+
+  /**
+   * Initialize install source detection from deep linking
+   * Call this early in app startup (e.g., in root _layout.tsx)
+   * to capture UTM parameters and referrer info
+   */
+  static async initializeInstallSource(): Promise<void> {
+    try {
+      // Get the initial URL if the app was opened via deep link
+      const url = await Linking.getInitialURL();
+      if (!url) return;
+
+      // Parse the URL to extract query parameters
+      const parsed = Linking.parse(url);
+      const queryParams = parsed.queryParams || {};
+
+      // Check for UTM parameters (used by ad networks)
+      if (
+        queryParams.utm_source ||
+        queryParams.utm_medium ||
+        queryParams.utm_campaign ||
+        queryParams.utm_content
+      ) {
+        // User came from an ad link
+        installSourceOverride = 'ads';
+      }
+      // Note: Play Store referrer detection requires the Play Install Referrer API,
+      // which needs native setup. For now, 'unknown' stays unknown unless UTMs are present.
+    } catch (err) {
+      if (__DEV__) console.warn('Failed to initialize install source:', err);
+    }
+  }
 
   /**
    * Get or create device fingerprint
@@ -126,25 +162,19 @@ export class DeviceFingerprintManager {
    * Returns where the user installed the app from
    */
   private static detectInstallSource(): 'playstore' | 'ads' | 'unknown' {
-    try {
-      // Check for UTM parameters from deep link (ads typically use utm_source, utm_medium, utm_campaign)
-      const searchParams = new URLSearchParams(window.location.search);
-      if (searchParams.has('utm_source') || searchParams.has('utm_medium') || searchParams.has('utm_campaign')) {
-        return 'ads';
-      }
-
-      // On Android, check PackageManager.getInstallReferrer() via native bridge.
-      // The Play Install Referrer Library returns the Google Play Store referrer string.
-      // This requires the native module to be set up separately.
-
-      // For now, default to unknown. Server-side risk scoring will evaluate device characteristics.
-      // Production implementation should integrate:
-      // - Play Install Referrer Library (android)
-      // - Firebase Dynamic Links or Branch.io for ad attribution
-      return 'unknown';
-    } catch {
-      return 'unknown';
+    // Return override if set during app initialization via deep link
+    if (installSourceOverride) {
+      return installSourceOverride;
     }
+
+    // TODO: Implement Play Install Referrer API integration:
+    // - Use react-native-google-play-billing or rnpm package
+    // - Call getInstallReferrer() to detect Play Store vs ad networks
+    // - Parse referrer string for utm_source, utm_medium, etc.
+    //
+    // For now, users without UTM params in deep link are classified as 'unknown',
+    // which server-side persona classification will evaluate based on device risk.
+    return 'unknown';
   }
 
   /**

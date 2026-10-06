@@ -108,13 +108,6 @@ function SubscriptionRequiredView({ persona }: { persona: ReturnType<typeof useP
     <View style={styles.container}>
       <Text style={styles.title}>Full Access Needed</Text>
       <Text style={styles.message}>{getMessage()}</Text>
-      {persona.daysUntilExpiry && persona.daysUntilExpiry < 7 && (
-        <View style={styles.expiryWarning}>
-          <Text style={styles.expiryText}>
-            ⏰ Your subscription expires in {persona.daysUntilExpiry} days
-          </Text>
-        </View>
-      )}
       <Button label="Subscribe Now" size="lg" onPress={() => router.push('/premium')} />
     </View>
   );
@@ -141,32 +134,9 @@ export function ActivationProgress() {
 }
 
 /**
- * Shows subscription expiry warning
+ * Subscription expiry warnings are now sent via push notifications
+ * and tracked through the profile's plan_status field
  */
-export function SubscriptionExpiryBanner() {
-  const { isSubscribed, daysUntilExpiry } = usePersona();
-
-  if (!isSubscribed || !daysUntilExpiry) return null;
-
-  if (daysUntilExpiry > 3) return null;
-
-  const isExpired = daysUntilExpiry <= 0;
-
-  return (
-    <View style={[styles.banner, isExpired ? styles.bannerError : styles.bannerWarning]}>
-      <Text style={styles.bannerText}>
-        {isExpired
-          ? '🚨 Your subscription expired'
-          : `⏰ Subscription expires in ${daysUntilExpiry} day${daysUntilExpiry === 1 ? '' : 's'}`}
-      </Text>
-      <Button
-        label={isExpired ? 'Renew' : 'Manage'}
-        size="sm"
-        onPress={() => router.push('/my-subscription')}
-      />
-    </View>
-  );
-}
 
 /**
  * Shows persona badge

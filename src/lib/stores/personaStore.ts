@@ -7,8 +7,8 @@
 import { create } from 'zustand';
 import { hasFullAccess, isActivated as isActivatedFn } from '@/features/persona/access';
 import { AuthManager, PersonaState } from '@/features/persona/api/AuthManager';
-import { SubscriptionManager, SubscriptionInfo } from '@/features/persona/api/SubscriptionManager';
-import { DeviceFingerprintManager } from '@/lib/fingerprint/deviceFingerprint';
+import { isPlanActive } from '@/features/premium/planStatus';
+import { profileStore } from '@/features/auth/profileStore';
 
 export interface PersonaStore {
   // Persona state
@@ -16,10 +16,8 @@ export interface PersonaStore {
   isLoading: boolean;
   error: string | null;
 
-  // Subscription state
-  subscription: SubscriptionInfo | null;
+  // Subscription comes from profile.plan_status (integrated with existing premium system)
   isSubscribed: boolean;
-  daysUntilExpiry: number | null;
 
   // Access flags
   canAccessFullContent: boolean;
@@ -31,7 +29,6 @@ export interface PersonaStore {
   // Actions
   initializePersona: (userId: string) => Promise<void>;
   refreshPersona: (userId: string) => Promise<void>;
-  updateSubscription: (userId: string) => Promise<void>;
   checkAccess: () => boolean;
   reset: () => void;
 }
@@ -41,9 +38,7 @@ export const usePersonaStore = create<PersonaStore>((set, get) => ({
   persona: null,
   isLoading: false,
   error: null,
-  subscription: null,
   isSubscribed: false,
-  daysUntilExpiry: null,
   canAccessFullContent: false,
   needsAdminApproval: false,
   isRejected: false,
@@ -57,10 +52,9 @@ export const usePersonaStore = create<PersonaStore>((set, get) => ({
       // Verify persona on startup (calls edge function for fresh classification)
       const persona = await AuthManager.verifyPersona(userId);
 
-      // Get subscription status
-      const subscription = await SubscriptionManager.checkSubscription(userId);
-      const isSubscribed = await SubscriptionManager.isActive(userId);
-      const daysUntilExpiry = await SubscriptionManager.getDaysUntilExpiry(userId);
+      // Get subscription status from the profile (integrated with existing premium system)
+      const profile = profileStore.getProfile();
+      const isSubscribed = isPlanActive(profile);
 
       // Calculate access flags
       const canAccessFullContent = hasFullAccess(persona, isSubscribed);
@@ -78,9 +72,7 @@ export const usePersonaStore = create<PersonaStore>((set, get) => ({
 
       set({
         persona,
-        subscription,
         isSubscribed,
-        daysUntilExpiry,
         canAccessFullContent,
         needsAdminApproval: persona?.needsAdminApproval || false,
         isRejected: persona?.isRejected || false,
@@ -117,26 +109,6 @@ export const usePersonaStore = create<PersonaStore>((set, get) => ({
     }
   },
 
-  // Update subscription state
-  updateSubscription: async (userId: string) => {
-    try {
-      const subscription = await SubscriptionManager.checkSubscription(userId);
-      const isSubscribed = await SubscriptionManager.isActive(userId);
-      const daysUntilExpiry = await SubscriptionManager.getDaysUntilExpiry(userId);
-
-      const persona = get().persona;
-      const canAccessFullContent = hasFullAccess(persona, isSubscribed);
-
-      set({
-        subscription,
-        isSubscribed,
-        daysUntilExpiry,
-        canAccessFullContent,
-      });
-    } catch (error) {
-      set({ error: String(error) });
-    }
-  },
 
   // Check if user can access content
   checkAccess: () => {
@@ -150,9 +122,7 @@ export const usePersonaStore = create<PersonaStore>((set, get) => ({
       persona: null,
       isLoading: false,
       error: null,
-      subscription: null,
       isSubscribed: false,
-      daysUntilExpiry: null,
       canAccessFullContent: false,
       needsAdminApproval: false,
       isRejected: false,

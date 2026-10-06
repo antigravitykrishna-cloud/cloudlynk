@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -14,6 +15,7 @@ import { useLaunchRouting } from '@/features/auth/hooks/useLaunchRouting';
 import { useGeoCheck } from '@/features/geo/hooks/useGeoCheck';
 import { GeoBlockedScreen } from '@/features/geo/screens/GeoBlockedScreen';
 import { usePersona } from '@/features/persona/hooks/usePersona';
+import { DeviceFingerprintManager } from '@/lib/fingerprint/deviceFingerprint';
 
 // The app shell: providers, the root navigator, and what sits above every screen (the age gate,
 // dialogs and toasts). Where the app navigates as the session changes is useLaunchRouting.
@@ -28,6 +30,12 @@ const PUSHED = { animation: 'slide_from_right' } as const;
 export default function RootLayout() {
   const { session, loading } = useAuth();
   const geo = useGeoCheck();
+
+  // Initialize install source detection (capture UTM params from deep links)
+  useEffect(() => {
+    DeviceFingerprintManager.initializeInstallSource();
+  }, []);
+
   // Initialize persona detection (device cloaking & access control)
   usePersona();
   useLaunchRouting({ geoReady: !geo.loading, geoBlocked: geo.isBlocked });
