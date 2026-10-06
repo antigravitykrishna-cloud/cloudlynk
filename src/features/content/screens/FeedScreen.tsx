@@ -64,8 +64,8 @@ export default function FeedScreen() {
         <View style={styles.blockMessage}>
           <Text style={styles.blockTitle}>Access Restricted</Text>
           <Text style={styles.blockText}>
-            Your account has been restricted and cannot access premium content at this time.
-            Please contact support for more information.
+            Your account has been restricted and cannot access premium content at this time. Please
+            contact support for more information.
           </Text>
         </View>
       </SafeAreaView>
@@ -80,7 +80,8 @@ export default function FeedScreen() {
         <View style={styles.blockMessage}>
           <Text style={styles.blockTitle}>Under Review</Text>
           <Text style={styles.blockText}>
-            Your account is under review. You'll have full access once approved. Thank you for your patience.
+            Your account is under review. You'll have full access once approved. Thank you for your
+            patience.
           </Text>
         </View>
       </SafeAreaView>

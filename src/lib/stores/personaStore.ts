@@ -109,7 +109,6 @@ export const usePersonaStore = create<PersonaStore>((set, get) => ({
     }
   },
 
-
   // Check if user can access content
   checkAccess: () => {
     const { persona, isSubscribed } = get();
