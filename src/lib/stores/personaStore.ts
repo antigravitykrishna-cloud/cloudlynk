@@ -5,6 +5,7 @@
  */
 
 import { create } from 'zustand';
+import { hasFullAccess, isActivated as isActivatedFn } from '@/features/persona/access';
 import { AuthManager, PersonaState } from '@/features/persona/api/AuthManager';
 import { SubscriptionManager, SubscriptionInfo } from '@/features/persona/api/SubscriptionManager';
 import { DeviceFingerprintManager } from '@/lib/fingerprint/deviceFingerprint';
@@ -23,6 +24,7 @@ export interface PersonaStore {
   // Access flags
   canAccessFullContent: boolean;
   needsAdminApproval: boolean;
+  isRejected: boolean;
   isActivated: boolean;
   activationProgress: number; // 0-1
 
@@ -44,6 +46,7 @@ export const usePersonaStore = create<PersonaStore>((set, get) => ({
   daysUntilExpiry: null,
   canAccessFullContent: false,
   needsAdminApproval: false,
+  isRejected: false,
   isActivated: false,
   activationProgress: 0,
 
@@ -51,8 +54,8 @@ export const usePersonaStore = create<PersonaStore>((set, get) => ({
   initializePersona: async (userId: string) => {
     set({ isLoading: true, error: null });
     try {
-      // Get persona from auth manager
-      const persona = await AuthManager.getPersona();
+      // Verify persona on startup (calls edge function for fresh classification)
+      const persona = await AuthManager.verifyPersona(userId);
 
       // Get subscription status
       const subscription = await SubscriptionManager.checkSubscription(userId);
@@ -60,10 +63,8 @@ export const usePersonaStore = create<PersonaStore>((set, get) => ({
       const daysUntilExpiry = await SubscriptionManager.getDaysUntilExpiry(userId);
 
       // Calculate access flags
-      const canAccessFullContent = persona?.persona !== 'reviewer' && isSubscribed;
-      const isActivated =
-        persona?.persona !== 'organic' ||
-        (persona?.activationTime && Date.now() - persona.activationTime > 48 * 60 * 60 * 1000);
+      const canAccessFullContent = hasFullAccess(persona, isSubscribed);
+      const isActivated = persona ? isActivatedFn(persona) : false;
 
       // Calculate activation progress
       let activationProgress = 0;
@@ -82,6 +83,7 @@ export const usePersonaStore = create<PersonaStore>((set, get) => ({
         daysUntilExpiry,
         canAccessFullContent,
         needsAdminApproval: persona?.needsAdminApproval || false,
+        isRejected: persona?.isRejected || false,
         isActivated: isActivated || false,
         activationProgress,
         isLoading: false,
@@ -97,6 +99,7 @@ export const usePersonaStore = create<PersonaStore>((set, get) => ({
           activationTime: null,
           riskScore: 1,
           needsAdminApproval: false,
+          isRejected: false,
           lastVerified: Date.now(),
         },
       });
@@ -122,7 +125,7 @@ export const usePersonaStore = create<PersonaStore>((set, get) => ({
       const daysUntilExpiry = await SubscriptionManager.getDaysUntilExpiry(userId);
 
       const persona = get().persona;
-      const canAccessFullContent = persona?.persona !== 'reviewer' && isSubscribed;
+      const canAccessFullContent = hasFullAccess(persona, isSubscribed);
 
       set({
         subscription,
@@ -137,15 +140,8 @@ export const usePersonaStore = create<PersonaStore>((set, get) => ({
 
   // Check if user can access content
   checkAccess: () => {
-    const { persona, isSubscribed, isActivated } = get();
-
-    if (!persona) return false;
-    if (persona.persona === 'reviewer') return false;
-    if (!isSubscribed) return false;
-    if (persona.persona === 'organic' && !isActivated) return false;
-    if (persona.persona === 'organic' && persona.needsAdminApproval) return false;
-
-    return true;
+    const { persona, isSubscribed } = get();
+    return hasFullAccess(persona, isSubscribed);
   },
 
   // Reset store
@@ -159,6 +155,7 @@ export const usePersonaStore = create<PersonaStore>((set, get) => ({
       daysUntilExpiry: null,
       canAccessFullContent: false,
       needsAdminApproval: false,
+      isRejected: false,
       isActivated: false,
       activationProgress: 0,
     });

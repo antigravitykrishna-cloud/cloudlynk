@@ -14,7 +14,12 @@ import {
   RefreshControl,
   Alert,
 } from 'react-native';
-import { fetchPendingApprovals, resolveApproval, type PendingUser } from '../api/approvals';
+import {
+  fetchPendingApprovals,
+  approveUser as approve,
+  rejectUser as reject,
+  type PendingUser,
+} from '../api/approvals';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Colors, Spacing } from '@/theme';
@@ -51,7 +56,7 @@ export default function AdminApprovalsScreen() {
   const approveUser = async (userId: string) => {
     try {
       setApproving(userId);
-      await resolveApproval(userId);
+      await approve(userId);
 
       // Show success and refresh
       showAlert('Approved', `User ${userId.slice(0, 8)}... approved`);
@@ -72,7 +77,7 @@ export default function AdminApprovalsScreen() {
         onPress: async () => {
           try {
             setApproving(userId);
-            await resolveApproval(userId);
+            await reject(userId);
 
             showAlert('Rejected', `User ${userId.slice(0, 8)}... rejected`);
             setUsers(users.filter(u => u.user_id !== userId));

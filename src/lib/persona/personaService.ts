@@ -18,6 +18,7 @@ export interface PersonaState {
   activationTime: number | null; // 48-hour activation timer for organic users
   riskScore: number;
   needsAdminApproval: boolean; // True if organic user needs approval
+  isRejected: boolean;
   lastVerified: number;
 }
 
@@ -59,6 +60,7 @@ export class PersonaService {
         activationTime: null,
         riskScore: 0.9,
         needsAdminApproval: false,
+        isRejected: false,
         lastVerified: Date.now(),
       };
     }

@@ -1574,6 +1574,8 @@ export type Database = {
           last_verified: string | null
           needs_admin_approval: boolean | null
           persona: Database["public"]["Enums"]["persona_type"]
+          rejected_at: string | null
+          rejected_by: string | null
           risk_score: number | null
           updated_at: string | null
           user_id: string
@@ -1589,6 +1591,8 @@ export type Database = {
           last_verified?: string | null
           needs_admin_approval?: boolean | null
           persona: Database["public"]["Enums"]["persona_type"]
+          rejected_at?: string | null
+          rejected_by?: string | null
           risk_score?: number | null
           updated_at?: string | null
           user_id: string
@@ -1604,6 +1608,8 @@ export type Database = {
           last_verified?: string | null
           needs_admin_approval?: boolean | null
           persona?: Database["public"]["Enums"]["persona_type"]
+          rejected_at?: string | null
+          rejected_by?: string | null
           risk_score?: number | null
           updated_at?: string | null
           user_id?: string

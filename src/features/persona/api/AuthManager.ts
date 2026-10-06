@@ -22,6 +22,7 @@ export interface PersonaState {
   activationTime: number | null;
   riskScore: number;
   needsAdminApproval: boolean;
+  isRejected: boolean;
   lastVerified: number;
 }
 
@@ -196,6 +197,7 @@ export class AuthManager {
         activationTime: null,
         riskScore: 1,
         needsAdminApproval: false,
+        isRejected: false,
         lastVerified: Date.now(),
       };
 

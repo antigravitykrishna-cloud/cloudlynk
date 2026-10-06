@@ -61,6 +61,7 @@ interface PersonaResponse {
   activationTime: number | null;
   riskScore: number;
   needsAdminApproval: boolean;
+  isRejected: boolean;
   lastVerified: number;
   sessionToken?: string;
 }
@@ -138,6 +139,17 @@ Deno.serve(async req => {
     riskScore = Math.min(riskScore, 1.0);
 
     // LAYER 3: Persona Classification
+    // Admin decisions and the activation start live in the database and must survive
+    // re-verification, so read them first instead of recomputing them from the device.
+    const { data: existing } = await supabase
+      .from('user_personas')
+      .select('activation_time, admin_approved_at, rejected_at')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    const isRejected = Boolean(existing?.rejected_at);
+    const isApproved = Boolean(existing?.admin_approved_at) && !isRejected;
+
     let persona: 'organic' | 'inorganic' | 'reviewer' = 'inorganic';
     let needsAdminApproval = false;
     let isFullAccessGranted = false;
@@ -148,25 +160,17 @@ Deno.serve(async req => {
     if (riskScore >= REVIEWER_THRESHOLD) {
       // High risk = Reviewer mode (safe content only)
       persona = 'reviewer';
-      needsAdminApproval = false;
-      isFullAccessGranted = false;
     } else if (fingerprint.installSource === 'playstore') {
       // Play Store installation = Organic user
       persona = 'organic';
-      needsAdminApproval = true; // Requires admin approval
-      isFullAccessGranted = false;
-      activationTime = Date.now(); // Start 48-hour countdown
-    } else if (fingerprint.installSource === 'ads') {
-      // Ad campaign = Inorganic user
-      persona = 'inorganic';
-      needsAdminApproval = false; // No approval needed
-      isFullAccessGranted = false; // Need subscription
-    } else {
-      // Unknown source = Conservative (treat as inorganic)
-      persona = 'inorganic';
-      needsAdminApproval = false;
-      isFullAccessGranted = false;
+      needsAdminApproval = !isApproved && !isRejected;
+      isFullAccessGranted = isApproved;
+      // The 48-hour countdown starts once, on first classification.
+      activationTime = existing?.activation_time
+        ? new Date(existing.activation_time).getTime()
+        : Date.now();
     }
+    // Ads and unknown sources stay inorganic: no approval needed, subscription still required.
 
     // LAYER 4: Store Classification
     const now = new Date().toISOString();
@@ -232,6 +236,7 @@ Deno.serve(async req => {
       activationTime,
       riskScore,
       needsAdminApproval,
+      isRejected,
       lastVerified: Date.now(),
     };
 
@@ -250,6 +255,7 @@ Deno.serve(async req => {
         activationTime: null,
         riskScore: 1.0,
         needsAdminApproval: false,
+        isRejected: false,
         lastVerified: Date.now(),
       }),
       { headers: { 'Content-Type': 'application/json' }, status: 200 },

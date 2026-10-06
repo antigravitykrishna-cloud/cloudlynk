@@ -44,6 +44,12 @@ export function ContentGate({
     return <>{children}</>;
   }
 
+  // A rejected account stays blocked until an admin reverses it, whatever it has paid for
+  if (requiredAccess === 'full' && persona.isRejected) {
+    onAccessDenied?.();
+    return <RejectedView />;
+  }
+
   // Check full access
   if (requiredAccess === 'full' && !persona.canAccessFullContent) {
     onAccessDenied?.();
@@ -64,6 +70,21 @@ function ReviewerOnlyView() {
         This content is only available for subscribers. Subscribe to access full content.
       </Text>
       <Button label="View Plans" size="lg" onPress={() => router.push('/premium')} />
+    </View>
+  );
+}
+
+/**
+ * Shows the blocked-account message (no subscribe button: paying would not unlock anything)
+ */
+function RejectedView() {
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Access Not Available</Text>
+      <Text style={styles.message}>
+        Your account is not eligible for full access right now. Please contact support if you think
+        this is a mistake.
+      </Text>
     </View>
   );
 }

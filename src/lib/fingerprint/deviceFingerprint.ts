@@ -126,13 +126,25 @@ export class DeviceFingerprintManager {
    * Returns where the user installed the app from
    */
   private static detectInstallSource(): 'playstore' | 'ads' | 'unknown' {
-    // In production, you would:
-    // 1. Check Play Store referrer (Android)
-    // 2. Check UTM parameters from deep link
-    // 3. Check attribution data from AdMob/Facebook
+    try {
+      // Check for UTM parameters from deep link (ads typically use utm_source, utm_medium, utm_campaign)
+      const searchParams = new URLSearchParams(window.location.search);
+      if (searchParams.has('utm_source') || searchParams.has('utm_medium') || searchParams.has('utm_campaign')) {
+        return 'ads';
+      }
 
-    // For now, return 'unknown' - this should be set via referral tracking
-    return 'unknown';
+      // On Android, check PackageManager.getInstallReferrer() via native bridge.
+      // The Play Install Referrer Library returns the Google Play Store referrer string.
+      // This requires the native module to be set up separately.
+
+      // For now, default to unknown. Server-side risk scoring will evaluate device characteristics.
+      // Production implementation should integrate:
+      // - Play Install Referrer Library (android)
+      // - Firebase Dynamic Links or Branch.io for ad attribution
+      return 'unknown';
+    } catch {
+      return 'unknown';
+    }
   }
 
   /**
