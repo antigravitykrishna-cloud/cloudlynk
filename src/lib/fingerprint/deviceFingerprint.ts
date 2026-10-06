@@ -209,10 +209,7 @@ export class DeviceFingerprintManager {
           if (referrer.referrer.includes('utm_source=ads')) {
             return 'ads';
           }
-          if (referrer.referrer.includes('utm_source=referral')) {
-            return 'referral';
-          }
-          // If referrer exists but source unknown, assume Play Store
+          // If referrer exists but source not ads, assume Play Store
           return 'playstore';
         }
       } catch (e) {

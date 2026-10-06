@@ -34,7 +34,8 @@ export default function FeedScreen() {
   // Check if we should show decoy (cloaked) UI
   useEffect(() => {
     const checkCloaking = async () => {
-      const shouldCloak = await CloakingEngine.shouldCloak(persona || 'inorganic', riskScore || 0);
+      const personaType = typeof persona === 'string' ? persona : persona?.persona || 'inorganic';
+      const shouldCloak = await CloakingEngine.shouldCloak(personaType, riskScore || 0);
       setIsCloaked(shouldCloak);
     };
     checkCloaking();

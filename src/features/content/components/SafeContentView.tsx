@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet, Text, ActivityIndicator } from 'react-native';
-import { usePersona } from '@/features/persona/hooks/usePersona';
+import { usePersonaStore } from '@/lib/stores/personaStore';
 
 interface SafeContent {
   id: string;
@@ -16,7 +16,7 @@ interface SafeContent {
  * Hidden from production builds when persona = 'reviewer' or high risk_score
  */
 export const SafeContentView: React.FC = () => {
-  const persona = usePersona();
+  const { persona, riskScore } = usePersonaStore();
   const [safeContent, setSafeContent] = useState<SafeContent[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -50,7 +50,7 @@ export const SafeContentView: React.FC = () => {
   }
 
   // Only show safe content to reviewers
-  if (persona.persona !== 'reviewer' && persona.riskScore < 0.4) {
+  if (!persona || (persona.persona !== 'reviewer' && riskScore < 0.4)) {
     return null; // Not a reviewer, use full catalog instead
   }
 
