@@ -35,17 +35,14 @@ export class PersonaService {
       const attestation = await SafetyNetAttestation.getAttestation();
 
       // Call Supabase edge function to classify persona
-      const { data, error } = await supabase.functions.invoke(
-        'classify-persona',
-        {
-          body: {
-            userId,
-            fingerprint,
-            attestationToken: attestation.token,
-            attestationMethod: attestation.method,
-          },
-        }
-      );
+      const { data, error } = await supabase.functions.invoke('classify-persona', {
+        body: {
+          userId,
+          fingerprint,
+          attestationToken: attestation.token,
+          attestationMethod: attestation.method,
+        },
+      });
 
       if (error) {
         console.error('Persona verification failed:', error);
@@ -71,10 +68,7 @@ export class PersonaService {
    * Check if 48-hour activation period is complete for organic users
    */
   static isActivationComplete(personaState: PersonaState): boolean {
-    if (
-      personaState.persona !== 'organic' ||
-      personaState.activationTime === null
-    ) {
+    if (personaState.persona !== 'organic' || personaState.activationTime === null) {
       return false;
     }
 
@@ -92,7 +86,7 @@ export class PersonaService {
     persona: Persona,
     isSubscribed: boolean,
     hasAdminApproval: boolean,
-    activationTime: number | null
+    activationTime: number | null,
   ): boolean {
     // Reviewers never get full access
     if (persona === 'reviewer') {
@@ -121,10 +115,7 @@ export class PersonaService {
    * Get activation progress for UI display
    * Shows 48-hour countdown for organic users
    */
-  static getActivationProgress(
-    persona: Persona,
-    activationTime: number | null
-  ): number {
+  static getActivationProgress(persona: Persona, activationTime: number | null): number {
     if (persona !== 'organic' || activationTime === null) {
       return 1; // 100% complete
     }

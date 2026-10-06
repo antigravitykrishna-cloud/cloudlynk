@@ -1,0 +1,35 @@
+import { supabase } from '@/lib/supabase';
+
+export interface PendingUser {
+  user_id: string;
+  persona: string;
+  risk_score: number | null;
+  created_at: string | null;
+  needs_admin_approval: boolean | null;
+  admin_approved_at: string | null;
+}
+
+export async function fetchPendingApprovals(): Promise<PendingUser[]> {
+  const { data, error } = await supabase
+    .from('user_personas')
+    .select('user_id, persona, risk_score, created_at, needs_admin_approval, admin_approved_at')
+    .eq('persona', 'organic')
+    .eq('needs_admin_approval', true)
+    .is('admin_approved_at', null)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function resolveApproval(userId: string): Promise<void> {
+  const { error } = await supabase
+    .from('user_personas')
+    .update({
+      needs_admin_approval: false,
+      admin_approved_at: new Date().toISOString(),
+    })
+    .eq('user_id', userId);
+
+  if (error) throw error;
+}

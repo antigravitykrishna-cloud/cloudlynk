@@ -45,7 +45,7 @@ export class NotificationManager {
     try {
       // Set up notification handler
       Notifications.setNotificationHandler({
-        handleNotification: async (notification) => {
+        handleNotification: async notification => {
           // Handle notification while app is in foreground
           console.log('Notification received:', notification);
           return {
@@ -117,10 +117,9 @@ export class NotificationManager {
             sound: Platform.OS === 'android' ? 'default' : undefined,
           },
           trigger: {
-            seconds: Math.ceil(
-              (payload.scheduledFor.getTime() - Date.now()) / 1000
-            ),
-          } as any,
+            type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+            seconds: Math.max(1, Math.ceil((payload.scheduledFor.getTime() - Date.now()) / 1000)),
+          },
         });
       } else {
         // Send immediately
@@ -151,7 +150,7 @@ export class NotificationManager {
       const user = await supabase.auth.getUser();
       if (!user.data?.user?.id) return;
 
-      const insertData: Record<string, any> = {
+      const insertData = {
         user_id: user.data.user.id,
         type: payload.type,
         title: payload.title,
@@ -160,16 +159,12 @@ export class NotificationManager {
         created_at: new Date().toISOString(),
       };
 
-      // Only add data field if the column exists in the schema
-      if (payload.data) {
-        (insertData as any).data = payload.data;
-      }
-
-      await supabase
-        .from('notifications')
-        .insert(insertData as any);
+      await supabase.from('notifications').insert(insertData);
     } catch (error) {
-      console.warn('Store notification failed (notifications table may not be fully configured):', error);
+      console.warn(
+        'Store notification failed (notifications table may not be fully configured):',
+        error,
+      );
     }
   }
 
@@ -191,14 +186,13 @@ export class NotificationManager {
       if (error) throw error;
 
       return (
-        data?.map((n) => ({
+        data?.map(n => ({
           id: n.id,
           type: (n.type || 'admin_message') as NotificationType,
           title: n.title,
           body: n.body,
           read: n.read || false,
           createdAt: n.created_at,
-          data: (n as any).data,
         })) || []
       );
     } catch (error) {
@@ -269,10 +263,7 @@ export class NotificationManager {
    */
   static async deleteNotification(notificationId: string): Promise<void> {
     try {
-      const { error } = await supabase
-        .from('notifications')
-        .delete()
-        .eq('id', notificationId);
+      const { error } = await supabase.from('notifications').delete().eq('id', notificationId);
 
       if (error) throw error;
     } catch (error) {
@@ -285,15 +276,13 @@ export class NotificationManager {
    */
   private static setupNotificationListeners(): void {
     // Notification received while app in foreground
-    this.notificationListener = Notifications.addNotificationReceivedListener(
-      (notification) => {
-        console.log('Notification received:', notification);
-      }
-    );
+    this.notificationListener = Notifications.addNotificationReceivedListener(notification => {
+      console.log('Notification received:', notification);
+    });
 
     // Notification tapped by user
     this.responseListener = Notifications.addNotificationResponseReceivedListener(
-      async (response) => {
+      async response => {
         const { data } = response.notification.request.content;
         console.log('Notification tapped:', data);
 
@@ -302,7 +291,7 @@ export class NotificationManager {
           // Navigate to relevant screen based on action
           // This would integrate with your router/navigation
         }
-      }
+      },
     );
   }
 

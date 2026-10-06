@@ -75,7 +75,9 @@ export class AuthManager {
 
       // OAuth flow returns provider, url, and flowId - the session comes after callback
       // For now, get the current session
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session?.user?.id) throw new Error('No user returned from Google');
 
       const user: AuthUser = {
@@ -162,20 +164,17 @@ export class AuthManager {
       const fingerprint = await DeviceFingerprintManager.getFingerprint();
 
       // Call edge function for server-side verification
-      const response = await fetch(
-        `${supabaseUrl}/functions/v1/classify-persona`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${await this._getAuthToken()}`,
-          },
-          body: JSON.stringify({
-            userId,
-            fingerprint,
-          }),
-        }
-      );
+      const response = await fetch(`${supabaseUrl}/functions/v1/classify-persona`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${await this._getAuthToken()}`,
+        },
+        body: JSON.stringify({
+          userId,
+          fingerprint,
+        }),
+      });
 
       if (!response.ok) {
         throw new Error(`Persona verification failed: ${response.statusText}`);

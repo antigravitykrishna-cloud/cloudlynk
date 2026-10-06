@@ -63,11 +63,7 @@ function ReviewerOnlyView() {
       <Text style={styles.message}>
         This content is only available for subscribers. Subscribe to access full content.
       </Text>
-      <Button
-        label="View Plans"
-        size="lg"
-        onPress={() => router.push('/premium')}
-      />
+      <Button label="View Plans" size="lg" onPress={() => router.push('/premium')} />
     </View>
   );
 }
@@ -75,7 +71,7 @@ function ReviewerOnlyView() {
 /**
  * Shows subscription required message
  */
-function SubscriptionRequiredView({ persona }: { persona: any }) {
+function SubscriptionRequiredView({ persona }: { persona: ReturnType<typeof usePersona> }) {
   const getMessage = () => {
     if (persona.persona?.persona === 'organic' && !persona.isActivated) {
       const progress = Math.round(persona.activationProgress * 100);
@@ -98,11 +94,7 @@ function SubscriptionRequiredView({ persona }: { persona: any }) {
           </Text>
         </View>
       )}
-      <Button
-        label="Subscribe Now"
-        size="lg"
-        onPress={() => router.push('/premium')}
-      />
+      <Button label="Subscribe Now" size="lg" onPress={() => router.push('/premium')} />
     </View>
   );
 }
@@ -122,9 +114,7 @@ export function ActivationProgress() {
       <View style={styles.progressBar}>
         <View style={[styles.progressFill, { width: `${percentage}%` }]} />
       </View>
-      <Text style={styles.progressText}>
-        Account unlocking: {percentage}%
-      </Text>
+      <Text style={styles.progressText}>Account unlocking: {percentage}%</Text>
     </View>
   );
 }
@@ -142,12 +132,7 @@ export function SubscriptionExpiryBanner() {
   const isExpired = daysUntilExpiry <= 0;
 
   return (
-    <View
-      style={[
-        styles.banner,
-        isExpired ? styles.bannerError : styles.bannerWarning,
-      ]}
-    >
+    <View style={[styles.banner, isExpired ? styles.bannerError : styles.bannerWarning]}>
       <Text style={styles.bannerText}>
         {isExpired
           ? '🚨 Your subscription expired'
@@ -171,9 +156,9 @@ export function PersonaBadge() {
   if (!persona) return null;
 
   const colors = {
-    reviewer: { bg: '#f44336', text: '#fff' },
-    organic: { bg: '#2196F3', text: '#fff' },
-    inorganic: { bg: '#4CAF50', text: '#fff' },
+    reviewer: { bg: Colors.danger, text: Colors.white },
+    organic: { bg: Colors.brandBlue, text: Colors.white },
+    inorganic: { bg: Colors.success, text: Colors.white },
   };
 
   const labels = {
@@ -187,9 +172,7 @@ export function PersonaBadge() {
 
   return (
     <View style={[styles.badge, { backgroundColor: color.bg }]}>
-      <Text style={[styles.badgeText, { color: color.text }]}>
-        {label}
-      </Text>
+      <Text style={[styles.badgeText, { color: color.text }]}>{label}</Text>
     </View>
   );
 }
@@ -227,15 +210,15 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   expiryWarning: {
-    backgroundColor: '#FFF3CD',
+    backgroundColor: Colors.warningDim,
     padding: Spacing.md,
     borderRadius: 8,
     marginBottom: Spacing.lg,
     borderLeftWidth: 4,
-    borderLeftColor: '#FFC107',
+    borderLeftColor: Colors.warning,
   },
   expiryText: {
-    color: '#664D03',
+    color: Colors.text,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -254,7 +237,7 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#4CAF50',
+    backgroundColor: Colors.success,
   },
   progressText: {
     fontSize: 12,
@@ -270,19 +253,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   bannerWarning: {
-    backgroundColor: '#FFF3CD',
-    borderLeftColor: '#FFC107',
+    backgroundColor: Colors.warningDim,
+    borderLeftColor: Colors.warning,
     borderLeftWidth: 4,
   },
   bannerError: {
-    backgroundColor: '#F8D7DA',
-    borderLeftColor: '#F44336',
+    backgroundColor: Colors.dangerDim,
+    borderLeftColor: Colors.danger,
     borderLeftWidth: 4,
   },
   bannerText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#664D03',
+    color: Colors.text,
     flex: 1,
   },
   badge: {

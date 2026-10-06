@@ -5,8 +5,9 @@
  */
 
 import { supabase } from '@/lib/supabase';
+import { Colors } from '@/theme';
 import * as SecureStore from 'expo-secure-store';
-import { NotificationManager } from '@/notifications/NotificationManager';
+import { NotificationManager } from '@/features/persona/api/NotificationManager';
 
 export type SubscriptionPlan = 'trial' | 'silver' | 'gold' | 'platinum' | 'diamond';
 
@@ -41,7 +42,7 @@ export class SubscriptionManager {
       duration: 3,
       priceINR: 99,
       features: ['Limited content', 'HD streaming'],
-      color: '#4CAF50',
+      color: Colors.success,
     },
     silver: {
       plan: 'silver',
@@ -49,7 +50,7 @@ export class SubscriptionManager {
       duration: 7,
       priceINR: 149,
       features: ['All content', 'HD streaming', 'Offline downloads'],
-      color: '#9E9E9E',
+      color: Colors.textSecondary,
     },
     gold: {
       plan: 'gold',
@@ -57,21 +58,15 @@ export class SubscriptionManager {
       duration: 30,
       priceINR: 259,
       features: ['All content', '4K streaming', 'Offline downloads', 'Ad-free'],
-      color: '#FFC107',
+      color: Colors.gold,
     },
     platinum: {
       plan: 'platinum',
       displayName: 'Platinum',
       duration: 180,
       priceINR: 599,
-      features: [
-        'All content',
-        '4K streaming',
-        'Offline downloads',
-        'Ad-free',
-        'Early access',
-      ],
-      color: '#E0E0E0',
+      features: ['All content', '4K streaming', 'Offline downloads', 'Ad-free', 'Early access'],
+      color: Colors.text,
     },
     diamond: {
       plan: 'diamond',
@@ -86,7 +81,7 @@ export class SubscriptionManager {
         'Early access',
         'Premium support',
       ],
-      color: '#FF6B9D',
+      color: Colors.pastelPink,
     },
   };
 
@@ -97,7 +92,7 @@ export class SubscriptionManager {
   static async subscribe(
     userId: string,
     plan: SubscriptionPlan,
-    paymentMethod: string
+    paymentMethod: string,
   ): Promise<SubscriptionInfo> {
     try {
       const planDetails = this.PLANS[plan];
@@ -117,17 +112,15 @@ export class SubscriptionManager {
 
       // Save to Supabase (if subscriptions table exists)
       try {
-        const { error } = await (supabase
-          .from('subscriptions' as any) as any)
-          .insert({
-            user_id: userId,
-            plan_type: plan,
-            status: 'active',
-            start_date: now.toISOString(),
-            end_date: endDate.toISOString(),
-            amount_paid: planDetails.priceINR,
-            currency: 'INR',
-          });
+        const { error } = await supabase.from('subscriptions').insert({
+          user_id: userId,
+          plan_type: plan,
+          status: 'active',
+          start_date: now.toISOString(),
+          end_date: endDate.toISOString(),
+          amount_paid: planDetails.priceINR,
+          currency: 'INR',
+        });
 
         if (error) {
           console.warn('Failed to save subscription to database:', error);
@@ -200,8 +193,8 @@ export class SubscriptionManager {
 
       // Update in Supabase (if subscriptions table exists)
       try {
-        const { error } = await (supabase
-          .from('subscriptions' as any) as any)
+        const { error } = await supabase
+          .from('subscriptions')
           .update({
             plan_type: plan,
             status: 'active',
@@ -231,8 +224,8 @@ export class SubscriptionManager {
   static async cancel(userId: string): Promise<void> {
     try {
       try {
-        const { error } = await (supabase
-          .from('subscriptions' as any) as any)
+        const { error } = await supabase
+          .from('subscriptions')
           .update({ status: 'cancelled' })
           .eq('user_id', userId);
 
@@ -263,9 +256,7 @@ export class SubscriptionManager {
     const subscription = await this.checkSubscription(userId);
     if (!subscription) return false;
 
-    return (
-      subscription.status === 'active' && new Date(subscription.endDate) > new Date()
-    );
+    return subscription.status === 'active' && new Date(subscription.endDate) > new Date();
   }
 
   /**
@@ -286,7 +277,7 @@ export class SubscriptionManager {
    */
   private static async scheduleExpiryNotifications(
     userId: string,
-    expiryDate: Date
+    expiryDate: Date,
   ): Promise<void> {
     const now = new Date();
     const msUntilExpiry = expiryDate.getTime() - now.getTime();
@@ -333,8 +324,8 @@ export class SubscriptionManager {
    */
   private static async _fetchFromServer(userId: string): Promise<SubscriptionInfo | null> {
     try {
-      const { data, error } = await (supabase
-        .from('subscriptions' as any) as any)
+      const { data, error } = await supabase
+        .from('subscriptions')
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
@@ -355,7 +346,7 @@ export class SubscriptionManager {
         autoRenew: data.auto_renew !== false,
         amountPaid: data.amount_paid || 0,
         currency: data.currency || 'INR',
-        paymentMethod: data.payment_method,
+        paymentMethod: data.payment_method ?? undefined,
       };
 
       await SecureStore.setItemAsync(this.SUBSCRIPTION_KEY, JSON.stringify(subscription));

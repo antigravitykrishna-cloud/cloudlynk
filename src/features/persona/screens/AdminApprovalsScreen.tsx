@@ -14,20 +14,11 @@ import {
   RefreshControl,
   Alert,
 } from 'react-native';
-import { supabase } from '@/lib/supabase';
+import { fetchPendingApprovals, resolveApproval, type PendingUser } from '../api/approvals';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Colors, Spacing } from '@/theme';
 import { showAlert } from '@/components/ui/Feedback';
-
-interface PendingUser {
-  user_id: string;
-  persona: string;
-  risk_score: number | null;
-  created_at: string | null;
-  needs_admin_approval: boolean | null;
-  admin_approved_at: string | null;
-}
 
 export default function AdminApprovalsScreen() {
   const [users, setUsers] = useState<PendingUser[]>([]);
@@ -42,16 +33,7 @@ export default function AdminApprovalsScreen() {
   const fetchPendingUsers = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('user_personas')
-        .select('user_id, persona, risk_score, created_at, needs_admin_approval, admin_approved_at')
-        .eq('persona', 'organic')
-        .eq('needs_admin_approval', true)
-        .is('admin_approved_at', null)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setUsers(data || []);
+      setUsers(await fetchPendingApprovals());
     } catch (error) {
       console.error('Failed to fetch pending users:', error);
       showAlert('Error', 'Failed to load pending approvals');
@@ -69,15 +51,7 @@ export default function AdminApprovalsScreen() {
   const approveUser = async (userId: string) => {
     try {
       setApproving(userId);
-      const { error } = await supabase
-        .from('user_personas')
-        .update({
-          needs_admin_approval: false,
-          admin_approved_at: new Date().toISOString(),
-        })
-        .eq('user_id', userId);
-
-      if (error) throw error;
+      await resolveApproval(userId);
 
       // Show success and refresh
       showAlert('Approved', `User ${userId.slice(0, 8)}... approved`);
@@ -98,20 +72,11 @@ export default function AdminApprovalsScreen() {
         onPress: async () => {
           try {
             setApproving(userId);
-            // Mark as rejected (don't approve)
-            const { error } = await supabase
-              .from('user_personas')
-              .update({
-                needs_admin_approval: false, // Prevent further requests
-                admin_approved_at: new Date().toISOString(),
-              })
-              .eq('user_id', userId);
-
-            if (error) throw error;
+            await resolveApproval(userId);
 
             showAlert('Rejected', `User ${userId.slice(0, 8)}... rejected`);
             setUsers(users.filter(u => u.user_id !== userId));
-          } catch (error) {
+          } catch {
             showAlert('Error', 'Failed to reject user');
           } finally {
             setApproving(null);
@@ -147,9 +112,7 @@ export default function AdminApprovalsScreen() {
       <FlatList
         data={users}
         keyExtractor={item => item.user_id}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         renderItem={({ item }) => (
           <UserCard
             user={item}
@@ -177,7 +140,7 @@ function UserCard({
 }) {
   const score = user.risk_score ?? 0.5;
   const riskLevel = score > 0.7 ? 'High' : score > 0.4 ? 'Medium' : 'Low';
-  const riskColor = score > 0.7 ? '#f44336' : score > 0.4 ? '#ff9800' : '#4caf50';
+  const riskColor = score > 0.7 ? Colors.danger : score > 0.4 ? Colors.warning : Colors.success;
 
   return (
     <Card style={styles.card}>
@@ -190,10 +153,7 @@ function UserCard({
 
       <View style={styles.details}>
         <DetailRow label="Persona" value={user.persona} />
-        <DetailRow
-          label="Risk Score"
-          value={`${((user.risk_score ?? 0.5) * 100).toFixed(0)}%`}
-        />
+        <DetailRow label="Risk Score" value={`${((user.risk_score ?? 0.5) * 100).toFixed(0)}%`} />
         <DetailRow
           label="Requested"
           value={user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown'}
@@ -296,7 +256,7 @@ const styles = StyleSheet.create({
   riskText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#fff',
+    color: Colors.white,
   },
   details: {
     marginBottom: Spacing.md,
@@ -327,7 +287,7 @@ const styles = StyleSheet.create({
   },
   rejectButton: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: Colors.surface,
   },
   approveButton: {
     flex: 1,

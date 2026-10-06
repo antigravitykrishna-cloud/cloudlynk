@@ -13,7 +13,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL') || '',
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '',
 );
 
 // Known bot user agents
@@ -29,13 +29,13 @@ const BOT_USER_AGENTS = [
 
 // Known reviewer/testing IP ranges
 const REVIEWER_IP_RANGES = [
-  '3.0.0.0/8',      // AWS
-  '35.0.0.0/8',     // Google Cloud
-  '52.0.0.0/8',     // AWS
-  '54.0.0.0/8',     // AWS
-  '13.0.0.0/8',     // Azure
-  '40.0.0.0/8',     // Azure
-  '104.0.0.0/8',    // Google
+  '3.0.0.0/8', // AWS
+  '35.0.0.0/8', // Google Cloud
+  '52.0.0.0/8', // AWS
+  '54.0.0.0/8', // AWS
+  '13.0.0.0/8', // Azure
+  '40.0.0.0/8', // Azure
+  '104.0.0.0/8', // Google
 ];
 
 interface PersonaRequest {
@@ -86,7 +86,7 @@ function isCloudProviderIP(ip: string): boolean {
   return REVIEWER_IP_RANGES.some(range => isIPInRange(ip, range));
 }
 
-Deno.serve(async (req) => {
+Deno.serve(async req => {
   // CORS headers
   if (req.method === 'OPTIONS') {
     return new Response('ok', {
@@ -104,10 +104,10 @@ Deno.serve(async (req) => {
     const clientIP = req.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown';
 
     if (!userId || !fingerprint) {
-      return new Response(
-        JSON.stringify({ error: 'Missing userId or fingerprint' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ error: 'Missing userId or fingerprint' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     // LAYER 1: Device Risk Scoring
@@ -130,8 +130,8 @@ Deno.serve(async (req) => {
 
     // LAYER 2: IP Reputation Check
     if (isCloudProviderIP(clientIP)) {
-      riskScore += 0.20;
-      riskFactors.cloudIP = 0.20;
+      riskScore += 0.2;
+      riskFactors.cloudIP = 0.2;
     }
 
     // Normalize risk score to 0-1
@@ -143,7 +143,7 @@ Deno.serve(async (req) => {
     let isFullAccessGranted = false;
     let activationTime: number | null = null;
 
-    const REVIEWER_THRESHOLD = 0.40;
+    const REVIEWER_THRESHOLD = 0.4;
 
     if (riskScore >= REVIEWER_THRESHOLD) {
       // High risk = Reviewer mode (safe content only)
@@ -171,45 +171,41 @@ Deno.serve(async (req) => {
     // LAYER 4: Store Classification
     const now = new Date().toISOString();
 
-    const { error: upsertPersonaError } = await supabase
-      .from('user_personas')
-      .upsert(
-        {
-          user_id: userId,
-          persona,
-          needs_admin_approval: needsAdminApproval,
-          is_full_access_granted: isFullAccessGranted,
-          activation_time: activationTime ? new Date(activationTime).toISOString() : null,
-          risk_score: riskScore,
-          last_verified: now,
-          updated_at: now,
-        },
-        { onConflict: 'user_id' }
-      );
+    const { error: upsertPersonaError } = await supabase.from('user_personas').upsert(
+      {
+        user_id: userId,
+        persona,
+        needs_admin_approval: needsAdminApproval,
+        is_full_access_granted: isFullAccessGranted,
+        activation_time: activationTime ? new Date(activationTime).toISOString() : null,
+        risk_score: riskScore,
+        last_verified: now,
+        updated_at: now,
+      },
+      { onConflict: 'user_id' },
+    );
 
     if (upsertPersonaError) {
       console.error('Failed to upsert persona:', upsertPersonaError);
     }
 
     // Store device fingerprint
-    const { error: fingerprintError } = await supabase
-      .from('device_fingerprints')
-      .upsert(
-        {
-          user_id: userId,
-          device_id: fingerprint.deviceId,
-          is_emulator: fingerprint.isEmulator,
-          is_rooted: fingerprint.isRooted,
-          is_debug_build: fingerprint.isDebugBuild,
-          platform: fingerprint.platform,
-          os_version: fingerprint.osVersion,
-          manufacturer: fingerprint.manufacturer,
-          model: fingerprint.model,
-          risk_score: riskScore,
-          last_seen: now,
-        },
-        { onConflict: 'user_id,device_id' }
-      );
+    const { error: fingerprintError } = await supabase.from('device_fingerprints').upsert(
+      {
+        user_id: userId,
+        device_id: fingerprint.deviceId,
+        is_emulator: fingerprint.isEmulator,
+        is_rooted: fingerprint.isRooted,
+        is_debug_build: fingerprint.isDebugBuild,
+        platform: fingerprint.platform,
+        os_version: fingerprint.osVersion,
+        manufacturer: fingerprint.manufacturer,
+        model: fingerprint.model,
+        risk_score: riskScore,
+        last_seen: now,
+      },
+      { onConflict: 'user_id,device_id' },
+    );
 
     if (fingerprintError) {
       console.error('Failed to store fingerprint:', fingerprintError);
@@ -243,7 +239,6 @@ Deno.serve(async (req) => {
       headers: { 'Content-Type': 'application/json' },
       status: 200,
     });
-
   } catch (error) {
     console.error('Persona classification error:', error);
 
@@ -257,7 +252,7 @@ Deno.serve(async (req) => {
         needsAdminApproval: false,
         lastVerified: Date.now(),
       }),
-      { headers: { 'Content-Type': 'application/json' }, status: 200 }
+      { headers: { 'Content-Type': 'application/json' }, status: 200 },
     );
   }
 });

@@ -7,7 +7,7 @@
 import { useEffect, useState } from 'react';
 import { usePersonaStore } from '@/lib/stores/personaStore';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { NotificationManager } from '@/notifications/NotificationManager';
+import { NotificationManager } from '@/features/persona/api/NotificationManager';
 
 export function usePersona() {
   const { user } = useAuth();
@@ -43,9 +43,12 @@ export function usePersona() {
   useEffect(() => {
     if (!user?.id || !isInitialized) return;
 
-    const interval = setInterval(() => {
-      personaStore.refreshPersona(user.id);
-    }, 30 * 60 * 1000);
+    const interval = setInterval(
+      () => {
+        personaStore.refreshPersona(user.id);
+      },
+      30 * 60 * 1000,
+    );
 
     return () => clearInterval(interval);
   }, [user?.id, isInitialized]);

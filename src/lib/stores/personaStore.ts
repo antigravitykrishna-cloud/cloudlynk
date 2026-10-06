@@ -5,8 +5,8 @@
  */
 
 import { create } from 'zustand';
-import { AuthManager, PersonaState } from '@/auth/AuthManager';
-import { SubscriptionManager, SubscriptionInfo } from '@/subscription/SubscriptionManager';
+import { AuthManager, PersonaState } from '@/features/persona/api/AuthManager';
+import { SubscriptionManager, SubscriptionInfo } from '@/features/persona/api/SubscriptionManager';
 import { DeviceFingerprintManager } from '@/lib/fingerprint/deviceFingerprint';
 
 export interface PersonaStore {
@@ -61,7 +61,8 @@ export const usePersonaStore = create<PersonaStore>((set, get) => ({
 
       // Calculate access flags
       const canAccessFullContent = persona?.persona !== 'reviewer' && isSubscribed;
-      const isActivated = persona?.persona !== 'organic' ||
+      const isActivated =
+        persona?.persona !== 'organic' ||
         (persona?.activationTime && Date.now() - persona.activationTime > 48 * 60 * 60 * 1000);
 
       // Calculate activation progress

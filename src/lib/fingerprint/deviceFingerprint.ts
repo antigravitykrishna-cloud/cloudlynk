@@ -54,10 +54,7 @@ export class DeviceFingerprintManager {
 
     // Cache the fingerprint
     try {
-      await SecureStore.setItemAsync(
-        this.FINGERPRINT_KEY,
-        JSON.stringify(fingerprint)
-      );
+      await SecureStore.setItemAsync(this.FINGERPRINT_KEY, JSON.stringify(fingerprint));
     } catch (e) {
       console.warn('Failed to cache fingerprint:', e);
     }
