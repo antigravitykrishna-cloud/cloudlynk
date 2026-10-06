@@ -28,7 +28,7 @@ P(f"Cohort: ALL ICU stays in icustays: {c['stays']} stays, {c['admissions']} hos
   "Vitals come from chartevents (HR 220045, RR 220210, SpO2 220277, NIBP systolic 220179, NIBP mean 220181, Temp °C 223762 and Temp °F 223761 converted to °C). "
   "Labs come from labevents for the stay's hadm_id with charttime between ICU intime and outtime (creatinine 50912, BUN 51006, potassium 50971, sodium 50983, bicarbonate 50882, glucose 50931, hemoglobin 51222, WBC 51301, platelets 51265, lactate 50813).")
 P("Two things to be upfront about:", True)
-P("1. The physiologic range table from “Slide 55” was not among the files I was given, so I could not use it. I used my own conventional impossible-value limits (HR 20–300 bpm, SpO2 50–100 %, Temp 25–45 °C) and also report a stricter sensitivity range. The bounds are one dictionary (RANGES) in the script; if your slide differs, edit it and re-run and the counts in Part A3 update.")
+P("1. The physiologic range table is the one on Slide 55 (provided by you as an image): HR 20–250 bpm (flag <20 or >250), SpO2 60–100 % (flag >100 or =0), temperature 30–43 °C (flag <30 or >43). For SpO2 the slide’s valid range (60–100) and its flag condition (>100 or =0) are not the same rule, so I report both counts and say which is which. The rules are in one dictionary (SLIDE) in the script.")
 P("2. The d_labitems.csv.gz in this demo has only the columns itemid, label, fluid, category. There is no loinc_code column, so the LOINC coverage answer in Part B is 0 % (see B3), not a number I could estimate from data.")
 
 H("Part A: Exploratory Data Analysis")
@@ -55,12 +55,17 @@ P("Interpretation: this is not MCAR. (i) The missingness shows horizontal stripe
 
 H("A3. Outliers (10 pts)", 2)
 o = pd.DataFrame(R["A3"])
-TAB(o[["variable", "unit", "valid_range", "n_obs", "n_flagged", "pct_flagged", "n_below", "n_above", "observed_min", "observed_max"]])
+t3 = o[["variable", "unit", "valid_range", "flag_rule", "n_obs", "n_flagged", "pct_flagged", "n_outside_valid_range", "pct_outside_valid_range", "observed_min", "observed_max"]].copy()
+t3.columns = ["variable", "unit", "slide valid range", "slide flag condition", "n values", "n flagged (flag condition)", "% flagged", "n outside valid range", "% outside valid range", "min", "max"]
+TAB(t3)
 IMG("A3_outliers.png")
-P("Range table used (assumption, see notes): HR 20–300, SpO2 50–100, Temp 25–45 °C (Fahrenheit readings converted to °C first). "
-  "Flagged values: HR: three readings of exactly 0 (artefact/disconnected sensor or asystole not plausible alongside the rest of the record); SpO2: three readings below 50 % (29, 43 and 47 %); temperature: three readings of 97.2, 98.9 and 99.0 charted in the Celsius item, which are clearly Fahrenheit values entered in the wrong field (a unit-entry error). "
-  f"Rates are tiny: {o.pct_flagged[0]:.3f}% (HR), {o.pct_flagged[1]:.3f}% (SpO2), {o.pct_flagged[2]:.3f}% (Temp). "
-  f"With a stricter range (HR 30–220, SpO2 70–100, Temp 32–42 °C) the counts become {o.sens_n_flagged[0]}, {o.sens_n_flagged[1]} and {o.sens_n_flagged[2]} ({o.sens_pct[0]:.3f}%, {o.sens_pct[1]:.3f}%, {o.sens_pct[2]:.3f}%), so the result is sensitive to where the bounds are drawn, but remains well under 1 %. Flagged values are excluded in A5.")
+fl = {r["variable"]: r for r in R["A3"]}
+P("Rule table applied (Slide 55): heart rate 20–250 bpm (flag <20 or >250); SpO2 60–100 % (flag >100 or =0); temperature 30–43 °C (flag <30 or >43), with Fahrenheit readings converted to °C first. "
+  f"Heart rate: {fl['HR']['n_flagged']} of {fl['HR']['n_obs']:,} values flagged ({fl['HR']['pct_flagged']:.3f}%), all exactly 0 (sensor/monitor artefact). "
+  f"Temperature: {fl['Temp_C']['n_flagged']} of {fl['Temp_C']['n_obs']:,} flagged ({fl['Temp_C']['pct_flagged']:.3f}%): {fl['Temp_C']['flagged_values']} charted in the Celsius item, which are Fahrenheit values entered as °C, exactly the unit mismatch the slide lists as the likely cause. "
+  f"SpO2: using the slide’s flag condition (>100 or =0) {fl['SpO2']['n_flagged']} of {fl['SpO2']['n_obs']:,} values are flagged ({fl['SpO2']['pct_flagged']:.3f}%); the maximum is exactly 100 and there are no zeros. "
+  f"If instead the stated valid range 60–100 is used, {fl['SpO2']['n_outside_valid_range']} values are out of range ({fl['SpO2']['pct_outside_valid_range']:.3f}%): {fl['SpO2']['outside_valid_values']}. These are low but not physically impossible (severe hypoxemia, or a poor probe signal), so they are suspicious rather than certainly wrong, and I would review them rather than silently delete them. "
+  "In all three variables the rate of impossible values is far below 1 %, i.e. these monitors are clean, and most of the problems are unit and sensor artefacts. In A5 I removed values outside the slide’s valid ranges (HR 20–250, SpO2 60–100, Temp 30–43).")
 
 H("A4. Temporal pattern (10 pts)", 2)
 a4 = R["A4"]

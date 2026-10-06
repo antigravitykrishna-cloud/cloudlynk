@@ -184,30 +184,44 @@ print("fisher p by death", {k: (round(x, 4) if x is not None else None) for k, x
 print("top co-missing", R["A2"]["top_comissing"])
 
 # ----------------------------------------------------------------------------
-# A3. Outliers  --  PHYSIOLOGIC RANGE TABLE
-# The course "Slide 55" table was not among the files provided, so these bounds are
-# my assumption (widely used "impossible value" limits). Edit to match the slide.
+# A3. Outliers  --  physiologic range table from Slide 55 ("Outlier Detection:
+# Physiologically Impossible Values")
+#   Variable  Valid range  Flag condition
+#   HR        20-250 bpm   < 20 or > 250
+#   SpO2      60-100 %     > 100 or = 0
+#   Temp      30-43 degC   < 30 or > 43
+# NOTE: for SpO2 the slide's "valid range" (60-100) and its "flag condition" (>100 or =0)
+# differ. The assignment says to flag impossible values, so the headline count uses the
+# slide's FLAG CONDITION; the count under the stricter valid range is reported alongside.
 # ----------------------------------------------------------------------------
-RANGES = {"HR": (20, 300, "bpm"), "SpO2": (50, 100, "%"), "Temp_C": (25, 45, "degC")}
-STRICT = {"HR": (30, 220), "SpO2": (70, 100), "Temp_C": (32, 42)}   # sensitivity only
+SLIDE = {   # name: (valid_lo, valid_hi, unit, flag_rule_text, flag_function)
+    "HR":     (20, 250, "bpm", "<20 or >250", lambda x: (x < 20) | (x > 250)),
+    "SpO2":   (60, 100, "%",   ">100 or =0",  lambda x: (x > 100) | (x == 0)),
+    "Temp_C": (30, 43,  "degC", "<30 or >43", lambda x: (x < 30) | (x > 43)),
+}
+RANGES = {k: (lo, hi, u) for k, (lo, hi, u, _, _) in SLIDE.items()}   # valid ranges
 rows = []
-for k, (lo, hi, u) in RANGES.items():
+flagged_vals = {}
+for k, (lo, hi, u, rule, fn) in SLIDE.items():
     s = v[v["var"] == k].valuenum
-    bad = (s < lo) | (s > hi)
-    sl, sh = STRICT[k]
-    bad2 = (s < sl) | (s > sh)
-    rows.append(dict(variable=k, unit=u, valid_range=f"{lo}-{hi}", n_obs=len(s), n_flagged=int(bad.sum()),
-                     pct_flagged=round(100 * bad.mean(), 4), n_below=int((s < lo).sum()), n_above=int((s > hi).sum()),
+    bad = fn(s)
+    outside = (s < lo) | (s > hi)
+    flagged_vals[k] = sorted(s[bad].round(1).tolist())
+    rows.append(dict(variable=k, unit=u, valid_range=f"{lo}-{hi}", flag_rule=rule, n_obs=len(s),
+                     n_flagged=int(bad.sum()), pct_flagged=round(100 * bad.mean(), 4),
+                     n_outside_valid_range=int(outside.sum()), pct_outside_valid_range=round(100 * outside.mean(), 4),
                      observed_min=round(s.min(), 1), observed_max=round(s.max(), 1),
-                     sens_range=f"{sl}-{sh}", sens_n_flagged=int(bad2.sum()), sens_pct=round(100 * bad2.mean(), 3)))
+                     flagged_values=str(flagged_vals[k]),
+                     outside_valid_values=str(sorted(s[outside].round(1).tolist()))))
 out3 = pd.DataFrame(rows); out3.to_csv(f"{OUT}/A3_outliers.csv", index=False)
 R["A3"] = rows
-print(out3.to_string())
+print(out3.drop(columns=["flagged_values", "outside_valid_values"]).to_string())
+print(out3[["variable", "flagged_values", "outside_valid_values"]].to_string())
 fig, ax = plt.subplots(1, 3, figsize=(13, 4))
-for a, (k, (lo, hi, u)) in zip(ax, RANGES.items()):
+for a_, (k, (lo, hi, u)) in zip(ax, RANGES.items()):
     s = v[v["var"] == k].valuenum
-    sns.histplot(s, bins=60, ax=a); a.axvline(lo, color="r", ls="--"); a.axvline(hi, color="r", ls="--")
-    a.set_yscale("log"); a.set_title(f"{k} ({u}); red = range [{lo},{hi}]")
+    sns.histplot(s, bins=60, ax=a_); a_.axvline(lo, color="r", ls="--"); a_.axvline(hi, color="r", ls="--")
+    a_.set_yscale("log"); a_.set_title(f"{k} ({u}); red = slide valid range [{lo},{hi}]")
 save("A3_outliers.png")
 
 # ----------------------------------------------------------------------------

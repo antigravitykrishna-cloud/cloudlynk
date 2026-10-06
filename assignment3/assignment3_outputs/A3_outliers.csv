@@ -1,4 +1,4 @@
-variable,unit,valid_range,n_obs,n_flagged,pct_flagged,n_below,n_above,observed_min,observed_max,sens_range,sens_n_flagged,sens_pct
-HR,bpm,20-300,13913,3,0.0216,3,0,0.0,200.0,30-220,5,0.036
-SpO2,%,50-100,13540,3,0.0222,3,0,29.0,100.0,70-100,9,0.066
-Temp_C,degC,25-45,3770,3,0.0796,0,3,31.1,99.0,32-42,5,0.133
+variable,unit,valid_range,flag_rule,n_obs,n_flagged,pct_flagged,n_outside_valid_range,pct_outside_valid_range,observed_min,observed_max,flagged_values,outside_valid_values
+HR,bpm,20-250,<20 or >250,13913,3,0.0216,3,0.0216,0.0,200.0,"[0.0, 0.0, 0.0]","[0.0, 0.0, 0.0]"
+SpO2,%,60-100,>100 or =0,13540,0,0.0,5,0.0369,29.0,100.0,[],"[29.0, 43.0, 47.0, 50.0, 52.0]"
+Temp_C,degC,30-43,<30 or >43,3770,3,0.0796,3,0.0796,31.1,99.0,"[97.2, 98.9, 99.0]","[97.2, 98.9, 99.0]"
