@@ -64,6 +64,16 @@ export const usePersonaStore = create<PersonaStore>((set, get) => ({
       const isActivated = persona?.persona !== 'organic' ||
         (persona?.activationTime && Date.now() - persona.activationTime > 48 * 60 * 60 * 1000);
 
+      // Calculate activation progress
+      let activationProgress = 0;
+      if (persona && persona.persona === 'organic' && persona.activationTime) {
+        const elapsed = Date.now() - persona.activationTime;
+        const totalTime = 48 * 60 * 60 * 1000;
+        activationProgress = Math.min(elapsed / totalTime, 1);
+      } else if (persona) {
+        activationProgress = 1;
+      }
+
       set({
         persona,
         subscription,
@@ -72,7 +82,7 @@ export const usePersonaStore = create<PersonaStore>((set, get) => ({
         canAccessFullContent,
         needsAdminApproval: persona?.needsAdminApproval || false,
         isActivated: isActivated || false,
-        activationProgress: this._calculateActivationProgress(persona),
+        activationProgress,
         isLoading: false,
       });
     } catch (error) {

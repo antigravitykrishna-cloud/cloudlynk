@@ -6,7 +6,7 @@
  * - "reviewer": Detected as reviewer/bot, sees safe content only
  */
 
-import { supabase } from '../supabase/client';
+import { supabase } from '../supabase';
 import { DeviceFingerprintManager, DeviceFingerprint } from '../fingerprint/deviceFingerprint';
 import { SafetyNetAttestation } from './safetyNetAttestation';
 

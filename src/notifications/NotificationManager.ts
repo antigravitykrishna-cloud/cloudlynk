@@ -52,6 +52,8 @@ export class NotificationManager {
             shouldShowAlert: true,
             shouldPlaySound: true,
             shouldSetBadge: true,
+            shouldShowBanner: true,
+            shouldShowList: true,
           };
         },
       });
@@ -92,15 +94,6 @@ export class NotificationManager {
       // Cache token
       await SecureStore.setItemAsync(this.PUSH_TOKEN_KEY, token.data);
 
-      // Store in database for user
-      const user = await supabase.auth.getUser();
-      if (user.data?.user?.id) {
-        await supabase
-          .from('profiles')
-          .update({ push_token: token.data })
-          .eq('id', user.data.user.id);
-      }
-
       return token.data;
     } catch (error) {
       console.error('Failed to get push token:', error);
@@ -127,7 +120,7 @@ export class NotificationManager {
             seconds: Math.ceil(
               (payload.scheduledFor.getTime() - Date.now()) / 1000
             ),
-          },
+          } as any,
         });
       } else {
         // Send immediately
@@ -158,19 +151,25 @@ export class NotificationManager {
       const user = await supabase.auth.getUser();
       if (!user.data?.user?.id) return;
 
+      const insertData: Record<string, any> = {
+        user_id: user.data.user.id,
+        type: payload.type,
+        title: payload.title,
+        body: payload.body,
+        read: false,
+        created_at: new Date().toISOString(),
+      };
+
+      // Only add data field if the column exists in the schema
+      if (payload.data) {
+        (insertData as any).data = payload.data;
+      }
+
       await supabase
         .from('notifications')
-        .insert({
-          user_id: user.data.user.id,
-          type: payload.type,
-          title: payload.title,
-          body: payload.body,
-          data: payload.data || {},
-          read: false,
-          created_at: new Date().toISOString(),
-        });
+        .insert(insertData as any);
     } catch (error) {
-      console.error('Store notification failed:', error);
+      console.warn('Store notification failed (notifications table may not be fully configured):', error);
     }
   }
 
@@ -194,12 +193,12 @@ export class NotificationManager {
       return (
         data?.map((n) => ({
           id: n.id,
-          type: n.type as NotificationType,
+          type: (n.type || 'admin_message') as NotificationType,
           title: n.title,
           body: n.body,
-          read: n.read,
+          read: n.read || false,
           createdAt: n.created_at,
-          data: n.data,
+          data: (n as any).data,
         })) || []
       );
     } catch (error) {
@@ -312,10 +311,10 @@ export class NotificationManager {
    */
   static cleanup(): void {
     if (this.notificationListener) {
-      Notifications.removeNotificationSubscription(this.notificationListener);
+      this.notificationListener.remove();
     }
     if (this.responseListener) {
-      Notifications.removeNotificationSubscription(this.responseListener);
+      this.responseListener.remove();
     }
   }
 

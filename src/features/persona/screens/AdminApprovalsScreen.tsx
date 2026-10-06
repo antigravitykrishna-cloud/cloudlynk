@@ -23,9 +23,9 @@ import { showAlert } from '@/components/ui/Feedback';
 interface PendingUser {
   user_id: string;
   persona: string;
-  risk_score: number;
-  created_at: string;
-  needs_admin_approval: boolean;
+  risk_score: number | null;
+  created_at: string | null;
+  needs_admin_approval: boolean | null;
   admin_approved_at: string | null;
 }
 
@@ -124,7 +124,7 @@ export default function AdminApprovalsScreen() {
   if (loading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <ActivityIndicator size="large" color={Colors.brandBlue} />
       </View>
     );
   }
@@ -175,8 +175,9 @@ function UserCard({
   onReject: () => void;
   isProcessing: boolean;
 }) {
-  const riskLevel = user.risk_score > 0.7 ? 'High' : user.risk_score > 0.4 ? 'Medium' : 'Low';
-  const riskColor = user.risk_score > 0.7 ? '#f44336' : user.risk_score > 0.4 ? '#ff9800' : '#4caf50';
+  const score = user.risk_score ?? 0.5;
+  const riskLevel = score > 0.7 ? 'High' : score > 0.4 ? 'Medium' : 'Low';
+  const riskColor = score > 0.7 ? '#f44336' : score > 0.4 ? '#ff9800' : '#4caf50';
 
   return (
     <Card style={styles.card}>
@@ -191,11 +192,11 @@ function UserCard({
         <DetailRow label="Persona" value={user.persona} />
         <DetailRow
           label="Risk Score"
-          value={`${(user.risk_score * 100).toFixed(0)}%`}
+          value={`${((user.risk_score ?? 0.5) * 100).toFixed(0)}%`}
         />
         <DetailRow
           label="Requested"
-          value={new Date(user.created_at).toLocaleDateString()}
+          value={user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown'}
         />
       </View>
 
@@ -253,12 +254,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '600',
-    color: Colors.text.primary,
+    color: Colors.text,
   },
   count: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.primary,
+    color: Colors.brandBlue,
     backgroundColor: Colors.bg,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
@@ -269,7 +270,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 18,
-    color: Colors.text.secondary,
+    color: Colors.textSecondary,
   },
   card: {
     marginBottom: Spacing.md,
@@ -284,7 +285,7 @@ const styles = StyleSheet.create({
   userId: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.text.primary,
+    color: Colors.text,
     flex: 1,
   },
   riskBadge: {
@@ -312,12 +313,12 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 14,
-    color: Colors.text.secondary,
+    color: Colors.textSecondary,
   },
   detailValue: {
     fontSize: 14,
     fontWeight: '500',
-    color: Colors.text.primary,
+    color: Colors.text,
   },
   actions: {
     flexDirection: 'row',

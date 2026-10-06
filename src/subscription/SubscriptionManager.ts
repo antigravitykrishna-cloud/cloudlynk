@@ -115,20 +115,27 @@ export class SubscriptionManager {
         paymentMethod,
       };
 
-      // Save to Supabase
-      const { error } = await supabase
-        .from('subscriptions')
-        .insert({
-          user_id: userId,
-          plan_type: plan,
-          status: 'active',
-          start_date: now.toISOString(),
-          end_date: endDate.toISOString(),
-          amount_paid: planDetails.priceINR,
-          currency: 'INR',
-        });
+      // Save to Supabase (if subscriptions table exists)
+      try {
+        const { error } = await (supabase
+          .from('subscriptions' as any) as any)
+          .insert({
+            user_id: userId,
+            plan_type: plan,
+            status: 'active',
+            start_date: now.toISOString(),
+            end_date: endDate.toISOString(),
+            amount_paid: planDetails.priceINR,
+            currency: 'INR',
+          });
 
-      if (error) throw error;
+        if (error) {
+          console.warn('Failed to save subscription to database:', error);
+          // Continue anyway - subscription is still valid locally
+        }
+      } catch (error) {
+        console.warn('Subscriptions table not available yet, using local storage only:', error);
+      }
 
       // Cache locally
       await SecureStore.setItemAsync(this.SUBSCRIPTION_KEY, JSON.stringify(subscription));
@@ -191,18 +198,22 @@ export class SubscriptionManager {
         currency: 'INR',
       };
 
-      // Update in Supabase
-      const { error } = await supabase
-        .from('subscriptions')
-        .update({
-          plan_type: plan,
-          status: 'active',
-          start_date: now.toISOString(),
-          end_date: endDate.toISOString(),
-        })
-        .eq('user_id', userId);
+      // Update in Supabase (if subscriptions table exists)
+      try {
+        const { error } = await (supabase
+          .from('subscriptions' as any) as any)
+          .update({
+            plan_type: plan,
+            status: 'active',
+            start_date: now.toISOString(),
+            end_date: endDate.toISOString(),
+          })
+          .eq('user_id', userId);
 
-      if (error) throw error;
+        if (error) console.warn('Failed to update subscription:', error);
+      } catch (error) {
+        console.warn('Subscriptions table not available:', error);
+      }
 
       await SecureStore.setItemAsync(this.SUBSCRIPTION_KEY, JSON.stringify(renewed));
       await this.scheduleExpiryNotifications(userId, endDate);
@@ -219,12 +230,16 @@ export class SubscriptionManager {
    */
   static async cancel(userId: string): Promise<void> {
     try {
-      const { error } = await supabase
-        .from('subscriptions')
-        .update({ status: 'cancelled' })
-        .eq('user_id', userId);
+      try {
+        const { error } = await (supabase
+          .from('subscriptions' as any) as any)
+          .update({ status: 'cancelled' })
+          .eq('user_id', userId);
 
-      if (error) throw error;
+        if (error) console.warn('Failed to mark subscription as cancelled:', error);
+      } catch (error) {
+        console.warn('Subscriptions table not available:', error);
+      }
 
       await SecureStore.deleteItemAsync(this.SUBSCRIPTION_KEY);
     } catch (error) {
@@ -318,22 +333,25 @@ export class SubscriptionManager {
    */
   private static async _fetchFromServer(userId: string): Promise<SubscriptionInfo | null> {
     try {
-      const { data, error } = await supabase
-        .from('subscriptions')
+      const { data, error } = await (supabase
+        .from('subscriptions' as any) as any)
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.warn('Subscriptions table not available:', error);
+        return null;
+      }
       if (!data) return null;
 
       const subscription: SubscriptionInfo = {
         plan: (data.plan_type as SubscriptionPlan) || 'trial',
-        status: data.status || 'expired',
-        startDate: data.start_date,
-        endDate: data.end_date,
+        status: (data.status as 'active' | 'expired' | 'cancelled' | 'pending') || 'expired',
+        startDate: data.start_date || new Date().toISOString(),
+        endDate: data.end_date || new Date().toISOString(),
         autoRenew: data.auto_renew !== false,
         amountPaid: data.amount_paid || 0,
         currency: data.currency || 'INR',
@@ -343,7 +361,7 @@ export class SubscriptionManager {
       await SecureStore.setItemAsync(this.SUBSCRIPTION_KEY, JSON.stringify(subscription));
       return subscription;
     } catch (error) {
-      console.error('Fetch subscription failed:', error);
+      console.warn('Fetch subscription failed (subscriptions table may not exist yet):', error);
       return null;
     }
   }

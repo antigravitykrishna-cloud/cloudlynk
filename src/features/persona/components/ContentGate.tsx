@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.bg,
   },
   loadingText: {
-    color: Colors.text.primary,
+    color: Colors.text,
     fontSize: 16,
   },
   container: {
@@ -215,13 +215,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: Colors.text.primary,
+    color: Colors.text,
     marginBottom: Spacing.md,
     textAlign: 'center',
   },
   message: {
     fontSize: 16,
-    color: Colors.text.secondary,
+    color: Colors.textSecondary,
     textAlign: 'center',
     marginBottom: Spacing.lg,
     lineHeight: 24,
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: 12,
-    color: Colors.text.secondary,
+    color: Colors.textSecondary,
     textAlign: 'center',
   },
   banner: {

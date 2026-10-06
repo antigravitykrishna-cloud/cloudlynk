@@ -4,7 +4,7 @@
  * Integrates with device fingerprinting for security
  */
 
-import { supabase } from '@/lib/supabase';
+import { supabase, supabaseUrl } from '@/lib/supabase';
 import { DeviceFingerprintManager } from '@/lib/fingerprint/deviceFingerprint';
 import * as SecureStore from 'expo-secure-store';
 
@@ -72,11 +72,15 @@ export class AuthManager {
       });
 
       if (error) throw error;
-      if (!data?.user?.id) throw new Error('No user returned from Google');
+
+      // OAuth flow returns provider, url, and flowId - the session comes after callback
+      // For now, get the current session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) throw new Error('No user returned from Google');
 
       const user: AuthUser = {
-        id: data.user.id,
-        email: data.user.email,
+        id: session.user.id,
+        email: session.user.email || '',
         authMethod: 'google',
         isVerified: true,
         createdAt: new Date().toISOString(),
@@ -159,7 +163,7 @@ export class AuthManager {
 
       // Call edge function for server-side verification
       const response = await fetch(
-        `${supabase.supabaseUrl}/functions/v1/classify-persona`,
+        `${supabaseUrl}/functions/v1/classify-persona`,
         {
           method: 'POST',
           headers: {
