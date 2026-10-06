@@ -119,7 +119,7 @@ android {
         // are the numbers that actually ship. app.json's copies are only
         // advisory while that is true.
         //
-        // Play rejects any upload whose versionCode is not strictly greater
+        // Play rejects any upload whose versionCode 18
         // than the last one it accepted. Nothing has been uploaded yet, so 8
         // is a free choice; after the first upload this must only ever go up.
         versionCode 18
