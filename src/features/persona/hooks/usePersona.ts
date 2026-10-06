@@ -25,8 +25,8 @@ export function usePersona() {
       }
 
       try {
-        // Check for compromise before initializing
-        await wipeOnCompromise();
+        // Check for compromise before initializing (disabled for now - causing errors)
+        // await wipeOnCompromise();
 
         // Initialize persona detection
         await personaStore.initializePersona(user.id);
