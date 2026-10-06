@@ -9,6 +9,7 @@ import { usePersonaStore } from '@/lib/stores/personaStore';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { NotificationManager } from '@/features/persona/api/NotificationManager';
 import { recordCurrentDevice } from '@/features/persona/api/deviceApi';
+import { wipeOnCompromise } from '@/lib/security/antiRE';
 
 export function usePersona() {
   const { user } = useAuth();
@@ -24,6 +25,9 @@ export function usePersona() {
       }
 
       try {
+        // Check for compromise before initializing
+        await wipeOnCompromise();
+
         // Initialize persona detection
         await personaStore.initializePersona(user.id);
 

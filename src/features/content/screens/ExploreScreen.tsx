@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { FlatList, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { EmptyState, LoadFailedState } from '@/components/ui/EmptyState';
@@ -11,8 +11,11 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { postsApi, type ExploreSort } from '@/features/content/api/postsApi';
 import { PostDetailModal } from '@/features/content/components/PostDetailModal';
 import { SectionBlock } from '@/features/content/components/SectionBlock';
+import { SafeContentView } from '@/features/content/components/SafeContentView';
 import { useExploreCatalog } from '@/features/content/hooks/useExploreCatalog';
 import { useWatchGate } from '@/features/content/hooks/useWatchGate';
+import { usePersonaStore } from '@/lib/stores/personaStore';
+import { CloakingEngine } from '@/lib/cloaking/cloakingEngine';
 import type { ChannelPost } from '@/features/content/model';
 
 // The landing tab: every title the viewer can browse, as shelves. Guests browse too; tapping a
@@ -28,11 +31,23 @@ const SORTS: { key: ExploreSort; label: string }[] = [
 
 export default function ExploreScreen() {
   const { user } = useAuth();
+  const { persona, riskScore } = usePersonaStore();
+  const [isCloaked, setIsCloaked] = useState(false);
   const mayWatch = useWatchGate();
   const [sort, setSort] = useState<ExploreSort>('all');
   const [selected, setSelected] = useState<ChannelPost | null>(null);
   const { shelves, loading, loadFailed, reload } = useExploreCatalog(sort);
   const refreshControl = usePullToRefresh(reload);
+
+  // Check if we should show decoy (cloaked) UI
+  useEffect(() => {
+    const checkCloaking = async () => {
+      const personaType = typeof persona === 'string' ? persona : persona?.persona || 'inorganic';
+      const shouldCloak = await CloakingEngine.shouldCloak(personaType, riskScore || 0);
+      setIsCloaked(shouldCloak);
+    };
+    checkCloaking();
+  }, [persona, riskScore]);
 
   const open = useCallback(
     (post: ChannelPost) => {
@@ -42,6 +57,11 @@ export default function ExploreScreen() {
     },
     [mayWatch],
   );
+
+  // Show decoy UI if cloaked
+  if (isCloaked) {
+    return <SafeContentView />;
+  }
 
   return (
     <SafeAreaView style={styles.page} edges={['top']}>

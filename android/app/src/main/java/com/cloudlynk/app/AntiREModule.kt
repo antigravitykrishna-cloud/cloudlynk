@@ -5,7 +5,7 @@ import android.os.Debug
 import com.facebook.react.bridge.*
 import java.io.File
 
-class AntiREModule(reactContext: ReactApplicationContext) : ReactContextBaseModule(reactContext) {
+class AntiREModule(private val reactContext: ReactApplicationContext) : ReactContextBaseModule(reactContext) {
   override fun getName() = "AntiRE"
 
   @ReactMethod

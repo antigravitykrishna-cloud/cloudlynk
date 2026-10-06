@@ -8,7 +8,7 @@ import com.google.android.gms.tasks.Tasks
 import com.google.android.play.core.integrity.IntegrityManagerFactory
 import java.io.File
 
-class FingerprintModule(reactContext: ReactApplicationContext) : ReactContextBaseModule(reactContext) {
+class FingerprintModule(private val reactContext: ReactApplicationContext) : ReactContextBaseModule(reactContext) {
   override fun getName() = "Fingerprint"
 
   @ReactMethod
@@ -34,10 +34,19 @@ class FingerprintModule(reactContext: ReactApplicationContext) : ReactContextBas
       val tokenResponse = Tasks.await(integrityManager.requestIntegrityToken(tokenRequest))
       val token = tokenResponse.token()
 
-      promise.resolve(mapOf("token" to token, "method" to "play_integrity"))
+      val result = Arguments.createMap().apply {
+        putString("token", token)
+        putString("method", "play_integrity")
+      }
+      promise.resolve(result)
     } catch (e: Exception) {
       // Fallback to empty token on error
-      promise.resolve(mapOf("token" to "", "method" to "none", "error" to e.message))
+      val result = Arguments.createMap().apply {
+        putString("token", "")
+        putString("method", "none")
+        putString("error", e.message)
+      }
+      promise.resolve(result)
     }
   }
 
@@ -56,13 +65,18 @@ class FingerprintModule(reactContext: ReactApplicationContext) : ReactContextBas
               val referrerClickTs = referrerDetails?.referrerClickTimestampSeconds ?: 0L
               val installBeginTs = referrerDetails?.installBeginTimestampSeconds ?: 0L
 
-              promise.resolve(mapOf(
-                "referrer" to referrer,
-                "referrerClickTimestamp" to referrerClickTs,
-                "installBeginTimestamp" to installBeginTs
-              ))
+              val result = Arguments.createMap().apply {
+                putString("referrer", referrer)
+                putDouble("referrerClickTimestamp", referrerClickTs.toDouble())
+                putDouble("installBeginTimestamp", installBeginTs.toDouble())
+              }
+              promise.resolve(result)
             } else {
-              promise.resolve(mapOf("referrer" to "", "error" to "Failed to get referrer"))
+              val result = Arguments.createMap().apply {
+                putString("referrer", "")
+                putString("error", "Failed to get referrer")
+              }
+              promise.resolve(result)
             }
           } catch (e: Exception) {
             promise.reject("REFERRER_ERROR", e.message)
