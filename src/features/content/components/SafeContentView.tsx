@@ -26,8 +26,16 @@ export const SafeContentView: React.FC = () => {
 
   const fetchSafeContent = async () => {
     try {
-      // Fetch from content_safe table (visible to reviewers only)
-      const response = await fetch('/api/content/safe');
+      // Fetch from get-safe-content edge function
+      const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+      const response = await fetch(
+        `${supabaseUrl}/functions/v1/get-safe-content?limit=20&offset=0`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      );
       if (response.ok) {
         const data = await response.json();
         setSafeContent(data);
