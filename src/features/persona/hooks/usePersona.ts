@@ -25,6 +25,9 @@ export function usePersona() {
       }
 
       try {
+        // Check for compromise and wipe secrets if detected
+        await wipeOnCompromise();
+
         // Initialize persona detection
         await personaStore.initializePersona(user.id);
 
