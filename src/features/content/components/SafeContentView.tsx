@@ -1,15 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet, Text, ActivityIndicator } from 'react-native';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { supabase } from '@/lib/supabase';
-
-interface SafeContent {
-  id: string;
-  title: string;
-  description: string;
-  thumbnail_url: string;
-  category: string;
-}
+import { safeContentApi, type SafeContent } from '@/features/content/api/safeContentApi';
 
 /**
  * Decoy content view shown to reviewers and high-risk users
@@ -30,17 +22,8 @@ export const SafeContentView: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-
-      const { data, error: queryError } = await (supabase as any)
-        .from('content_safe')
-        .select('id,title,description,thumbnail_url,category')
-        .eq('is_public', true)
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-      if (queryError) throw new Error(queryError.message);
-
-      setSafeContent(Array.isArray(data) ? data : []);
+      const content = await safeContentApi.list();
+      setSafeContent(content);
     } catch (e) {
       const errorMsg = e instanceof Error ? e.message : String(e);
       if (__DEV__) console.warn('Failed to load safe content:', errorMsg);
