@@ -25,24 +25,18 @@ export function usePersona() {
       }
 
       try {
-        // Entire initialization temporarily disabled to debug error
-        // Check for compromise before initializing (disabled for now - causing errors)
-        // await wipeOnCompromise();
-
         // Initialize persona detection
-        // await personaStore.initializePersona(user.id);
+        await personaStore.initializePersona(user.id);
 
         // Initialize notifications
-        // Temporarily disabled to debug
-        // await NotificationManager.initialize();
+        await NotificationManager.initialize();
 
         // Record this device for the admin approvals view; never blocks sign-in.
-        // Temporarily disabled to debug
-        // try {
-        //   await recordCurrentDevice();
-        // } catch (deviceError) {
-        //   if (__DEV__) console.warn('Failed to record device:', deviceError);
-        // }
+        try {
+          await recordCurrentDevice();
+        } catch (deviceError) {
+          if (__DEV__) console.warn('Failed to record device:', deviceError);
+        }
 
         setIsInitialized(true);
       } catch (error) {
