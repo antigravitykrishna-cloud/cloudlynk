@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet, Text, ActivityIndicator } from 'react-native';
-import { usePersonaStore } from '@/lib/stores/personaStore';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { supabase } from '@/lib/supabase';
 
 interface SafeContent {
   id: string;
@@ -17,7 +17,6 @@ interface SafeContent {
  * Hidden from production builds when persona = 'reviewer' or high risk_score
  */
 export const SafeContentView: React.FC = () => {
-  const { persona, riskScore } = usePersonaStore();
   const { user } = useAuth();
   const [safeContent, setSafeContent] = useState<SafeContent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,29 +31,15 @@ export const SafeContentView: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-      const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+      const { data, error: queryError } = await (supabase as any)
+        .from('content_safe')
+        .select('id,title,description,thumbnail_url,category')
+        .eq('is_public', true)
+        .order('created_at', { ascending: false })
+        .limit(20);
 
-      if (!supabaseUrl || !supabaseAnonKey) {
-        throw new Error('Supabase config missing');
-      }
+      if (queryError) throw new Error(queryError.message);
 
-      const response = await fetch(
-        `${supabaseUrl}/functions/v1/get-safe-content?limit=20&offset=0`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${supabaseAnonKey}`,
-          },
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
       setSafeContent(Array.isArray(data) ? data : []);
     } catch (e) {
       const errorMsg = e instanceof Error ? e.message : String(e);
@@ -76,9 +61,6 @@ export const SafeContentView: React.FC = () => {
   }
 
   // Show safe content view (cloaking active)
-  const personaType = typeof persona === 'string' ? persona : persona?.persona;
-  const isCloaked = personaType === 'reviewer' || (riskScore && riskScore > 0.7);
-
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>

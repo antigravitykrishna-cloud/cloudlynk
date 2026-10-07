@@ -3,7 +3,7 @@
  * Verifies end-to-end persona classification → cloaking → content flow
  */
 
-import { CloakingEngine } from './cloakingEngine';
+import { CloakingEngine } from '@/lib/cloaking/cloakingEngine';
 import * as SecureStore from 'expo-secure-store';
 
 // Mock SecureStore
