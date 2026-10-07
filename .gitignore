@@ -88,3 +88,4 @@ deno.lock
 
 # local build output
 *.log
+coverage/
