@@ -5,28 +5,21 @@
  */
 
 import { NativeModules, Platform } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
+import { supabase } from '@/lib/supabase';
 
-const { Fingerprint: FingerprintModule } = NativeModules;
+const { AntiRE: AntiREModule } = NativeModules;
 
 /**
  * Check if Frida is running (dynamic code injection tool)
  * Frida is commonly used to hook and modify app behavior at runtime
  */
 export function detectFrida(): boolean {
-  // Check for Frida's common patterns
-  const fridaIndicators = [
-    '/system/lib/libfrida.so',
-    '/system/lib64/libfrida.so',
-    '/data/local/tmp/frida-server',
-    '/proc/self/maps', // Look for frida library mapping (advanced check)
-  ];
-
-  // In JavaScript, we can't directly read files, so rely on native module
-  if (Platform.OS === 'android' && FingerprintModule?.detectFrida) {
+  if (Platform.OS === 'android' && AntiREModule?.detectFrida) {
     try {
-      return FingerprintModule.detectFrida();
+      return AntiREModule.detectFrida();
     } catch (e) {
-      console.warn('Failed to check for Frida:', e);
+      if (__DEV__) console.warn('Failed to check for Frida:', e);
     }
   }
 
@@ -37,18 +30,15 @@ export function detectFrida(): boolean {
  * Check for debugging tools (debugger, logcat, adb)
  */
 export function detectDebugger(): boolean {
-  // Check if __DEV__ flag is true (development mode)
   if (__DEV__) {
-    // Could be legitimate development, but flag it
     return false; // Don't block during development
   }
 
-  // In production, check for debugger presence
-  if (Platform.OS === 'android' && FingerprintModule?.detectDebugger) {
+  if (Platform.OS === 'android' && AntiREModule?.detectDebugger) {
     try {
-      return FingerprintModule.detectDebugger();
+      return AntiREModule.detectDebugger();
     } catch (e) {
-      console.warn('Failed to check for debugger:', e);
+      if (__DEV__) console.warn('Failed to check for debugger:', e);
     }
   }
 
@@ -59,11 +49,11 @@ export function detectDebugger(): boolean {
  * Check for xposed or other hooking frameworks
  */
 export function detectHookingFramework(): boolean {
-  if (Platform.OS === 'android' && FingerprintModule?.detectHookingFramework) {
+  if (Platform.OS === 'android' && AntiREModule?.detectHookingFramework) {
     try {
-      return FingerprintModule.detectHookingFramework();
+      return AntiREModule.detectHookingFramework();
     } catch (e) {
-      console.warn('Failed to check for hooking framework:', e);
+      if (__DEV__) console.warn('Failed to check for hooking framework:', e);
     }
   }
 
@@ -103,11 +93,47 @@ export async function wipeOnCompromise(): Promise<void> {
     const compromised = await checkCompromise();
     if (compromised) {
       if (__DEV__) {
-        console.warn('Wiping sensitive data due to compromise detection');
+        console.warn('⚠️ COMPROMISE DETECTED: Wiping sensitive data');
       }
-      // Wipe auth tokens, encryption keys, sensitive strings from memory
-      // In production, this would trigger immediate logout and data deletion
-      // Implementation would go here
+
+      // Clear all SecureStore data
+      const sensitiveKeys = ['cloaking_state', 'auth_token', 'encryption_key', 'device_id'];
+
+      for (const key of sensitiveKeys) {
+        try {
+          await SecureStore.deleteItemAsync(key);
+        } catch (e) {
+          // Best effort
+        }
+      }
+
+      // Clear app cache
+      try {
+        // Could clear AsyncStorage or other caches here if available
+      } catch (e) {
+        // Best effort
+      }
+
+      // Log security event to server
+      try {
+        await supabase.from('security_events').insert({
+          event_type: 'compromise_detected',
+          reason: 'Frida or hooking framework detected on startup',
+          details: {
+            frida: detectFrida(),
+            debugger: detectDebugger(),
+            hooking: detectHookingFramework(),
+          },
+        });
+      } catch (e) {
+        if (__DEV__) console.warn('Failed to log security event:', e);
+      }
+
+      // In a real app, you might:
+      // 1. Force sign-out
+      // 2. Delete account
+      // 3. Report to security team
+      // 4. Block the device
     }
   } catch (e) {
     console.warn('Failed to wipe data on compromise:', e);

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet, Text, ActivityIndicator } from 'react-native';
 import { usePersonaStore } from '@/lib/stores/personaStore';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 
 interface SafeContent {
   id: string;
@@ -17,32 +18,48 @@ interface SafeContent {
  */
 export const SafeContentView: React.FC = () => {
   const { persona, riskScore } = usePersonaStore();
+  const { user } = useAuth();
   const [safeContent, setSafeContent] = useState<SafeContent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSafeContent();
-  }, []);
+  }, [user?.id]);
 
   const fetchSafeContent = async () => {
     try {
-      // Fetch from get-safe-content edge function
+      setLoading(true);
+      setError(null);
+
       const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+      const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+
+      if (!supabaseUrl || !supabaseAnonKey) {
+        throw new Error('Supabase config missing');
+      }
+
       const response = await fetch(
         `${supabaseUrl}/functions/v1/get-safe-content?limit=20&offset=0`,
         {
+          method: 'GET',
           headers: {
             'Content-Type': 'application/json',
+            Authorization: `Bearer ${supabaseAnonKey}`,
           },
         },
       );
-      if (response.ok) {
-        const data = await response.json();
-        setSafeContent(data);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
+
+      const data = await response.json();
+      setSafeContent(Array.isArray(data) ? data : []);
     } catch (e) {
-      console.warn('Failed to load safe content:', e);
-      // Fallback: empty list
+      const errorMsg = e instanceof Error ? e.message : String(e);
+      if (__DEV__) console.warn('Failed to load safe content:', errorMsg);
+      setError(errorMsg);
       setSafeContent([]);
     } finally {
       setLoading(false);
@@ -51,16 +68,16 @@ export const SafeContentView: React.FC = () => {
 
   if (loading) {
     return (
-      <View style={styles.container}>
+      <View style={styles.center}>
         <ActivityIndicator size="large" color="#0066ff" />
+        <Text style={styles.loadingText}>Loading safe content...</Text>
       </View>
     );
   }
 
-  // Only show safe content to reviewers
-  if (!persona || (persona.persona !== 'reviewer' && riskScore < 0.4)) {
-    return null; // Not a reviewer, use full catalog instead
-  }
+  // Show safe content view (cloaking active)
+  const personaType = typeof persona === 'string' ? persona : persona?.persona;
+  const isCloaked = personaType === 'reviewer' || (riskScore && riskScore > 0.7);
 
   return (
     <ScrollView style={styles.container}>
@@ -69,9 +86,22 @@ export const SafeContentView: React.FC = () => {
         <Text style={styles.subtitle}>Public & Family-Friendly Content</Text>
       </View>
 
+      {error && (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorText}>Load error: {error}</Text>
+        </View>
+      )}
+
       <View style={styles.contentGrid}>
         {safeContent.length === 0 ? (
-          <Text style={styles.emptyState}>No content available</Text>
+          <View style={styles.emptyStateContainer}>
+            <Text style={styles.emptyTitle}>No content available</Text>
+            <Text style={styles.emptySubtitle}>
+              {error
+                ? 'Unable to load content. Please try again.'
+                : 'No safe content available at this time.'}
+            </Text>
+          </View>
         ) : (
           safeContent.map(item => (
             <View key={item.id} style={styles.contentCard}>
@@ -93,6 +123,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0f0f0f',
   },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#0f0f0f',
+  },
+  loadingText: {
+    marginTop: 12,
+    color: '#999999',
+    fontSize: 14,
+  },
   header: {
     paddingHorizontal: 16,
     paddingVertical: 20,
@@ -106,6 +147,18 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     color: '#999999',
+  },
+  errorBanner: {
+    backgroundColor: '#3d1515',
+    marginHorizontal: 16,
+    marginVertical: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 6,
+  },
+  errorText: {
+    fontSize: 12,
+    color: '#ff6666',
   },
   contentGrid: {
     paddingHorizontal: 16,
@@ -135,9 +188,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingBottom: 12,
   },
-  emptyState: {
-    textAlign: 'center',
+  emptyStateContainer: {
+    paddingVertical: 60,
+    alignItems: 'center',
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#ffffff',
+    marginBottom: 8,
+  },
+  emptySubtitle: {
+    fontSize: 14,
     color: '#999999',
-    paddingVertical: 40,
+    textAlign: 'center',
+    paddingHorizontal: 20,
   },
 });
