@@ -32,7 +32,9 @@ const SORTS: { key: ExploreSort; label: string }[] = [
 export default function ExploreScreen() {
   const { user } = useAuth();
   const { persona, riskScore } = usePersonaStore();
-  const [isCloaked, setIsCloaked] = useState(false);
+  // Fail closed: stay on the decoy view until classification actually clears the visitor.
+  // Real content must never be the default while persona is still unknown.
+  const [isCloaked, setIsCloaked] = useState(true);
   const mayWatch = useWatchGate();
   const [sort, setSort] = useState<ExploreSort>('all');
   const [selected, setSelected] = useState<ChannelPost | null>(null);
@@ -44,7 +46,8 @@ export default function ExploreScreen() {
     const checkCloaking = async () => {
       try {
         if (!persona) {
-          setIsCloaked(false);
+          // Not classified yet (or classification unavailable) — stay cloaked.
+          setIsCloaked(true);
           return;
         }
         const personaType = typeof persona === 'string' ? persona : persona.persona || 'inorganic';
@@ -52,7 +55,7 @@ export default function ExploreScreen() {
         setIsCloaked(shouldCloak);
       } catch (e) {
         if (__DEV__) console.warn('Cloaking check failed:', e);
-        setIsCloaked(false);
+        setIsCloaked(true);
       }
     };
     checkCloaking();

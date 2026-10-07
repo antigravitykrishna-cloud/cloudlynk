@@ -26,7 +26,9 @@ export default function FeedScreen() {
   const [posts, setPosts] = useState<ListedPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
-  const [isCloaked, setIsCloaked] = useState(false);
+  // Fail closed: stay on the decoy view until classification actually clears the visitor.
+  // Real content must never be the default while persona is still unknown.
+  const [isCloaked, setIsCloaked] = useState(true);
 
   // Check persona access state
   const { isRejected, needsAdminApproval, persona, riskScore } = usePersonaStore();
@@ -36,7 +38,8 @@ export default function FeedScreen() {
     const checkCloaking = async () => {
       try {
         if (!persona) {
-          setIsCloaked(false);
+          // Not classified yet (or classification unavailable) — stay cloaked.
+          setIsCloaked(true);
           return;
         }
         const personaType = typeof persona === 'string' ? persona : persona.persona || 'inorganic';
@@ -44,7 +47,7 @@ export default function FeedScreen() {
         setIsCloaked(shouldCloak);
       } catch (e) {
         if (__DEV__) console.warn('Cloaking check failed:', e);
-        setIsCloaked(false);
+        setIsCloaked(true);
       }
     };
     checkCloaking();

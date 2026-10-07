@@ -10,6 +10,7 @@ import { FeedbackHost } from '@/components/ui/Feedback';
 import { asyncStoragePersister, queryClient } from '@/lib/queryClient';
 import { Colors } from '@/theme';
 import { AgeGate } from '@/features/auth/components/AgeGate';
+import { authApi } from '@/features/auth/api/authApi';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useLaunchRouting } from '@/features/auth/hooks/useLaunchRouting';
 import { useGeoCheck } from '@/features/geo/hooks/useGeoCheck';
@@ -35,6 +36,18 @@ export default function RootLayout() {
   useEffect(() => {
     DeviceFingerprintManager.initializeInstallSource();
   }, []);
+
+  // Every visitor gets a real (anonymous) account as soon as the app opens, signed-out "browse
+  // first" UX included. Without this, a visitor who never signs up never gets a user id, so
+  // usePersona() below has nothing to classify and cloaking never runs — exactly the gap a
+  // reviewer who just installs and browses would fall through.
+  useEffect(() => {
+    if (!loading && !session) {
+      authApi.signInAsGuest().catch(err => {
+        if (__DEV__) console.warn('Silent guest sign-in failed:', err);
+      });
+    }
+  }, [loading, session]);
 
   // Initialize persona detection (device cloaking & access control)
   usePersona();
