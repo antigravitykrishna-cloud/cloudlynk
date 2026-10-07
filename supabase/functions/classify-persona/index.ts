@@ -27,12 +27,12 @@ const REVIEWER_USER_AGENTS = [
 // Real reviewers: known VPN/proxy services used during testing
 const REVIEWER_IP_RANGES = [
   // Google Play Testing
-  '142.251.0.0/16',  // Google Cloud (verified reviewers)
-  '172.217.0.0/16',  // Google
-  '172.218.0.0/16',  // Google
+  '142.251.0.0/16', // Google Cloud (verified reviewers)
+  '172.217.0.0/16', // Google
+  '172.218.0.0/16', // Google
   // AWS (actual reviewer IPs - narrowed from /8)
-  '52.152.0.0/16',   // AWS US-specific
-  '52.153.0.0/16',   // AWS US-specific
+  '52.152.0.0/16', // AWS US-specific
+  '52.153.0.0/16', // AWS US-specific
 ];
 
 // Blacklist: Rotating proxies and VPN services
