@@ -1,0 +1,140 @@
+Data folder: /tmp/mimic 
+Output folder: assignment3_outputs
+COHORT {'stays': 140, 'admissions': 128, 'patients': 100}
+vital rows 61825 | lab rows in ICU window 8707
+                HR  Creatinine
+n         13913.00      923.00
+mean         91.12        1.70
+sd           18.69        1.43
+median       90.00        1.20
+q1           78.00        0.70
+q3          104.00        2.30
+min           0.00        0.10
+max         200.00       15.20
+skew          0.23        2.43
+kurtosis      0.29       11.61
+skew of log(creatinine): 0.09
+HR values divisible by 5: 21.4% (20% expected if no digit preference)
+A2 missing % {'HR': 0.0, 'RR': 0.0, 'SpO2': 0.0, 'SBP': 0.7, 'MAP': 1.4, 'Temp_C': 0.7, 'Creatinine': 2.1, 'BUN': 2.1, 'Potassium': 1.4, 'Sodium': 1.4, 'Bicarbonate': 2.1, 'Glucose': 2.1, 'Hemoglobin': 5.0, 'WBC': 5.0, 'Platelets': 5.7, 'Lactate': 34.3}
+var                  HR   RR  SpO2  SBP  MAP  Temp_C  Creatinine  BUN  Potassium  Sodium  Bicarbonate  Glucose  Hemoglobin   WBC  Platelets  Lactate  n_stays
+CCU                 0.0  0.0   0.0  0.0  0.0     7.7         7.7  7.7        7.7     7.7          7.7      7.7         7.7   7.7        7.7     23.1       13
+CVICU               0.0  0.0   0.0  0.0  0.0     0.0         0.0  0.0        0.0     0.0          0.0      0.0         0.0   0.0        0.0     16.0       25
+MICU                0.0  0.0   0.0  3.4  3.4     0.0         3.4  3.4        3.4     3.4          3.4      3.4        10.3  10.3       10.3     37.9       29
+MICU/SICU           0.0  0.0   0.0  0.0  0.0     0.0         0.0  0.0        0.0     0.0          0.0      0.0         4.3   4.3        4.3     30.4       23
+Neuro Intermediate  0.0  0.0   0.0  0.0  0.0     0.0         0.0  0.0        0.0     0.0          0.0      0.0         0.0   0.0        0.0    100.0        1
+Neuro SICU          0.0  0.0   0.0  0.0  0.0     0.0         0.0  0.0        0.0     0.0          0.0      0.0         0.0   0.0        0.0     33.3        3
+Neuro Stepdown      0.0  0.0   0.0  0.0  0.0     0.0         0.0  0.0        0.0     0.0          0.0      0.0         0.0   0.0        0.0      0.0        1
+SICU                0.0  0.0   0.0  0.0  3.4     0.0         3.4  3.4        0.0     0.0          3.4      3.4         6.9   6.9        6.9     48.3       29
+TSICU               0.0  0.0   0.0  0.0  0.0     0.0         0.0  0.0        0.0     0.0          0.0      0.0         0.0   0.0        6.2     43.8       16
+chi2 p by unit {'HR': None, 'RR': None, 'SpO2': None, 'SBP': 0.6963, 'MAP': 0.8252, 'Temp_C': 0.1316, 'Creatinine': 0.6914, 'BUN': 0.6914, 'Potassium': 0.4365, 'Sodium': 0.4365, 'Bicarbonate': 0.6914, 'Glucose': 0.6914, 'Hemoglobin': 0.5955, 'WBC': 0.5955, 'Platelets': 0.7795, 'Lactate': 0.2392}
+fisher p by death {'HR': None, 'RR': None, 'SpO2': None, 'SBP': 0.1429, 'MAP': 0.2662, 'Temp_C': 0.1429, 'Creatinine': 0.0025, 'BUN': 0.0025, 'Potassium': 0.0195, 'Sodium': 0.0195, 'Bicarbonate': 0.0025, 'Glucose': 0.0025, 'Hemoglobin': 0.0604, 'WBC': 0.0604, 'Platelets': 0.0876, 'Lactate': 0.073}
+top co-missing [('Hemoglobin', 'WBC', 1.0), ('Creatinine', 'BUN', 1.0), ('BUN', 'Glucose', 1.0), ('Creatinine', 'Glucose', 1.0), ('Creatinine', 'Bicarbonate', 1.0), ('BUN', 'Bicarbonate', 1.0)]
+  variable  unit valid_range    flag_rule  n_obs  n_flagged  pct_flagged  n_outside_valid_range  pct_outside_valid_range  observed_min  observed_max
+0       HR   bpm      20-250  <20 or >250  13913          3       0.0216                      3                   0.0216           0.0         200.0
+1     SpO2     %      60-100   >100 or =0  13540          0       0.0000                      5                   0.0369          29.0         100.0
+2   Temp_C  degC       30-43   <30 or >43   3770          3       0.0796                      3                   0.0796          31.1          99.0
+  variable      flagged_values            outside_valid_values
+0       HR     [0.0, 0.0, 0.0]                 [0.0, 0.0, 0.0]
+1     SpO2                  []  [29.0, 43.0, 47.0, 50.0, 52.0]
+2   Temp_C  [97.2, 98.9, 99.0]              [97.2, 98.9, 99.0]
+subject_id                 10039708
+hadm_id                    28258130
+n_draws                          61
+span_days                      33.4
+median_gap_h                   11.9
+gap_iqr                 [6.5, 22.8]
+pct_draws_3_to_7am             43.9
+pct_this_pt_3_to_7am           44.3
+          charttime  creatinine
+2140-01-23 19:14:00         2.2
+2140-01-23 23:51:00         2.0
+2140-01-24 05:51:00         1.9
+2140-01-24 11:56:00         1.9
+2140-01-24 17:08:00         1.7
+2140-01-25 05:00:00         1.8
+2140-01-25 15:29:00         1.8
+2140-01-26 00:04:00         1.8
+2140-01-26 08:45:00         1.9
+2140-01-26 18:41:00         1.9
+2140-01-27 00:04:00         2.0
+2140-01-28 03:38:00         2.2 
+... ( 61 draws in total)
+A5 |r|>0.6: [('SBP', 'MAP', 0.768, 138), ('Creatinine', 'BUN', 0.716, 137)]
+                             n  median  mean
+level            gender                     
+all measurements F       394.0    0.80  1.28
+                 M       529.0    1.70  2.00
+per-patient mean F        43.0    0.60  1.02
+                 M        56.0    1.05  1.61
+Mann-Whitney p (measurements): 5.04e-29 | p (per patient): 1.90e-05
+hospital_expire_flag, ICU-cohort admissions: {0: 113, 1: 15} -> 11.7% died, imbalance 7.53 : 1
+ICU stays: {0: 120, 1: 20} | all admissions in demo: {0: 260, 1: 15}
+n_admissions                          275
+n_rows                               4506
+unique_raw_codes                     1474
+unique_raw_codes_ignoring_version    1472
+threshold_admissions                    3
+codes_ge_1pct                         401
+icd9_rows                            2193
+icd10_rows                           2313
+max_prevalence_pct                   24.7
+all_codes_in_dictionary              True
+         code  n_adm   pct                                                                                                  long_title
+0      9:4019     68  24.7                                                                          Unspecified essential hypertension
+1     10:E785     57  20.7                                                                                 Hyperlipidemia, unspecified
+2      9:2724     55  20.0                                                                        Other and unspecified hyperlipidemia
+3     10:E039     47  17.1                                                                                 Hypothyroidism, unspecified
+4     10:Z794     37  13.5                                                                          Long term (current) use of insulin
+5   10:Z87891     35  12.7                                                                     Personal history of nicotine dependence
+6     9:42731     34  12.4                                                                                         Atrial fibrillation
+7    10:I2510     33  12.0                             Atherosclerotic heart disease of native coronary artery without angina pectoris
+8     9:25000     33  12.0  Diabetes mellitus without mention of complication, type II or unspecified type, not stated as uncontrolled
+9      10:I10     32  11.6                                                                            Essential (primary) hypertension
+10    10:F329     32  11.6                                                      Major depressive disorder, single episode, unspecified
+11    9:V1582     31  11.3                                                                             Personal history of tobacco use
+12    10:N179     31  11.3                                                                           Acute kidney failure, unspecified
+13      9:311     30  10.9                                                               Depressive disorder, not elsewhere classified
+14    9:41401     28  10.2                                                          Coronary atherosclerosis of native coronary artery
+unique_raw                    1474.0
+unique_families                688.0
+reduction_pct                   53.3
+top20_unique_raw                20.0
+top20_unique_families           20.0
+families_ge_1pct               337.0
+families_with_multiple_raw     313.0
+     raw_code  family
+0      9:4019   9:401
+1     10:E785  10:E78
+2      9:2724   9:272
+3     10:E039  10:E03
+4     10:Z794  10:Z79
+5   10:Z87891  10:Z87
+6     9:42731   9:427
+7     9:25000   9:250
+8    10:I2510  10:I25
+9     10:F329  10:F32
+10     10:I10  10:I10
+11    10:N179  10:N17
+12    9:V1582   9:V15
+13      9:311   9:311
+14    9:41401   9:414
+15    9:40390   9:403
+16    10:E119  10:E11
+17    10:F419  10:F41
+18     9:5849   9:584
+19    9:V5867   9:V58
+d_labitems columns: ['itemid', 'label', 'fluid', 'category']
+itemids in labevents: 498 | with a loinc_code: 0 | fraction: 0.0%
+share of lab events covered by top-N itemids: {10: 0.271, 25: 0.585, 50: 0.794, 100: 0.937}
+ itemid          label fluid  n_events
+  50971      Potassium Blood      3022
+  50983         Sodium Blood      3007
+  50912     Creatinine Blood      3003
+  50902       Chloride Blood      2981
+  51006  Urea Nitrogen Blood      2974
+  51221     Hematocrit Blood      2913
+  50882    Bicarbonate Blood      2863
+  50868      Anion Gap Blood      2860
+  51265 Platelet Count Blood      2827
+  51222     Hemoglobin Blood      2787
+done

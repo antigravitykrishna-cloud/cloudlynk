@@ -1,0 +1,617 @@
+{
+ "cohort": {
+  "stays": 140,
+  "admissions": 128,
+  "patients": 100
+ },
+ "A1": {
+  "HR": {
+   "n": 13913,
+   "mean": 91.12233163228635,
+   "sd": 18.689358119703506,
+   "median": 90.0,
+   "q1": 78.0,
+   "q3": 104.0,
+   "min": 0.0,
+   "max": 200.0,
+   "skew": 0.23227052776415397,
+   "kurtosis": 0.28872239817505463
+  },
+  "Creatinine": {
+   "n": 923,
+   "mean": 1.6953412784398703,
+   "sd": 1.4294432450356234,
+   "median": 1.2,
+   "q1": 0.7,
+   "q3": 2.3,
+   "min": 0.1,
+   "max": 15.2,
+   "skew": 2.4301893508941554,
+   "kurtosis": 11.608757447690438
+  },
+  "log_Creatinine_skew": 0.09325593489174984,
+  "HR_pct_divisible_by_5": 21.4
+ },
+ "A2": {
+  "missing_pct": {
+   "HR": 0.0,
+   "RR": 0.0,
+   "SpO2": 0.0,
+   "SBP": 0.7,
+   "MAP": 1.4,
+   "Temp_C": 0.7,
+   "Creatinine": 2.1,
+   "BUN": 2.1,
+   "Potassium": 1.4,
+   "Sodium": 1.4,
+   "Bicarbonate": 2.1,
+   "Glucose": 2.1,
+   "Hemoglobin": 5.0,
+   "WBC": 5.0,
+   "Platelets": 5.7,
+   "Lactate": 34.3
+  },
+  "chi2_p_by_unit": {
+   "HR": null,
+   "RR": null,
+   "SpO2": null,
+   "SBP": 0.6962746843635124,
+   "MAP": 0.8251532608668293,
+   "Temp_C": 0.13157520789389665,
+   "Creatinine": 0.6913533718124072,
+   "BUN": 0.6913533718124072,
+   "Potassium": 0.4364870048980315,
+   "Sodium": 0.4364870048980315,
+   "Bicarbonate": 0.6913533718124072,
+   "Glucose": 0.6913533718124072,
+   "Hemoglobin": 0.5955442474513417,
+   "WBC": 0.5955442474513417,
+   "Platelets": 0.7794511955658345,
+   "Lactate": 0.23918318486919077
+  },
+  "fisher_p_by_death": {
+   "HR": null,
+   "RR": null,
+   "SpO2": null,
+   "SBP": 0.14285714285714285,
+   "MAP": 0.2661870503597122,
+   "Temp_C": 0.14285714285714285,
+   "Creatinine": 0.002547030698422628,
+   "BUN": 0.002547030698422628,
+   "Potassium": 0.019527235354573482,
+   "Sodium": 0.019527235354573482,
+   "Bicarbonate": 0.002547030698422628,
+   "Glucose": 0.002547030698422628,
+   "Hemoglobin": 0.06036263274700702,
+   "WBC": 0.06036263274700702,
+   "Platelets": 0.08764976253010011,
+   "Lactate": 0.0730151035819475
+  },
+  "top_comissing": [
+   [
+    "Hemoglobin",
+    "WBC",
+    1.0
+   ],
+   [
+    "Creatinine",
+    "BUN",
+    1.0
+   ],
+   [
+    "BUN",
+    "Glucose",
+    1.0
+   ],
+   [
+    "Creatinine",
+    "Glucose",
+    1.0
+   ],
+   [
+    "Creatinine",
+    "Bicarbonate",
+    1.0
+   ],
+   [
+    "BUN",
+    "Bicarbonate",
+    1.0
+   ]
+  ],
+  "n_vars": 16
+ },
+ "A3": [
+  {
+   "variable": "HR",
+   "unit": "bpm",
+   "valid_range": "20-250",
+   "flag_rule": "<20 or >250",
+   "n_obs": 13913,
+   "n_flagged": 3,
+   "pct_flagged": 0.0216,
+   "n_outside_valid_range": 3,
+   "pct_outside_valid_range": 0.0216,
+   "observed_min": 0.0,
+   "observed_max": 200.0,
+   "flagged_values": "[0.0, 0.0, 0.0]",
+   "outside_valid_values": "[0.0, 0.0, 0.0]"
+  },
+  {
+   "variable": "SpO2",
+   "unit": "%",
+   "valid_range": "60-100",
+   "flag_rule": ">100 or =0",
+   "n_obs": 13540,
+   "n_flagged": 0,
+   "pct_flagged": 0.0,
+   "n_outside_valid_range": 5,
+   "pct_outside_valid_range": 0.0369,
+   "observed_min": 29.0,
+   "observed_max": 100.0,
+   "flagged_values": "[]",
+   "outside_valid_values": "[29.0, 43.0, 47.0, 50.0, 52.0]"
+  },
+  {
+   "variable": "Temp_C",
+   "unit": "degC",
+   "valid_range": "30-43",
+   "flag_rule": "<30 or >43",
+   "n_obs": 3770,
+   "n_flagged": 3,
+   "pct_flagged": 0.0796,
+   "n_outside_valid_range": 3,
+   "pct_outside_valid_range": 0.0796,
+   "observed_min": 31.1,
+   "observed_max": 99.0,
+   "flagged_values": "[97.2, 98.9, 99.0]",
+   "outside_valid_values": "[97.2, 98.9, 99.0]"
+  }
+ ],
+ "A4": {
+  "subject_id": 10039708,
+  "hadm_id": 28258130,
+  "n_draws": 61,
+  "span_days": 33.4,
+  "median_gap_h": 11.9,
+  "gap_iqr": [
+   6.5,
+   22.8
+  ],
+  "pct_draws_3_to_7am": 43.9,
+  "pct_this_pt_3_to_7am": 44.3,
+  "values": [
+   2.2,
+   2.0,
+   1.9,
+   1.9,
+   1.7,
+   1.8,
+   1.8,
+   1.8,
+   1.9,
+   1.9,
+   2.0,
+   2.2,
+   2.3,
+   2.4,
+   2.5,
+   2.6,
+   2.4,
+   2.5,
+   2.5,
+   2.1,
+   1.6,
+   1.6,
+   1.4,
+   1.3,
+   1.0,
+   1.0,
+   0.9,
+   0.8,
+   0.8,
+   0.7,
+   0.8,
+   0.7,
+   0.7,
+   0.7,
+   0.9,
+   1.1,
+   1.0,
+   0.7,
+   0.6,
+   0.6,
+   0.5,
+   0.7,
+   1.0,
+   1.2,
+   1.4,
+   1.8,
+   2.2,
+   2.7,
+   3.0,
+   3.2,
+   3.5,
+   3.6,
+   2.6,
+   3.0,
+   3.5,
+   3.6,
+   3.9,
+   4.0,
+   4.0,
+   4.1,
+   2.9
+  ],
+  "times": [
+   "2140-01-23 19:14:00",
+   "2140-01-23 23:51:00",
+   "2140-01-24 05:51:00",
+   "2140-01-24 11:56:00",
+   "2140-01-24 17:08:00",
+   "2140-01-25 05:00:00",
+   "2140-01-25 15:29:00",
+   "2140-01-26 00:04:00",
+   "2140-01-26 08:45:00",
+   "2140-01-26 18:41:00",
+   "2140-01-27 00:04:00",
+   "2140-01-28 03:38:00",
+   "2140-01-28 19:35:00",
+   "2140-01-29 01:36:00",
+   "2140-01-29 13:55:00",
+   "2140-01-30 02:22:00",
+   "2140-01-30 14:44:00",
+   "2140-01-30 17:45:00",
+   "2140-01-30 22:24:00",
+   "2140-01-31 03:31:00",
+   "2140-01-31 14:30:00",
+   "2140-01-31 21:43:00",
+   "2140-02-01 03:29:00",
+   "2140-02-01 14:43:00",
+   "2140-02-02 03:06:00",
+   "2140-02-02 15:05:00",
+   "2140-02-02 20:41:00",
+   "2140-02-03 03:13:00",
+   "2140-02-03 09:33:00",
+   "2140-02-03 15:37:00",
+   "2140-02-03 23:30:00",
+   "2140-02-04 04:04:00",
+   "2140-02-04 17:00:00",
+   "2140-02-04 20:11:00",
+   "2140-02-05 05:07:00",
+   "2140-02-05 15:38:00",
+   "2140-02-05 23:55:00",
+   "2140-02-06 11:53:00",
+   "2140-02-06 23:53:00",
+   "2140-02-07 11:50:00",
+   "2140-02-08 05:13:00",
+   "2140-02-08 16:33:00",
+   "2140-02-09 06:50:00",
+   "2140-02-09 13:52:00",
+   "2140-02-10 05:32:00",
+   "2140-02-11 04:15:00",
+   "2140-02-12 05:49:00",
+   "2140-02-13 05:44:00",
+   "2140-02-14 05:25:00",
+   "2140-02-15 05:45:00",
+   "2140-02-16 06:38:00",
+   "2140-02-17 06:16:00",
+   "2140-02-18 05:30:00",
+   "2140-02-19 05:43:00",
+   "2140-02-20 07:35:00",
+   "2140-02-21 05:03:00",
+   "2140-02-22 05:43:00",
+   "2140-02-23 04:36:00",
+   "2140-02-24 05:04:00",
+   "2140-02-25 05:45:00",
+   "2140-02-26 04:57:00"
+  ]
+ },
+ "A5": {
+  "n_features": 15,
+  "strong": [
+   [
+    "SBP",
+    "MAP",
+    0.768,
+    138
+   ],
+   [
+    "Creatinine",
+    "BUN",
+    0.716,
+    137
+   ]
+  ]
+ },
+ "A6": {
+  "value_level": {
+   "F": {
+    "n": 394,
+    "median": 0.8,
+    "mean": 1.28
+   },
+   "M": {
+    "n": 529,
+    "median": 1.7,
+    "mean": 2.0
+   }
+  },
+  "patient_level": {
+   "F": {
+    "n": 43,
+    "median": 0.6,
+    "mean": 1.02
+   },
+   "M": {
+    "n": 56,
+    "median": 1.05,
+    "mean": 1.61
+   }
+  },
+  "mwu_p_value_level": 5.042499335232996e-29,
+  "mwu_p_patient_level": 1.9015657706894047e-05
+ },
+ "A7": {
+  "cohort_admissions": {
+   "0": 113,
+   "1": 15
+  },
+  "cohort_stays": {
+   "0": 120,
+   "1": 20
+  },
+  "all_admissions": {
+   "0": 260,
+   "1": 15
+  },
+  "death_rate_pct": 11.7,
+  "imbalance": 7.53
+ },
+ "B1": {
+  "n_admissions": 275,
+  "n_rows": 4506,
+  "unique_raw_codes": 1474,
+  "unique_raw_codes_ignoring_version": 1472,
+  "threshold_admissions": 3,
+  "codes_ge_1pct": 401,
+  "icd9_rows": 2193,
+  "icd10_rows": 2313,
+  "max_prevalence_pct": 24.7,
+  "all_codes_in_dictionary": true,
+  "top": [
+   [
+    "9:4019",
+    68,
+    24.7,
+    "Unspecified essential hypertension"
+   ],
+   [
+    "10:E785",
+    57,
+    20.7,
+    "Hyperlipidemia, unspecified"
+   ],
+   [
+    "9:2724",
+    55,
+    20.0,
+    "Other and unspecified hyperlipidemia"
+   ],
+   [
+    "10:E039",
+    47,
+    17.1,
+    "Hypothyroidism, unspecified"
+   ],
+   [
+    "10:Z794",
+    37,
+    13.5,
+    "Long term (current) use of insulin"
+   ],
+   [
+    "10:Z87891",
+    35,
+    12.7,
+    "Personal history of nicotine dependence"
+   ],
+   [
+    "9:42731",
+    34,
+    12.4,
+    "Atrial fibrillation"
+   ],
+   [
+    "10:I2510",
+    33,
+    12.0,
+    "Atherosclerotic heart disease of native coronary artery without angina pectoris"
+   ],
+   [
+    "9:25000",
+    33,
+    12.0,
+    "Diabetes mellitus without mention of complication, type II or unspecified type, not stated as uncontrolled"
+   ],
+   [
+    "10:I10",
+    32,
+    11.6,
+    "Essential (primary) hypertension"
+   ],
+   [
+    "10:F329",
+    32,
+    11.6,
+    "Major depressive disorder, single episode, unspecified"
+   ],
+   [
+    "9:V1582",
+    31,
+    11.3,
+    "Personal history of tobacco use"
+   ],
+   [
+    "10:N179",
+    31,
+    11.3,
+    "Acute kidney failure, unspecified"
+   ],
+   [
+    "9:311",
+    30,
+    10.9,
+    "Depressive disorder, not elsewhere classified"
+   ],
+   [
+    "9:41401",
+    28,
+    10.2,
+    "Coronary atherosclerosis of native coronary artery"
+   ]
+  ]
+ },
+ "B2": {
+  "unique_raw": 1474,
+  "unique_families": 688,
+  "reduction_pct": 53.3,
+  "top20_unique_raw": 20,
+  "top20_unique_families": 20,
+  "families_ge_1pct": 337,
+  "families_with_multiple_raw": 313,
+  "example": [
+   [
+    "9:4019",
+    "9:401"
+   ],
+   [
+    "10:E785",
+    "10:E78"
+   ],
+   [
+    "9:2724",
+    "9:272"
+   ],
+   [
+    "10:E039",
+    "10:E03"
+   ],
+   [
+    "10:Z794",
+    "10:Z79"
+   ],
+   [
+    "10:Z87891",
+    "10:Z87"
+   ],
+   [
+    "9:42731",
+    "9:427"
+   ],
+   [
+    "9:25000",
+    "9:250"
+   ]
+  ],
+  "e_v_code_note": 802
+ },
+ "B3": {
+  "d_labitems_columns": [
+   "itemid",
+   "label",
+   "fluid",
+   "category"
+  ],
+  "n_itemids_in_labevents": 498,
+  "n_in_dictionary": 498,
+  "loinc_column_present": false,
+  "n_with_loinc": 0,
+  "fraction_with_loinc": 0.0,
+  "by_fluid": {
+   "Blood": 289,
+   "Urine": 86,
+   "Other Body Fluid": 39,
+   "Bone Marrow": 26,
+   "Ascites": 21,
+   "Pleural": 18,
+   "Cerebrospinal Fluid": 8,
+   "Joint Fluid": 8,
+   "Stool": 3
+  },
+  "by_category": {
+   "Hematology": 238,
+   "Chemistry": 227,
+   "Blood Gas": 33
+  },
+  "top10_items": [
+   [
+    50971,
+    "Potassium",
+    "Blood",
+    3022
+   ],
+   [
+    50983,
+    "Sodium",
+    "Blood",
+    3007
+   ],
+   [
+    50912,
+    "Creatinine",
+    "Blood",
+    3003
+   ],
+   [
+    50902,
+    "Chloride",
+    "Blood",
+    2981
+   ],
+   [
+    51006,
+    "Urea Nitrogen",
+    "Blood",
+    2974
+   ],
+   [
+    51221,
+    "Hematocrit",
+    "Blood",
+    2913
+   ],
+   [
+    50882,
+    "Bicarbonate",
+    "Blood",
+    2863
+   ],
+   [
+    50868,
+    "Anion Gap",
+    "Blood",
+    2860
+   ],
+   [
+    51265,
+    "Platelet Count",
+    "Blood",
+    2827
+   ],
+   [
+    51222,
+    "Hemoglobin",
+    "Blood",
+    2787
+   ]
+  ],
+  "event_share_top": {
+   "10": 0.271,
+   "25": 0.585,
+   "50": 0.794,
+   "100": 0.937
+  },
+  "duplicate_labels_across_itemids": 46
+ }
+}
