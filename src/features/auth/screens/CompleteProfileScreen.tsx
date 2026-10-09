@@ -43,21 +43,15 @@ export default function CompleteProfileScreen() {
   useEffect(() => {
     if (!isNewAccount || triedAutomatically.current) return;
     triedAutomatically.current = true;
-
     (async () => {
       try {
         if (!(await hasConfirmedAgeOnDevice())) throw new Error('No age answer on this device');
         await finish();
-      } catch (error) {
+      } catch {
         // Fall back to the card rather than a dead end.
-        if (__DEV__) console.warn('Auto-completion failed:', error);
         setCompletingAutomatically(false);
       }
-    })().catch(err => {
-      // Catch any unhandled promise rejection
-      if (__DEV__) console.error('Unhandled error in profile completion:', err);
-      setCompletingAutomatically(false);
-    });
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once per new account
   }, [isNewAccount]);
 

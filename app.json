@@ -34,10 +34,7 @@
       "permissions": [
         "android.permission.INTERNET",
         "android.permission.ACCESS_NETWORK_STATE",
-        "com.android.vending.BILLING",
-        "android.permission.POST_NOTIFICATIONS",
-        "android.permission.RECEIVE_BOOT_COMPLETED",
-        "android.permission.VIBRATE"
+        "com.android.vending.BILLING"
       ],
       "intentFilters": [
         {
@@ -72,15 +69,6 @@
       "expo-router",
       "expo-screen-orientation",
       "expo-secure-store",
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/icon.png",
-          "color": "#0B1220",
-          "sounds": [],
-          "mode": "production"
-        }
-      ],
       [
         "expo-image-picker",
         {
@@ -119,6 +107,6 @@
         "projectId": "4224a968-e720-43b6-92a8-c26458f2a7a0"
       }
     },
-    "owner": "cloudlynk"
+    "owner": "southern-methodist-university"
   }
 }

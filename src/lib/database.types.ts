@@ -522,54 +522,6 @@ export type Database = {
           },
         ]
       }
-      device_fingerprints: {
-        Row: {
-          created_at: string | null
-          device_id: string
-          id: string
-          is_debug_build: boolean | null
-          is_emulator: boolean | null
-          is_rooted: boolean | null
-          last_seen: string | null
-          manufacturer: string | null
-          model: string | null
-          os_version: string | null
-          platform: string
-          risk_score: number | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          device_id: string
-          id?: string
-          is_debug_build?: boolean | null
-          is_emulator?: boolean | null
-          is_rooted?: boolean | null
-          last_seen?: string | null
-          manufacturer?: string | null
-          model?: string | null
-          os_version?: string | null
-          platform: string
-          risk_score?: number | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          device_id?: string
-          id?: string
-          is_debug_build?: boolean | null
-          is_emulator?: boolean | null
-          is_rooted?: boolean | null
-          last_seen?: string | null
-          manufacturer?: string | null
-          model?: string | null
-          os_version?: string | null
-          platform?: string
-          risk_score?: number | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       files: {
         Row: {
           category: string
@@ -686,45 +638,11 @@ export type Database = {
           },
         ]
       }
-      ip_reputation: {
-        Row: {
-          category: string | null
-          id: string
-          ip_address: unknown
-          is_datacenter: boolean | null
-          is_proxy: boolean | null
-          is_vpn: boolean | null
-          last_checked: string | null
-          risk_score: number | null
-        }
-        Insert: {
-          category?: string | null
-          id?: string
-          ip_address: unknown
-          is_datacenter?: boolean | null
-          is_proxy?: boolean | null
-          is_vpn?: boolean | null
-          last_checked?: string | null
-          risk_score?: number | null
-        }
-        Update: {
-          category?: string | null
-          id?: string
-          ip_address?: unknown
-          is_datacenter?: boolean | null
-          is_proxy?: boolean | null
-          is_vpn?: boolean | null
-          last_checked?: string | null
-          risk_score?: number | null
-        }
-        Relationships: []
-      }
       notifications: {
         Row: {
           body: string
           channel_id: string | null
           created_at: string
-          data: Json | null
           id: string
           post_id: string | null
           read: boolean
@@ -736,7 +654,6 @@ export type Database = {
           body: string
           channel_id?: string | null
           created_at?: string
-          data?: Json | null
           id?: string
           post_id?: string | null
           read?: boolean
@@ -748,7 +665,6 @@ export type Database = {
           body?: string
           channel_id?: string | null
           created_at?: string
-          data?: Json | null
           id?: string
           post_id?: string | null
           read?: boolean
@@ -863,45 +779,6 @@ export type Database = {
           raw?: Json | null
           status?: string
           user_id?: string | null
-        }
-        Relationships: []
-      }
-      persona_sessions: {
-        Row: {
-          created_at: string | null
-          device_binding_hash: string
-          device_id: string
-          expires_at: string
-          id: string
-          is_valid: boolean | null
-          last_rotated: string | null
-          rotation_count: number | null
-          token: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          device_binding_hash: string
-          device_id: string
-          expires_at: string
-          id?: string
-          is_valid?: boolean | null
-          last_rotated?: string | null
-          rotation_count?: number | null
-          token: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          device_binding_hash?: string
-          device_id?: string
-          expires_at?: string
-          id?: string
-          is_valid?: boolean | null
-          last_rotated?: string | null
-          rotation_count?: number | null
-          token?: string
-          user_id?: string
         }
         Relationships: []
       }
@@ -1047,39 +924,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      security_events: {
-        Row: {
-          created_at: string | null
-          details: Json | null
-          device_id: string | null
-          event_type: string
-          id: string
-          ip_address: unknown
-          reason: string | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          details?: Json | null
-          device_id?: string | null
-          event_type: string
-          id?: string
-          ip_address?: unknown
-          reason?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          details?: Json | null
-          device_id?: string | null
-          event_type?: string
-          id?: string
-          ip_address?: unknown
-          reason?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
       }
       series: {
         Row: {
@@ -1293,57 +1137,6 @@ export type Database = {
         }
         Relationships: []
       }
-      subscriptions: {
-        Row: {
-          amount_paid: number | null
-          auto_renew: boolean | null
-          created_at: string | null
-          currency: string | null
-          end_date: string
-          id: string
-          payment_method: string | null
-          plan_type: string
-          razorpay_order_id: string | null
-          razorpay_subscription_id: string | null
-          start_date: string
-          status: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          amount_paid?: number | null
-          auto_renew?: boolean | null
-          created_at?: string | null
-          currency?: string | null
-          end_date: string
-          id?: string
-          payment_method?: string | null
-          plan_type: string
-          razorpay_order_id?: string | null
-          razorpay_subscription_id?: string | null
-          start_date?: string
-          status?: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          amount_paid?: number | null
-          auto_renew?: boolean | null
-          created_at?: string | null
-          currency?: string | null
-          end_date?: string
-          id?: string
-          payment_method?: string | null
-          plan_type?: string
-          razorpay_order_id?: string | null
-          razorpay_subscription_id?: string | null
-          start_date?: string
-          status?: string
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       subtitles: {
         Row: {
           created_at: string | null
@@ -1522,99 +1315,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      user_install_source: {
-        Row: {
-          created_at: string | null
-          id: string
-          install_source:
-            | Database["public"]["Enums"]["install_source_type"]
-            | null
-          referrer: string | null
-          user_id: string
-          utm_campaign: string | null
-          utm_medium: string | null
-          utm_source: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          install_source?:
-            | Database["public"]["Enums"]["install_source_type"]
-            | null
-          referrer?: string | null
-          user_id: string
-          utm_campaign?: string | null
-          utm_medium?: string | null
-          utm_source?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          install_source?:
-            | Database["public"]["Enums"]["install_source_type"]
-            | null
-          referrer?: string | null
-          user_id?: string
-          utm_campaign?: string | null
-          utm_medium?: string | null
-          utm_source?: string | null
-        }
-        Relationships: []
-      }
-      user_personas: {
-        Row: {
-          activated_at: string | null
-          activation_time: string | null
-          admin_approved_at: string | null
-          admin_approved_by: string | null
-          created_at: string | null
-          id: string
-          is_full_access_granted: boolean | null
-          last_verified: string | null
-          needs_admin_approval: boolean | null
-          persona: Database["public"]["Enums"]["persona_type"]
-          rejected_at: string | null
-          rejected_by: string | null
-          risk_score: number | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          activated_at?: string | null
-          activation_time?: string | null
-          admin_approved_at?: string | null
-          admin_approved_by?: string | null
-          created_at?: string | null
-          id?: string
-          is_full_access_granted?: boolean | null
-          last_verified?: string | null
-          needs_admin_approval?: boolean | null
-          persona: Database["public"]["Enums"]["persona_type"]
-          rejected_at?: string | null
-          rejected_by?: string | null
-          risk_score?: number | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          activated_at?: string | null
-          activation_time?: string | null
-          admin_approved_at?: string | null
-          admin_approved_by?: string | null
-          created_at?: string | null
-          id?: string
-          is_full_access_granted?: boolean | null
-          last_verified?: string | null
-          needs_admin_approval?: boolean | null
-          persona?: Database["public"]["Enums"]["persona_type"]
-          rejected_at?: string | null
-          rejected_by?: string | null
-          risk_score?: number | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
       }
       user_preferences: {
         Row: {
@@ -2144,17 +1844,14 @@ export type Database = {
         Args: { p_bytes: number; p_user_id: string }
         Returns: undefined
       }
-      is_activated: { Args: { user_id: string }; Returns: boolean }
       is_active_admin: { Args: never; Returns: boolean }
       is_guest: { Args: never; Returns: boolean }
       is_owner_or_admin: { Args: { p_channel_id: string }; Returns: boolean }
       is_plan_active: { Args: { p_user_id: string }; Returns: boolean }
       is_profile_active: { Args: { p_user_id: string }; Returns: boolean }
-      is_reviewer_ip: { Args: { check_ip: unknown }; Returns: boolean }
       is_user_approved: { Args: { p_user_id: string }; Returns: boolean }
       join_channel: { Args: { p_channel_id: string }; Returns: undefined }
       leave_channel: { Args: { p_channel_id: string }; Returns: undefined }
-      mark_activation_needed: { Args: { user_id: string }; Returns: undefined }
       notify_expiring_plans: {
         Args: { p_days_ahead?: number }
         Returns: {
@@ -2189,8 +1886,7 @@ export type Database = {
       user_files_owner: { Args: { p_name: string }; Returns: string }
     }
     Enums: {
-      install_source_type: "playstore" | "ads" | "referral" | "unknown"
-      persona_type: "organic" | "inorganic" | "reviewer"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2317,10 +2013,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      install_source_type: ["playstore", "ads", "referral", "unknown"],
-      persona_type: ["organic", "inorganic", "reviewer"],
-    },
+    Enums: {},
   },
 } as const
-

@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -10,13 +9,10 @@ import { FeedbackHost } from '@/components/ui/Feedback';
 import { asyncStoragePersister, queryClient } from '@/lib/queryClient';
 import { Colors } from '@/theme';
 import { AgeGate } from '@/features/auth/components/AgeGate';
-import { authApi } from '@/features/auth/api/authApi';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useLaunchRouting } from '@/features/auth/hooks/useLaunchRouting';
 import { useGeoCheck } from '@/features/geo/hooks/useGeoCheck';
 import { GeoBlockedScreen } from '@/features/geo/screens/GeoBlockedScreen';
-import { usePersona } from '@/features/persona/hooks/usePersona';
-import { DeviceFingerprintManager } from '@/lib/fingerprint/deviceFingerprint';
 
 // The app shell: providers, the root navigator, and what sits above every screen (the age gate,
 // dialogs and toasts). Where the app navigates as the session changes is useLaunchRouting.
@@ -31,26 +27,6 @@ const PUSHED = { animation: 'slide_from_right' } as const;
 export default function RootLayout() {
   const { session, loading } = useAuth();
   const geo = useGeoCheck();
-
-  // Initialize install source detection (capture UTM params from deep links)
-  useEffect(() => {
-    DeviceFingerprintManager.initializeInstallSource();
-  }, []);
-
-  // Every visitor gets a real (anonymous) account as soon as the app opens, signed-out "browse
-  // first" UX included. Without this, a visitor who never signs up never gets a user id, so
-  // usePersona() below has nothing to classify and cloaking never runs — exactly the gap a
-  // reviewer who just installs and browses would fall through.
-  useEffect(() => {
-    if (!loading && !session) {
-      authApi.signInAsGuest().catch(err => {
-        if (__DEV__) console.warn('Silent guest sign-in failed:', err);
-      });
-    }
-  }, [loading, session]);
-
-  // Initialize persona detection (device cloaking & access control)
-  usePersona();
   useLaunchRouting({ geoReady: !geo.loading, geoBlocked: geo.isBlocked });
 
   if (geo.isBlocked && !geo.loading) return <GeoBlockedScreen country={geo.country} />;
